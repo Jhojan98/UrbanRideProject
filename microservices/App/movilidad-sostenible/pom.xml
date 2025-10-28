@@ -17,6 +17,7 @@
 
     <modules>
         <module>usuario-service</module>
+        <module>bicis-service</module>
     </modules>
 
     <properties>

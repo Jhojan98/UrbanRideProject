@@ -12,8 +12,7 @@ import java.util.Date;
 public class Usuario {
 
     @Id
-    @Column(name = "k_CC")
-    private String k_CC;
+    private String k_cedula_ciudadania_usuario;
 
     private String n_primerNombre;
 
@@ -32,13 +31,15 @@ public class Usuario {
 
     private Date f_fechaRegistro;
 
-    // Getters and Setters
-    public String getK_CC() {
-        return k_CC;
+    // Getters and Setter
+
+
+    public String getK_cedula_ciudadania_usuario() {
+        return k_cedula_ciudadania_usuario;
     }
 
-    public void setK_CC(String k_CC) {
-        this.k_CC = k_CC;
+    public void setK_cedula_ciudadania_usuario(String k_cedula_ciudadania_usuario) {
+        this.k_cedula_ciudadania_usuario = k_cedula_ciudadania_usuario;
     }
 
     public String getN_primerNombre() {
