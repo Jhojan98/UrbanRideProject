@@ -12,14 +12,17 @@ const THEME_KEY = 'app-theme'
 
 const isDark = ref(false)
 
+// Cambia el atributo data-theme en <html> para que los estilos CSS reaccionen al modo claro/oscuro
 const applyTheme = (dark) => {
   const root = document.documentElement
   if (dark) {
-    root.classList.add('dark')
+    root.setAttribute('data-theme', 'dark')
     root.classList.remove('light')
+    root.classList.add('dark')
   } else {
-    root.classList.add('light')
+    root.setAttribute('data-theme', 'light')
     root.classList.remove('dark')
+    root.classList.add('light')
   }
   localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light')
 }

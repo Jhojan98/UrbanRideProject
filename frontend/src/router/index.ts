@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
-import SignupView from '@/views/SignupView.vue'
+// import SignupView from '@/views/SignupView.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -14,12 +14,13 @@ const routes: Array<RouteRecordRaw> = [
     name: 'about',
     component: LoginView
   },
-  {
-    path: '/signup',
-    name: 'signup',
-    component: SignupView
-  }
+  // {
+  //   path: '/signup',
+  //   name: 'signup',
+  //   component: SignupView
+  // }
 ]
+//TODO: Descomentar cuando esté el signup listo
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),

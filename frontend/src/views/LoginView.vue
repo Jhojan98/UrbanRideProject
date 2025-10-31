@@ -13,7 +13,7 @@
             <button type="submit" class="form-submit">Entrar</button>
         </form>
         <h3>¿No tienes cuenta con nosotros?</h3>
-        <router-link :to="{name:'signup'}">Regístrate aquí</router-link>
+        <!-- <router-link :to="{name:'signup'}">Regístrate aquí</router-link> -->
     </div>
 </template>
 
