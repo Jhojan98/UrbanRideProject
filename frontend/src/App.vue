@@ -2,9 +2,6 @@
 
 <template>
   <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-    <!-- Botón para cambiar entre tema claro y oscuro -->
     <ToggleTheme />
   </nav>
   <router-view/>
@@ -12,20 +9,13 @@
 </template>
 
 <script setup lang="ts">
-// Importamos el componente que controla el tema
+
 import ToggleTheme from './components/ToggleTheme.vue';
 </script>
 
 <style lang="scss">
+@import "./styles/global.scss";
 @import "./styles/forms.scss";
-
-/* Estilos globales para aplicar tema */
-body {
-  background: var(--bg);
-  color: var(--text);
-  margin: 0;
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-}
 
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
