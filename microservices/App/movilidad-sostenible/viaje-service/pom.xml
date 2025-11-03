@@ -7,11 +7,12 @@
 		<artifactId>movilidad-sostenible</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
+
 	<groupId>com.movilidadsostenible</groupId>
-	<artifactId>bicis-service</artifactId>
+	<artifactId>viaje-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>bicis-service</name>
-	<description>Microservicio para la gestión de bicicletas del sistema de bicicletas compartidas.</description>
+	<name>viaje-service</name>
+	<description>Microservicio encargado de la gestión de viajes del sistema de bicicletas compartidas: inicio, finalización.</description>
 	<url/>
 	<licenses>
 		<license/>

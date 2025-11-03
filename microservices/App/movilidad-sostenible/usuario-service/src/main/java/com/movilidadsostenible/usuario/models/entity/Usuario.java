@@ -4,6 +4,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.hibernate.validator.constraints.Email;
+import org.hibernate.validator.constraints.NotEmpty;
 
 import java.util.Date;
 
@@ -12,97 +16,135 @@ import java.util.Date;
 public class Usuario {
 
     @Id
-    private String k_cedula_ciudadania_usuario;
+    @Column(name = "k_cedula_ciudadania_usuario")
+    private Integer cedulaCiudadaniaUsuario;
 
-    private String n_primerNombre;
+    @NotEmpty
+    @Column(unique = true, name = "n_usuario")
+    private String usuario;
 
-    private String n_segundoNombre;
+    @NotBlank
+    @Column(name = "n_contrasena")
+    private String contrasena;
 
-    private String n_primerApellido;
+    @NotBlank
+    @Column(name = "n_primer_nombre")
+    private String primerNombre;
 
-    private String n_segundoApellido;
+    @Column(name = "n_segundo_nombre")
+    private String segundoNombre;
 
-    private Date f_fechaNacimiento;
+    @NotBlank
+    @Column(name = "n_primer_apellido")
+    private String primerApellido;
 
-    @Column(unique = true)
-    private String n_correoElectronico;
+    @Column(name = "n_segundo_apellido")
+    private String segundoApellido;
 
-    private String t_tipoSuscripcion;
+    @NotNull
+    @Column(name = "f_fecha_nacimiento")
+    private Date fechaNacimiento;
 
-    private Date f_fechaRegistro;
+    @NotEmpty
+    @Column(unique = true, name = "n_correo_electronico")
+    @Email
+    private String correoElectronico;
+
+    @Column(name = "t_tipo_suscripcion")
+    private String tipoSuscripcion;
+
+    @NotNull
+    @Column(name = "f_fecha_de_registro")
+    private Date fechaRegistro;
 
     // Getters and Setter
 
 
-    public String getK_cedula_ciudadania_usuario() {
-        return k_cedula_ciudadania_usuario;
+    public Integer getCedulaCiudadaniaUsuario() {
+        return cedulaCiudadaniaUsuario;
     }
 
-    public void setK_cedula_ciudadania_usuario(String k_cedula_ciudadania_usuario) {
-        this.k_cedula_ciudadania_usuario = k_cedula_ciudadania_usuario;
+    public void setCedulaCiudadaniaUsuario(Integer cedulaCiudadaniaUsuario) {
+        this.cedulaCiudadaniaUsuario = cedulaCiudadaniaUsuario;
     }
 
-    public String getN_primerNombre() {
-        return n_primerNombre;
+    public String getContrasena() {
+        return contrasena;
     }
 
-    public void setN_primerNombre(String n_primerNombre) {
-        this.n_primerNombre = n_primerNombre;
+    public void setContrasena(String contrasena) {
+        this.contrasena = contrasena;
     }
 
-    public String getN_segundoNombre() {
-        return n_segundoNombre;
+    public String getUsuario() {
+        return usuario;
     }
 
-    public void setN_segundoNombre(String n_segundoNombre) {
-        this.n_segundoNombre = n_segundoNombre;
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
     }
 
-    public String getN_primerApellido() {
-        return n_primerApellido;
+    public String getPrimerNombre() {
+        return primerNombre;
     }
 
-    public void setN_primerApellido(String n_primerApellido) {
-        this.n_primerApellido = n_primerApellido;
+    public void setPrimerNombre(String primerNombre) {
+        this.primerNombre = primerNombre;
     }
 
-    public String getN_segundoApellido() {
-        return n_segundoApellido;
+    public String getSegundoNombre() {
+        return segundoNombre;
     }
 
-    public void setN_segundoApellido(String n_segundoApellido) {
-        this.n_segundoApellido = n_segundoApellido;
+    public void setSegundoNombre(String segundoNombre) {
+        this.segundoNombre = segundoNombre;
     }
 
-    public Date getF_fechaNacimiento() {
-        return f_fechaNacimiento;
+    public String getPrimerApellido() {
+        return primerApellido;
     }
 
-    public void setF_fechaNacimiento(Date f_fechaNacimiento) {
-        this.f_fechaNacimiento = f_fechaNacimiento;
+    public void setPrimerApellido(String primerApellido) {
+        this.primerApellido = primerApellido;
     }
 
-    public String getN_correoElectronico() {
-        return n_correoElectronico;
+    public String getSegundoApellido() {
+        return segundoApellido;
     }
 
-    public void setN_correoElectronico(String n_correoElectronico) {
-        this.n_correoElectronico = n_correoElectronico;
+    public void setSegundoApellido(String segundoApellido) {
+        this.segundoApellido = segundoApellido;
     }
 
-    public String getT_tipoSuscripcion() {
-        return t_tipoSuscripcion;
+    public Date getFechaNacimiento() {
+        return fechaNacimiento;
     }
 
-    public void setT_tipoSuscripcion(String t_tipoSuscripcion) {
-        this.t_tipoSuscripcion = t_tipoSuscripcion;
+    public void setFechaNacimiento(Date fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
     }
 
-    public Date getF_fechaRegistro() {
-        return f_fechaRegistro;
+    public String getCorreoElectronico() {
+        return correoElectronico;
     }
 
-    public void setF_fechaRegistro(Date f_fechaRegistro) {
-        this.f_fechaRegistro = f_fechaRegistro;
+    public void setCorreoElectronico(String correoElectronico) {
+        this.correoElectronico = correoElectronico;
+    }
+
+    public String getTipoSuscripcion() {
+        return tipoSuscripcion;
+    }
+
+    public void setTipoSuscripcion(String tipoSuscripcion) {
+        this.tipoSuscripcion = tipoSuscripcion;
+    }
+
+    public Date getFechaRegistro() {
+        return fechaRegistro;
+    }
+
+    public void setFechaRegistro(Date fechaRegistro) {
+        this.fechaRegistro = fechaRegistro;
     }
 }
