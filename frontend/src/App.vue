@@ -5,12 +5,15 @@
     <ToggleTheme />
   </nav>
   <router-view/>
-  
+  <BalanceComponent/>
+
 </template>
 
 <script setup lang="ts">
 
+import BalanceComponent from './components/BalanceComponent.vue';
 import ToggleTheme from './components/ToggleTheme.vue';
+BalanceComponent
 </script>
 
 <style lang="scss">
