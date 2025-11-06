@@ -38,6 +38,10 @@
   /* Others */
   --border-radius: 8px;
   --base-spacing: 16px;
+  /* Select/input specific colors (kept stable across themes) */
+  --select-bg: #ffffff;
+  --select-text: #000000;
+  --select-border: #cccccc;
 }
 
 /* Color Palette - Dark Mode */
@@ -53,6 +57,10 @@
   --color-white: #F5F7FA;
   --color-black: #000000;
   --color-red-alert: #D9534F;
+  /* Keep select colors consistent in dark mode too */
+  --select-bg: #ffffff;
+  --select-text: #000000;
+  --select-border: #cccccc;
 }
 
 /* Reset and base */
@@ -127,11 +135,11 @@ select,
 textarea {
   width: 100%;
   padding: 10px;
-  border: 1px solid var(--color-gray-light);
+  border: 1px solid var(--select-border);
   border-radius: var(--border-radius);
   font-size: 16px;
-  color: var(--color-gray-dark);
-  background-color: var(--color-white);
+  color: var(--select-text);
+  background-color: var(--select-bg);
   transition: border-color 0.3s ease;
 }
 
@@ -221,9 +229,10 @@ body[data-theme="dark"] button.primary:hover {
 body[data-theme="dark"] input,
 body[data-theme="dark"] select,
 body[data-theme="dark"] textarea {
-  background-color: var(--color-gray-light);
-  color: var(--color-white);
-  border-color: var(--color-gray-medium);
+  /* Keep using the select/input variables so form controls remain stable across themes */
+  background-color: var(--select-bg);
+  color: var(--select-text);
+  border-color: var(--select-border);
 }
 
 /* Utilities */
