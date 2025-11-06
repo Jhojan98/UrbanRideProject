@@ -21,7 +21,6 @@ venv.bak/
 
 # IDE
 .vscode/
-.idea/
 *.swp
 *.swo
 *~
@@ -70,3 +69,4 @@ Thumbs.db
 *.tmp
 *.bak
 *.swp
+/.vscode
