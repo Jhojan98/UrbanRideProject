@@ -1,14 +1,15 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-    <router-link :to="{ name: 'Login' }">Iniciar Sesión</router-link>
-  </nav>
-  <router-view/>
+  <div class="container-menu">
+    <nav class="header-menu">
+      <router-link to="/">Home</router-link> |
+      <router-link to="/about">About</router-link>
+      <router-link :to="{ name: 'Login' }">Iniciar Sesión</router-link>
+    </nav>
+    <router-view />
+  </div>
 </template>
 
-<style lang="scss">
-#app {
+/*#app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -28,4 +29,7 @@ nav {
     }
   }
 }
+
+<style lang="scss">
+@import "./styles/styles.scss";
 </style>
