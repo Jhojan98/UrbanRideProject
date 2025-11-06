@@ -1,15 +1,15 @@
 FROM openjdk:26-ea-21-jdk-oraclelinux8 AS builder
-
-WORKDIR /app/usuario-service
+ARG SERVICE_NAME=usuario-service
+WORKDIR /app/$SERVICE_NAME
 
 COPY ./pom.xml /app
-COPY ./usuario-service/.mvn ./.mvn
-COPY ./usuario-service/mvnw .
-COPY ./usuario-service/pom.xml .
+COPY ./$SERVICE_NAME/.mvn ./.mvn
+COPY ./$SERVICE_NAME/mvnw .
+COPY ./$SERVICE_NAME/pom.xml .
 
 RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip && rm -r ./target/
 
-COPY ./usuario-service/src ./src
+COPY ./$SERVICE_NAME/src ./src
 
 RUN ./mvnw clean package -DskipTests
 
@@ -17,8 +17,12 @@ FROM openjdk:26-ea-21-jdk-oraclelinux8
 
 WORKDIR /app
 RUN mkdir ./logs
-COPY --from=builder /app/usuario-service/target/usuario-service-0.0.1-SNAPSHOT.jar .
-EXPOSE 8001
+ARG SERVICE_NAME=usuario-service
+ARG TARGET_FOLDER=/app/$SERVICE_NAME/target/
+COPY --from=builder $TARGET_FOLDER/usuario-service-0.0.1-SNAPSHOT.jar .
+ARG PORT_APP=8001
+ENV PORT=$PORT_APP
+EXPOSE $PORT
 
 ENTRYPOINT ["java", "-jar", "usuario-service-0.0.1-SNAPSHOT.jar"]
 

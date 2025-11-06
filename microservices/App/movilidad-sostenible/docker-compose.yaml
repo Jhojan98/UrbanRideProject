@@ -1,0 +1,66 @@
+services:
+  postgres17:
+    container_name: postgres17
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SASA
+      POSTGRES_DB: movilidad_sostenible
+    ports:
+      - "5532:5432"
+    volumes:
+      - data-postgres:/var/lib/postgresql/data
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+  usuario-service:
+    container_name: usuario-service
+    build:
+      context: ./
+      dockerfile: ./usuario-service/Dockerfile
+    ports:
+      - "8001:8001"
+    env_file: ./usuario-service/.env
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+    restart: always
+
+  bicis-service:
+    container_name: bicis-service
+    build:
+      context: ./
+      dockerfile: ./bicis-service/Dockerfile
+    ports:
+      - "8002:8002"
+    env_file: ./bicis-service/.env
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+    restart: always
+
+  viaje-service:
+    container_name: viaje-service
+    build:
+      context: ./
+      dockerfile: ./viaje-service/Dockerfile
+    ports:
+      - "8003:8003"
+    env_file: ./viaje-service/.env
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - usuario-service
+      - bicis-service
+    restart: always
+
+volumes:
+  data-postgres:
+    name: data-postgres
+
+networks:
+  movilidad-sostenible-network:

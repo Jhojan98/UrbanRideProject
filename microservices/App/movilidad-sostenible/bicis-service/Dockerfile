@@ -1,15 +1,15 @@
 FROM openjdk:26-ea-21-jdk-oraclelinux8 AS builder
-
-WORKDIR /app/bicis-service
+ARG SERVICE_NAME=bicis-service
+WORKDIR /app/$SERVICE_NAME
 
 COPY ./pom.xml /app
-COPY ./bicis-service/.mvn ./.mvn
-COPY ./bicis-service/mvnw .
-COPY ./bicis-service/pom.xml .
+COPY ./$SERVICE_NAME/.mvn ./.mvn
+COPY ./$SERVICE_NAME/mvnw .
+COPY ./$SERVICE_NAME/pom.xml .
 
 RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip && rm -r ./target/
 
-COPY ./bicis-service/src ./src
+COPY ./$SERVICE_NAME/src ./src
 
 RUN ./mvnw clean package -DskipTests
 
@@ -17,7 +17,12 @@ FROM openjdk:26-ea-21-jdk-oraclelinux8
 
 WORKDIR /app
 RUN mkdir ./logs
-COPY --from=builder /app/bicis-service/target/bicis-service-0.0.1-SNAPSHOT.jar .
-EXPOSE 8002
+ARG SERVICE_NAME=bicis-service
+ARG TARGET_FOLDER=/app/$SERVICE_NAME/target/
+COPY --from=builder $TARGET_FOLDER/bicis-service-0.0.1-SNAPSHOT.jar .
+ARG PORT_APP=8003
+ENV PORT=$PORT_APP
+EXPOSE $PORT
+
 
 ENTRYPOINT ["java", "-jar", "bicis-service-0.0.1-SNAPSHOT.jar"]
