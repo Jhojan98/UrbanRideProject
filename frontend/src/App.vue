@@ -1,28 +1,17 @@
 //Aquí se puede poner la land page
 
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-    <router-link :to="{ name: 'Login' }">Iniciar Sesión</router-link>
-  </nav>
-  <router-view/>
-  <BalanceComponent/>
-
+  <div class="container-menu">
+    <nav class="header-menu">
+      <router-link to="/">Home</router-link> |
+      <router-link to="/about">About</router-link>
+      <router-link :to="{ name: 'Login' }">Iniciar Sesión</router-link>
+    </nav>
+    <router-view />
+  </div>
 </template>
 
-<script setup lang="ts">
-
-import BalanceComponent from './components/BalanceComponent.vue';
-import ToggleTheme from './components/ToggleTheme.vue';
-BalanceComponent
-</script>
-
-<style lang="scss">
-@import "./styles/global.scss";
-@import "./styles/forms.scss";
-
-#app {
+/*#app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -42,4 +31,7 @@ nav {
     }
   }
 }
+
+<style lang="scss">
+@import "./styles/styles.scss";
 </style>
