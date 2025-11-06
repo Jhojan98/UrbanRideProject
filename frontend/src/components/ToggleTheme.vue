@@ -1,10 +1,19 @@
-<!-- ThemeToggle.vue -->
+
 <template>
-  <button @click="toggleTheme">
-    {{ isDark ? 'Claro' : 'Oscuro' }}
+  <button @click="toggleTheme" class="theme-toggle">
+    <img 
+      v-if="isDark" 
+      src="@/assets/icons/dark.png" 
+      alt="Tema Claro" 
+    />
+    <img 
+      v-else 
+      src="@/assets/icons/light.png" 
+      alt="Tema Oscuro" 
+    />
   </button>
 </template>
-
+<div> Iconos diseñados por <a href="https://www.flaticon.es/autores/freepik" title="Freepik"> Freepik </a> from <a href="https://www.flaticon.es/" title="Flaticon">www.flaticon.es'</a></div>
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 
@@ -51,5 +60,11 @@ onMounted(() => {
 body {
   background: var(--bg);
   color: var(--text);
+}
+
+.theme-toggle img {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
 }
 </style>

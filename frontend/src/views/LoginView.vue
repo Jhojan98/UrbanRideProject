@@ -1,6 +1,6 @@
 <template>
-
     <div class="form-container">
+        <img src="@/assets/ECORIDE.jpg" alt="Logo" class="form-logo" />
         <h2 class="form-title">Iniciar Sesión</h2>
         <form @submit.prevent="onSubmit">
             <div class="form-group">
@@ -13,8 +13,12 @@
             </div>
             <button type="submit" class="form-submit">Entrar</button>
         </form>
-        <h3>¿No tienes cuenta con nosotros?</h3>
-        <!-- <router-link :to="{name:'signup'}">Regístrate aquí</router-link> -->
+        <br>
+        <h4>¿No tienes cuenta?
+            <router-link class="link-inline" :to="{ name: 'signup' }">
+                Regístrate aquí
+            </router-link>
+        </h4>
     </div>
 </template>
 

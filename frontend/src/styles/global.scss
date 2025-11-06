@@ -1,47 +1,26 @@
 /* Color Palette - Light Mode */
 :root {
-  --color-green-main: #2E8B57;
-  --color-green-light: #57A86A;
-  --color-blue-main: #3A7BD5;
-  --color-blue-light: #5A95E3;
-  --color-gray-very-light: #F5F7FA;
-  --color-gray-light: #D9E1E8;
-  --color-gray-medium: #A0A9B8;
-  --color-gray-dark: #2F3B52;
-  --color-white: #FFFFFF;
-  --color-black: #000000;
-  --color-red-alert: #E14C4C;
+  /* Light Mode Palette */
+  --color-primary-light: #2E7D32;   
+  --color-accent-light: #FBC02D;     
+  --color-background-light: #FFFFFF; 
+  --color-surface-light: #FFF8E1;  
+  --color-text-primary-light: #000000;
+  --color-text-secondary-light: #4A4A4A;
+  --color-border-light: #E0E0E0;     
+  --color-button-text-light: #FFFFFF; 
+}
 
-  /* Status Indicators */
-  --color-battery-high: #4CAF50;
-  --color-battery-medium: #FFB300;
-  --color-battery-low: #E14C4C;
-  --color-lock-secure: #2E8B57;
-  --color-lock-alert: #E14C4C;
-  --color-iot-good: #3A7BD5;
-  --color-iot-loss: #777777;
-
-  /* Battery status classes */
-  --color-battery-high: #4CAF50;
-  --color-battery-medium: #FFB300;
-  --color-battery-low: #E14C4C;
-
-    /* Battery status classes */
-  --color-balance-positive: #4CAF50;
-  --color-balance-low: #FFB300;
-  --color-balance-negative: #E14C4C;
-
-
-  /* Typography */
-  --font-family-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
-  /* Others */
-  --border-radius: 8px;
-  --base-spacing: 16px;
-  /* Select/input specific colors (kept stable across themes) */
-  --select-bg: #ffffff;
-  --select-text: #000000;
-  --select-border: #cccccc;
+[data-theme="dark"] {
+  /* Dark Mode Palette */
+  --color-primary-dark: #266629;     
+  --color-accent-dark: #F1C84B;    
+  --color-background-dark: #000000; 
+  --color-surface-dark: #1E2128;     
+  --color-text-primary-dark: #FFFFFF; 
+  --color-text-secondary-dark: #B0B0B0;
+  --color-border-dark: #333333;
+  --color-button-text-dark: #000000;
 }
 
 /* Color Palette - Dark Mode */
@@ -143,6 +122,19 @@ textarea {
   transition: border-color 0.3s ease;
 }
 
+.link-inline {
+  color: var(--color-primary-light);
+  font-weight: 600;
+  margin-left: 6px;
+  text-decoration: none;
+  transition: color .25s ease;
+}
+
+.link-inline:hover {
+  color: var(--color-green-light);
+  text-decoration: underline;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -155,6 +147,7 @@ textarea:focus {
 h1, h2, h3, h4, h5, h6 {
   color: var(--color-gray-dark);
   margin: 0 0 12px 0;
+  
 }
 
 p {
@@ -247,4 +240,38 @@ body[data-theme="dark"] textarea {
   .container { padding: 12px; }
   button { font-size: 14px; padding: 10px 20px; }
   .map-container { height: 300px; }
+}
+
+.main-header {
+  width: 100%;
+  padding: 0rem 2rem;
+  background: var(--color-primary-light);
+  border-bottom: 1px solid var(--color-border-light);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #FFFFFF;
+}
+
+.header-menu {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  font-weight: 500;
+}
+
+/* router-link con estilo */
+.header-menu a {
+  text-decoration: none;
+  color: var(--color-text-primary-light);
+  transition: color .25s;
+}
+
+.header-menu a:hover {
+  color: var(--color-primary-light);
+}
+
+/* contenido de la página debajo del header */
+.page-content {
+  padding: 2rem;
 }
