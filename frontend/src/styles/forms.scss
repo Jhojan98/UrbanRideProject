@@ -1,0 +1,75 @@
+/* Form styles using SASS */
+$primary-color: #42b983;
+$input-border: #ccc;
+$input-padding: 0.5rem 0.75rem;
+
+/* Theme variables */
+/* Light theme */
+@at-root :root.light {
+  --bg: #fff;
+  --text: #000;
+  --form-bg: #fff;
+  --form-border: #e0e0e0;
+}
+
+/* Dark theme */
+@at-root :root.dark {
+  --bg: #121212;
+  --text: #fff;
+  --form-bg: #1e1e1e;
+  --form-border: #333;
+}
+
+// Contenedor del formulario, usa variables de tema
+.form-container {
+  max-width: 400px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: var(--form-bg);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+// Título del formulario, usa color de texto del tema
+.form-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  color: var(--text);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+    input {
+      width: 100%;
+      padding: $input-padding;
+      border: 1px solid var(--form-border);
+      border-radius: 4px;
+      &::placeholder {
+        color: #aaa;
+      }
+      &:focus {
+        outline: none;
+        border-color: $primary-color;
+      }
+    }
+}
+
+.form-submit {
+  width: 100%;
+  padding: $input-padding;
+  background: $primary-color;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  &:hover {
+    background: darken($primary-color, 10%);
+  }
+}
