@@ -16,12 +16,18 @@ services:
 
   usuario-service:
     container_name: usuario-service
-    build:
-      context: ./
-      dockerfile: ./usuario-service/Dockerfile
+    image: seanbolivar2002/viaje-service:latest
+#    build:
+#      context: ./
+#      dockerfile: ./usuario-service/Dockerfile
     ports:
       - "8001:8001"
-    env_file: ./usuario-service/.env
+    environment:
+      PORT: 8001
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SASA
     networks:
       - movilidad-sostenible-network
     depends_on:
@@ -30,12 +36,18 @@ services:
 
   bicis-service:
     container_name: bicis-service
-    build:
-      context: ./
-      dockerfile: ./bicis-service/Dockerfile
+    image: seanbolivar2002/bicis-service:latest
+#    build:
+#      context: ./
+#      dockerfile: ./bicis-service/Dockerfile
     ports:
       - "8002:8002"
-    env_file: ./bicis-service/.env
+    environment:
+      PORT: 8002
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SASA
     networks:
       - movilidad-sostenible-network
     depends_on:
@@ -44,12 +56,18 @@ services:
 
   viaje-service:
     container_name: viaje-service
-    build:
-      context: ./
-      dockerfile: ./viaje-service/Dockerfile
+    image: seanbolivar2002/viaje-service:latest
+#    build:
+#      context: ./
+#      dockerfile: ./viaje-service/Dockerfile
     ports:
       - "8003:8003"
-    env_file: ./viaje-service/.env
+    environment:
+      PORT: 8003
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SASA
     networks:
       - movilidad-sostenible-network
     depends_on:
