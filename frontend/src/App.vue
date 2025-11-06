@@ -1,50 +1,55 @@
-//Aquí se puede poner la land page
 <template>
-  <header class="main-header">
-    <nav class="header-menu">
-      <router-link to="/">Home</router-link>
-      <router-link to="/about">About</router-link>
-      <router-link :to="{ name: 'Login' }">Iniciar Sesión</router-link>
 
-      <ToggleTheme />
-    </nav>
-  </header>
+<div id="app">
 
-  <main class="page-content">
-    <router-view />
-  </main>
+  <Header />
+    <main class="main-content">
+      <router-view />
+    </main>
+    
+    <Footer />
+  </div>
 </template>
 
-<script setup lang="ts">
+<script>
+// Importa los componentes Header y Footer 
+import Header from './components/Header.vue'
+import Footer from './components/Footer.vue'
 
-
-import BalanceComponent from './components/BalanceComponent.vue';
-import ToggleTheme from './components/ToggleTheme.vue';
-BalanceComponent
+export default {
+  name: 'App', 
+  components: {
+    Header, 
+    Footer  
+  }
+}
 </script>
 
-<style lang="scss">
-@import "./styles/global.scss";
-@import "./styles/forms.scss";
+<style>
+/* Estilos globales 
 
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+/* Reset: elimina márgenes y padding */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box; /* padding y border se incluyen en el width/height */
 }
 
-nav {
-  padding: 30px;
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #FFFFFF;
+  color: #004E61;
+  line-height: 1.6; 
+}
 
-  a {
-    font-weight: bold;
-    color: #2c3e50;
+#app {
+  min-height: 100vh; /* Ocupa toda la altura de la ventana */
+  display: flex;
+  flex-direction: column; 
+}
 
-    &.router-link-exact-active {
-      color: #42b983;
-    }
-  }
+.main-content {
+  flex: 1; /*  footer al fondo */
+  margin-top: 80px; /*   header fijo */
 }
 </style>
