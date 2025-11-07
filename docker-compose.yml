@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # Base de datos PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: urbanride-postgres
+    environment:
+      POSTGRES_DB: sistemabicicletas
+      POSTGRES_USER: urbanride
+      POSTGRES_PASSWORD: urbanride2024
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"  # Puerto 5433 en Windows para evitar conflicto con PostgreSQL local
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./BD/sistemaBicicletas-1761520428.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./BD/init-metodo-pago.sql:/docker-entrypoint-initdb.d/02-metodo-pago.sql
+    networks:
+      - urbanride-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urbanride -d sistemabicicletas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # RabbitMQ - Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: urbanride-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: urbanride
+      RABBITMQ_DEFAULT_PASS: urbanride2024
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    networks:
+      - urbanride-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  # Microservicio de Métodos de Pago (FastAPI)
+  metodos-pago-api:
+    build:
+      context: ./microservices/payments/metodos-pago-api
+      dockerfile: Dockerfile
+    container_name: urbanride-metodos-pago-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: sistemabicicletas
+      DB_USER: urbanride
+      DB_PASSWORD: urbanride2024
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: urbanride
+      RABBITMQ_PASSWORD: urbanride2024
+    ports:
+      - "5002:5002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - urbanride-network
+    restart: unless-stopped
+
+  # pgAdmin - Interfaz web para administrar PostgreSQL (opcional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: urbanride-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@urbanride.com
+      PGADMIN_DEFAULT_PASSWORD: admin2024
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - urbanride-network
+    restart: unless-stopped
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+networks:
+  urbanride-network:
+    driver: bridge
+    name: urbanride-network
+
+volumes:
+  postgres_data:
+    name: urbanride-postgres-data
+  pgadmin_data:
+    name: urbanride-pgadmin-data
+  rabbitmq_data:
+    name: urbanride-rabbitmq-data

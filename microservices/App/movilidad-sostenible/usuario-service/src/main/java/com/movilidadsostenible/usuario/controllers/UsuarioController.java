@@ -2,15 +2,15 @@ package com.movilidadsostenible.usuario.controllers;
 
 import com.movilidadsostenible.usuario.models.entity.Usuario;
 import com.movilidadsostenible.usuario.services.UsuarioService;
-import jakarta.validation.Valid;
+import com.movilidadsostenible.usuario.services.UsuarioServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class UsuarioController {
@@ -24,7 +24,7 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> obtenerUsuarioPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> obtenerUsuarioPorId(@PathVariable String id) {
         Optional<Usuario> usuarioOptional = service.porId(id);
 
         if(usuarioOptional.isPresent()) {
@@ -35,49 +35,25 @@ public class UsuarioController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crearUsuario(@Valid @RequestBody Usuario usuario,
-                                          BindingResult result) {
-        if (!usuario.getCorreoElectronico().isEmpty() &&
-                service.porCorreoElectronico(usuario.getCorreoElectronico()).isPresent()){
-            return ResponseEntity.badRequest()
-                    .body(Collections.singletonMap("mensaje", "Ya!!! existe un usuario con ese correo electrónico"));
-        }
-
-        if (result.hasErrors()) {
-            return validar(result);
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.guardar(usuario));
+    @ResponseStatus(HttpStatus.CREATED)
+    public Usuario crearusuario(@RequestBody Usuario usuario) {
+        return service.guardar(usuario);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> actualizarUsuario(@Valid @RequestBody Usuario usuario, 
-                                               BindingResult result,
-                                               @PathVariable Integer id) {
-
-
-        if (result.hasErrors()) {
-            return validar(result);
-        }
-        
+    public ResponseEntity<?> actualizarUsuario(@RequestBody Usuario usuario, @PathVariable String id) {
         Optional<Usuario> usuarioOptional = service.porId(id);
         if(usuarioOptional.isPresent()) {
             Usuario usuarioDB = usuarioOptional.get();
 
-            if (!usuario.getCorreoElectronico().isEmpty() &&
-                    !usuario.getCorreoElectronico().equalsIgnoreCase(usuarioDB.getCorreoElectronico()) &&
-                    service.porCorreoElectronico(usuario.getCorreoElectronico()).isPresent()){
-                return ResponseEntity.badRequest()
-                        .body(Collections.singletonMap("mensaje", "Ya existe un usuario con ese correo electrónico cambielo"));
-            }
-
-            usuarioDB.setPrimerNombre(usuario.getPrimerNombre());
-            usuarioDB.setSegundoNombre(usuario.getSegundoNombre());
-            usuarioDB.setPrimerApellido(usuario.getPrimerApellido());
-            usuarioDB.setSegundoApellido(usuario.getSegundoApellido());
-            usuarioDB.setFechaNacimiento(usuario.getFechaNacimiento());
-            usuarioDB.setCorreoElectronico(usuario.getCorreoElectronico());
-            usuarioDB.setTipoSuscripcion(usuario.getTipoSuscripcion());
-            usuarioDB.setFechaRegistro(usuario.getFechaRegistro());
+            usuarioDB.setN_primerNombre(usuario.getN_primerNombre());
+            usuarioDB.setN_segundoNombre(usuario.getN_segundoNombre());
+            usuarioDB.setN_primerApellido(usuario.getN_primerApellido());
+            usuarioDB.setN_segundoApellido(usuario.getN_segundoApellido());
+            usuarioDB.setF_fechaNacimiento(usuario.getF_fechaNacimiento());
+            usuarioDB.setN_correoElectronico(usuario.getN_correoElectronico());
+            usuarioDB.setT_tipoSuscripcion(usuario.getT_tipoSuscripcion());
+            usuarioDB.setF_fechaRegistro(usuario.getF_fechaRegistro());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(service.guardar(usuarioDB));
         } else {
@@ -86,7 +62,7 @@ public class UsuarioController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> eliminarUsuario(@PathVariable Integer id) {
+    public ResponseEntity<?> eliminarUsuario(@PathVariable String id) {
         Optional<Usuario> usuarioOptional = service.porId(id);
         if (usuarioOptional.isPresent()) {
             service.eliminar(id);
@@ -95,14 +71,4 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
     }
-
-
-    private ResponseEntity<Map<String, String>> validar(BindingResult result) {
-        Map<String,String> errores = new HashMap<>();
-        result.getFieldErrors().forEach(err -> {
-            errores.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage());
-        });
-        return ResponseEntity.badRequest().body(errores);
-    }
 }
-

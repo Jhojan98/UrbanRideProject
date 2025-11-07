@@ -1,0 +1,148 @@
+{
+  "info": {
+    "name": "UrbanRide - Métodos de Pago API",
+    "description": "Colección de requests para probar la API de Métodos de Pago",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Validar Tarjeta",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"numeroTarjeta\": \"4532015112830366\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/metodos-pago/validar",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "metodos-pago", "validar"]
+        }
+      }
+    },
+    {
+      "name": "2. Agregar Método de Pago",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"k_usuarioCC\": \"1234567890\",\n  \"t_tipoTarjeta\": \"CREDITO\",\n  \"n_numeroTarjetaCompleto\": \"4532015112830366\",\n  \"n_nombreTitular\": \"JUAN PEREZ\",\n  \"f_fechaExpiracion\": \"2026-12-31\",\n  \"b_principal\": true,\n  \"n_direccionFacturacion\": \"Calle 123 #45-67\",\n  \"n_codigoPostal\": \"110111\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/metodos-pago",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "metodos-pago"]
+        }
+      }
+    },
+    {
+      "name": "3. Listar Métodos de Pago",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/metodos-pago/usuario/1234567890",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "metodos-pago", "usuario", "1234567890"]
+        }
+      }
+    },
+    {
+      "name": "4. Obtener Método Principal",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/metodos-pago/usuario/1234567890/principal",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "metodos-pago", "usuario", "1234567890", "principal"]
+        }
+      }
+    },
+    {
+      "name": "5. Actualizar Método de Pago",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"n_nombreTitular\": \"JUAN PEREZ ACTUALIZADO\",\n  \"n_direccionFacturacion\": \"Nueva Dirección 456\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/metodos-pago/1/usuario/1234567890",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "metodos-pago", "1", "usuario", "1234567890"]
+        }
+      }
+    },
+    {
+      "name": "6. Establecer Como Principal",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/metodos-pago/1/usuario/1234567890/principal",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "metodos-pago", "1", "usuario", "1234567890", "principal"]
+        }
+      }
+    },
+    {
+      "name": "7. Eliminar Método de Pago",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/metodos-pago/1/usuario/1234567890",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "metodos-pago", "1", "usuario", "1234567890"]
+        }
+      }
+    },
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/actuator/health",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["actuator", "health"]
+        }
+      }
+    }
+  ]
+}
