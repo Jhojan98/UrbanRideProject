@@ -1,6 +1,6 @@
 <template>
     <div class="form-container">
-        <img src="@/assets/ECORIDE.jpg" alt="Logo" class="form-logo" />
+        <img src="@/assets/ECORIDE.png" alt="Logo" class="form-logo" />
         <h2 class="form-title">Iniciar Sesión</h2>
         <form @submit.prevent="onSubmit">
             <div class="form-group">
