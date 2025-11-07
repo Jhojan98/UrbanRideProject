@@ -33,5 +33,5 @@ function onSubmit() {
 </script>
 
 <style lang="scss">
-@import "../styles/forms.scss";
+@import "@/styles/login.scss";
 </style>

@@ -13,7 +13,6 @@
     />
   </button>
 </template>
-<div> Iconos diseñados por <a href="https://www.flaticon.es/autores/freepik" title="Freepik"> Freepik </a> from <a href="https://www.flaticon.es/" title="Flaticon">www.flaticon.es'</a></div>
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 
@@ -49,6 +48,39 @@ onMounted(() => {
 </script>
 
 <style>
+.theme-toggle {
+  background-color: #ffff;
+  border: none;
+  padding: 0.4rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* sombra sutil para que no se pierda */
+  box-shadow: 0 0 4px rgba(0,0,0,0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+/* ícono */
+.theme-toggle img {
+  width: 24px;
+  height: 24px;
+}
+
+/* hover */
+.theme-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 6px rgba(0,0,0,0.35);
+  background-color: #ffff;
+}
+
+/* click */
+.theme-toggle:active {
+  transform: scale(0.94);
+}
+
 :root.light {
   --bg: #fff;
   --text: #000;
@@ -59,7 +91,7 @@ onMounted(() => {
 }
 body {
   background: var(--bg);
-  color: var(--text);
+  color: white;
 }
 
 .theme-toggle img {
