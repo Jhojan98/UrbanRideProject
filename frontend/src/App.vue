@@ -7,26 +7,21 @@
       <router-view />
     </main>
     
-    <Footer />
+    <HeaderComponent />
+    <FooterComponent />
   </div>
 </template>
 
-<script>
-// Importa los componentes Header y Footer 
-import Header from './components/Header.vue'
-import Footer from './components/Footer.vue'
+<script setup>
+// Importa los componentes Header y Footer
+import HeaderComponent from './components/HeaderComponent.vue';
+import FooterComponent from './components/FooterComponent.vue';
 
-export default {
-  name: 'App', 
-  components: {
-    Header, 
-    Footer  
-  }
-}
+
 </script>
 
-<style>
-/* Estilos globales 
+<style lang="scss">
+@import "@/styles/global.scss";
 
 /* Reset: elimina márgenes y padding */
 * {

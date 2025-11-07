@@ -2,7 +2,7 @@
     <div class="form-container">
         <img src="@/assets/ECORIDE.png" alt="Logo" class="form-logo" />
         <h2 class="form-title">Iniciar Sesión</h2>
-        <form @submit.prevent="onSubmit">
+        <form @submit.prevent="logUser">
             <div class="form-group">
                 <label for="email">Correo Electrónico</label>
                 <input id="email" type="email" v-model="email" placeholder="ejemplo@dominio.com" required />
@@ -18,22 +18,28 @@
             <router-link class="link-inline" :to="{ name: 'signup' }">
                 Regístrate aquí
             </router-link>
+            <p>{{feedback}}</p>
         </h4>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, Ref } from 'vue';
+import userAuth from '@/stores/auth';
+import { RouterLink } from 'vue-router';
 
-const email = ref('');
-const password = ref('');
+const email: Ref<string> = ref('');
+const password: Ref<string> = ref('');
+const feedback: Ref<string> = ref('');
+const store = userAuth();
 
-function onSubmit() {
-
-    console.log('Login attempt', { email: email.value, password: password.value });
+const logUser = async () => {
+    const res = await store.login(email.value, password.value)
 }
+
+
 </script>
 
 <style lang="scss">
-@import "@/styles/forms.scss";
+@import "@/styles/login.scss";
 </style>

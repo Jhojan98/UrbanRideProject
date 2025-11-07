@@ -22,11 +22,8 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Reservation'
-  // Por ahora no tiene lógica JavaScript, solo muestra la interfaz
-}
+<script setup>
+
 </script>
 
 <style scoped>
