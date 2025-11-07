@@ -23,7 +23,7 @@ public class UsuarioServiceImpl implements UsuarioService{
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Usuario> porId(String id) {
+    public Optional<Usuario> porId(Integer id) {
         return repository.findById(id);
     }
 
@@ -35,7 +35,12 @@ public class UsuarioServiceImpl implements UsuarioService{
 
     @Override
     @Transactional
-    public void eliminar(String id) {
+    public void eliminar(Integer id) {
         repository.deleteById(id);
+    }
+
+    @Override
+    public Optional<Usuario> porCorreoElectronico(String email) {
+        return repository.findByCorreoElectronico(email);
     }
 }

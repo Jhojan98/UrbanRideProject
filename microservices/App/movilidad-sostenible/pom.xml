@@ -7,7 +7,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.7</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/> <!-- lookup parent from repositories -->
     </parent>
 
     <groupId>org.example</groupId>
@@ -17,6 +17,8 @@
 
     <modules>
         <module>usuario-service</module>
+        <module>bicis-service</module>
+        <module>viaje-service</module>
     </modules>
 
     <properties>
