@@ -128,6 +128,17 @@
   box-shadow: inset 0 3px 8px rgba(0,0,0,0.25);
 }
 
+html[data-theme="dark"] .btn-primary {
+  background-color: var(--color-background-dark);
+  color: var(--color-text-primary-dark);
+}
+
+html[data-theme="dark"] .btn-primary.router-link-active {
+  background-color: var(--color-surface-light);
+  color: white;
+  transform: translateY(1px);
+}
+
 
 .btn-primary.router-link-active {
   background-color: var(--color-surface-light);

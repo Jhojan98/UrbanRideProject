@@ -3,15 +3,23 @@
     <!-- Sección Hero (principal con llamada a la acción) -->
     <section class="hero">
       <div class="hero-content">
-        <h1 class="hero-title">Rodar tu vida, respirar tu ciudad.</h1>
-        <p class="hero-subtitle">Tu ciudad a tu ritmo, de forma sostenible.</p>
-        <div class="hero-buttons">
-          <!-- Botones que por ahora no hacen nada (solo diseño) -->
-          <button class="btn-primary">Ver Mapa de Estaciones</button>
-          <button class="btn-secondary">Aprende Más</button>
+        
+        <div class="hero-left">
+          <h1 class="hero-title">Rodar tu vida, respirar tu ciudad.</h1>
+          <p class="hero-subtitle">Tu ciudad a tu ritmo, de forma sostenible.</p>
+          <div class="hero-buttons">
+            <button class="butn-primary">Ver Mapa de Estaciones</button>
+            <button class="btn-secondary">Aprende Más</button>
+          </div>
         </div>
+
+        <div class="hero-right">
+          <img src="@/assets/ciclovia1.jpg" alt="Imagen eco bike" class="hero-img" />
+        </div>
+
       </div>
     </section>
+
 
     <!-- Sección de Beneficios -->
     <section class="benefits">

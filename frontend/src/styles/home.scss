@@ -1,20 +1,48 @@
 
+
+body {
+  background-image: none;
+  background-color: var(--color-background-light);
+}
 .home {
   min-height: calc(100vh - 200px); /* Altura mínima menos header y footer */
+  background-color: white;
 }
 
+html[data-theme="dark"] .home{
+  background-color: var(--color-background-dark);       /* Texto claro */
+}
 .hero {
-  background: linear-gradient(135deg, #2E7D32 0%, #004E61 100%); /* Degradado verde a azul */
-  color: #FFFFFF;
+  color:var(--color-text-primary-light);
   padding: 4rem 2rem;
-  text-align: center;
-  margin-top: -80px; /* Compensa el header fijo */
-  padding-top: 120px; /* Añade padding superior para que el contenido no quede detrás del header */
+  margin-top: -80px;
+  padding-top: 120px;
 }
 
 .hero-content {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+.hero-left {
+  flex: 1;
+  text-align: left;
+}
+
+.hero-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-img {
+  width: 100%;
+  max-width: 420px;
+  object-fit: contain;
 }
 
 .hero-title {
@@ -36,10 +64,10 @@
   flex-wrap: wrap; /* En móviles los botones se apilan */
 }
 
-/* Estilos para botones primarios */
-.btn-primary {
-  background-color: #FBC02D; /* Amarillo */
-  color: #004E61; /* Azul oscuro */
+
+.butn-primary {
+  background-color: var(--color-primary-light); 
+  color: var(--color-button-text-light); 
   border: none;
   padding: 12px 24px;
   border-radius: 6px;
@@ -49,15 +77,15 @@
   font-size: 1rem;
 }
 
-.btn-primary:hover {
-  background-color: #F9A825; /* Amarillo más oscuro al hover */
+.butn-primary:hover {
+  background-color: var(--color-surface-light); 
 }
 
 /* Estilos para botones secundarios */
 .btn-secondary {
   background-color: transparent;
-  color: #FFFFFF;
-  border: 2px solid #FFFFFF;
+  color: var(--color-primary-light);
+  border: 2px solid var(--color-primary-light);
   padding: 12px 24px;
   border-radius: 6px;
   font-weight: bold;
@@ -66,6 +94,10 @@
   font-size: 1rem;
 }
 
+html[data-theme="dark"] .butn-primary{
+  background-color: var(--color-primary-light); 
+  color: var(--color-button-text-light); 
+}
 .btn-secondary:hover {
   background-color: #FFFFFF;
   color: #004E61; /* Invierte colores al hover */
@@ -75,15 +107,25 @@
   padding: 4rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  background-color: #F7D680;
+  border-radius: 16px;
+  text-align: center;
 }
 
+html[data-theme="dark"] .benefits{
+  background-color: var(--color-border-dark);
+}
 .section-title {
   text-align: center;
-  color: #004E61;
+  color:  var(--color-primary-light);
   font-size: 2.5rem;
-  margin-bottom: 3rem;
+  background-color: transparent;
+  
 }
 
+html[data-theme="dark"] .section-title{
+  color: var(--color-text-primary-dark);
+}
 .benefits-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Grid responsive */
@@ -116,7 +158,6 @@
 
 .stations {
   padding: 4rem 2rem;
-  background-color: #f8f9fa; /* Fondo gris claro */
 }
 
 .stations-header {
