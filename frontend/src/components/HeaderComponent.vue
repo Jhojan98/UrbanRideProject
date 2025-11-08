@@ -3,7 +3,7 @@
     <div class="header-content">
 
       <div class="logo">
-        <img src="@/assets/ECORIDE.jpg" alt="ecoRideLogo" class="logo-img">
+        <img src="@/assets/ecorideHeader.png" alt="ecoRideLogo" class="logo-img">
         <span class="logo-text">ECORIDE</span>
       </div>
 
@@ -31,6 +31,7 @@ import ToggleTheme from './ToggleTheme.vue';
 </script>
 
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "@/styles/header.scss";
 </style>
+

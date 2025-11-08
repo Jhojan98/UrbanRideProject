@@ -40,6 +40,6 @@ const logUser = async () => {
 
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "@/styles/login.scss";
 </style>
