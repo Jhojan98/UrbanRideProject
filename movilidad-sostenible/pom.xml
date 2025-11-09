@@ -19,6 +19,9 @@
         <module>usuario-service</module>
         <module>bicis-service</module>
         <module>viaje-service</module>
+        <module>eureka-server</module>
+        <module>gateway-server</module>
+        <module>email-service</module>
     </modules>
 
     <properties>

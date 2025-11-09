@@ -1,7 +1,7 @@
 package com.movilidadsostenible.bicis_service.services;
 
-import com.movilidadsostenible.bicis_service.entity.Bicicleta;
-import com.movilidadsostenible.bicis_service.repositories.BicicletaRepository;
+import com.movilidadsostenible.bicis_service.entity.Bicycle;
+import com.movilidadsostenible.bicis_service.repositories.BicycleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,32 +10,32 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class BicicletaServiceImpl implements BicicletaService {
+public class BicicletaServiceImpl implements BicycleService {
 
     @Autowired
-    private BicicletaRepository repository;
+    private BicycleRepository repository;
 
     @Override
     @Transactional(readOnly = true)
-    public List<Bicicleta> listarBicicletas() {
-        return (List<Bicicleta>) repository.findAll();
+    public List<Bicycle> listBicycle() {
+        return (List<Bicycle>) repository.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Bicicleta> porId(Integer id) {
+    public Optional<Bicycle> byId(Integer id) {
         return repository.findById(id);
     }
 
     @Override
     @Transactional
-    public Bicicleta guardar(Bicicleta bicicleta) {
-        return repository.save(bicicleta);
+    public Bicycle save(Bicycle bicycle) {
+        return repository.save(bicycle);
     }
 
     @Override
     @Transactional
-    public void eliminar(Integer id) {
+    public void delete(Integer id) {
         repository.deleteById(id);
     }
 }

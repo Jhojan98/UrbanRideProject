@@ -1,0 +1,96 @@
+package com.movilidadsostenible.viaje_service.controllers;
+
+import com.movilidadsostenible.viaje_service.models.entity.Travel;
+import com.movilidadsostenible.viaje_service.services.TravelService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.*;
+
+@RestController
+public class TravelController {
+    @Autowired
+    private TravelService service;
+
+    @GetMapping
+    public List<Travel> listTravels() {
+        return service.listTravels();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getTravelsById(@PathVariable Integer id) {
+        Optional<Travel> usuarioOptional = service.byId(id);
+
+        if(usuarioOptional.isPresent()) {
+            return ResponseEntity.ok(usuarioOptional.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/viaje/usuario/{id}")
+    public ResponseEntity<?> obtenerViajesPorIdUsuario(@PathVariable Integer id) {
+        Optional<Travel> usuarioOptional = service.byId(id);
+
+        if(usuarioOptional.isPresent()) {
+            return ResponseEntity.ok(usuarioOptional.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/viaje/bicicleta/{id}")
+    public ResponseEntity<?> obtenerViajesPorIdBicicleta(@PathVariable Integer id) {
+        Optional<Travel> usuarioOptional = service.byId(id);
+
+        if(usuarioOptional.isPresent()) {
+            return ResponseEntity.ok(usuarioOptional.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping
+    public ResponseEntity<?> createTravel(@Valid @RequestBody Travel travel,
+                                          BindingResult result) {
+
+        if (result.hasErrors()) {
+            return validate(result);
+        }
+        try{
+            Optional<Travel> viajeGuardado = Optional.ofNullable(service.save(travel));
+            if (viajeGuardado.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(Collections.singletonMap("mensaje", "No se pudo crear el travel. Verifique que el usuario y la bicicleta existan."));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("mensaje", "Error al crear el travel: " + e.getMessage()));
+        }
+        return null;
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTravel(@PathVariable Integer id) {
+        Optional<Travel> userOptional = service.byId(id);
+        if (userOptional.isPresent()) {
+            service.delete(id);
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+
+    private ResponseEntity<Map<String, String>> validate(BindingResult result) {
+        Map<String,String> errors = new HashMap<>();
+        result.getFieldErrors().forEach(err -> {
+            errors.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage());
+        });
+        return ResponseEntity.badRequest().body(errors);
+    }
+}
