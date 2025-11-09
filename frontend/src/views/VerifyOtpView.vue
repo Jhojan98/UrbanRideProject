@@ -62,14 +62,22 @@ const verifyOtp = async () => {
         return;
     }
 
-    const res = await store.verifyOtp(email.value, otpNumber);
+    // Usar el email almacenado en el store si está disponible
+    const emailToVerify = email.value || store.tempEmail;
+    
+    if (!emailToVerify) {
+        feedback.value = 'Por favor, ingresa tu correo electrónico';
+        return;
+    }
+
+    const res = await store.verifyOtp(emailToVerify, otpNumber);
     
     if (res) {
         feedback.value = 'Verificación exitosa';
-        // Redirigir al usuario después de verificación exitosa
+        // Redirigir al usuario a la página de reservas
         setTimeout(() => {
-            router.push('/');
-        }, 2000);
+            router.push('/reservation');
+        }, 1500);
     } else {
         feedback.value = store.message || 'Error al verificar el OTP';
     }

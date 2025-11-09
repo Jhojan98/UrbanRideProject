@@ -16,20 +16,35 @@
                 <input id="password" type="password" v-model="password" placeholder="********" required />
             </div>
             <button type="submit" class="form-submit">Registrarse</button>
+            <h3>{{ feedback }}</h3>
         </form>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, Ref } from 'vue';
+import { useRouter } from 'vue-router';
+import userAuth from '@/stores/auth';
 
-const name = ref('');
-const email = ref('');
-const password = ref('');
+const name:Ref<string> = ref('');
+const email: Ref<string> = ref('');
+const password:Ref<string> = ref('');
+const feedback: Ref<string> = ref('');
 
-function onSubmit() {
-    // Lógica de registro, por ejemplo enviar datos a la API.
-    console.log('Signup attempt', { name: name.value, email: email.value, password: password.value });
+const store = userAuth();
+const router = useRouter();
+
+const onSubmit = async () => {
+    feedback.value = '';
+    const res = await store.register(name.value, email.value, password.value);
+    
+    if (res) {
+        feedback.value = "Registro exitoso. Te enviaremos un código de verificación.";
+        // Redirigir a la página de verificación OTP
+        router.push('/verify-otp');
+    } else {
+        feedback.value = store.message || "Error en el registro";
+    }
 }
 </script>
 

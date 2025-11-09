@@ -3,8 +3,8 @@ import HomeView from '../views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import SignupView from '@/views/SignupView.vue'
 import VerifyOtpView from '@/views/VerifyOtpView.vue'
-// import SignupView from '@/views/SignupView.vue'
-
+import ProfileView from '@/views/ProfileView.vue'
+import ReservationView from '@/views/ReservationView.vue'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -14,17 +14,31 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/login',
     name: 'login',
-    component: LoginView
+    component: LoginView,
+    meta: { requireAuth: false }
   },
   {
     path: '/signup',
     name: 'signup',
-    component: SignupView
+    component: SignupView,
+    meta: {requireAuth: false}
   },
   {
     path: '/verify-otp',
     name: 'verify-otp',
     component: VerifyOtpView
+  },
+  {
+    path: '/my-profile',
+    name: 'profile',
+    component: ProfileView,
+    meta:{ requireAuth: true }
+  },
+  {
+    path: '/reservation',
+    name: 'reservation',
+    component: ReservationView,
+    meta:{ requireAuth: true }
   }
 ]
 //TODO: Descomentar cuando esté el signup listo

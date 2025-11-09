@@ -26,15 +26,31 @@
 <script setup lang="ts">
 import { ref, Ref } from 'vue';
 import userAuth from '@/stores/auth';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
 
 const email: Ref<string> = ref('');
 const password: Ref<string> = ref('');
 const feedback: Ref<string> = ref('');
 const store = userAuth();
+const router = useRouter();
 
 const logUser = async () => {
-    const res = await store.login(email.value, password.value)
+    feedback.value = '';
+    console.log(email.value, password.value);
+    const res = await store.login(email.value, password.value);
+    
+    if (res.needsVerification) {
+        feedback.value = "Por favor verifica tu cuenta primero";
+        router.push('/verify-otp');
+        return;
+    }
+    
+    if (res.success) {
+        feedback.value = "Inicio de sesión exitoso";
+        router.push('/reservation');
+    } else {
+        feedback.value = store.message || "Error en el inicio de sesión";
+    }
 }
 
 

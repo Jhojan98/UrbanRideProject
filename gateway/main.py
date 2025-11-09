@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile
+from fastapi import FastAPI, HTTPException, File, UploadFile, Request
+from fastapi.middleware.cors import CORSMiddleware
 import fastapi as _fastapi
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
@@ -13,8 +14,35 @@ import rpc_client
 
 # Import Pydantic schemas
 from schemas import UserCredentials, UserRegisteration, GenerateOtp, VerifyOtp, Bicycle
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
+
+# CORS configuration: allow Vue dev server origin
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080"],  # add other origins if needed
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def log_raw_request(request: Request, call_next):
+    try:
+        body = await request.body()
+        logging.info(f"[raw-request] {request.method} {request.url} content-type={request.headers.get('content-type')} body={body!r}")
+    except Exception as e:
+        logging.error(f"[raw-request] failed to read body: {e}")
+
+    # Recreate request for downstream
+    async def receive():
+        return {"type": "http.request", "body": body}
+
+    request = Request(request.scope, receive)
+    response = await call_next(request)
+    return response
 security = HTTPBearer()
 
 # Load environment variables
@@ -63,9 +91,20 @@ async def jwt_validation(credentials: HTTPAuthorizationCredentials = _fastapi.De
 @app.post("/auth/login", tags=['Authentication Service'])
 async def login(user_data: UserCredentials):
     try:
-        response = requests.post(f"{AUTH_BASE_URL}/api/token", json={"username": user_data.username, "password": user_data.password})
+        response = requests.post(
+            f"{AUTH_BASE_URL}/api/token",
+            json={"username": user_data.username, "password": user_data.password},
+        )
         if response.status_code == 200:
-            return response.json()
+            # El servicio de auth devuelve un JWT como string plano.
+            # Normalizamos a un objeto JSON consistente {"token": "<jwt>"}.
+            try:
+                data = response.json()
+            except Exception:
+                data = response.text
+
+            token = data if isinstance(data, str) else data.get("token")
+            return {"token": token}
         else:
             raise HTTPException(status_code=response.status_code, detail=response.json())
     except requests.exceptions.ConnectionError:
@@ -83,8 +122,13 @@ async def registeration(user_data:UserRegisteration):
                 "role": user_data.role or "user",
             },
         )
-        if response.status_code == 200:
-            return response.json()
+        if response.status_code in (200, 201):
+            # Propagamos el status code real del servicio de auth
+            try:
+                payload = response.json()
+            except Exception:
+                payload = None
+            return JSONResponse(status_code=response.status_code, content=payload)
         else:
             raise HTTPException(status_code=response.status_code, detail=response.json())
     except requests.exceptions.ConnectionError:

@@ -85,42 +85,44 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'Profile',
-  // data() es una función que retorna los datos reactivos del componente
-  data() {
-    return {
-      // Array de viajes que se muestra en la tabla
-      trips: [
-        {
-          id: 1, // Identificador único (necesario para :key)
-          route: 'Parque Central a Calle Mayor',
-          date: '2024-05-20',
-          duration: '25 min',
-          cost: '$15.000',
-          status: 'C' // Estado del viaje
-        },
-        {
-          id: 2,
-          route: 'Plaza Nueva a Estación Tren',
-          date: '2024-05-18',
-          duration: '15 min',
-          cost: '$14.000',
-          status: 'C'
-        },
-        {
-          id: 3,
-          route: 'Avenida Sol a Mercado',
-          date: '2024-05-15',
-          duration: '30 min',
-          cost: '$18.000',
-          status: 'C'
-        }
-      ]
-    }
-  }
+<script setup lang="ts">
+import { ref } from 'vue';
+
+interface Trip {
+  id: number;
+  route: string;
+  date: string;
+  duration: string;
+  cost: string;
+  status: string;
 }
+
+const trips = ref<Trip[]>([
+  {
+    id: 1,
+    route: 'Parque Central a Calle Mayor',
+    date: '2024-05-20',
+    duration: '25 min',
+    cost: '$15.000',
+    status: 'C'
+  },
+  {
+    id: 2,
+    route: 'Plaza Nueva a Estación Tren',
+    date: '2024-05-18',
+    duration: '15 min',
+    cost: '$14.000',
+    status: 'C'
+  },
+  {
+    id: 3,
+    route: 'Avenida Sol a Mercado',
+    date: '2024-05-15',
+    duration: '30 min',
+    cost: '$18.000',
+    status: 'C'
+  }
+]);
 </script>
 
 <style scoped>
