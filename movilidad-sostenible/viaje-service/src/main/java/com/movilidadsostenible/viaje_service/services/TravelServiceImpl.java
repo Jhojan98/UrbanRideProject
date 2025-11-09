@@ -1,0 +1,59 @@
+package com.movilidadsostenible.viaje_service.services;
+
+import com.movilidadsostenible.viaje_service.clients.BicycleClientRest;
+import com.movilidadsostenible.viaje_service.clients.UserClientRest;
+import com.movilidadsostenible.viaje_service.models.Bicycle;
+import com.movilidadsostenible.viaje_service.models.User;
+import com.movilidadsostenible.viaje_service.models.entity.Travel;
+import com.movilidadsostenible.viaje_service.repositories.TravelRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class TravelServiceImpl implements TravelService {
+    @Autowired
+    private TravelRepository repository;
+
+    @Autowired
+    private UserClientRest userClientRest;
+
+    @Autowired
+    private BicycleClientRest bicycleClientRest;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Travel> listTravels() {
+        return (List<Travel>)repository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Travel> byId(Integer id) {
+        return repository.findById(id);
+    }
+
+    @Override
+    @Transactional
+    public Travel save(Travel travel) {
+        Optional<User> usuarioOptional = Optional.ofNullable(userClientRest.userDetail(travel.getUserCc()));
+        Optional<Bicycle> bicicletaOptional = Optional.ofNullable(bicycleClientRest.bicycleDetail(travel.getIdBicycle()));
+
+        if (usuarioOptional.isPresent() && bicicletaOptional.isPresent()) {
+            return repository.save(travel);
+        }
+        return null;
+
+    }
+
+    @Override
+    @Transactional
+    public void delete(Integer id) {
+        repository.deleteById(id);
+    }
+
+
+}
