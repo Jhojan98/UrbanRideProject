@@ -12,17 +12,24 @@ postgres_host = os.environ.get("POSTGRES_HOST")
 postgres_db = os.environ.get("POSTGRES_DB")
 postgres_user = os.environ.get("POSTGRES_USER")
 postgres_password = os.environ.get("POSTGRES_PASSWORD")
-service_schema = os.environ.get("DB_SCHEMA", "bicycle")
+service_schema = os.environ.get("DB_SCHEMA", "public")
 explicit_url = os.environ.get("DATABASE_URL")
+
+# Build search_path including public, guard against None
+schemas_raw = service_schema if service_schema else "public"
+schemas = [s.strip() for s in schemas_raw.split(',') if s.strip()]
+if "public" not in [s.lower() for s in schemas]:
+    schemas.append("public")
+search_path = ",".join(schemas)
 
 # Prefer explicit DATABASE_URL if provided
 if explicit_url:
     DATABASE_URL = explicit_url
 else:
-    # Use psycopg driver and set search_path to the service schema
+    # Use psycopg driver and set search_path to the service schema(s)
     DATABASE_URL = (
         f"postgresql+psycopg://{postgres_user}:{postgres_password}@{postgres_host}/{postgres_db}"
-        f"?options=-csearch_path%3D{service_schema}"
+        f"?options=-csearch_path%3D{search_path}"
     )
 
 engine_2 = _sql.create_engine(DATABASE_URL)

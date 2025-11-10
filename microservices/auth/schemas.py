@@ -1,51 +1,48 @@
 import datetime as _dt
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
-class _AddressBase(BaseModel):
-    street: str
-    landmark: str
-    city: str
-    country: str
-    pincode: str
-    latitude: float
-    longitude: float
+# Esquema base alineado con la tabla usuario
+class UserBase(BaseModel):
+    k_cedula_ciudadania_usuario: int
+    n_usuario: str
+    n_primer_nombre: str
+    n_segundo_nombre: Optional[str] = None
+    n_primer_apellido: str
+    n_segundo_apellido: Optional[str] = None
+    f_fecha_nacimiento: _dt.date
+    n_correo_electronico: EmailStr
+    t_tipo_suscripcion: str
+    f_fecha_de_registro: str
+    is_verified: bool
+    otp: Optional[str] = None
+    date_created: _dt.datetime
 
-class AddressCreate(_AddressBase):
+    class Config:
+        from_attributes = True
+
+# Datos para crear usuario (solo campos mínimos + password).
+class UserCreate(BaseModel):
+    n_usuario: str
+    password: str = Field(min_length=6)
+    n_primer_nombre: str
+    n_segundo_nombre: Optional[str] = None
+    n_primer_apellido: str
+    n_segundo_apellido: Optional[str] = None
+    f_fecha_nacimiento: _dt.date
+    n_correo_electronico: EmailStr
+
+# Representación pública
+class User(UserBase):
     pass
 
-class Address(_AddressBase):
-    id: int
-    user_id: int
-
-    class Config:
-        from_attributes = True
-
-class _UserBase(BaseModel):
-    name: str
-    email: str
-
-class UserCreate(_UserBase):
-    password: str
-    role: Optional[str] = "user"
-
-class User(_UserBase):
-    id: int
-    is_verified: bool
-    date_created: _dt.datetime
-    role: str = "user"
-    addresses: list[Address] = []
-
-    class Config:
-        from_attributes = True
-
 class GenerateUserToken(BaseModel):
-    username: str
+    username: str  # n_correo_electronico o n_usuario según la lógica en authenticate
     password: str
 
 class GenerateOtp(BaseModel):
-    email: str
+    email: EmailStr
 
 class VerifyOtp(BaseModel):
-    email: str
-    otp: int
+    email: EmailStr
+    otp: str

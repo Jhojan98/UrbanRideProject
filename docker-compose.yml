@@ -46,6 +46,7 @@ services:
       - "5001:5001"
     volumes:
       - ./gateway:/app
+      - ./secrets/jwt_public.pem:/run/secrets/jwt_public.pem:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -67,6 +68,7 @@ services:
       RABBITMQ_HOST: ${RABBITMQ_URL}
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       postgres-db:
         condition: service_started
@@ -76,7 +78,9 @@ services:
       - "5000:5000"
     volumes:
       - ./microservices/auth:/app
-    command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 5000 --reload"
+      - ./secrets/jwt_private.pem:/run/secrets/jwt_private.pem:ro
+      - ./secrets/jwt_public.pem:/run/secrets/jwt_public.pem:ro
+    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 5000 --reload"
     restart: unless-stopped
 
   notification-service:
@@ -106,7 +110,7 @@ services:
       POSTGRES_USER: ${BICYCLE_DB_USER}
       POSTGRES_PASSWORD: ${BICYCLE_DB_PASSWORD}
       DATABASE_URL: postgresql+psycopg://${BICYCLE_DB_USER}:${BICYCLE_DB_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
-      DB_SCHEMA: bicycle
+      DB_SCHEMA: public
     depends_on:
       postgres-db:
         condition: service_started
@@ -116,7 +120,7 @@ services:
       - "5002:5002"
     volumes:
       - ./microservices/bicycle:/app
-    command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 5002 --reload"
+    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 5002 --reload"
     restart: unless-stopped
 
 volumes:
