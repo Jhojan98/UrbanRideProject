@@ -1,0 +1,27 @@
+# Configura estas variables con tus credenciales reales
+GMAIL_ADDRESS=hexalab6@gmail.com
+GMAIL_PASSWORD=tvwrvvkxogxzebbr
+
+# --- Database (Postgres) ---
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=mysecretpassword
+POSTGRES_DB=mydatabase
+
+# Per-service DB users
+AUTH_DB_USER=auth_user
+AUTH_DB_PASSWORD=auth_pass
+BICYCLE_DB_USER=bicycle_user
+BICYCLE_DB_PASSWORD=bicycle_pass
+
+# --- RabbitMQ ---
+RABBITMQ_DEFAULT_USER=admin
+RABBITMQ_DEFAULT_PASS=admin123
+RABBITMQ_URL=some-rabbit
+
+# --- Service URLs (usados por el gateway) ---
+AUTH_BASE_URL=http://auth-service:5000
+BICYCLE_SERVICE_URL=http://bicycle-service:5002
+
+# --- JWT & Email ---
+JWT_SECRET=e56623570e0a0152989fd38e13da9cd6eb7031e4e039e939ba845167ee59b496
+# GMAIL_ADDRESS y GMAIL_PASSWORD ya definidos si existían
