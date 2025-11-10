@@ -115,7 +115,7 @@ async def send_otp_mail(userdata: _schemas.GenerateOtp, db: _orm.Session = _fast
 @app.post("/api/users/verify_otp", tags=["User Auth"])
 async def verify_otp(userdata: _schemas.VerifyOtp, db: _orm.Session = _fastapi.Depends(_services.get_db)):
     user = await _services.get_user_by_email(email=userdata.email, db=db )
-
+ #awdaddad
     if not user:
         raise _fastapi.HTTPException(status_code=404, detail="User not found")
 
