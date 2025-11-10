@@ -5,6 +5,7 @@ import SignupView from '@/views/SignupView.vue'
 import VerifyOtpView from '@/views/VerifyOtpView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ReservationView from '@/views/ReservationView.vue'
+import BalanceComponent from '@/components/BalanceComponent.vue'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -38,6 +39,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/reservation',
     name: 'reservation',
     component: ReservationView,
+    meta:{ requireAuth: true }
+  }, {
+    path: '/balance',
+    name: 'balance',
+    component: BalanceComponent,
     meta:{ requireAuth: true }
   }
 ]
