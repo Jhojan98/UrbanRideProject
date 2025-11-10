@@ -3,14 +3,20 @@
         <img src="@/assets/ECORIDE.png" alt="Logo" class="form-logo" />
         <h2 class="form-title">Iniciar Sesión</h2>
         <form @submit.prevent="logUser">
-            <div class="form-group">
-                <label for="email">Correo Electrónico</label>
-                <input id="email" type="email" v-model="email" placeholder="ejemplo@dominio.com" required />
+            <div class="form-group icon-input">
+                <label for="email"><i class="fas fa-envelope left"></i> Correo Electrónico</label>
+                <div class="input-wrapper">
+                    <input id="email" type="email" v-model="email" placeholder="Correo Electrónico" required />
+                </div>
             </div>
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                <input id="password" type="password" v-model="password" placeholder="********" required />
+
+            <div class="form-group icon-input">
+                <label for="password"> <i class="fas fa-lock"></i> Contraseña</label>
+                <div class="input-wrapper">
+                    <input id="password" type="password" v-model="password" placeholder="Contraseña" required />
+                </div>
             </div>
+
             <button type="submit" class="form-submit">Entrar</button>
         </form>
         <br>

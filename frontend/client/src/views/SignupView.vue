@@ -4,16 +4,16 @@
         <h2 class="form-title">Crear Cuenta</h2>
         <form @submit.prevent="onSubmit">
             <div class="form-group">
-                <label for="name">Nombre</label>
-                <input id="name" type="text" v-model="name" placeholder="Juan Pérez" required />
+                <label for="name"><i class="fas fa-user"></i> Nombre</label>
+                <input id="name" type="text" v-model="name" placeholder="Nombre Usuario" required />
             </div>
             <div class="form-group">
-                <label for="email">Correo Electrónico</label>
-                <input id="email" type="email" v-model="email" placeholder="ejemplo@dominio.com" required />
+                <label for="email"><i class="fas fa-envelope left"></i> Correo Electrónico</label>
+                <input id="email" type="email" v-model="email" placeholder="Correo Electrónico" required />
             </div>
             <div class="form-group">
-                <label for="password">Contraseña</label>
-                <input id="password" type="password" v-model="password" placeholder="********" required />
+                <label for="password"><i class="fas fa-lock"> </i>Contraseña</label>
+                <input id="password" type="password" v-model="password" placeholder="Contraseña" required />
             </div>
             <button type="submit" class="form-submit">Registrarse</button>
             <h3>{{ feedback }}</h3>

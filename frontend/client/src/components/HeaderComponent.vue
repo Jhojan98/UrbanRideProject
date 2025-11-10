@@ -8,8 +8,8 @@
       </div>
 
       <nav class="nav">
-        <router-link to="/" class="nav-link">Inicio</router-link>
-        <router-link to="/" class="nav-link">Mapa</router-link>
+        <router-link :to="{name: 'home'}" class="nav-link">Inicio</router-link>
+        <router-link :to="{name: 'maps'}" class="nav-link">Mapa</router-link>
         <router-link to="/profile" class="nav-link">Perfil</router-link>
 
       </nav>
@@ -17,6 +17,7 @@
       <div class="auth-buttons">
         <router-link :to="{ name: 'login' }" class="btn-primary">Iniciar Sesión</router-link>
         <router-link :to="{ name: 'signup' }" class="btn-primary">Registrarse</router-link>
+
         <toggle-theme />
       </div>
 

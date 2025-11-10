@@ -6,6 +6,7 @@ import VerifyOtpView from '@/views/VerifyOtpView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ReservationView from '@/views/ReservationView.vue'
 import BalanceComponent from '@/components/BalanceComponent.vue'
+import MapsView from '@/views/MapsView.vue'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -22,6 +23,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/signup',
     name: 'signup',
     component: SignupView,
+    meta: {requireAuth: false}
+  },
+  {
+    path: '/maps',
+    name : 'maps',
+    component: MapsView,
     meta: {requireAuth: false}
   },
   {

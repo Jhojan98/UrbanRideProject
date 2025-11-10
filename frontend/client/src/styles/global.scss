@@ -11,6 +11,7 @@
   --color-button-text-light: #FFFFFF; 
 }
 
+
 [data-theme="dark"] {
   /* Dark Mode Palette */
   --color-primary-dark: #266629;     
@@ -274,4 +275,9 @@ body[data-theme="dark"] textarea {
 /* contenido de la página debajo del header */
 .page-content {
   padding: 2rem;
+}
+i {
+  position: static !important;
+  font-size: inherit !important;
+  z-index: auto !important;
 }
