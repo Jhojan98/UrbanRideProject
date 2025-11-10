@@ -1,5 +1,5 @@
 -- Create per-service users and grant minimal privileges
--- Idempotent: uses DO blocks to avoid errors if rerun
+-- Arquitectura simplificada: solo schema public
 -- Create roles/users
 DO $$
 BEGIN
@@ -15,13 +15,44 @@ END$$;
 GRANT CONNECT ON DATABASE mydatabase TO auth_user;
 GRANT CONNECT ON DATABASE mydatabase TO bicycle_user;
 
--- Auth schema privileges
-GRANT USAGE, CREATE ON SCHEMA auth TO auth_user;
--- Default privileges so future tables/sequences are accessible
-ALTER DEFAULT PRIVILEGES IN SCHEMA auth GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER ON TABLES TO auth_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA auth GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO auth_user;
+-- Otorgar uso del schema public (necesario para acceder a las tablas)
+GRANT USAGE ON SCHEMA public TO auth_user;
+GRANT USAGE ON SCHEMA public TO bicycle_user;
 
--- Bicycle schema privileges
-GRANT USAGE, CREATE ON SCHEMA bicycle TO bicycle_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA bicycle GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER ON TABLES TO bicycle_user;
-ALTER DEFAULT PRIVILEGES IN SCHEMA bicycle GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO bicycle_user;
+
+-- Permisos para bicycle_user sobre tabla bicicleta
+DO $$
+BEGIN
+   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bicycle_user') THEN
+      -- Otorgar uso del schema public
+      GRANT USAGE ON SCHEMA public TO bicycle_user;
+      
+      -- Permisos sobre la tabla bicicleta
+      GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.bicicleta TO bicycle_user;
+      
+      -- Permisos sobre las secuencias de bicicleta
+      GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.bicicleta_k_id_bicicleta_seq TO bicycle_user;
+      GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.bicicleta_k_serie_seq TO bicycle_user;
+      
+      RAISE NOTICE 'Permisos otorgados a bicycle_user sobre public.bicicleta';
+   END IF;
+END$$;
+
+-- Permisos para auth_user sobre tabla usuario
+DO $$
+BEGIN
+   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'auth_user') THEN
+      -- Otorgar uso del schema public
+      GRANT USAGE ON SCHEMA public TO auth_user;
+      
+      -- Permisos sobre la tabla usuario
+      GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.usuario TO auth_user;
+      
+      -- Permisos sobre la secuencia de usuario
+      GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.usuario_k_cedula_ciudadania_usuario_seq TO auth_user;
+      
+      RAISE NOTICE 'Permisos otorgados a auth_user sobre public.usuario';
+   END IF;
+END$$;
+
+-- Grants RBAC movidos a 04-rbac-grants.sql

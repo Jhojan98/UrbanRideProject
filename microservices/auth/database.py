@@ -12,7 +12,7 @@ postgres_host = os.environ.get("POSTGRES_HOST")
 postgres_db = os.environ.get("POSTGRES_DB")
 postgres_user = os.environ.get("POSTGRES_USER")
 postgres_password = os.environ.get("POSTGRES_PASSWORD")
-service_schema = os.environ.get("DB_SCHEMA", "auth")
+service_schema = os.environ.get("DB_SCHEMA", "public")
 explicit_url = os.environ.get("DATABASE_URL")
 
 # Prefer explicit DATABASE_URL if provided
