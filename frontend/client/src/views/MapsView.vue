@@ -55,12 +55,11 @@ import { ref } from "vue";
 export default {
   name: "ReservationPanel",
 
-  // ⬇ Aquí declaramos las props de manera clásica
   props: {
   station: {
     type: Object,
-    required: false,   // ✅ quitar lo obligatorio por ahora
-    default: () => ({  // ✅ poner algo provisional para que no explote
+    required: false,  
+    default: () => ({  
         name: "Selecciona una estación",
         available: 0,
         status: "N/A"
