@@ -6,55 +6,66 @@ import VerifyOtpView from '@/views/VerifyOtpView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ReservationView from '@/views/ReservationView.vue'
 import BalanceComponent from '@/components/BalanceComponent.vue'
-import MapsView from '@/views/MapsView.vue'
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: HomeView,
+    meta: { layout: 'main' }
   },
   {
     path: '/login',
     name: 'login',
     component: LoginView,
-    meta: { requireAuth: false }
+    meta: { requireAuth: false, layout: 'blank' }
   },
   {
     path: '/signup',
     name: 'signup',
     component: SignupView,
-    meta: {requireAuth: false}
+    meta: {requireAuth: false, layout: 'blank'}
   },
-  {
-    path: '/maps',
-    name : 'maps',
-    component: MapsView,
-    meta: {requireAuth: false}
-  },
+
   {
     path: '/verify-otp',
     name: 'verify-otp',
-    component: VerifyOtpView
+    component: VerifyOtpView,
+    meta: { layout: 'blank' }
   },
   {
     path: '/my-profile',
     name: 'profile',
     component: ProfileView,
-    meta:{ requireAuth: true }
+    meta:{ requireAuth: true, layout: 'main' }
+  },
+  {
+    path: '/maps',
+    name: 'maps',
+    component: ReservationView,
+    meta:{ requireAuth: true, layout: 'main' }
   },
   {
     path: '/reservation',
     name: 'reservation',
     component: ReservationView,
-    meta:{ requireAuth: true }
-  }, {
+    meta:{ requireAuth: true, layout: 'main' }
+  },
+  {
     path: '/balance',
     name: 'balance',
     component: BalanceComponent,
-    meta:{ requireAuth: true }
+    meta:{ requireAuth: true, layout: 'main' }
+  },
+  {
+    path: '/plan-your-trip',
+    name: 'plan-your-trip',
+    component: ReservationView,
+    meta:{ requireAuth: true, layout: 'main' }
   }
+
+
 ]
-//TODO: Descomentar cuando esté el signup listo
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),

@@ -1,23 +1,24 @@
 <template>
-
-<div id="app">
-
-  <Header />
-    <main class="main-content">
-      <router-view />
-    </main>
-    
-    <HeaderComponent />
-    <FooterComponent />
-  </div>
+  <router-view v-slot="{ Component }">
+    <component :is="layoutComponent">
+      <component :is="Component" />
+    </component>
+  </router-view>
 </template>
 
-<script setup>
-// Importa los componentes Header y Footer
-import HeaderComponent from './components/HeaderComponent.vue';
-import FooterComponent from './components/FooterComponent.vue';
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import MainLayout from '@/layouts/MainLayout.vue'
+import BlankLayout from '@/layouts/BlankLayout.vue'
 
+const route = useRoute()
 
+const layoutComponent = computed(() => {
+  const layout = route.meta.layout as string | undefined
+  if (!layout) return MainLayout
+  return layout === 'blank' ? BlankLayout : MainLayout
+})
 </script>
 
 <style lang="scss">
@@ -40,11 +41,10 @@ body {
 #app {
   min-height: 100vh; /* Ocupa toda la altura de la ventana */
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
 }
 
 .main-content {
   flex: 1; /*  footer al fondo */
-  margin-top: 80px; /*   header fijo */
 }
 </style>

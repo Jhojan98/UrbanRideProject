@@ -20,13 +20,9 @@
               </tr>
             </thead>
             <tbody>
-              <!-- 
-                v-for es una directiva de Vue que itera sobre un array
-                :key es necesario para que Vue pueda trackear cada elemento
-                trip in trips significa "para cada trip en el array trips"
-              -->
+
               <tr v-for="trip in trips" :key="trip.id">
-                <td>{{ trip.route }}</td> <!-- {{ }} muestra datos de JavaScript -->
+                <td>{{ trip.route }}</td> 
                 <td>{{ trip.date }}</td>
                 <td>{{ trip.duration }}</td>
                 <td>{{ trip.cost }}</td>
