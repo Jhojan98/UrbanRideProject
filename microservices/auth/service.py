@@ -13,22 +13,18 @@ import json
 import pika
 import time
 
-# Load environment variables
-# Backward-compatible secret (HS256 fallback)
 JWT_SECRET = os.getenv("JWT_SECRET", "your-secret-key-here")
 TOKEN_EXP_MINUTES = int(os.getenv("TOKEN_EXP_MINUTES", "30"))
-
-# RS256 key configuration
+OTP_EXP_MINUTES = int(os.getenv("OTP_EXP_MINUTES", "10"))
 JWT_PRIVATE_KEY_PATH = os.getenv("JWT_PRIVATE_KEY_PATH", "/run/secrets/jwt_private.pem")
 JWT_PUBLIC_KEY_PATH = os.getenv("JWT_PUBLIC_KEY_PATH", "/run/secrets/jwt_public.pem")
-JWT_PRIVATE_KEY_INLINE = os.getenv("JWT_PRIVATE_KEY")  # optional direct PEM content
-JWT_PUBLIC_KEY_INLINE = os.getenv("JWT_PUBLIC_KEY")    # optional direct PEM content
+JWT_PRIVATE_KEY_INLINE = os.getenv("JWT_PRIVATE_KEY")
+JWT_PUBLIC_KEY_INLINE = os.getenv("JWT_PUBLIC_KEY")
 
 SIGNING_KEY = None
 VERIFY_KEY = None
 JWT_ALGORITHM = "HS256"
 
-# Try to load RSA keys if available
 try:
     if JWT_PRIVATE_KEY_INLINE:
         SIGNING_KEY = JWT_PRIVATE_KEY_INLINE
@@ -43,7 +39,6 @@ try:
     if SIGNING_KEY and VERIFY_KEY:
         JWT_ALGORITHM = "RS256"
 except Exception:
-    # If any error reading keys, keep HS256 fallback
     SIGNING_KEY = None
     VERIFY_KEY = None
     JWT_ALGORITHM = "HS256"
@@ -61,61 +56,52 @@ def get_db():
     finally:
         db.close()
 
-# Obtener usuario por correo
+# Get by email
 async def get_user_by_email(email: str, db: _orm.Session):
-    return db.query(_models.User).filter(_models.User.n_correo_electronico == email).first()
+    return db.query(_models.User).filter(_models.User.n_user_email == email).first()
 
-# Obtener usuario por nombre de usuario
+# Get by username
 async def get_user_by_username(username: str, db: _orm.Session):
-    return db.query(_models.User).filter(_models.User.n_usuario == username).first()
+    return db.query(_models.User).filter(_models.User.n_username == username).first()
 
 async def create_user(user: _schemas.UserCreate, db: _orm.Session):
     hashed_password = _hash.bcrypt.hash(user.password)
     db_user = _models.User(
-        n_usuario=user.n_usuario,
-        n_contrasena="__legacy__",  # placeholder para columna obligatoria
-        hashed_password=hashed_password,
-        n_primer_nombre=user.n_primer_nombre,
-        n_segundo_nombre=user.n_segundo_nombre,
-        n_primer_apellido=user.n_primer_apellido,
-        n_segundo_apellido=user.n_segundo_apellido,
-        f_fecha_nacimiento=user.f_fecha_nacimiento,
-        n_correo_electronico=user.n_correo_electronico,
-        t_tipo_suscripcion="NINGUNA",
-        f_fecha_de_registro=_dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        k_user_cc=user.k_user_cc,  # cedula provided by client
+        n_username=user.n_username,
+        n_hashed_password=hashed_password,
+        n_user_first_name=user.n_user_first_name,
+        n_user_second_name=user.n_user_second_name,
+        n_user_first_lastname=user.n_user_first_lastname,
+        n_user_second_lastname=user.n_user_second_lastname,
+        f_user_birthdate=user.f_user_birthdate,
+        n_user_email=user.n_user_email,
+        t_subscription_type="NONE",
+        f_user_registration_date=_dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        t_is_verified=False,
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
 
-async def authenticate_user(email: str, password: str, db: _orm.Session):
-    # Permitir login por correo o nombre de usuario
-    user = await get_user_by_email(email=email, db=db)
+async def authenticate_user(email_or_username: str, password: str, db: _orm.Session):
+    user = await get_user_by_email(email=email_or_username, db=db)
     if not user:
-        user = await get_user_by_username(username=email, db=db)
+        user = await get_user_by_username(username=email_or_username, db=db)
     if not user:
         return False
     if not user.verify_password(password):
         return False
-    if not user.is_verified:
+    if not user.t_is_verified:
         return "is_verified_false"
     return user
 
-# Obtener roles del usuario
-async def get_user_roles(db: _orm.Session, user_id: int) -> list[str]:
-    rows = db.query(_models.Rol.n_nombre).join(
-        _models.UsuarioRol, _models.Rol.k_id_rol == _models.UsuarioRol.k_id_rol
-    ).filter(_models.UsuarioRol.k_cedula_ciudadania_usuario == user_id).all()
-    return [r[0] for r in rows] if rows else []
-
-async def create_token(user: _models.User, db: _orm.Session):
-    roles = await get_user_roles(db, user.k_cedula_ciudadania_usuario)
+async def create_token(user: _models.User):
     claims = {
-        "k_cedula_ciudadania_usuario": user.k_cedula_ciudadania_usuario,
-        "n_usuario": user.n_usuario,
-        "n_correo_electronico": user.n_correo_electronico,
-        "roles": roles or ["USER"],
+        "k_user_cc": user.k_user_cc,
+        "n_username": user.n_username,
+        "n_user_email": user.n_user_email,
         "exp": _dt.datetime.utcnow() + _dt.timedelta(minutes=TOKEN_EXP_MINUTES),
         "iat": _dt.datetime.utcnow(),
         "nbf": _dt.datetime.utcnow(),
@@ -131,15 +117,16 @@ async def get_current_user(db: _orm.Session = Depends(get_db), token: str = Depe
             payload = jwt.decode(token, VERIFY_KEY, algorithms=["RS256"], issuer="auth-service")
         else:
             payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"], issuer="auth-service")
-        user = db.query(_models.User).get(payload["k_cedula_ciudadania_usuario"])
+        user = db.query(_models.User).get(payload["k_user_cc"])
     except Exception:
         return None
-    # Retornar esquema Pydantic (UserBase) para compatibilidad con response_model
     from pydantic import ValidationError
     try:
         return _schemas.UserBase.model_validate(user)
     except ValidationError:
         return None
+
+# OTP utilities
 
 def generate_otp():
     return str(random.randint(100000, 999999))
@@ -162,9 +149,8 @@ def send_otp(email, otp, channel):
         'email': email,
         'subject': 'Account Verification OTP Notification',
         'other': 'null',
-        'body': f'Your OTP for account verification is: {otp} \n Please enter this OTP on the verification page to complete your account setup. \n If you did not request this OTP, please ignore this message.\n Thank you '
+        'body': f'Your OTP for account verification is: {otp} \n Please enter this OTP on the verification page to complete your account setup. \n If you did not request this OTP, please ignore this message.'
     }
-
     try:
         channel.queue_declare(queue='email_notification', durable=True)
         channel.basic_publish(
@@ -173,25 +159,40 @@ def send_otp(email, otp, channel):
             body=json.dumps(message),
             properties=pika.BasicProperties(delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE),
         )
-        print("Sent OTP email notification")
     except Exception as err:
         print(f"Failed to publish message: {err}")
     finally:
         channel.close()
         connection.close()
 
-async def user_has_role(db: _orm.Session, user_id: int, roles: list[str]) -> bool:
-    return db.query(_models.Rol.n_nombre).join(_models.UsuarioRol, _models.Rol.k_id_rol == _models.UsuarioRol.k_id_rol)\
-        .filter(_models.UsuarioRol.k_cedula_ciudadania_usuario == user_id, _models.Rol.n_nombre.in_(roles)).first() is not None
+async def create_email_verification(db: _orm.Session, user: _models.User, otp: str):
+    otp_hash = _hash.bcrypt.hash(otp)
+    record = _models.EmailVerification(
+        n_otp_hash=otp_hash,
+        n_user_email=user.n_user_email,
+        f_expires_at=_dt.datetime.utcnow() + _dt.timedelta(minutes=OTP_EXP_MINUTES),
+        t_consumed=False,
+        f_created_at=_dt.datetime.utcnow(),
+        k_user_cc=user.k_user_cc,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record
 
-from fastapi import HTTPException
-async def require_roles(roles: list[str], db: _orm.Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    # Obtener usuario actual
-    current = await get_current_user(db=db, token=token)
-    if not current:
-        raise HTTPException(status_code=401, detail={"message": "Not authenticated", "code": "NOT_AUTHENTICATED"})
-    # current es UserBase, necesitamos ID
-    user = db.query(_models.User).get(current.k_cedula_ciudadania_usuario)
-    if not user or not await user_has_role(db, user.k_cedula_ciudadania_usuario, roles):
-        raise HTTPException(status_code=403, detail={"message": "Insufficient role", "code": "INSUFFICIENT_ROLE"})
-    return user
+async def verify_email_otp(db: _orm.Session, email: str, otp: str):
+    q = db.query(_models.EmailVerification).filter(
+        _models.EmailVerification.n_user_email == email,
+        _models.EmailVerification.t_consumed == False,
+    ).order_by(_models.EmailVerification.f_created_at.desc())
+    record = q.first()
+    if not record:
+        return False
+    if record.f_expires_at < _dt.datetime.utcnow():
+        return False
+    if not _hash.bcrypt.verify(otp, record.n_otp_hash):
+        return False
+    # mark consumed
+    record.t_consumed = True
+    db.add(record)
+    return True
