@@ -1,115 +1,78 @@
 <template>
-  <div class="reservation-panel">
-    <div class="header">
-      <h2>Detalles de la Estación</h2>
-      <button class="close-btn" @click="$emit('close')">✕</button>
+    <div class="map-wrapper">
+        <div id="map" class="map-container" />
     </div>
-
-    <h3>{{ props.station.name }}</h3>
-
-    <p class="availability">
-      🚲 Bicicletas Disponibles: <strong>{{ props.station.available }}</strong>
-    </p>
-
-    <p class="status" :class="props.station.status.toLowerCase()">
-      {{ props.station.status }}
-    </p>
-
-    <label class="label">Tipo de Bicicleta:</label>
-    <div class="select-group">
-      <label><input type="radio" v-model="bikeType" value="mechanical" /> Mecánica</label>
-      <label><input type="radio" v-model="bikeType" value="electric" /> Eléctrica</label>
-    </div>
-
-    <label class="label">Tipo de Viaje:</label>
-    <div class="select-group vertical">
-      <label>
-        <input type="radio" v-model="rideType" value="short_trip" />
-        Última Milla — 45 min máx — $17.500 + $250/min adicional
-      </label>
-
-      <label>
-        <input type="radio" v-model="rideType" value="long_trip" />
-        Recorrido Largo — 75 min máx — $25.000 + $1.000/min adicional
-      </label>
-    </div>
-
-    <div class="balance-container">
-      Saldo: <strong>${{ props.balance }}</strong>
-      <button class="reload-btn" @click="recharge">Recargar</button>
-    </div>
-
-    <p class="warning">
-      ⚠️ La bicicleta se reservará por <strong>10 minutos</strong>.
-    </p>
-
-    <button class="reserve-btn" @click="reserve">
-      Reservar Bicicleta
-    </button>
-  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, defineEmits, withDefaults, defineProps } from 'vue'
-import { useReservation } from '@/composables/useReservation'
-import { useRouter } from 'vue-router'
-const router = useRouter()
+import { onMounted, onUnmounted, ref } from 'vue'
+import L, { Map as LeafletMap } from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 
-interface Station {
-  name: string
-  available: number
-  status: string
-}
+// Arreglar rutas de íconos por defecto de Leaflet en bundlers
+// Ajuste para íconos: en proyectos con vue-cli los assets de leaflet se sirven desde /img
+// Si los íconos no aparecen, se puede configurar via CSS o copiar los archivos.
+// De momento mantenemos configuración por defecto.
 
-interface Props {
-  station?: Station
-  balance?: number
-}
+const map = ref<LeafletMap | null>(null)
 
-const recharge = () => {
-  router.push({ name: 'profile' })
-}
+onMounted(() => {
+    // Centro inicial: Villavicencio (Meta, Colombia)
+    const initialCenter: [number, number] = [4.1514, -73.6370]
 
-// withDefaults + defineProps con factory function para objetos
-const props = withDefaults(defineProps<Props>(), {
-  station: () => ({ name: 'Selecciona una estación', available: 0, status: 'N/A' }),
-  balance: 0
+    map.value = L.map('map', {
+        center: initialCenter,
+        zoom: 13,
+        zoomControl: true,
+    })
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(map.value)
+
+    // Marcadores de ejemplo en Villavicencio (puedes reemplazarlos por estaciones reales)
+    const stations: Array<{ name: string; coords: [number, number] }> = [
+        { name: 'Estación Centro', coords: [4.1519, -73.6365] },
+        { name: 'Parque Sikuani', coords: [4.1460, -73.6500] },
+        { name: 'Zona Universitaria', coords: [4.1630, -73.6220] },
+        { name: 'Estación Sur', coords: [4.1390, -73.6550] },
+    ]
+
+        if (map.value) {
+            stations.forEach((s) => {
+                L.marker(s.coords).addTo(map.value as LeafletMap)
+                    .bindPopup(`<b>${s.name}</b>`)
+            })
+        }
 })
 
-// defineEmits tipado
-const emit = defineEmits<{
-  reserve: [payload: { bikeType: string; rideType: string }]
-  close: []
-}>()
-
-const { setReservation } = useReservation()
-
-const bikeType = ref<string>('')
-const rideType = ref<string>('')
-
-function reserve() {
-  if (!bikeType.value || !rideType.value) {
-    window.alert('Por favor selecciona el tipo de bicicleta y el tipo de viaje.')
-    return
-  }
-
-  const reservationPayload = {
-    bikeType: bikeType.value,
-    rideType: rideType.value,
-    station: props.station
-  }
-
-  // Guardar la reserva en el estado compartido
-  setReservation(reservationPayload)
-
-  // Emitir el evento para que el padre pueda reaccionar
-  emit('reserve', {
-    bikeType: bikeType.value,
-    rideType: rideType.value
-  })
-}
+onUnmounted(() => {
+    if (map.value) {
+        map.value.remove()
+        map.value = null
+    }
+})
 </script>
 
-<style lang="scss">
-@import "@/styles/maps.scss";
+<style scoped>
+.map-wrapper {
+    width: 100%;
+    height: 100%;
+}
+
+.map-container {
+    width: 100%;
+    /* Ocupa viewport menos header/footer aprox. */
+    min-height: calc(100vh - 140px);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+@media (max-width: 768px) {
+    .map-container {
+        min-height: 50vh;
+    }
+}
 </style>
