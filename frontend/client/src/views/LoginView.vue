@@ -1,7 +1,7 @@
 <!-- Src/views/LoginView.vue -->
 <template>
     <div class="form-container">
-        <img src="@/assets/ECORIDE.jpg" alt="Logo" class="form-logo" />
+        <img src="@/assets/ECORIDE.webp" alt="Logo" class="form-logo" />
         <h2 class="form-title">Iniciar Sesión</h2>
         <form @submit.prevent="logUser">
             <div class="form-group">

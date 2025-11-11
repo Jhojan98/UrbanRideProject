@@ -146,3 +146,17 @@ html[data-theme="dark"] .btn-primary.router-link-active {
   transform: translateY(1px);
 }
 
+.btn-logout {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+.btn-logout:hover {
+  transform: translateY(-2px);
+}
+
+.btn-logout:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 3px 8px rgba(0,0,0,0.25);
+}

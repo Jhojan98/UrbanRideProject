@@ -137,9 +137,16 @@ const userAuth = defineStore("auth", {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, otp })
                 });
+                
+                let json: unknown = null;
+                try {
+                    json = await res.json();
+                } catch {
+                    json = null;
+                }
+
                 if (!res.ok) {
-                    const err: unknown = await res.json().catch(() => ({}));
-                    const detail = (err && typeof err === 'object') ? (err as Record<string, unknown>).detail : undefined;
+                    const detail = (json && typeof json === 'object') ? (json as Record<string, unknown>).detail : undefined;
                     this.message = (typeof detail === 'string')
                         ? detail
                         : (detail && typeof detail === 'object' && 'msg' in (detail as Record<string, unknown>))
@@ -147,6 +154,14 @@ const userAuth = defineStore("auth", {
                             : 'OTP inválido';
                     return false;
                 }
+
+                // Verificar si el servidor devuelve un token tras verificación exitosa
+                const token: unknown = (json && typeof json === 'object') ? (json as Record<string, unknown>).token : undefined;
+                if (typeof token === 'string' && token) {
+                    // Si el servidor devuelve token, establecerlo (auto-login tras verificación)
+                    this.token = token;
+                }
+
                 this.isVerified = true;
                 this.pendingVerification = false;
                 this.tempEmail = null;

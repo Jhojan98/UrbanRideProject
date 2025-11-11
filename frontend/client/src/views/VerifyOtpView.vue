@@ -1,6 +1,6 @@
 <template>
     <div class="form-container">
-        <img src="@/assets/ECORIDE.jpg" alt="Logo" class="form-logo" />
+        <img src="@/assets/ECORIDE.webp" alt="Logo" class="form-logo" />
         <h2 class="form-title">Verificación OTP</h2>
         
         <!-- Mostramos el email que viene del store -->
@@ -84,9 +84,16 @@ const verifyOtp = async () => {
     
     if (res) {
         feedback.value = '¡Verificación exitosa! Redirigiendo...';
-        // Redirigir al usuario después de verificación exitosa
+        
+        // Verificar si se obtuvo un token (auto-login)
         setTimeout(() => {
-            router.push('/reservation');
+            if (store.token) {
+                // Si hay token, ir a página protegida
+                router.push('/maps');
+            } else {
+                // Si no hay token, ir al login para que inicie sesión
+                router.push({ name: 'login', query: { verified: 'true' } });
+            }
         }, 1500);
     } else {
         feedback.value = store.message || 'Error al verificar el OTP';

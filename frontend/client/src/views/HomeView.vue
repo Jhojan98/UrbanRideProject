@@ -14,7 +14,7 @@
         </div>
 
         <div class="hero-right">
-          <img src="@/assets/ciclovia1.jpg" alt="Imagen eco bike" class="hero-img" />
+          <img src="@/assets/ciclovia1.webp" alt="Imagen eco bike" class="hero-img" />
         </div>
 
       </div>
