@@ -10,6 +10,7 @@ import logging
 import os
 import jwt
 import rpc_client
+import datetime as _dt
 
 # Import Pydantic schemas
 from schemas import UserCredentials, UserRegisteration, GenerateOtp, VerifyOtp, BicycleBase
@@ -91,8 +92,7 @@ async def login(user_data: UserCredentials):
                 "access_token": data.get("access_token"),
                 "token_type": data.get("token_type", "bearer"),
                 "is_verified": data.get("is_verified", False),
-                "expires_in": data.get("expires_in"),
-                "roles": data.get("roles", [])
+                "expires_in": data.get("expires_in")
             }
         else:
             # Error normalizado
@@ -106,15 +106,22 @@ async def login(user_data: UserCredentials):
 @app.post("/auth/register", tags=['Authentication Service'])
 async def registeration(user_data: UserRegisteration):
     try:
+        # Ensure birthdate is JSON-serializable string
+        bd = user_data.f_user_birthdate
+        if hasattr(bd, "isoformat"):
+            bd_str = bd.isoformat()
+        else:
+            bd_str = str(bd)
         payload = {
-            "n_usuario": user_data.n_usuario,
+            "k_user_cc": user_data.k_user_cc,
+            "n_username": user_data.n_username,
             "password": user_data.password,
-            "n_primer_nombre": user_data.n_primer_nombre,
-            "n_segundo_nombre": user_data.n_segundo_nombre,
-            "n_primer_apellido": user_data.n_primer_apellido,
-            "n_segundo_apellido": user_data.n_segundo_apellido,
-            "f_fecha_nacimiento": user_data.f_fecha_nacimiento,
-            "n_correo_electronico": str(user_data.n_correo_electronico),
+            "n_user_first_name": user_data.n_user_first_name,
+            "n_user_second_name": user_data.n_user_second_name,
+            "n_user_first_lastname": user_data.n_user_first_lastname,
+            "n_user_second_lastname": user_data.n_user_second_lastname,
+            "f_user_birthdate": bd_str,
+            "n_user_email": str(user_data.n_user_email),
         }
         response = requests.post(f"{AUTH_BASE_URL}/api/users", json=payload)
         if response.status_code in (200, 201):
@@ -176,20 +183,11 @@ async def get_bicycles(payload: dict = _fastapi.Depends(jwt_validation)):
 
 @app.post('/bicycles', tags=['Bicycle Service'])
 def create_bicycle(bicycle: BicycleBase, payload: dict = _fastapi.Depends(jwt_validation)):
-    # Chequeo simple de rol en el JWT (roles o role)
-    roles = []
-    if isinstance(payload, dict):
-        if 'roles' in payload and isinstance(payload['roles'], list):
-            roles = payload['roles']
-        elif 'role' in payload and isinstance(payload['role'], str):
-            roles = [payload['role']]
-    if 'ADMIN' not in [r.upper() for r in roles]:
-        raise HTTPException(status_code=403, detail={"message": "Insufficient role", "code": "INSUFFICIENT_ROLE"})
     try:
-        if bicycle.f_ultima_actualizacion:
-            bicycle.f_ultima_actualizacion = bicycle.f_ultima_actualizacion.isoformat()
+        if bicycle.f_last_update:
+            bicycle.f_last_update = bicycle.f_last_update.isoformat()
         response = requests.post(f"{BICYCLE_SERVICE_URL}/api/bicycles", json=bicycle.dict())
-        if response.status_code == 201:
+        if response.status_code in (200, 201):
             return response.json()
         else:
             raise HTTPException(status_code=response.status_code, detail=response.json())
