@@ -89,10 +89,6 @@ onMounted(() => {
   --bg: #121212;
   --text: #fff;
 }
-body {
-  background: var(--bg);
-  color: white;
-}
 
 .theme-toggle img {
   width: 24px;

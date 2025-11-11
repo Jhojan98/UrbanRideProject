@@ -51,7 +51,7 @@
 body {
   margin: 0;
   font-family: var(--font-family-base);
-  background-color: var(--color-gray-very-light);
+  background-color: var(--color-background-dark);
   color: var(--color-gray-dark);
   line-height: 1.5;
 }
@@ -208,10 +208,13 @@ p {
 
 /* Light/Dark modes: example for body */
 body[data-theme="dark"] {
-  background-color: var(--color-gray-very-light);
+  background-color: var(--color-background-dark);
   color: var(--color-gray-dark);
 }
 
+body[data-theme="dark"] button.reservation-card {
+  background-color: var(--color-surface-dark);
+}
 body[data-theme="dark"] button.primary {
   background-color: var(--color-green-main);
 }

@@ -3,13 +3,15 @@
     <!-- Sección Hero (principal con llamada a la acción) -->
     <section class="hero">
       <div class="hero-content">
-        
+
         <div class="hero-left">
           <h1 class="hero-title">Rodar tu vida, respirar tu ciudad.</h1>
           <p class="hero-subtitle">Tu ciudad a tu ritmo, de forma sostenible.</p>
           <div class="hero-buttons">
-            <button class="butn-primary" @click="goToStationsMap">Ver Mapa de Estaciones</button>
-            <button class="btn-secondary" @click="learnMore">Aprende Más</button>
+            <router-link :to="{ name: 'maps' }" class="buttn-primary">
+              Ver Mapa de Estaciones
+            </router-link>
+              <button class="btn-secondary" @click="learnMore">Aprende Más</button>
           </div>
         </div>
 
@@ -87,6 +89,6 @@ const learnMore = () => {
 };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "@/styles/home.scss";
 </style>

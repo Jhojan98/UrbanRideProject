@@ -1,19 +1,4 @@
-body {
-  background-image: url('@/assets/forms_background.webp');
-    background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  min-height: 100vh;
-}
 
-body::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.45); 
-  backdrop-filter: blur(4px); 
-  z-index: -1;
-}
 
 .form-logo{
   display: block;
@@ -23,6 +8,7 @@ body::before {
 }
 
 .form-container {
+  
   max-width: 400px;
   margin: 30px auto;
   padding: 2rem;

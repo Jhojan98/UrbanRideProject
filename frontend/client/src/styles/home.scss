@@ -1,12 +1,10 @@
 
 
-body {
-  background-image: none;
-  background-color: var(--color-background-light);
-}
+@import "./global.scss";
 .home {
   min-height: calc(100vh - 200px); /* Altura mínima menos header y footer */
   background-color: white;
+  width: 100%;
 }
 
 html[data-theme="dark"] .home{
@@ -65,7 +63,7 @@ html[data-theme="dark"] .home{
 }
 
 
-.butn-primary {
+.buttn-primary {
   background-color: var(--color-primary-light); 
   color: var(--color-button-text-light); 
   border: none;
@@ -77,7 +75,7 @@ html[data-theme="dark"] .home{
   font-size: 1rem;
 }
 
-.butn-primary:hover {
+.buttn-primary:hover {
   background-color: var(--color-surface-light); 
 }
 

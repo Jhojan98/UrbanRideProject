@@ -12,6 +12,7 @@
 
 /* Container */
 .container {
+  
   position: absolute; 
   top: 188px; 
   left: 496px; 
@@ -259,4 +260,28 @@
   width: 42px; 
   height: 42px; 
   fill: #2E7D32FF; /* primary-500 */
+}
+
+.page-with-background {
+  position: relative;
+  background-image: url('@/assets/forms_background.webp');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  overflow: hidden; 
+}
+
+.page-with-background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.45); 
+  backdrop-filter: blur(4px); 
+  z-index: 1; 
+}
+
+.page-with-background > * {
+  position: relative;
+  z-index: 2;
 }

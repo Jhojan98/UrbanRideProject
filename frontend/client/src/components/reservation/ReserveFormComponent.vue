@@ -1,9 +1,7 @@
 <template>
   <div class="reservation-panel">
-    <div class="header">
-      <h2>Detalles de la Estación</h2>
-      <button class="close-btn" @click="$emit('close')">✕</button>
-    </div>
+    <h1>Detalles de la Estación</h1>
+
 
     <h3>{{ props.station.name }}</h3>
 
@@ -20,30 +18,38 @@
       <label><input type="radio" v-model="bikeType" value="mechanical" /> Mecánica</label>
       <label><input type="radio" v-model="bikeType" value="electric" /> Eléctrica</label>
     </div>
-
     <label class="label">Tipo de Viaje:</label>
-    <div class="select-group vertical">
-      <label>
+    <div class="ride-options">
+      <label class="ride-card">
         <input type="radio" v-model="rideType" value="short_trip" />
-        Última Milla — 45 min máx — $17.500 + $250/min adicional
+        <div>
+          <strong>Última Milla</strong>
+          <p>Máx 45 min</p>
+          <span class="price">$17.500 + $250/min</span>
+        </div>
       </label>
 
-      <label>
+      <label class="ride-card">
         <input type="radio" v-model="rideType" value="long_trip" />
-        Recorrido Largo — 75 min máx — $25.000 + $1.000/min adicional
+        <div>
+          <strong>Recorrido Largo</strong>
+          <p>Máx 75 min</p>
+          <span class="price">$25.000 + $1.000/min</span>
+        </div>
       </label>
     </div>
 
+
     <div class="balance-container">
       Saldo: <strong>${{ props.balance }}</strong>
-      <button class="reload-btn" @click="recharge">Recargar</button>
+      <button class="btn-secondary" @click="recharge">Recargar</button>
     </div>
 
     <p class="warning">
       ⚠️ La bicicleta se reservará por <strong>10 minutos</strong>.
     </p>
-
-    <button class="reserve-btn" @click="reserve">
+    
+    <button class="butn-primary" @click="reserve">
       Reservar Bicicleta
     </button>
   </div>
@@ -110,6 +116,6 @@ function reserve() {
 }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 @import "@/styles/maps.scss";
 </style>
