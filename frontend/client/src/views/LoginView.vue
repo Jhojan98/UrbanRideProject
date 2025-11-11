@@ -5,11 +5,11 @@
         <h2 class="form-title">Iniciar Sesión</h2>
         <form @submit.prevent="logUser">
             <div class="form-group">
-                <label for="email">Correo Electrónico</label>
+                <label for="email"><i class="fas fa-envelope left"></i> Correo Electrónico</label>
                 <input id="email" type="email" v-model="email" placeholder="ejemplo@dominio.com" required />
             </div>
             <div class="form-group">
-                <label for="password">Contraseña</label>
+                <label for="password"><i class="fas fa-lock"> </i>Contraseña</label>
                 <input id="password" type="password" v-model="password" placeholder="********" required />
             </div>
                 <button type="submit" class="form-submit">Entrar</button>

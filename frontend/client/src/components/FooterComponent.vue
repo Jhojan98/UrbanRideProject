@@ -10,8 +10,11 @@
       </div>
       <!-- Copyright -->
       <div class="copyright">
+        <i class="fa-brands fa-facebook"></i> Ecoride |
+        <i class="fa-brands fa-instagram"></i> ecoride |
+        <i class="fa-brands fa-tiktok"></i> ecoride |
 
-        © 2024 ECORIDE
+        © 2026 ECORIDE
       </div>
     </div>
   </footer>
