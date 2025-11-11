@@ -40,6 +40,8 @@ services:
       AUTH_BASE_URL: ${AUTH_BASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
       BICYCLE_SERVICE_URL: ${BICYCLE_SERVICE_URL}
+      PAYMENT_SERVICE_URL: ${PAYMENT_SERVICE_URL}
+      RESERVATION_SERVICE_URL: ${RESERVATION_SERVICE_URL}
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
@@ -118,6 +120,55 @@ services:
     volumes:
       - ./microservices/bicycle:/app
     command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 5002 --reload"
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./microservices/payments/metodos-pago-api
+    container_name: payment-service
+    environment:
+      POSTGRES_HOST: postgres-db
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${PAYMENT_DB_USER}
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
+      DATABASE_URL: postgresql+psycopg2://${PAYMENT_DB_USER}:${PAYMENT_DB_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+    depends_on:
+      postgres-db:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./microservices/payments/metodos-pago-api:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 5003 --reload
+    restart: unless-stopped
+
+  reservation-service:
+    build:
+      context: ./microservices/reservations
+    container_name: reservation-service
+    environment:
+      POSTGRES_HOST: postgres-db
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${RESERVATION_DB_USER}
+      POSTGRES_PASSWORD: ${RESERVATION_DB_PASSWORD}
+      DATABASE_URL: postgresql+psycopg2://${RESERVATION_DB_USER}:${RESERVATION_DB_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
+      PAYMENT_SERVICE_URL: http://payment-service:5003
+    depends_on:
+      postgres-db:
+        condition: service_started
+      payment-service:
+        condition: service_started
+    ports:
+      - "5004:5004"
+    volumes:
+      - ./microservices/reservations:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 5004 --reload
     restart: unless-stopped
 
   pgadmin:

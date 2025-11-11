@@ -12,7 +12,16 @@ import jwt
 import rpc_client
 
 # Import Pydantic schemas
-from schemas import UserCredentials, UserRegisteration, GenerateOtp, VerifyOtp, Bicycle
+from schemas import (
+    UserCredentials, 
+    UserRegisteration, 
+    GenerateOtp, 
+    VerifyOtp, 
+    Bicycle, 
+    PaymentMethodCreate,
+    RechargeBalance,
+    ReservationCreate
+)
 
 app = FastAPI()
 security = HTTPBearer()
@@ -28,6 +37,8 @@ RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "rabbitmq")
 RABBITMQ_USER = os.environ.get("RABBITMQ_DEFAULT_USER", "guest")
 RABBITMQ_PASS = os.environ.get("RABBITMQ_DEFAULT_PASS", "guest")
 BICYCLE_SERVICE_URL = os.environ.get("BICYCLE_SERVICE_URL")
+PAYMENT_SERVICE_URL = os.getenv('PAYMENT_SERVICE_URL', 'http://payment-service:5003')
+RESERVATION_SERVICE_URL = os.getenv('RESERVATION_SERVICE_URL', 'http://reservation-service:5004')
 
 # Global variable for RabbitMQ connection
 channel = None
@@ -137,6 +148,180 @@ def create_bicycle(bicycle: Bicycle,payload: dict = _fastapi.Depends(jwt_validat
         raise HTTPException(status_code=503, detail="Bicycle service is unavailable")
 
 
+# Payment Methods microservice routes
+@app.post('/payment-methods', tags=['Payment Methods Service'])
+async def create_payment_method(payment_data: PaymentMethodCreate, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Crear un nuevo método de pago para un usuario.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.post(
+            f"{PAYMENT_SERVICE_URL}/api/metodos-pago/",
+            json=payment_data.dict()
+        )
+        if response.status_code == 201:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+
+@app.get('/payment-methods/user/{user_cc}', tags=['Payment Methods Service'])
+async def get_payment_methods(user_cc: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Obtener todos los métodos de pago activos de un usuario.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.get(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/usuario/{user_cc}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+
+@app.delete('/payment-methods/{payment_id}/user/{user_cc}', tags=['Payment Methods Service'])
+async def delete_payment_method(payment_id: int, user_cc: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Eliminar (desactivar) un método de pago específico.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.delete(
+            f"{PAYMENT_SERVICE_URL}/api/metodos-pago/{payment_id}/usuario/{user_cc}"
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+
+@app.post('/payment-methods/recharge', tags=['Payment Methods Service'])
+async def recharge_balance(recharge_data: RechargeBalance, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Recargar saldo en un método de pago.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.post(
+            f"{PAYMENT_SERVICE_URL}/api/metodos-pago/recarga",
+            json=recharge_data.dict()
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+
+@app.get('/payment-methods/balance/{payment_method_id}', tags=['Payment Methods Service'])
+async def get_balance(payment_method_id: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Consultar saldo de un método de pago.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.get(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/saldo/{payment_method_id}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+
+@app.get('/payment-methods/balance/user/{user_cc}/total', tags=['Payment Methods Service'])
+async def get_user_total_balance(user_cc: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Consultar saldo total de todos los métodos de pago del usuario.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.get(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/usuario/{user_cc}/saldo-total")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+
+# Reservation microservice routes
+@app.post('/reservations', tags=['Reservation Service'])
+async def create_reservation(reservation_data: ReservationCreate, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Crear una nueva reserva/viaje con cobro automático.
+    Se descuentan $5,000 del método de pago.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.post(
+            f"{RESERVATION_SERVICE_URL}/api/reservations/",
+            json=reservation_data.dict()
+        )
+        if response.status_code == 201:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Reservation service is unavailable")
+
+
+@app.get('/reservations/user/{user_cc}', tags=['Reservation Service'])
+async def get_user_reservations(user_cc: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Obtener todas las reservas de un usuario.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.get(f"{RESERVATION_SERVICE_URL}/api/reservations/user/{user_cc}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Reservation service is unavailable")
+
+
+@app.get('/reservations/{reservation_id}', tags=['Reservation Service'])
+async def get_reservation(reservation_id: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Obtener una reserva específica.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.get(f"{RESERVATION_SERVICE_URL}/api/reservations/{reservation_id}")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Reservation service is unavailable")
+
+
+@app.delete('/reservations/{reservation_id}/user/{user_cc}', tags=['Reservation Service'])
+async def cancel_reservation(reservation_id: int, user_cc: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    """
+    Cancelar una reserva.
+    Requiere autenticación JWT.
+    """
+    try:
+        response = requests.delete(
+            f"{RESERVATION_SERVICE_URL}/api/reservations/{reservation_id}/user/{user_cc}"
+        )
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.json())
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Reservation service is unavailable")
 
 
 if __name__ == "__main__":

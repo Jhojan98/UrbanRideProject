@@ -1,0 +1,27 @@
+-- Create payments schema and user for payment microservice
+-- This script is idempotent and can be run multiple times
+
+-- Create payments schema
+CREATE SCHEMA IF NOT EXISTS payments;
+
+-- Create payment_user role
+DO $$
+BEGIN
+   IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'payment_user') THEN
+      CREATE ROLE payment_user LOGIN PASSWORD 'payment_pass';
+   END IF;
+END$$;
+
+-- Grant connection to database
+GRANT CONNECT ON DATABASE mydatabase TO payment_user;
+
+-- Grant schema privileges
+GRANT USAGE, CREATE ON SCHEMA payments TO payment_user;
+GRANT USAGE, CREATE ON SCHEMA payments TO postgres;
+
+-- Grant default privileges for future tables
+ALTER DEFAULT PRIVILEGES IN SCHEMA payments GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER ON TABLES TO payment_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA payments GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO payment_user;
+
+-- Grant all privileges to postgres for admin tasks
+GRANT ALL PRIVILEGES ON SCHEMA payments TO postgres;

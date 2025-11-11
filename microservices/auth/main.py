@@ -27,7 +27,7 @@ async def startup_event():
         credentials = pika.PlainCredentials(rabbit_user, rabbit_pass)
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_host, credentials=credentials))
         channel = connection.channel()
-        channel.queue_declare(queue='email_notification')
+        channel.queue_declare(queue='email_notification', durable=True)
         logging.info(f"RabbitMQ connection established successfully to {rabbit_host} as {rabbit_user}")
     except Exception as e:
         logging.error(f"Failed to connect to RabbitMQ: {e}")

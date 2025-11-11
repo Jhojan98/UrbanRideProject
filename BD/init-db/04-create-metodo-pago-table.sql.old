@@ -1,0 +1,76 @@
+-- Create metodo_pago table in payments schema
+-- This table stores payment methods (credit/debit cards) for users
+
+SET search_path TO payments;
+
+-- Drop table if exists (for development)
+DROP TABLE IF EXISTS metodo_pago CASCADE;
+
+-- Create metodo_pago table
+CREATE TABLE metodo_pago (
+    k_metodopago BIGSERIAL PRIMARY KEY,
+    k_usuario_cc VARCHAR(50) NOT NULL,
+    t_tipotarjeta VARCHAR(20) NOT NULL,
+    n_numerotarjeta VARCHAR(20) NOT NULL,
+    n_numerotarjetacompleto VARCHAR(20),
+    n_nombretitular VARCHAR(100) NOT NULL,
+    f_fechaexpiracion DATE NOT NULL,
+    n_marca VARCHAR(20),
+    b_principal BOOLEAN DEFAULT FALSE,
+    b_activo BOOLEAN DEFAULT TRUE,
+    f_fecharegistro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    n_direccionfacturacion VARCHAR(255),
+    n_codigopostal VARCHAR(20),
+    v_saldo BIGINT DEFAULT 0
+);
+
+-- Create indexes for better performance
+CREATE INDEX idx_metodo_pago_usuario ON metodo_pago(k_usuario_cc);
+CREATE INDEX idx_metodo_pago_principal ON metodo_pago(k_usuario_cc, b_principal) WHERE b_principal = TRUE;
+CREATE INDEX idx_metodo_pago_activo ON metodo_pago(k_usuario_cc, b_activo) WHERE b_activo = TRUE;
+
+-- Add table and column comments
+COMMENT ON TABLE metodo_pago IS 'Payment methods (cards) associated with users';
+COMMENT ON COLUMN metodo_pago.k_metodopago IS 'Unique payment method ID';
+COMMENT ON COLUMN metodo_pago.k_usuario_cc IS 'User ID (cedula)';
+COMMENT ON COLUMN metodo_pago.t_tipotarjeta IS 'Card type: CREDITO, DEBITO, PSE, EFECTIVO';
+COMMENT ON COLUMN metodo_pago.n_numerotarjeta IS 'Masked card number (**** **** **** 1234)';
+COMMENT ON COLUMN metodo_pago.n_numerotarjetacompleto IS 'Full card number (should be encrypted in production)';
+COMMENT ON COLUMN metodo_pago.n_nombretitular IS 'Cardholder name';
+COMMENT ON COLUMN metodo_pago.f_fechaexpiracion IS 'Card expiration date';
+COMMENT ON COLUMN metodo_pago.n_marca IS 'Card brand: VISA, MASTERCARD, AMEX, etc.';
+COMMENT ON COLUMN metodo_pago.b_principal IS 'Is this the primary payment method?';
+COMMENT ON COLUMN metodo_pago.b_activo IS 'Is this payment method active?';
+COMMENT ON COLUMN metodo_pago.f_fecharegistro IS 'Registration timestamp';
+COMMENT ON COLUMN metodo_pago.n_direccionfacturacion IS 'Billing address';
+COMMENT ON COLUMN metodo_pago.n_codigopostal IS 'Postal code';
+COMMENT ON COLUMN metodo_pago.v_saldo IS 'Available balance for this payment method';
+
+-- Create function to ensure only one principal payment method per user
+CREATE OR REPLACE FUNCTION asegurar_un_principal()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.b_principal = TRUE THEN
+        UPDATE payments.metodo_pago 
+        SET b_principal = FALSE 
+        WHERE k_usuario_cc = NEW.k_usuario_cc 
+          AND k_metodopago != NEW.k_metodopago 
+          AND b_principal = TRUE;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to enforce single principal payment method
+DROP TRIGGER IF EXISTS trigger_un_principal ON metodo_pago;
+CREATE TRIGGER trigger_un_principal
+    BEFORE INSERT OR UPDATE ON metodo_pago
+    FOR EACH ROW
+    EXECUTE FUNCTION asegurar_un_principal();
+
+-- Grant permissions on table to payment_user
+GRANT SELECT, INSERT, UPDATE, DELETE ON metodo_pago TO payment_user;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE metodo_pago_k_metodopago_seq TO payment_user;
+
+-- Success message
+SELECT 'Payment methods table created successfully in payments schema' AS status;
