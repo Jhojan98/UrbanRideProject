@@ -29,7 +29,9 @@ services:
 
   eureka-server:
     container_name: eureka-server
-    image: seanbolivar2002/eureka-server:latest
+    build:
+      context: ./
+      dockerfile: ./eureka-server/Dockerfile
     ports:
       - "8761:8761"
     environment:
@@ -42,10 +44,9 @@ services:
 
   usuario-service:
     container_name: usuario-service
-    image: seanbolivar2002/usuario-service:latest
-#    build:
-#      context: ./
-#      dockerfile: ./usuario-service/Dockerfile
+    build:
+      context: ./
+      dockerfile: ./usuario-service/Dockerfile
     ports:
       - "8001:8001"
     environment:
@@ -68,10 +69,9 @@ services:
 
   email-service:
     container_name: email-service
-    image: seanbolivar2002/email-service:latest
-#    build:
-#      context: ./
-#      dockerfile: ./email-service/Dockerfile
+    build:
+      context: ./
+      dockerfile: ./email-service/Dockerfile
     ports:
       - "8004:8004"
     environment:
@@ -94,10 +94,9 @@ services:
 
   bicis-service:
     container_name: bicis-service
-    image: seanbolivar2002/bicis-service:latest
-#    build:
-#      context: ./
-#      dockerfile: ./bicis-service/Dockerfile
+    build:
+      context: ./
+      dockerfile: ./bicis-service/Dockerfile
     ports:
       - "8002:8002"
     environment:
@@ -115,10 +114,9 @@ services:
 
   viaje-service:
     container_name: viaje-service
-    image: seanbolivar2002/viaje-service:latest
-#    build:
-#      context: ./
-#      dockerfile: ./viaje-service/Dockerfile
+    build:
+      context: ./
+      dockerfile: ./viaje-service/Dockerfile
     ports:
       - "8003:8003"
     environment:
@@ -139,9 +137,9 @@ services:
   gateway-server:
     container_name: gateway-server
     image: seanbolivar2002/gateway-server:latest
-#    build:
-#      context: ./
-#      dockerfile: ./gateway-server/Dockerfile
+    build:
+      context: ./
+      dockerfile: ./gateway-server/Dockerfile
     ports:
       - "8090:8090"
     environment:

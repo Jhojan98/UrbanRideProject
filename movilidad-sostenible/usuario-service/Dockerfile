@@ -7,6 +7,7 @@ COPY ./$SERVICE_NAME/.mvn ./.mvn
 COPY ./$SERVICE_NAME/mvnw .
 COPY ./$SERVICE_NAME/pom.xml .
 
+RUN chmod +x mvnw
 RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip && rm -r ./target/
 
 COPY ./$SERVICE_NAME/src ./src
@@ -25,4 +26,3 @@ ENV PORT=$PORT_APP
 EXPOSE $PORT
 
 ENTRYPOINT ["java", "-jar", "usuario-service-0.0.1-SNAPSHOT.jar"]
-
