@@ -4,6 +4,12 @@ import com.movilidadsostenible.usuario.models.dto.UserDTO;
 import com.movilidadsostenible.usuario.models.entity.User;
 import com.movilidadsostenible.usuario.publisher.UserPublisher;
 import com.movilidadsostenible.usuario.services.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
+@Tag(name = "Usuarios", description = "Operaciones CRUD para usuarios")
 public class UserController {
 
     @Autowired
@@ -27,12 +34,21 @@ public class UserController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar usuarios")
     public List<User> listUsers() {
         return service.listUsers();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Integer id) {
+    @Operation(summary = "Obtener usuario por id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Encontrado",
+                            content = @Content(schema = @Schema(implementation = User.class))),
+                    @ApiResponse(responseCode = "404", description = "No encontrado")
+            })
+    public ResponseEntity<?> getUserById(
+            @Parameter(description = "Identificador del usuario", required = true)
+            @PathVariable Integer id) {
         Optional<User> usuarioOptional = service.byId(id);
 
         if(usuarioOptional.isPresent()) {
@@ -43,6 +59,12 @@ public class UserController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Registrar usuario",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Creado",
+                            content = @Content(schema = @Schema(implementation = User.class))),
+                    @ApiResponse(responseCode = "400", description = "Validación fallida")
+            })
     public ResponseEntity<?> createUser(@Valid @RequestBody User user,
                                         BindingResult result) {
         if (!user.getUserEmail().isEmpty() &&
@@ -65,6 +87,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar usuario")
     public ResponseEntity<?> updateUser(@Valid @RequestBody User user,
                                         BindingResult result,
                                         @PathVariable Integer id) {
@@ -102,6 +125,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar usuario")
     public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
         Optional<User> usuarioOptional = service.byId(id);
         if (usuarioOptional.isPresent()) {
@@ -121,4 +145,3 @@ public class UserController {
         return ResponseEntity.badRequest().body(errores);
     }
 }
-

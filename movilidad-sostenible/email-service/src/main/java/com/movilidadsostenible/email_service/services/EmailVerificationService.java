@@ -13,4 +13,5 @@ public interface EmailVerificationService {
 
     void processEmailVerification(UserDTO user);
     boolean verifyOtp(Integer userCc, String otp);
+    EmailVerification resendOtp(Integer userCc);
 }

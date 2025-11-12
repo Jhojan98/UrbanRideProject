@@ -136,7 +136,6 @@ services:
 
   gateway-server:
     container_name: gateway-server
-    image: seanbolivar2002/gateway-server:latest
     build:
       context: ./
       dockerfile: ./gateway-server/Dockerfile
@@ -148,6 +147,50 @@ services:
       - movilidad-sostenible-network
     depends_on:
       - postgres17
+    restart: always
+
+  estaciones-service:
+    container_name: estaciones-service
+    build:
+      context: ./
+      dockerfile: ./estaciones-service/Dockerfile
+    ports:
+      - "8005:8005"
+    environment:
+      PORT: 8005
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SASA
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
+    restart: always
+
+  ciudad-service:
+    container_name: ciudad-service
+    build:
+      context: ./
+      dockerfile: ./ciudad-service/Dockerfile
+    ports:
+      - "8006:8006"
+    environment:
+      PORT: 8006
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SASA
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
     restart: always
 
 volumes:

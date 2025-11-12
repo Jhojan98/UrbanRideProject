@@ -2,6 +2,12 @@ package com.movilidadsostenible.bicis_service.controllers;
 
 import com.movilidadsostenible.bicis_service.entity.Bicycle;
 import com.movilidadsostenible.bicis_service.services.BicycleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,19 +21,29 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
+@Tag(name = "Bicicletas", description = "Operaciones CRUD para bicicletas")
 public class BicicletaController {
 
     @Autowired
     private BicycleService service;
 
     @GetMapping
+    @Operation(summary = "Listar bicicletas", description = "Obtiene el listado completo de bicicletas")
     public ResponseEntity<List<Bicycle>> listBicycles() {
         List<Bicycle> bicicletas = service.listBicycle();
         return ResponseEntity.ok(bicicletas);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBicycleByid(@PathVariable Integer id) {
+    @Operation(summary = "Obtener bicicleta por id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Bicicleta encontrada",
+                            content = @Content(schema = @Schema(implementation = Bicycle.class))),
+                    @ApiResponse(responseCode = "404", description = "No encontrada")
+            })
+    public ResponseEntity<?> getBicycleByid(
+            @Parameter(description = "Identificador de la bicicleta", required = true)
+            @PathVariable Integer id) {
         Optional<Bicycle> o = service.byId(id);
         if (o.isPresent()) {
             return ResponseEntity.ok(o.get());
@@ -40,6 +56,12 @@ public class BicicletaController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Crear bicicleta",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Creada",
+                            content = @Content(schema = @Schema(implementation = Bicycle.class))),
+                    @ApiResponse(responseCode = "400", description = "Validación fallida")
+            })
     public ResponseEntity<?> createBicycle(@Valid @RequestBody Bicycle bicycle,
                                            BindingResult result) {
         if (result.hasErrors()) {
@@ -49,6 +71,7 @@ public class BicicletaController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar bicicleta")
     public ResponseEntity<?> updateBicycle(@Valid @RequestBody Bicycle bicycle,
                                            BindingResult result,
                                            @PathVariable Integer id) {
@@ -70,6 +93,7 @@ public class BicicletaController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar bicicleta")
     public ResponseEntity<?> deleteBicycle(@PathVariable Integer id) {
         Optional<Bicycle> o = service.byId(id);
         if (o.isPresent()) {

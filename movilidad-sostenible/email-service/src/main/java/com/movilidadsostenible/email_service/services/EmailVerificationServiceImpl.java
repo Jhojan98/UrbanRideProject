@@ -95,5 +95,32 @@ public class EmailVerificationServiceImpl implements EmailVerificationService{
     public void delete(Integer idEmailVerification) {
         verificationRepository.deleteById(idEmailVerification);
     }
-}
 
+    @Override
+    public EmailVerification resendOtp(Integer userCc) {
+        Optional<EmailVerification> currentOpt = verificationRepository.findTopByUserCcOrderByCreatedAtDesc(userCc);
+        if (currentOpt.isEmpty()) {
+            throw new IllegalArgumentException("No existe registro de verificación para el usuario: " + userCc);
+        }
+        EmailVerification current = currentOpt.get();
+        // Marcar el anterior como consumido (invalidado)
+        if (!current.isConsumed()) {
+            current.setConsumed(true);
+            verificationRepository.save(current);
+        }
+        // Generar nuevo OTP
+        String otp = otpService.generateOtp();
+        EmailVerification nuevo = new EmailVerification();
+        nuevo.setUserCc(current.getUserCc());
+        nuevo.setUserEmail(current.getUserEmail());
+        nuevo.setOtpHash(otpService.hashOtp(otp));
+        nuevo.setCreatedAt(LocalDateTime.now());
+        nuevo.setExpiresAt(LocalDateTime.now().plus(10, ChronoUnit.MINUTES));
+        nuevo.setConsumed(false);
+        verificationRepository.save(nuevo);
+
+        String verificationLink = "http://localhost:8004/verify?userCc=" + userCc + "&otp=" + otp;
+        emailSenderService.sendVerificationEmail(current.getUserEmail(), verificationLink);
+        return nuevo;
+    }
+}
