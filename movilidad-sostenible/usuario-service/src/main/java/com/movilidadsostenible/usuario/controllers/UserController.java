@@ -136,6 +136,39 @@ public class UserController {
         }
     }
 
+    @PostMapping("/{userCc}/verification/resend")
+    @Operation(summary = "Reenviar código de verificación", description = "Genera y envía nuevamente el código de verificación al correo del usuario.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OTP reenviado", content = @Content(schema = @Schema(implementation = Map.class))),
+                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
+                    @ApiResponse(responseCode = "409", description = "Usuario ya verificado")
+            })
+    public ResponseEntity<?> resendVerification(
+            @Parameter(description = "Documento del usuario", required = true)
+            @PathVariable Integer userCc) {
+        Optional<User> usuarioOptional = service.byId(userCc);
+        if (usuarioOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("resent", false, "message", "Usuario no encontrado"));
+        }
+        User usuario = usuarioOptional.get();
+        if (Boolean.TRUE.equals(usuario.getIsVerified())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("resent", false, "message", "El usuario ya está verificado"));
+        }
+        // Publicar nuevamente el mensaje al email-service para regenerar OTP
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUserCc(usuario.getUserCc());
+        userDTO.setUserEmail(usuario.getUserEmail());
+        userDTO.setVerified(false); // sigue sin verificar
+        publisher.sendJsonMessage(userDTO);
+        return ResponseEntity.ok(Map.of(
+                "resent", true,
+                "message", "Se solicitó el reenvío del código de verificación",
+                "userCc", usuario.getUserCc()
+        ));
+    }
+
 
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {
         Map<String,String> errores = new HashMap<>();

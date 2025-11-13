@@ -62,7 +62,7 @@ public class EmailVerificationController {
 
             UserDTO user = new UserDTO();
             user.setUserCc(emailVerificationTemp.getUserCc());
-            user.setUserEmail(emailVerificationTemp.getUserEmail());
+            user.setUserEmail("");
             user.setVerified(true);
             publisher.sendJsonMessage(user);
         }
@@ -72,39 +72,5 @@ public class EmailVerificationController {
                 "message", "Correo verificado exitosamente",
                 "userCc", userCc
         ));
-    }
-
-    @PostMapping("/verify/resend")
-    @Operation(summary = "Reenviar código de verificación",
-            description = "Genera y envía un nuevo código OTP al correo registrado del usuario.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OTP reenviado",
-                            content = @Content(schema = @Schema(implementation = Map.class))),
-                    @ApiResponse(responseCode = "404", description = "Usuario no tiene verificación pendiente")
-            })
-    public ResponseEntity<?> resendOtp(
-            @Parameter(description = "Documento del usuario", required = true)
-            @RequestParam("userCc") Integer userCc) {
-        try {
-            var nuevo = emailVerificationService.resendOtp(userCc);
-            return ResponseEntity.ok(Map.of(
-                    "resent", true,
-                    "message", "Se envió un nuevo código de verificación al correo",
-                    "userCc", userCc,
-                    "expiresAt", String.valueOf(nuevo.getExpiresAt())
-            ));
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of(
-                            "resent", false,
-                            "message", ex.getMessage()
-                    ));
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of(
-                            "resent", false,
-                            "message", "Error al reenviar OTP: " + ex.getMessage()
-                    ));
-        }
     }
 }
