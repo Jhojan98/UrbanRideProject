@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: postgres17
+  name: postgres17
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres17
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: postgres17
+    spec:
+      containers:
+      - image: postgres:17-alpine
+        name: postgres
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "SASA"
+        - name: POSTGRES_DB
+          value: "movilidad_sostenible"
+

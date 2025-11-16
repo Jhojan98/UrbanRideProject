@@ -10,7 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./BD/init-db:/docker-entrypoint-initdb.d # Mount initialization scripts
+      - ./BD/v2-db:/docker-entrypoint-initdb.d # Mount initialization scripts
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -37,32 +37,22 @@ services:
     container_name: gateway-service
     environment:
       JWT_SECRET: ${JWT_SECRET}
-      AUTH_BASE_URL: ${AUTH_BASE_URL}
-      RABBITMQ_URL: ${RABBITMQ_URL}
-      BICYCLE_SERVICE_URL: ${BICYCLE_SERVICE_URL}
+      AUTH_BASE_URL: http://auth-service:5000
+      USERS_SERVICE_URL: http://users-service:5003
+      RABBITMQ_URL: some-rabbit
+      BICYCLE_SERVICE_URL: http://bicycle-service:5002
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     ports:
       - "5001:5001"
     volumes:
       - ./gateway:/app
+      - ./secrets/jwt_public.pem:/run/secrets/jwt_public.pem:ro
     depends_on:
       rabbitmq:
         condition: service_healthy
       postgres-db:
         condition: service_started
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: ./frontend/client
-    container_name: frontend
-    environment:
-      NODE_ENV: production
-    ports:
-      - "8080:80"
-    depends_on:
-      - gateway
     restart: unless-stopped
 
   auth-service:
@@ -72,14 +62,14 @@ services:
     environment:
       POSTGRES_HOST: postgres-db
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${AUTH_DB_USER}
-      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
-      DATABASE_URL: postgresql+psycopg://${AUTH_DB_USER}:${AUTH_DB_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
-      DB_SCHEMA: auth
-      RABBITMQ_HOST: ${RABBITMQ_URL}
-      JWT_SECRET: ${JWT_SECRET}
+      POSTGRES_USER: ${VERIFICATION_DB_USER}
+      POSTGRES_PASSWORD: ${VERIFICATION_DB_PASSWORD}
+      DATABASE_URL: postgresql+psycopg://${VERIFICATION_DB_USER}:${VERIFICATION_DB_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
+      DB_SCHEMA: public
+      RABBITMQ_HOST: some-rabbit
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       postgres-db:
         condition: service_started
@@ -89,7 +79,9 @@ services:
       - "5000:5000"
     volumes:
       - ./microservices/auth:/app
-    command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 5000 --reload"
+      - ./secrets/jwt_private.pem:/run/secrets/jwt_private.pem:ro
+      - ./secrets/jwt_public.pem:/run/secrets/jwt_public.pem:ro
+    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 5000 --reload"
     restart: unless-stopped
 
   notification-service:
@@ -97,7 +89,7 @@ services:
       context: ./microservices/notification_service
     container_name: notification-service
     environment:
-      RABBITMQ_URL: ${RABBITMQ_URL}
+      RABBITMQ_URL: some-rabbit
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
       GMAIL_ADDRESS: ${GMAIL_ADDRESS}
@@ -119,7 +111,7 @@ services:
       POSTGRES_USER: ${BICYCLE_DB_USER}
       POSTGRES_PASSWORD: ${BICYCLE_DB_PASSWORD}
       DATABASE_URL: postgresql+psycopg://${BICYCLE_DB_USER}:${BICYCLE_DB_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
-      DB_SCHEMA: bicycle
+      DB_SCHEMA: public
     depends_on:
       postgres-db:
         condition: service_started
@@ -129,25 +121,30 @@ services:
       - "5002:5002"
     volumes:
       - ./microservices/bicycle:/app
-    command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 5002 --reload"
+    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 5002 --reload"
     restart: unless-stopped
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: pgadmin
+  users-service:
+    build:
+      context: ./microservices/users
+    container_name: users-service
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      POSTGRES_HOST: postgres-db
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: manager_users
+      POSTGRES_PASSWORD: g_user
+      DATABASE_URL: postgresql+psycopg://manager_users:g_user@postgres-db:5432/${POSTGRES_DB}
+      DB_SCHEMA: public
     depends_on:
-      - postgres-db
+      postgres-db:
+        condition: service_started
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./microservices/users:/app
+      - ./secrets/jwt_public.pem:/run/secrets/jwt_public.pem:ro
     restart: unless-stopped
 
 volumes:
   postgres_data:
   rabbitmq_data:
-  pgadmin_data:

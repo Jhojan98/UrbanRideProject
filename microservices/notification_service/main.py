@@ -16,7 +16,7 @@ credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASS)
 def main():
     print("Starting notification service...", flush=True)
     print(f"Connecting to RabbitMQ at: {RABBITMQ_URL}", flush=True)
-
+    
     # rabbitmq connection
     connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_URL, credentials=credentials))
     channel = connection.channel()

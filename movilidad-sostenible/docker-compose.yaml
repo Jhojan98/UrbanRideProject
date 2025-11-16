@@ -1,0 +1,201 @@
+services:
+  postgres17:
+    container_name: postgres17
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SASA
+      POSTGRES_DB: movilidad_sostenible
+    ports:
+      - "5532:5432"
+    volumes:
+      - data-postgres:/var/lib/postgresql/data
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+  rabbitmq:
+    container_name: rabbitmq-server
+    image: rabbitmq:4.1.5-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+#  database-migrator:
+#    container_name: database-migrator
+#    image: seanbolivar2002/database-migrator:latest
+#    environment:
+#      DB_HOST: postgres17:5432
+#      POSTGRES_DB: movilidad_sostenible
+#      POSTGRES_USER_FLYWAY: flyway
+#      POSTGRES_PASSWORD_FLYWAY: FLYWAY_PASS
+#      FLYWAY_BASELINE: "false"
+#    networks:
+#      - movilidad-sostenible-network
+#    depends_on:
+#      - postgres17
+#    restart: "no"
+
+  eureka-server:
+    container_name: eureka-server
+    image: seanbolivar2002/eureka-server:latest
+    ports:
+      - "8761:8761"
+    environment:
+      PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+    restart: always
+
+  usuario-service:
+    container_name: usuario-service
+    image: seanbolivar2002/usuario-service:latest
+    ports:
+      - "8001:8001"
+    environment:
+      PORT: 8001
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: manager_users
+      POSTGRES_PASSWORD: g_user
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
+      - rabbitmq
+    restart: always
+
+  email-service:
+    container_name: email-service
+    image: seanbolivar2002/email-service:latest
+    ports:
+      - "8004:8004"
+    environment:
+      PORT: 8004
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: SASA
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
+      - rabbitmq
+    restart: always
+
+  bicis-service:
+    container_name: bicis-service
+    image: seanbolivar2002/bicis-service:latest
+    ports:
+      - "8002:8002"
+    environment:
+      PORT: 8002
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: manager_bicycle
+      POSTGRES_PASSWORD: g_bicy
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
+    restart: always
+
+  viaje-service:
+    container_name: viaje-service
+    image: seanbolivar2002/viaje-service:latest
+    ports:
+      - "8003:8003"
+    environment:
+      PORT: 8003
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: manager_travel
+      POSTGRES_PASSWORD: g_trav
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - usuario-service
+      - bicis-service
+      - eureka-server
+    restart: always
+
+  gateway-server:
+    container_name: gateway-server
+    image: seanbolivar2002/gateway-server:latest
+    ports:
+      - "8090:8090"
+    environment:
+      PORT: 8090
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+    restart: always
+
+  estaciones-service:
+    container_name: estaciones-service
+    image: seanbolivar2002/estaciones-service:latest
+    ports:
+      - "8005:8005"
+    environment:
+      PORT: 8005
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: manager_station
+      POSTGRES_PASSWORD: g_stat
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
+    restart: always
+
+  ciudad-service:
+    container_name: ciudad-service
+    image: seanbolivar2002/ciudad-service:latest
+    ports:
+      - "8006:8006"
+    environment:
+      PORT: 8006
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: manager_city
+      POSTGRES_PASSWORD: g_city
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
+    restart: always
+
+volumes:
+  data-postgres:
+    name: data-postgres
+
+networks:
+  movilidad-sostenible-network:
+    driver: bridge

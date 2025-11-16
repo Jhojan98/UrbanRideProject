@@ -1,0 +1,12 @@
+docker build -t usuario-service:latest . -f .\usuario-service\Dockerfile                            
+docker run -p 8001:8001 -d --rm --name usuario-service --network movilidad-sostenible usuario-service
+
+docker build -t bicis-service:latest . -f .\bicis-service\Dockerfile 
+docker run -p 8002:8002 -d --rm --name bicis-service --network movilidad-sostenible bicis-service
+
+docker build -t viaje-service:latest . -f .\viaje-service\Dockerfile 
+docker run -p 8003:8003 -d --rm --name viaje-service --network movilidad-sostenible viaje-service
+
+docker network create movilidad-sostenible
+
+docker run -p 5532:5432 --name postgres17 --network movilidad-sostenible -e POSTGRES_PASSWORD=SASA -e POSTGRES_DB=movilidad_sostenible -d -v data-postgres:/var/lib/postgresql/data --restart=always postgres:17-alpine                
