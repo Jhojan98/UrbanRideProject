@@ -25,6 +25,7 @@ logging.basicConfig(level=logging.INFO)
 # Retrieve environment variables
 JWT_SECRET = os.environ.get("JWT_SECRET")
 AUTH_BASE_URL = os.environ.get("AUTH_BASE_URL")
+USERS_SERVICE_URL = os.environ.get("USERS_SERVICE_URL")
 RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "rabbitmq")
 RABBITMQ_USER = os.environ.get("RABBITMQ_DEFAULT_USER", "guest")
 RABBITMQ_PASS = os.environ.get("RABBITMQ_DEFAULT_PASS", "guest")
@@ -93,6 +94,7 @@ async def login(user_data: UserCredentials):
                 "token_type": data.get("token_type", "bearer"),
                 "is_verified": data.get("is_verified", False),
                 "expires_in": data.get("expires_in")
+                # Agregar que se devuelva un json 
             }
         else:
             # Error normalizado
@@ -123,13 +125,16 @@ async def registeration(user_data: UserRegisteration):
             "f_user_birthdate": bd_str,
             "n_user_email": str(user_data.n_user_email),
         }
-        response = requests.post(f"{AUTH_BASE_URL}/api/users", json=payload)
+        # Forward to users-service
+        if not USERS_SERVICE_URL:
+            raise HTTPException(status_code=500, detail={"message": "USERS_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+        response = requests.post(f"{USERS_SERVICE_URL}/api/users", json=payload)
         if response.status_code in (200, 201):
             return response.json()
         else:
             raise HTTPException(status_code=response.status_code, detail=response.json())
     except requests.exceptions.ConnectionError:
-        raise HTTPException(status_code=503, detail="Authentication service is unavailable")
+        raise HTTPException(status_code=503, detail="Users service is unavailable")
 
 @app.post("/auth/generate_otp", tags=['Authentication Service'])
 async def generate_otp(user_data: GenerateOtp):
