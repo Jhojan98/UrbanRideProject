@@ -27,14 +27,27 @@ async def list_users(skip: int = 0, limit: int = 50, db: Session = Depends(get_d
 
 @app.post("/api/users", tags=['User Auth'])
 async def create_user(user: _schemas.UserCreate, db: Session = _fastapi.Depends(get_db)):
-    db_user = await _services.get_user_by_email(db=db, email=user.n_user_email)
-    if db_user:
-        raise _fastapi.HTTPException(status_code=400, detail="User with that email already exists")
-    # Check cedula uniqueness
+    # Pre-check email
+    if await _services.get_user_by_email(db=db, email=user.n_user_email):
+        raise _fastapi.HTTPException(status_code=400, detail="Email already exists")
+    # Pre-check username
+    if await _services.get_user_by_username(db=db, username=user.n_username):
+        raise _fastapi.HTTPException(status_code=400, detail="Username already exists")
+    # Pre-check cedula
     existing_cedula = db.query(_models.User).filter(_models.User.k_user_cc == user.k_user_cc).first()
     if existing_cedula:
         raise _fastapi.HTTPException(status_code=400, detail="Cedula already registered")
-    created = await _services.create_user(user=user, db=db)
+    try:
+        created = await _services.create_user(user=user, db=db)
+    except ValueError as ve:
+        mapping = {
+            'email_exists': (400, 'Email already exists'),
+            'username_exists': (400, 'Username already exists'),
+            'cedula_exists': (400, 'Cedula already registered'),
+            'integrity_error': (409, 'Unique constraint violation'),
+        }
+        status, msg = mapping.get(str(ve), (500, 'Internal error'))
+        raise _fastapi.HTTPException(status_code=status, detail=msg)
     return {"detail": "User Registered", "k_user_cc": created.k_user_cc}
 
 @app.get("/api/users/{user_id}", response_model=_schemas.UserOut)
@@ -49,7 +62,12 @@ async def update_user(user_id: int, data: _schemas.UserUpdate, db: Session = Dep
     user = await _services.get_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    updated = await _services.update_user(db, user, data)
+    try:
+        updated = await _services.update_user(db, user, data)
+    except ValueError as ve:
+        if str(ve) == 'integrity_error':
+            raise HTTPException(status_code=409, detail="Unique constraint violation")
+        raise HTTPException(status_code=500, detail="Internal error")
     return updated
 
 @app.delete("/api/users/{user_id}")

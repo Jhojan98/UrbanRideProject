@@ -5,6 +5,7 @@ import datetime as _dt
 import passlib.hash as _hash
 import os
 import database as _database
+from sqlalchemy.exc import IntegrityError
 
 # Dependency
 
@@ -28,6 +29,15 @@ async def list_users(db: _orm.Session, skip: int = 0, limit: int = 50):
     return db.query(_models.User).offset(skip).limit(limit).all()
 
 async def create_user(db: _orm.Session, user: _schemas.UserCreate):
+    # Pre-check unique constraints to fail fast
+    if await get_user_by_email(db, user.n_user_email):
+        raise ValueError('email_exists')
+    if await get_user_by_username(db, user.n_username):
+        raise ValueError('username_exists')
+    existing_cedula = db.query(_models.User).filter(_models.User.k_user_cc == user.k_user_cc).first()
+    if existing_cedula:
+        raise ValueError('cedula_exists')
+
     hashed_password = _hash.bcrypt.hash(user.password)
     db_user = _models.User(
         k_user_cc=user.k_user_cc,
@@ -44,7 +54,12 @@ async def create_user(db: _orm.Session, user: _schemas.UserCreate):
         t_is_verified=False,
     )
     db.add(db_user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # Race condition fallback
+        raise ValueError('integrity_error')
     db.refresh(db_user)
     return db_user
 
@@ -64,7 +79,11 @@ async def update_user(db: _orm.Session, user: _models.User, data: _schemas.UserU
     if getattr(data, "t_is_verified", None) is not None:
         user.t_is_verified = data.t_is_verified
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise ValueError('integrity_error')
     db.refresh(user)
     return user
 
@@ -90,6 +109,10 @@ async def mark_user_verified(db: _orm.Session, email: str):
         return None
     user.t_is_verified = True
     db.add(user)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise ValueError('integrity_error')
     db.refresh(user)
     return user
