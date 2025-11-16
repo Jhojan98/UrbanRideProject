@@ -40,7 +40,7 @@ async def create_user(db: _orm.Session, user: _schemas.UserCreate):
         f_user_birthdate=user.f_user_birthdate,
         n_user_email=user.n_user_email,
         t_subscription_type="NONE",
-        f_user_registration_date=_dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        f_user_registration_date=_dt.date.today(),
         t_is_verified=False,
     )
     db.add(db_user)

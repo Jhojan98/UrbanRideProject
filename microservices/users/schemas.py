@@ -12,7 +12,7 @@ class UserBase(BaseModel):
     f_user_birthdate: _dt.date
     n_user_email: EmailStr
     t_subscription_type: str
-    f_user_registration_date: str
+    f_user_registration_date: _dt.date
     t_is_verified: bool
 
     class Config:

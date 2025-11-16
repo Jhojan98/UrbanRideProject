@@ -1,5 +1,6 @@
 -- Roles principales 
 CREATE ROLE manager_users LOGIN PASSWORD 'g_user'; 
+CREATE ROLE manager_verification LOGIN PASSWORD 'g_verif';
 CREATE ROLE manager_bicycle LOGIN PASSWORD 'g_bicy'; 
 CREATE ROLE manager_travel LOGIN PASSWORD 'g_travel'; 
 CREATE ROLE manager_admins LOGIN PASSWORD 'g_admin';
@@ -13,12 +14,13 @@ CREATE ROLE manager_city LOGIN PASSWORD 'g_city';
 
 
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO manager_users;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO manager_verification;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO manager_bicycle;;
 
 -- Privilegios sobre tablas
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.users TO manager_users;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.users TO manager_users;
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_verification TO manager_users;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_verification TO manager_verification;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.bicycle TO manager_bicycle;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.admins TO manager_admins;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.city  TO manager_city;

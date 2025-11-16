@@ -62,9 +62,9 @@ services:
     environment:
       POSTGRES_HOST: postgres-db
       POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: manager_users
-      POSTGRES_PASSWORD: g_user
-      DATABASE_URL: postgresql+psycopg://manager_users:g_user@postgres-db:5432/${POSTGRES_DB}
+      POSTGRES_USER: ${VERIFICATION_DB_USER}
+      POSTGRES_PASSWORD: ${VERIFICATION_DB_PASSWORD}
+      DATABASE_URL: postgresql+psycopg://${VERIFICATION_DB_USER}:${VERIFICATION_DB_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
       DB_SCHEMA: public
       RABBITMQ_HOST: some-rabbit
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}

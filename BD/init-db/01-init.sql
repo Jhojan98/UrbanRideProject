@@ -55,7 +55,7 @@ CREATE TABLE administrado
 	n_segundo_apellido varchar(50) NULL,	-- Segundo apellido del administrador.
 	f_fecha_nacimiento date NOT NULL,	-- Fecha de nacimiento del administrador.
 	n_correo_electronico varchar(100) NOT NULL,	-- Correo electronico del administrador.
-	f_fecha_de_registro varchar(50) NOT NULL	-- Fecha de registro del usuario en la aplicacion.
+	f_fecha_de_registro date NOT NULL	-- Fecha de registro del usuario en la aplicacion.
 )
 ;
 
@@ -111,7 +111,7 @@ CREATE TABLE metodo_pago
 	k_id_metodo_pago varchar(10) NOT NULL,
 	t_tipo_tarjeta varchar(10) NOT NULL,
 	v_numero varchar(16) NOT NULL,
-	f_fecha_expiracion varchar(50) NOT NULL,
+	f_fecha_expiracion date NOT NULL,
 	n_nombre_titular varchar(50) NOT NULL,
 	v_saldo numeric(9) NULL,
 	k_cedula_ciudadania_usuario serial NOT NULL
@@ -143,7 +143,7 @@ CREATE TABLE usuario
 	f_fecha_nacimiento date NOT NULL,	-- Fecha de nacimiento del usuario.
 	n_correo_electronico varchar(100) NOT NULL,	-- Correo electronico del usuario.
 	t_tipo_suscripcion varchar(50) NOT NULL   DEFAULT 'NINGUNA',	-- Tipo de suscripcion del usuario.
-	f_fecha_de_registro varchar(50) NOT NULL	-- Fecha de registro del usuario en la aplicacion.
+	f_fecha_de_registro date NOT NULL	-- Fecha de registro del usuario en la aplicacion.
 )
 ;
 
@@ -218,10 +218,6 @@ ALTER TABLE metodo_pago ADD CONSTRAINT "PK_Table3"
 	PRIMARY KEY (k_id_metodo_pago,k_cedula_ciudadania_usuario)
 ;
 
-ALTER TABLE metodo_pago ADD CONSTRAINT "CHK_f_fecha_expiracion" CHECK (f_fecha_expiracion ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
-)
-;
-
 CREATE INDEX "IXFK_Metodo_pago_Usuario" ON metodo_pago (k_cedula_ciudadania_usuario ASC)
 ;
 
@@ -256,16 +252,6 @@ CREATE INDEX "IXFK_Usuario_multa_Multa" ON usuario_multa (k_id_multa ASC)
 ;
 
 CREATE INDEX "IXFK_Usuario_multa_Usuario" ON usuario_multa (k_cedula_ciudadania_usuario ASC)
-;
-
-ALTER TABLE viaje ADD CONSTRAINT "PK_viaje"
-	PRIMARY KEY (k_id_viaje)
-;
-
-CREATE INDEX "IXFK_Viaje_bicicleta" ON viaje (k_serie ASC,k_id_bicicleta ASC)
-;
-
-CREATE INDEX "IXFK_Viaje_Usuario" ON viaje (k_cedula_ciudadania_usuario ASC)
 ;
 
 /* Create Foreign Key Constraints */

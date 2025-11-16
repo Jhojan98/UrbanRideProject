@@ -14,5 +14,5 @@ class User(Base):
     f_user_birthdate = _sql.Column(_sql.Date, nullable=False)
     n_user_email = _sql.Column(_sql.String(100), unique=True, index=True, nullable=False)
     t_subscription_type = _sql.Column(_sql.String(50), default="NONE", nullable=False)
-    f_user_registration_date = _sql.Column(_sql.String(50), nullable=False)
+    f_user_registration_date = _sql.Column(_sql.Date, nullable=False)
     t_is_verified = _sql.Column(_sql.Boolean, default=False, nullable=False)

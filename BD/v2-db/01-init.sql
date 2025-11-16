@@ -58,7 +58,7 @@ CREATE TABLE admins
 	n_second_lastname varchar(50) NULL,	-- Segundo apellido del administrador.
 	f_admin_birthday date NOT NULL,	-- Fecha de nacimiento del administrador.
 	n_admin_email varchar(100) NOT NULL,	-- Correo electronico del administrador.
-	f_admin_registration_date varchar(50) NOT NULL	-- Fecha de registro del usuario en la aplicacion.
+	f_admin_registration_date date NOT NULL	-- Fecha de registro del usuario en la aplicacion.
 )
 ;
 
@@ -125,7 +125,7 @@ CREATE TABLE payment_method
 	k_id_payment_method varchar(10) NOT NULL,
 	t_card_type varchar(10) NOT NULL,
 	v_number varchar(16) NOT NULL,
-	f_expiration_date varchar(50) NOT NULL,
+	f_expiration_date date NOT NULL,
 	n_owner_name varchar(50) NOT NULL,
 	v_balance numeric(9) NULL,
 	k_user_cc integer NOT NULL -- no serial
@@ -171,7 +171,7 @@ CREATE TABLE users
 	f_user_birthdate date NOT NULL,
 	n_user_email varchar(100) NOT NULL,
 	t_subscription_type varchar(50) NOT NULL   DEFAULT 'NONE',
-	f_user_registration_date varchar(50) NOT NULL,
+	f_user_registration_date date NOT NULL,
 	t_is_verified boolean NOT NULL   DEFAULT false
 )
 ;
@@ -230,10 +230,6 @@ ALTER TABLE fine ADD CONSTRAINT "PK_Fine"
 
 ALTER TABLE payment_method ADD CONSTRAINT "PK_Payment_method"
 	PRIMARY KEY (k_id_payment_method,k_user_cc)
-;
-
-ALTER TABLE payment_method ADD CONSTRAINT "CHK_f_expiration_date" CHECK (f_expiration_date ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'
-)
 ;
 
 CREATE INDEX "IXFK_Payment_method_User" ON payment_method (k_user_cc ASC)

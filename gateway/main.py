@@ -11,6 +11,7 @@ import os
 import jwt
 import rpc_client
 import datetime as _dt
+from fastapi.middleware.cors import CORSMiddleware
 
 # Import Pydantic schemas
 from schemas import UserCredentials, UserRegisteration, GenerateOtp, VerifyOtp, BicycleBase
@@ -30,6 +31,47 @@ RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "rabbitmq")
 RABBITMQ_USER = os.environ.get("RABBITMQ_DEFAULT_USER", "guest")
 RABBITMQ_PASS = os.environ.get("RABBITMQ_DEFAULT_PASS", "guest")
 BICYCLE_SERVICE_URL = os.environ.get("BICYCLE_SERVICE_URL")
+
+# CORS configuration
+CORS_ALLOW_ORIGINS = os.environ.get("CORS_ALLOW_ORIGINS", "*")
+if CORS_ALLOW_ORIGINS.strip() == "*":
+    # Wildcard origins: no credentials allowed by spec
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+else:
+    origins = [o.strip() for o in CORS_ALLOW_ORIGINS.split(",") if o.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
+
+
+@app.middleware("http")
+async def log_raw_request(request: Request, call_next):
+    try:
+        body = await request.body()
+        logging.info(f"[raw-request] {request.method} {request.url} content-type={request.headers.get('content-type')} body={body!r}")
+    except Exception as e:
+        logging.error(f"[raw-request] failed to read body: {e}")
+
+    # Recreate request for downstream
+    async def receive():
+        return {"type": "http.request", "body": body}
+
+    request = Request(request.scope, receive)
+    response = await call_next(request)
+    return response
+security = HTTPBearer()
 
 # Optional RS256 public key support
 JWT_PUBLIC_KEY_PATH = os.environ.get("JWT_PUBLIC_KEY_PATH", "/run/secrets/jwt_public.pem")
