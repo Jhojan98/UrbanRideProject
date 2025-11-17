@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -32,44 +31,27 @@ public class EmailVerificationServiceImpl implements EmailVerificationService{
         // 2. Guardar OTP en la base
         EmailVerification ver = new EmailVerification();
         ver.setUserCc(user.getUserCc());
-        ver.setUserEmail(user.getUserEmail());
         ver.setOtpHash(otpService.hashOtp(otp));
-
-        ver.setCreatedAt(LocalDateTime.from(LocalDateTime.now()));
-        ver.setExpiresAt(LocalDateTime.from(LocalDateTime.now().plus(10, ChronoUnit.MINUTES)));
+        ver.setCreatedAt(LocalDateTime.now());
+        ver.setExpiresAt(LocalDateTime.now().plus(10, ChronoUnit.MINUTES));
+        ver.setConsumed(false);
         save(ver);
 
-        // 3. Enviar el correo
+        // 3. Enviar el correo usando el email del DTO
         String verificationLink = "http://localhost:8004/verify?userCc=" + user.getUserCc() + "&otp=" + otp;
-
-        emailSenderService.sendVerificationEmail(
-                user.getUserEmail(),
-                verificationLink
-        );
+        emailSenderService.sendVerificationEmail(user.getUserEmail(), verificationLink);
     }
 
     @Override
     public boolean verifyOtp(Integer userCc, String otp) {
-        // Buscar el registro de verificación por userId
         Optional<EmailVerification> opt = verificationRepository.findTopByUserCcOrderByCreatedAtDesc(userCc);
         if (opt.isEmpty()) return false;
-
         EmailVerification ev = opt.get();
-
-        // Revisar expiración
         if (LocalDateTime.now().isAfter(ev.getExpiresAt())) return false;
-
-        // Validar OTP
         boolean matches = otpService.verifyOtp(otp, ev.getOtpHash());
         if (!matches) return false;
-
-        // Marcar como consumido
         ev.setConsumed(true);
         verificationRepository.save(ev);
-
-        // Opcional: publicar mensaje a RabbitMQ para el microservicio Usuario
-        // messagePublisher.sendVerificationSuccess(userId, ev.getEmail());
-
         return true;
     }
 
@@ -95,5 +77,31 @@ public class EmailVerificationServiceImpl implements EmailVerificationService{
     public void delete(Integer idEmailVerification) {
         verificationRepository.deleteById(idEmailVerification);
     }
-}
 
+    @Override
+    public EmailVerification resendOtp(Integer userCc) {
+        Optional<EmailVerification> currentOpt = verificationRepository.findTopByUserCcOrderByCreatedAtDesc(userCc);
+        if (currentOpt.isEmpty()) {
+            throw new IllegalArgumentException("No existe registro de verificación para el usuario: " + userCc);
+        }
+        EmailVerification current = currentOpt.get();
+        // Invalidar OTP previo si no estaba consumido
+        if (!current.isConsumed()) {
+            current.setConsumed(true);
+            verificationRepository.save(current);
+        }
+        // Generar nuevo OTP y persistir
+        String otp = otpService.generateOtp();
+        EmailVerification nuevo = new EmailVerification();
+        nuevo.setUserCc(current.getUserCc());
+        nuevo.setOtpHash(otpService.hashOtp(otp));
+        nuevo.setCreatedAt(LocalDateTime.now());
+        nuevo.setExpiresAt(LocalDateTime.now().plus(10, ChronoUnit.MINUTES));
+        nuevo.setConsumed(false);
+        verificationRepository.save(nuevo);
+
+        // Nota: No enviamos email aquí porque la tabla no guarda el correo.
+        // El reenvío debe iniciarse desde usuario-service publicando UserDTO con el email actual.
+        return nuevo;
+    }
+}

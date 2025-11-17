@@ -4,6 +4,12 @@ import com.movilidadsostenible.usuario.models.dto.UserDTO;
 import com.movilidadsostenible.usuario.models.entity.User;
 import com.movilidadsostenible.usuario.publisher.UserPublisher;
 import com.movilidadsostenible.usuario.services.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
+@Tag(name = "Usuarios", description = "Operaciones CRUD para usuarios")
 public class UserController {
 
     @Autowired
@@ -27,12 +34,21 @@ public class UserController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar usuarios")
     public List<User> listUsers() {
         return service.listUsers();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Integer id) {
+    @Operation(summary = "Obtener usuario por id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Encontrado",
+                            content = @Content(schema = @Schema(implementation = User.class))),
+                    @ApiResponse(responseCode = "404", description = "No encontrado")
+            })
+    public ResponseEntity<?> getUserById(
+            @Parameter(description = "Identificador del usuario", required = true)
+            @PathVariable Integer id) {
         Optional<User> usuarioOptional = service.byId(id);
 
         if(usuarioOptional.isPresent()) {
@@ -43,6 +59,12 @@ public class UserController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Registrar usuario",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Creado",
+                            content = @Content(schema = @Schema(implementation = User.class))),
+                    @ApiResponse(responseCode = "400", description = "Validación fallida")
+            })
     public ResponseEntity<?> createUser(@Valid @RequestBody User user,
                                         BindingResult result) {
         if (!user.getUserEmail().isEmpty() &&
@@ -65,6 +87,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar usuario")
     public ResponseEntity<?> updateUser(@Valid @RequestBody User user,
                                         BindingResult result,
                                         @PathVariable Integer id) {
@@ -102,6 +125,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar usuario")
     public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
         Optional<User> usuarioOptional = service.byId(id);
         if (usuarioOptional.isPresent()) {
@@ -110,6 +134,39 @@ public class UserController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/{userCc}/verification/resend")
+    @Operation(summary = "Reenviar código de verificación", description = "Genera y envía nuevamente el código de verificación al correo del usuario.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OTP reenviado", content = @Content(schema = @Schema(implementation = Map.class))),
+                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
+                    @ApiResponse(responseCode = "409", description = "Usuario ya verificado")
+            })
+    public ResponseEntity<?> resendVerification(
+            @Parameter(description = "Documento del usuario", required = true)
+            @PathVariable Integer userCc) {
+        Optional<User> usuarioOptional = service.byId(userCc);
+        if (usuarioOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("resent", false, "message", "Usuario no encontrado"));
+        }
+        User usuario = usuarioOptional.get();
+        if (Boolean.TRUE.equals(usuario.getIsVerified())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("resent", false, "message", "El usuario ya está verificado"));
+        }
+        // Publicar nuevamente el mensaje al email-service para regenerar OTP
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUserCc(usuario.getUserCc());
+        userDTO.setUserEmail(usuario.getUserEmail());
+        userDTO.setVerified(false); // sigue sin verificar
+        publisher.sendJsonMessage(userDTO);
+        return ResponseEntity.ok(Map.of(
+                "resent", true,
+                "message", "Se solicitó el reenvío del código de verificación",
+                "userCc", usuario.getUserCc()
+        ));
     }
 
 
@@ -121,4 +178,3 @@ public class UserController {
         return ResponseEntity.badRequest().body(errores);
     }
 }
-

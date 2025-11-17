@@ -27,6 +27,21 @@ services:
       - movilidad-sostenible-network
     restart: always
 
+#  database-migrator:
+#    container_name: database-migrator
+#    image: seanbolivar2002/database-migrator:latest
+#    environment:
+#      DB_HOST: postgres17:5432
+#      POSTGRES_DB: movilidad_sostenible
+#      POSTGRES_USER_FLYWAY: flyway
+#      POSTGRES_PASSWORD_FLYWAY: FLYWAY_PASS
+#      FLYWAY_BASELINE: "false"
+#    networks:
+#      - movilidad-sostenible-network
+#    depends_on:
+#      - postgres17
+#    restart: "no"
+
   eureka-server:
     container_name: eureka-server
     image: seanbolivar2002/eureka-server:latest
@@ -43,17 +58,14 @@ services:
   usuario-service:
     container_name: usuario-service
     image: seanbolivar2002/usuario-service:latest
-#    build:
-#      context: ./
-#      dockerfile: ./usuario-service/Dockerfile
     ports:
       - "8001:8001"
     environment:
       PORT: 8001
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: SASA
+      POSTGRES_USER: manager_users
+      POSTGRES_PASSWORD: g_user
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: guest
@@ -69,9 +81,6 @@ services:
   email-service:
     container_name: email-service
     image: seanbolivar2002/email-service:latest
-#    build:
-#      context: ./
-#      dockerfile: ./email-service/Dockerfile
     ports:
       - "8004:8004"
     environment:
@@ -95,17 +104,14 @@ services:
   bicis-service:
     container_name: bicis-service
     image: seanbolivar2002/bicis-service:latest
-#    build:
-#      context: ./
-#      dockerfile: ./bicis-service/Dockerfile
     ports:
       - "8002:8002"
     environment:
       PORT: 8002
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: SASA
+      POSTGRES_USER: manager_bicycle
+      POSTGRES_PASSWORD: g_bicy
     networks:
       - movilidad-sostenible-network
     depends_on:
@@ -116,17 +122,14 @@ services:
   viaje-service:
     container_name: viaje-service
     image: seanbolivar2002/viaje-service:latest
-#    build:
-#      context: ./
-#      dockerfile: ./viaje-service/Dockerfile
     ports:
       - "8003:8003"
     environment:
       PORT: 8003
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: SASA
+      POSTGRES_USER: manager_travel
+      POSTGRES_PASSWORD: g_trav
     networks:
       - movilidad-sostenible-network
     depends_on:
@@ -139,9 +142,6 @@ services:
   gateway-server:
     container_name: gateway-server
     image: seanbolivar2002/gateway-server:latest
-#    build:
-#      context: ./
-#      dockerfile: ./gateway-server/Dockerfile
     ports:
       - "8090:8090"
     environment:
@@ -150,6 +150,46 @@ services:
       - movilidad-sostenible-network
     depends_on:
       - postgres17
+    restart: always
+
+  estaciones-service:
+    container_name: estaciones-service
+    image: seanbolivar2002/estaciones-service:latest
+    ports:
+      - "8005:8005"
+    environment:
+      PORT: 8005
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: manager_station
+      POSTGRES_PASSWORD: g_stat
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
+    restart: always
+
+  ciudad-service:
+    container_name: ciudad-service
+    image: seanbolivar2002/ciudad-service:latest
+    ports:
+      - "8006:8006"
+    environment:
+      PORT: 8006
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: manager_city
+      POSTGRES_PASSWORD: g_city
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      - postgres17
+      - eureka-server
     restart: always
 
 volumes:

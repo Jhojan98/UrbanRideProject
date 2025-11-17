@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/bicis-service/Dockerfile">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/bicis-service/Dockerfile" />
+              <option name="originalContent" value="FROM openjdk:26-ea-21-jdk-oraclelinux8 AS builder&#10;ARG SERVICE_NAME=bicis-service&#10;WORKDIR /app/$SERVICE_NAME&#10;&#10;COPY ./pom.xml /app&#10;COPY ./$SERVICE_NAME/.mvn ./.mvn&#10;COPY ./$SERVICE_NAME/mvnw .&#10;COPY ./$SERVICE_NAME/pom.xml .&#10;&#10;RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip &amp;&amp; rm -r ./target/&#10;&#10;COPY ./$SERVICE_NAME/src ./src&#10;&#10;RUN ./mvnw clean package -DskipTests&#10;&#10;FROM openjdk:26-ea-21-jdk-oraclelinux8&#10;&#10;WORKDIR /app&#10;RUN mkdir ./logs&#10;ARG SERVICE_NAME=bicis-service&#10;ARG TARGET_FOLDER=/app/$SERVICE_NAME/target/&#10;COPY --from=builder $TARGET_FOLDER/bicis-service-0.0.1-SNAPSHOT.jar .&#10;ARG PORT_APP=8003&#10;ENV PORT=$PORT_APP&#10;EXPOSE $PORT&#10;&#10;&#10;ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;bicis-service-0.0.1-SNAPSHOT.jar&quot;]" />
+              <option name="updatedContent" value="FROM openjdk:26-ea-21-jdk-oraclelinux8 AS builder&#10;ARG SERVICE_NAME=bicis-service&#10;WORKDIR /app/$SERVICE_NAME&#10;&#10;COPY ./pom.xml /app&#10;COPY ./$SERVICE_NAME/.mvn ./.mvn&#10;COPY ./$SERVICE_NAME/mvnw .&#10;COPY ./$SERVICE_NAME/pom.xml .&#10;&#10;RUN chmod +x mvnw &amp;&amp; sed -i 's/\r$//' mvnw&#10;&#10;RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip &amp;&amp; rm -r ./target/&#10;&#10;COPY ./$SERVICE_NAME/src ./src&#10;&#10;RUN ./mvnw clean package -DskipTests&#10;&#10;FROM openjdk:26-ea-21-jdk-oraclelinux8&#10;&#10;WORKDIR /app&#10;RUN mkdir ./logs&#10;ARG SERVICE_NAME=bicis-service&#10;ARG TARGET_FOLDER=/app/$SERVICE_NAME/target/&#10;COPY --from=builder $TARGET_FOLDER/bicis-service-0.0.1-SNAPSHOT.jar .&#10;ARG PORT_APP=8003&#10;ENV PORT=$PORT_APP&#10;EXPOSE $PORT&#10;&#10;&#10;ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;bicis-service-0.0.1-SNAPSHOT.jar&quot;]" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/email-service/Dockerfile">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/email-service/Dockerfile" />
+              <option name="originalContent" value="FROM openjdk:26-ea-21-jdk-oraclelinux8 AS builder&#10;ARG SERVICE_NAME=email-service&#10;WORKDIR /app/$SERVICE_NAME&#10;&#10;COPY ./pom.xml /app&#10;COPY ./$SERVICE_NAME/.mvn ./.mvn&#10;COPY ./$SERVICE_NAME/mvnw .&#10;COPY ./$SERVICE_NAME/pom.xml .&#10;&#10;RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip &amp;&amp; rm -r ./target/&#10;&#10;COPY ./$SERVICE_NAME/src ./src&#10;&#10;RUN ./mvnw clean package -DskipTests&#10;&#10;FROM openjdk:26-ea-21-jdk-oraclelinux8&#10;&#10;WORKDIR /app&#10;RUN mkdir ./logs&#10;ARG SERVICE_NAME=email-service&#10;ARG TARGET_FOLDER=/app/$SERVICE_NAME/target/&#10;COPY --from=builder $TARGET_FOLDER/email-service-0.0.1-SNAPSHOT.jar .&#10;ARG PORT_APP=8004&#10;ENV PORT=$PORT_APP&#10;EXPOSE $PORT&#10;&#10;ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;email-service-0.0.1-SNAPSHOT.jar&quot;]&#10;" />
+              <option name="updatedContent" value="FROM openjdk:26-ea-21-jdk-oraclelinux8 AS builder&#10;ARG SERVICE_NAME=email-service&#10;WORKDIR /app/$SERVICE_NAME&#10;&#10;COPY ./pom.xml /app&#10;COPY ./$SERVICE_NAME/.mvn ./.mvn&#10;COPY ./$SERVICE_NAME/mvnw .&#10;COPY ./$SERVICE_NAME/pom.xml .&#10;&#10;RUN chmod +x mvnw &amp;&amp; sed -i 's/\r$//' mvnw&#10;&#10;RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip &amp;&amp; rm -r ./target/&#10;&#10;COPY ./$SERVICE_NAME/src ./src&#10;&#10;RUN ./mvnw clean package -DskipTests&#10;&#10;FROM openjdk:26-ea-21-jdk-oraclelinux8&#10;&#10;WORKDIR /app&#10;RUN mkdir ./logs&#10;ARG SERVICE_NAME=email-service&#10;ARG TARGET_FOLDER=/app/$SERVICE_NAME/target/&#10;COPY --from=builder $TARGET_FOLDER/email-service-0.0.1-SNAPSHOT.jar .&#10;ARG PORT_APP=8004&#10;ENV PORT=$PORT_APP&#10;EXPOSE $PORT&#10;&#10;ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;email-service-0.0.1-SNAPSHOT.jar&quot;]" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/estaciones-service/src/main/java/com/movilidadsostenible/estaciones_service/EstacionesServiceApplication.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/estaciones-service/src/main/java/com/movilidadsostenible/estaciones_service/EstacionesServiceApplication.java" />
+              <option name="originalContent" value="package com.movilidadsostenible.estaciones_service;&#10;&#10;import org.springframework.boot.SpringApplication;&#10;import org.springframework.boot.autoconfigure.SpringBootApplication;&#10;&#10;@SpringBootApplication&#10;public class EstacionesServiceApplication {&#10;&#10;&#9;public static void main(String[] args) {&#10;&#9;&#9;SpringApplication.run(EstacionesServiceApplication.class, args);&#10;&#9;}&#10;&#10;}&#10;" />
+              <option name="updatedContent" value="package com.movilidadsostenible.estaciones_service;&#10;&#10;import org.springframework.boot.SpringApplication;&#10;import org.springframework.boot.autoconfigure.SpringBootApplication;&#10;import org.springframework.cloud.openfeign.EnableFeignClients;&#10;&#10;@SpringBootApplication&#10;@EnableFeignClients(basePackages = &quot;com.movilidadsostenible.estaciones_service.clients&quot;)&#10;public class EstacionesServiceApplication {&#10;&#10;&#9;public static void main(String[] args) {&#10;&#9;&#9;SpringApplication.run(EstacionesServiceApplication.class, args);&#10;&#9;}&#10;&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/gateway-server/Dockerfile">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/gateway-server/Dockerfile" />
+              <option name="originalContent" value="FROM openjdk:26-ea-21-jdk-oraclelinux8 AS builder&#10;ARG SERVICE_NAME=gateway-server&#10;WORKDIR /app/$SERVICE_NAME&#10;&#10;COPY ./pom.xml /app&#10;COPY ./$SERVICE_NAME/.mvn ./.mvn&#10;COPY ./$SERVICE_NAME/mvnw .&#10;COPY ./$SERVICE_NAME/pom.xml .&#10;&#10;RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip &amp;&amp; rm -r ./target/&#10;&#10;COPY ./$SERVICE_NAME/src ./src&#10;&#10;RUN ./mvnw clean package -DskipTests&#10;&#10;FROM openjdk:26-ea-21-jdk-oraclelinux8&#10;&#10;WORKDIR /app&#10;RUN mkdir ./logs&#10;ARG SERVICE_NAME=gateway-server&#10;ARG TARGET_FOLDER=/app/$SERVICE_NAME/target/&#10;COPY --from=builder $TARGET_FOLDER/gateway-server-0.0.1-SNAPSHOT.jar .&#10;ARG PORT_APP=8090&#10;ENV PORT=$PORT_APP&#10;EXPOSE $PORT&#10;&#10;&#10;ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;gateway-server-0.0.1-SNAPSHOT.jar&quot;]" />
+              <option name="updatedContent" value="FROM openjdk:26-ea-21-jdk-oraclelinux8 AS builder&#10;ARG SERVICE_NAME=gateway-server&#10;WORKDIR /app/$SERVICE_NAME&#10;&#10;COPY ./pom.xml /app&#10;COPY ./$SERVICE_NAME/.mvn ./.mvn&#10;COPY ./$SERVICE_NAME/mvnw .&#10;COPY ./$SERVICE_NAME/pom.xml .&#10;&#10;# Grant execute permission to mvnw and normalize line endings&#10;RUN chmod +x mvnw &amp;&amp; sed -i 's/\r$//' mvnw&#10;&#10;RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip &amp;&amp; rm -r ./target/&#10;&#10;COPY ./$SERVICE_NAME/src ./src&#10;&#10;RUN ./mvnw clean package -DskipTests&#10;&#10;FROM openjdk:26-ea-21-jdk-oraclelinux8&#10;&#10;WORKDIR /app&#10;RUN mkdir ./logs&#10;ARG SERVICE_NAME=gateway-server&#10;ARG TARGET_FOLDER=/app/$SERVICE_NAME/target/&#10;COPY --from=builder $TARGET_FOLDER/gateway-server-0.0.1-SNAPSHOT.jar .&#10;ARG PORT_APP=8090&#10;ENV PORT=$PORT_APP&#10;EXPOSE $PORT&#10;&#10;&#10;ENTRYPOINT [&quot;java&quot;, &quot;-jar&quot;, &quot;gateway-server-0.0.1-SNAPSHOT.jar&quot;]" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

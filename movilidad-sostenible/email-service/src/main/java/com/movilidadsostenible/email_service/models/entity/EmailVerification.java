@@ -12,17 +12,12 @@ public class EmailVerification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "k_id_email_verifiation")
+    @Column(name = "k_id_email_verification")
     private Integer idEmailVerification;
 
     @NotNull
     @Column(name = "n_otp_hash")
     private String otpHash;
-
-    @NotNull
-    @Email
-    @Column(name = "n_user_email")
-    private String userEmail;
 
     @NotNull
     @Column(name = "f_expires_at")
@@ -49,14 +44,6 @@ public class EmailVerification {
 
     public void setIdEmailVerification(Integer idEmailVerification) {
         this.idEmailVerification = idEmailVerification;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
     }
 
     public String getOtpHash() {
@@ -99,3 +86,4 @@ public class EmailVerification {
         this.userCc = userCc;
     }
 }
+

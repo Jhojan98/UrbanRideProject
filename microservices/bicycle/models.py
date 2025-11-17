@@ -1,16 +1,22 @@
 import datetime as _dt
 import sqlalchemy as _sql
 import sqlalchemy.orm as _orm
-import passlib.hash as _hash
-from database import Base , engine_2
-import database as _database
+from database import Base
 
-class Bicycle(_database.Base):
-    __tablename__ = "bicycles"
-    __table_args__ = {'schema': 'bicycle'}
-    
-    idBicileta = _sql.Column(_sql.Integer, primary_key=True, index=True)
-    serie = _sql.Column(_sql.String)
-    modelo = _sql.Column(_sql.String)
-    estado = _sql.Column(_sql.String)
+class Bicycle(Base):
+    __tablename__ = "bicycle"
+    __table_args__ = {"schema": "public"}
+
+    k_id_bicycle = _sql.Column(_sql.Integer, primary_key=True, index=True, autoincrement=True)
+    k_series = _sql.Column(_sql.Integer, primary_key=True, index=True)
+    n_model = _sql.Column(_sql.String(50), nullable=False)
+    t_padlock_status = _sql.Column(_sql.String(50), nullable=False, server_default='CLOSE')
+    f_last_update = _sql.Column(_sql.DateTime(timezone=False))
+    n_latitude = _sql.Column(_sql.Float)
+    n_length = _sql.Column(_sql.Float)
+    v_battery = _sql.Column(_sql.Numeric(5,2))
+
+    @property
+    def id(self):
+        return self.k_id_bicycle
 
