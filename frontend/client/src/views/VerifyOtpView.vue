@@ -68,19 +68,13 @@ const verifyOtp = async () => {
         return;
     }
 
-    const otpNumber = parseInt(otp.value, 10);
-    
-    if (isNaN(otpNumber)) {
+    // Validar que sea un número pero enviarlo como string
+    if (!/^\d{6}$/.test(otp.value)) {
         feedback.value = 'El OTP debe ser un número válido de 6 dígitos';
         return;
     }
 
-    if (otp.value.length !== 6) {
-        feedback.value = 'El OTP debe tener exactamente 6 dígitos';
-        return;
-    }
-
-    const res = await store.verifyOtp(email.value, otpNumber);
+    const res = await store.verifyOtp(email.value, otp.value);
     
     if (res) {
         feedback.value = '¡Verificación exitosa! Redirigiendo...';

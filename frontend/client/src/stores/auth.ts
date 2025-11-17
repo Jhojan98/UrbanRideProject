@@ -13,14 +13,30 @@ const userAuth = defineStore("auth", {
     },
     actions: {
 
-        async register(name: string, email: string, password: string, role = "user") {
+        async register(id:number, username: string, password: string, fName: string, sName:string|"", fLastName: string, sLastName: string|"", birthDate: Date, email:string) {
             const uri = `${this.baseURL}/auth/register`;
             try {
+                // Formatear fecha a YYYY-MM-DD para el backend
+                const formattedDate = birthDate.toISOString().split('T')[0];
+                
+                const payload = {
+                    k_user_cc: id,
+                    n_username: username,
+                    password: password,
+                    n_user_first_name: fName,
+                    n_user_second_name: sName || null,
+                    n_user_first_lastname: fLastName,
+                    n_user_second_lastname: sLastName || null,
+                    f_user_birthdate: formattedDate,
+                    n_user_email: email
+                };
+                
                 const res = await fetch(uri, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, role })
+                    body: JSON.stringify(payload)
                 });
+                
                 if (!res.ok) {
                     const err: unknown = await res.json().catch(() => ({}));
                     const detail = (err && typeof err === 'object') ? (err as Record<string, unknown>).detail : undefined;
@@ -57,6 +73,7 @@ const userAuth = defineStore("auth", {
                         password: password
                     })
                 });
+                
                 let json: unknown = null;
                 try {
                     json = await res.json();
@@ -78,21 +95,23 @@ const userAuth = defineStore("auth", {
                 if (!res.ok) {
                     const detail = (json && typeof json === 'object') ? (json as Record<string, unknown>).detail : undefined;
                     this.message = (typeof detail === 'string') ? detail : 'Credenciales inválidas';
-                    console.log('Login error detail:', detail);
                     this.token = null;
                     return { success: false };
                 }
 
-                // Éxito: validar estructura { token: string }
-                const token: unknown = (json && typeof json === 'object') ? (json as Record<string, unknown>).token : undefined;
-                if (typeof token !== 'string' || !token) {
+                // Éxito: validar estructura { access_token: string, token_type: string, is_verified: bool, expires_in: number }
+                const jsonObj = json as Record<string, unknown>;
+                const accessToken: unknown = jsonObj.access_token;
+                const isVerified: unknown = jsonObj.is_verified;
+                
+                if (typeof accessToken !== 'string' || !accessToken) {
                     this.message = 'Respuesta inválida del servidor';
                     this.token = null;
                     return { success: false };
                 }
 
-                this.token = token;
-                this.isVerified = true;
+                this.token = accessToken;
+                this.isVerified = typeof isVerified === 'boolean' ? isVerified : true;
                 this.pendingVerification = false;
                 this.message = 'Login exitoso';
                 return { success: true };
@@ -129,13 +148,13 @@ const userAuth = defineStore("auth", {
                 return false;
             }
         },
-        async verifyOtp(email: string, otp: number) {
+        async verifyOtp(email: string, otp: string) {
             const uri = `${this.baseURL}/auth/verify_otp`;
             try {
                 const res = await fetch(uri, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, otp })
+                    body: JSON.stringify({ email: email, otp: otp })
                 });
                 
                 let json: unknown = null;

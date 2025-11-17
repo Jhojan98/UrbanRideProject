@@ -12,6 +12,20 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./BD/v2-db:/docker-entrypoint-initdb.d # Mount initialization scripts
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres-db
+    restart: unless-stopped
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: some-rabbit
@@ -145,6 +159,17 @@ services:
       - ./secrets/jwt_public.pem:/run/secrets/jwt_public.pem:ro
     restart: unless-stopped
 
+  client-frontend:
+    build:
+      context: ./frontend/client
+    container_name: client-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - gateway
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   rabbitmq_data:
+  pgadmin_data:
