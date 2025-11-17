@@ -15,7 +15,7 @@ CREATE ROLE manager_city LOGIN PASSWORD 'g_city';
 
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO manager_users;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO manager_verification;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO manager_bicycle;;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO manager_bicycle;
 
 -- Privilegios sobre tablas
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.users TO manager_users;
