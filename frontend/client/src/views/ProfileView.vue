@@ -72,8 +72,8 @@
             </div>
           </div>
           <div class="payment-actions">
-            <button class="btn-payment">Gestionar métodos de pago</button>
-            <button class="btn-add-balance">Añadir saldo</button>
+            <button class="btn-payment" @click="managePayMethod">Gestionar métodos de pago</button>
+            <button class="btn-add-balance" @click="addBalance">Añadir saldo</button>
           </div>
         </div>
       </section>
@@ -83,7 +83,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-
+import { useRouter } from 'vue-router';
+const router = useRouter();
 interface Trip {
   id: number;
   route: string;
@@ -93,6 +94,12 @@ interface Trip {
   status: string;
 }
 
+const managePayMethod = () => {
+  router.push({ name: 'payment-methods' });
+};
+const addBalance = () => {
+  router.push({ name: 'add-balance' });
+};
 const trips = ref<Trip[]>([
   {
     id: 1,
