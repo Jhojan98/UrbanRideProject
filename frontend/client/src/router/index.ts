@@ -62,7 +62,29 @@ const routes: Array<RouteRecordRaw> = [
     name: 'plan-your-trip',
     component: ReservationView,
     meta:{ requireAuth: true, layout: 'main' }
+  },
+
+  {
+    path: '/destination',
+    name: 'destination',
+    component: () => import('@/components/DestinationMapComponent.vue'),
+    meta: {requireAuth: false, layout: 'main'}
+  },
+  {
+    path: '/payment', 
+    name: 'payment-methods',
+    component: () => import('@/components/PaymentMethodsComponent.vue'),
+    meta: {requireAuth: false, layout: 'main'}
+
+  },
+  {
+    path: '/report-problem',
+    name: 'report-problem',
+    component: () => import('@/components/ReportProblemComponent.vue'),
+    meta: {requireAuth: false, layout: 'main'}
+
   }
+  
 
 
 ]
