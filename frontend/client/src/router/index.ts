@@ -6,6 +6,9 @@ import VerifyOtpView from '@/views/VerifyOtpView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ReservationView from '@/views/ReservationView.vue'
 import BalanceComponent from '@/components/BalanceComponent.vue'
+import PaymentMethodsComponent from '@/components/PaymentMethodsComponent.vue'
+import DestinationMapComponent from '@/components/DestinationMapComponent.vue'
+import ReportProblemComponent from '@/components/ReportProblemComponent.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -62,7 +65,29 @@ const routes: Array<RouteRecordRaw> = [
     name: 'plan-your-trip',
     component: ReservationView,
     meta:{ requireAuth: true, layout: 'main' }
+  },
+
+  {
+    path: '/destination',
+    name: 'destination',
+    component: DestinationMapComponent,
+    meta: {requireAuth: false, layout: 'main'}
+  },
+  {
+    path: '/payment',
+    name: 'payment-methods',
+    component: PaymentMethodsComponent,
+    meta: {requireAuth: false, layout: 'main'}
+
+  },
+  {
+    path: '/report-problem',
+    name: 'report-problem',
+    component: ReportProblemComponent,
+    meta: {requireAuth: false, layout: 'main'}
+
   }
+  
 
 
 ]

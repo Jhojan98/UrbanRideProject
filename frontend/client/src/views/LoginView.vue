@@ -54,7 +54,7 @@ const logUser = async () => {
         // Login exitoso
         feedback.value = 'Login exitoso. Redirigiendo...';
         setTimeout(() => {
-            router.push('/reservation');
+            router.push({name: "reservation"});
         }, 1500);
     } else {
         // Error en login
