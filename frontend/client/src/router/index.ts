@@ -74,7 +74,7 @@ const routes: Array<RouteRecordRaw> = [
     meta: {requireAuth: false, layout: 'main'}
   },
   {
-    path: '/payment', 
+    path: '/payment',
     name: 'payment-methods',
     component: PaymentMethodsComponent,
     meta: {requireAuth: false, layout: 'main'}
