@@ -1,10 +1,10 @@
 <template>
     <div class="dashboard-layout page-content">
-        <h2 class="dashboard-title">Panel de Estaciones</h2>
+        <h2 class="dashboard-title">{{$t('dashboard.stations.title')}}</h2>
         <div class="dashboard-grid">
             <div class="grid-left">
                 <StationInfo
-                    :stations="stations"
+                    :stations="stationsList"
                     @show-bikes="handleShowBikes"
                 />
                 <BikeInfo
@@ -21,70 +21,85 @@
     
 </template>
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import StationInfo from '@/components/dashboard/StationInfo.vue'
 import BikeInfo from '@/components/dashboard/BikeInfo.vue'
 import MapComponent from '@/components/dashboard/MapComponent.vue'
+import {
+    Station,
+    crearBicicleta,
+    crearEstacion,
+    bikeFlyweightFactory,
+    stationFlyweightFactory
+} from '@/patterns/flyweight'
 
-interface Bike {
-    id: string
-    condicion: 'Excelente' | 'Buena' | 'Regular' | 'Mala'
-    modelo: string
-    tipo: 'electrica' | 'mecanica'
-    bateria?: number // solo si electrica
-}
+// Datos mock usando el patrón Flyweight
+// Use an untyped array for internal storage to avoid structural mismatch with private members,
+// and expose a typed computed for components that expect Station[]
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const stations = ref<any[]>([])
+const stationsList = computed<Station[]>(() => stations.value as Station[])
 
-interface Station {
-    id: string
-    nombre: string
-    ubicacion: string
-    cctvActivo: boolean
-    botonPanicoActivo: boolean
-    iluminacionActiva: boolean
-    bicicletas: Bike[]
-}
+// Inicializar datos con el patrón Flyweight
+onMounted(() => {
+    console.log('🚀 Inicializando estaciones con patrón Flyweight...')
 
-// Datos mock; en integración real vendrán de API
-const stations = ref<Station[]>([
-    {
-        id: 'ST-001',
-        nombre: 'Estación Central',
-        ubicacion: 'Av. Principal 123',
-        cctvActivo: true,
-        botonPanicoActivo: false,
-        iluminacionActiva: true,
-        bicicletas: [
-            { id: 'B-100', condicion: 'Excelente', modelo: 'UrbanX', tipo: 'electrica', bateria: 87 },
-            { id: 'B-101', condicion: 'Buena', modelo: 'UrbanLite', tipo: 'mecanica' },
-            { id: 'B-102', condicion: 'Regular', modelo: 'EcoRide', tipo: 'electrica', bateria: 55 },
-            { id: 'B-103', condicion: 'Excelente', modelo: 'EcoRide', tipo: 'mecanica' }
+    // Main Station
+    const station1 = crearEstacion(
+        'ST-001',
+        'Central Station',
+        'Main Ave 123',
+        'metro',
+        true,
+        false,
+        true,
+        [
+            crearBicicleta('B-100', 'Optimal', 'UrbanX', 'electrica', 87),
+            crearBicicleta('B-101', 'Optimal', 'UrbanLite', 'mecanica'),
+            crearBicicleta('B-102', 'Needs maintenance', 'EcoRide', 'electrica', 55),
+            crearBicicleta('B-103', 'Optimal', 'EcoRide', 'mecanica')
         ]
-    },
-    {
-        id: 'ST-002',
-        nombre: 'Parque Norte',
-        ubicacion: 'Calle Norte 45',
-        cctvActivo: true,
-        botonPanicoActivo: true,
-        iluminacionActiva: true,
-        bicicletas: [
-            { id: 'B-200', condicion: 'Buena', modelo: 'UrbanX', tipo: 'electrica', bateria: 63 },
-            { id: 'B-201', condicion: 'Excelente', modelo: 'UrbanLite', tipo: 'mecanica' }
+    )
+
+    // Secondary Station
+    const station2 = crearEstacion(
+        'ST-002',
+        'North Park',
+        'North Street 45',
+        'centro financiero',
+        true,
+        true,
+        true,
+        [
+            crearBicicleta('B-200', 'Optimal', 'UrbanX', 'electrica', 63),
+            crearBicicleta('B-201', 'Optimal', 'UrbanLite', 'mecanica')
         ]
-    },
-    {
-        id: 'ST-003',
-        nombre: 'Terminal Sur',
-        ubicacion: 'Av. Sur 800',
-        cctvActivo: false,
-        botonPanicoActivo: false,
-        iluminacionActiva: true,
-        bicicletas: []
-    }
-])
+    )
+
+    // Small Station
+    const station3 = crearEstacion(
+        'ST-003',
+        'South Terminal',
+        'South Ave 800',
+        'residencial',
+        false,
+        false,
+        true,
+        []
+    )
+
+    stations.value = [station1, station2, station3]
+
+    // Mostrar estadísticas de optimización
+    console.log('📊 Estadísticas de Flyweight:')
+    console.log(`   🚲 Flyweights de bicicletas creados: ${bikeFlyweightFactory.getFlyweightCount()}`)
+    console.log(`   🏢 Flyweights de estaciones creados: ${stationFlyweightFactory.getFlyweightCount()}`)
+    bikeFlyweightFactory.listFlyweights()
+})
 
 const selectedStationId = ref<string | null>(null)
-const selectedStation = computed(() => stations.value.find(s => s.id === selectedStationId.value) || null)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const selectedStation = computed(() => stations.value.find((s: any) => s.id === selectedStationId.value) || null)
 
 function handleShowBikes(stationId: string) {
     selectedStationId.value = stationId

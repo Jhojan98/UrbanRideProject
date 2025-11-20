@@ -3,23 +3,25 @@
         <table class="dashboard-table">
             <thead>
                 <tr>
-                    <th>Nombre</th>
-                    <th>Ubicación</th>
-                    <th>CCTV</th>
-                    <th>Iluminación</th>
-                    <th>Bicicletas (máx 15)</th>
-                    <th>Botón Pánico</th>
+                    <th>{{ t('dashboard.stations.nameC') }}</th>
+                    <th>{{ t('dashboard.stations.locationC') }}</th>
+                    <th>{{ t('dashboard.stations.CCTVC') }}</th>
+                    <th>{{ t('dashboard.stations.iluminationC') }}</th>
+                    <th>{{ t('dashboard.bikes.title').split(':')[0] }}</th>
+                    <th>{{ t('dashboard.stations.panicC') }}</th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="station in props.stations" :key="station.id">
-                    <td>{{ station.nombre }}</td>
-                    <td>{{ station.ubicacion }}</td>
+                    <td>{{ station.name }}</td>
+                    <td>{{ station.location }}</td>
                     <td>
-                        <span :class="['status-pill', station.cctvActivo ? 'on' : 'off']">{{ station.cctvActivo ? 'Activo' : 'Inactivo' }}</span>
+                        <span v-if="station.cctvActive" class="status-pill on">{{ t('dashboard.stations.statusActive', 0) }}</span>
+                        <span v-else class="status-pill off">{{ t('dashboard.stations.statusActive', 1) }}</span>
                     </td>
                     <td>
-                        <span :class="['status-pill', station.iluminacionActiva ? 'on' : 'off']">{{ station.iluminacionActiva ? 'Activa' : 'Inactiva' }}</span>
+                        <span v-if="station.lightingActive" class="status-pill on">{{ t('dashboard.stations.statusActiveF', 0) }}</span>
+                        <span v-else class="status-pill off">{{ t('dashboard.stations.statusActiveF', 1) }}</span>
                     </td>
                     <td
                         class="bike-count-cell"
@@ -27,28 +29,33 @@
                         @mouseenter="showSlots(station)"
                         @mouseleave="hideSlots"
                     >
-                        <span class="clickable">{{ station.bicicletas.length }}</span>
-                        <!-- Tooltip interno restaurado -->
+                        <span class="clickable">{{ station.getCapacityStatus() }}</span>
+                        <!-- Tooltip interno -->
                         <div
                             v-if="hoveredStation && hoveredStation.id === station.id && tooltipVisible"
                             class="slots-tooltip"
                         >
-                            <p class="tooltip-title">Slots (1-15)</p>
+                            <p class="tooltip-title"><span class="material-symbols-outlined">{{ station.getIcon() }}</span> {{ station.category }} - Slots (1-{{ station.maxCapacity }})</p>
                             <div class="slots-grid">
                                 <div
-                                    v-for="n in 15"
+                                    v-for="n in station.maxCapacity"
                                     :key="n"
-                                    :class="['slot-box', n <= station.bicicletas.length ? 'occupied' : 'empty']"
-                                    :title="n <= station.bicicletas.length ? 'Ocupado' : 'Libre'"
+                                    :class="['slot-box', n <= station.bikes.length ? 'occupied' : 'empty']"
+                                    :title="t('dashboard.stations.slotStatus', n <= station.bikes.length ? 0 : 1)"
                                 >
                                     {{ n }}
                                 </div>
                             </div>
-                            <p class="summary">Ocupados: {{ station.bicicletas.length }} | Libres: {{ 15 - station.bicicletas.length }}</p>
+                            <p class="summary">
+                                Ocupados: {{ station.bikes.length }} | 
+                                Libres: {{ station.maxCapacity - station.bikes.length }} |
+                                Disponibles: {{ station.getAvailableBikes() }}
+                            </p>
                         </div>
                     </td>
                     <td>
-                        <span :class="['status-pill', station.botonPanicoActivo ? 'on' : 'off']">{{ station.botonPanicoActivo ? 'Activo' : 'Inactivo' }}</span>
+                        <span v-if="station.panicButtonActive" class="status-pill on">{{ t('dashboard.stations.panicStatus', 0) }}</span>
+                        <span v-else class="status-pill off">{{ t('dashboard.stations.panicStatus', 1) }}</span>
                     </td>
                 </tr>
             </tbody>
@@ -57,23 +64,10 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import type { Station } from '@/patterns/flyweight'
 
-interface Bike {
-    id: string
-    condicion: string
-    modelo: string
-    tipo: 'electrica' | 'mecanica'
-    bateria?: number
-}
-interface Station {
-    id: string
-    nombre: string
-    ubicacion: string
-    cctvActivo: boolean
-    botonPanicoActivo: boolean
-    iluminacionActiva: boolean
-    bicicletas: Bike[]
-}
+const { t } = useI18n()
 
 // Declaraciones para que el analizador estático reconozca macros de Vue
 declare function defineProps<T>(): T
@@ -102,9 +96,15 @@ function hideSlots() {
 </script>
 
 <style lang="scss" scoped>
-.bike-count-cell .clickable { cursor: pointer; font-weight:600; color: var(--color-primary-light); }
+.bike-count-cell { position: relative; text-align: center; }
+.bike-count-cell .clickable { 
+  cursor: pointer; 
+  font-weight: 600; 
+  color: var(--color-primary-light);
+  display: inline-block;
+  min-width: 80px;
+}
 .bike-count-cell:hover .clickable { text-decoration: underline; }
-.bike-count-cell { position: relative; }
 .slots-tooltip {
     position: absolute;
     top: 100%;

@@ -14,8 +14,8 @@
       </nav>
 
       <div class="auth-buttons">
-
-
+        <button class="lang-switch" @click="toggleLocale">{{ currentLocaleLabel }}</button>
+        <button class="logout-btn" @click="logout">{{ t('dashboard.logout') }}</button>
         <toggle-theme />
       </div>
 
@@ -23,33 +23,30 @@
   </header>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import ToggleTheme from './ToggleTheme.vue';
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import ToggleTheme from './ToggleTheme.vue'
+import { useI18n } from 'vue-i18n'
+import useAuthStore from '@/stores/auth'
 
 
-const route = useRoute();
-const router = useRouter();
+const router = useRouter()
+const { locale, t } = useI18n({ useScope: 'global' })
+const authStore = useAuthStore()
 
+// Alternar entre idiomas español e inglés
+const toggleLocale = () => {
+  locale.value = locale.value === 'es' ? 'en' : 'es'
+}
 
-// Usar storeToRefs para mantener la reactividad del store
-
-
-// Verificar si el usuario está autenticado
-
-
-// Verificar si estamos en una ruta de autenticación (login, signup, verify-otp)
-const isAuthRoute = computed(() => {
-  const authRoutes = ['login', 'signup', 'verify-otp'];
-  return authRoutes.includes(route.name as string);
-});
+// Etiqueta del idioma actual
+const currentLocaleLabel = computed(() => (locale.value === 'es' ? 'ES' : 'EN'))
 
 // Manejar el cierre de sesión
-const logout = async () => {
-
-  router.push({ name: 'home' });
-};
+const logout = () => {
+  authStore.logout()
+  router.push({ name: 'login' })
+}
 </script>
 
 

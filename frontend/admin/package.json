@@ -9,10 +9,12 @@
   },
   "dependencies": {
     "core-js": "^3.8.3",
+    "i18n": "^0.15.3",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",
     "pinia": "^3.0.4",
     "vue": "^3.2.13",
+    "vue-i18n": "^11.1.12",
     "vue-router": "^4.0.3"
   },
   "devDependencies": {
