@@ -93,7 +93,7 @@ const onSubmit = async () => {
     if (res) {
         feedback.value = "Registro exitoso. Te enviaremos un código de verificación.";
         // Redirigir a la página de verificación OTP
-        router.push('/verify-otp');
+        router.push({ name: 'verify-otp' });
     } else {
         feedback.value = "Error en el registro";
     }

@@ -90,7 +90,7 @@ services:
       rabbitmq:
         condition: service_healthy
     ports:
-      - "5000:5000"
+      - "5004:5004"
     volumes:
       - ./microservices/auth:/app
       - ./secrets/jwt_private.pem:/run/secrets/jwt_private.pem:ro
