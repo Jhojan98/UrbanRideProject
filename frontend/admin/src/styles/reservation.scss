@@ -1,0 +1,154 @@
+.reservation {
+  min-height: calc(100vh - 140px);
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.reservation-card {
+  background: #FFFFFF;
+  padding: 3rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.reservation
+
+.timer {
+  font-size: 4rem; /* Tiempo grande y visible */
+  font-weight: bold;
+  color: #2E7D32;
+  margin-bottom: 0.5rem;
+}
+
+.timer-label {
+  color: #666;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.trip-details {
+  background-color: #f8f9fa; /* Fondo gris claro para destacar */
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  text-align: left; /* Alinea el texto a la izquierda dentro de este contenedor */
+}
+
+.trip-details h3 {
+  color: #004E61;
+  margin-bottom: 1rem;
+  text-align: center; /* Pero el título centrado */
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between; /* Etiqueta a la izquierda, valor a la derecha */
+  margin-bottom: 0.5rem;
+}
+
+.detail-label {
+  color: #666;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #004E61;
+  font-weight: bold;
+}
+
+
+.btn-confirm:hover {
+  background-color: #266629;
+}
+.butn-primary {
+  background-color: var(--color-primary-light); 
+  color: var(--color-button-text-light); 
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1rem;
+}
+
+.butn-primary:hover {
+  background-color: var(--color-surface-light); 
+}
+
+/* Estilos para botones secundarios */
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-primary-light);
+  border: 2px solid var(--color-primary-light);
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1rem;
+}
+
+html[data-theme="dark"] .butn-primary{
+  background-color: var(--color-primary-light); 
+  color: var(--color-button-text-light); 
+}
+.btn-secondary:hover {
+  background-color: #FFFFFF;
+  color: #004E61; /* Invierte colores al hover */
+}
+
+
+html[data-theme="dark"] .reservation-card {
+  background-color: var(--color-border-dark);
+  color: var(--color-text-primary-dark);
+  box-shadow: 0 4px 12px rgba(255,255,255,0.05);
+}
+
+
+
+
+
+/* === DETALLES DEL VIAJE === */
+.trip-details {
+  background: #fafafa;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+
+
+.trip-details h3 {
+  color: var(--color-primary-light);
+  margin-bottom: 0.8rem;
+  font-size: 1.2rem;
+}
+
+/* Ítems de detalle */
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.35rem 0;
+}
+
+.detail-label {
+  opacity: 0.7;
+  font-size: 0.95rem;
+}
+
+.detail-value {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Botón principal (ya tenías estilos globales) */
+.butn-primary {
+  width: 100%;
+  margin-top: 10px;
+}

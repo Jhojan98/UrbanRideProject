@@ -1,0 +1,207 @@
+
+
+@import "./global.scss";
+.home {
+  min-height: calc(100vh - 200px); /* Altura mínima menos header y footer */
+  background-color: white;
+  width: 100%;
+}
+
+html[data-theme="dark"] .home{
+  background-color: var(--color-background-dark);       /* Texto claro */
+}
+.hero {
+  color:var(--color-text-primary-light);
+  padding: 4rem 2rem;
+  margin-top: -80px;
+  padding-top: 120px;
+}
+
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+.hero-left {
+  flex: 1;
+  text-align: left;
+}
+
+.hero-right {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-img {
+  width: 100%;
+  max-width: 420px;
+  object-fit: contain;
+}
+
+.hero-title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.9; /* Texto ligeramente transparente */
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap; /* En móviles los botones se apilan */
+}
+
+
+.buttn-primary {
+  background-color: var(--color-primary-light); 
+  color: var(--color-button-text-light); 
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1rem;
+}
+
+.buttn-primary:hover {
+  background-color: var(--color-surface-light); 
+}
+
+/* Estilos para botones secundarios */
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-primary-light);
+  border: 2px solid var(--color-primary-light);
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 1rem;
+}
+
+html[data-theme="dark"] .butn-primary{
+  background-color: var(--color-primary-light); 
+  color: var(--color-button-text-light); 
+}
+.btn-secondary:hover {
+  background-color: #FFFFFF;
+  color: #004E61; /* Invierte colores al hover */
+}
+
+.benefits {
+  padding: 4rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #F7D680;
+  border-radius: 16px;
+  text-align: center;
+}
+
+html[data-theme="dark"] .benefits{
+  background-color: var(--color-border-dark);
+}
+.section-title {
+  text-align: center;
+  color:  var(--color-primary-light);
+  font-size: 2.5rem;
+  background-color: transparent;
+  
+}
+
+html[data-theme="dark"] .section-title{
+  color: var(--color-text-primary-dark);
+}
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Grid responsive */
+  gap: 2rem;
+}
+
+.benefit-card {
+  background: #FFFFFF;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra suave */
+  text-align: center;
+  transition: transform 0.3s; /* Transición para el efecto hover */
+}
+
+.benefit-card:hover {
+  transform: translateY(-5px); /* Efecto de levantar al hover */
+}
+
+.benefit-card h3 {
+  color: #2E7D32;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.benefit-card p {
+  color: #666;
+  line-height: 1.6;
+}
+
+.stations {
+  padding: 4rem 2rem;
+}
+
+.stations-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap; /* En móviles se apila */
+  gap: 1rem;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #2E7D32;
+  border: 2px solid #2E7D32;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1rem;
+}
+
+.btn-outline:hover {
+  background-color: #2E7D32;
+  color: #FFFFFF;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem; /* Título más pequeño en móviles */
+  }
+  
+  .hero-buttons {
+    flex-direction: column; /* Botones en columna en móviles */
+    align-items: center;
+  }
+  
+  .stations-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .section-title {
+    font-size: 2rem;
+  }
+}
