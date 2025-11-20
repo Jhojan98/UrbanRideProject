@@ -61,8 +61,8 @@ class RecargaSaldoRequest(BaseModel):
     
     @validator("monto")
     def validar_monto(cls, v):
-        if v < 1000:
-            raise ValueError("El monto mínimo de recarga es $1,000")
+        if v < 2000:
+            raise ValueError("El monto mínimo de recarga es $2,000")
         if v > 5000000:
             raise ValueError("El monto máximo de recarga es $5,000,000")
         return v
@@ -88,3 +88,32 @@ class ConsultaSaldoResponse(BaseModel):
     n_marca: Optional[str]
     n_numero_tarjeta: str
     ultima_actualizacion: Optional[datetime]
+
+
+class StripePaymentIntentRequest(BaseModel):
+    k_metodo_pago: int
+    monto: int
+    moneda: Optional[str] = None
+    tipo_operacion: Optional[str] = None
+    k_series: Optional[int] = None
+    k_id_bicycle: Optional[int] = None
+
+
+class StripePaymentIntentResponse(BaseModel):
+    payment_intent_id: str
+    client_secret: str
+    status: str
+    currency: str
+    amount: int
+    k_metodo_pago: int
+    k_usuario_cc: int
+
+
+class StripeSetupIntentRequest(BaseModel):
+    k_usuario_cc: int
+
+
+class StripeSetupIntentResponse(BaseModel):
+    setup_intent_id: str
+    client_secret: str
+    customer_id: str

@@ -25,3 +25,13 @@ class MetodoPago(Base):
     n_direccion_facturacion = Column("n_billing_address", String(255))
     n_codigo_postal = Column("n_postal_code", String(20))
     v_saldo = Column("v_balance", BigInteger, default=0)  # Available balance (in cents)
+
+
+class StripeCustomer(Base):
+    __tablename__ = "stripe_customer"
+    __table_args__ = {"schema": "public"}
+
+    # Mapea el atributo k_usuario_cc a la columna k_user_cc en la BD
+    k_usuario_cc = Column("k_user_cc", Integer, primary_key=True, autoincrement=False)
+    stripe_customer_id = Column(String(255), nullable=False)
+    f_creacion = Column(TIMESTAMP(timezone=False), server_default=func.now())
