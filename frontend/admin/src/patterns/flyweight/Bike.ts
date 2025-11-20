@@ -10,12 +10,12 @@ export class Bike {
     ) {}
 
     // Acceso a propiedades del flyweight
-    get modelo(): string {
+    get model(): string {
         return this.flyweight.modelo
     }
 
-    get tipo(): 'electrica' | 'mecanica' {
-        return this.flyweight.tipo
+    get type(): 'electric' | 'mechanical' {
+        return this.flyweight.tipo === 'electrica' ? 'electric' : 'mechanical'
     }
 
     getIcon(): string {
@@ -24,17 +24,17 @@ export class Bike {
 
     // Métodos que operan con estado extrínseco e intrínseco
     getStatus(): string {
-        const batteryStatus = this.tipo === 'electrica' 
-            ? ` (Batería: ${this.battery}%)` 
+        const batteryStatus = this.type === 'electric' 
+            ? ` (Battery: ${this.battery}%)` 
             : ''
-        return `${this.modelo} ${this.getIcon()} - ${this.condition}${batteryStatus}`
+        return `${this.model} ${this.getIcon()} - ${this.condition}${batteryStatus}`
     }
 
     needsMaintenance(): boolean {
         if (this.condition === 'Needs maintenance') {
             return true
         }
-        if (this.tipo === 'electrica' && this.battery !== undefined && this.battery < 30) {
+        if (this.type === 'electric' && this.battery !== undefined && this.battery < 30) {
             return true
         }
         return false
@@ -44,8 +44,8 @@ export class Bike {
         return {
             id: this.id,
             condition: this.condition,
-            modelo: this.modelo,
-            tipo: this.tipo,
+            model: this.model,
+            type: this.type,
             battery: this.battery
         }
     }

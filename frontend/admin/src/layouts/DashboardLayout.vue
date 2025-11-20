@@ -27,8 +27,8 @@ import BikeInfo from '@/components/dashboard/BikeInfo.vue'
 import MapComponent from '@/components/dashboard/MapComponent.vue'
 import {
     Station,
-    crearBicicleta,
-    crearEstacion,
+    createBike,
+    createStation,
     bikeFlyweightFactory,
     stationFlyweightFactory
 } from '@/patterns/flyweight'
@@ -45,7 +45,7 @@ onMounted(() => {
     console.log('🚀 Inicializando estaciones con patrón Flyweight...')
 
     // Main Station
-    const station1 = crearEstacion(
+    const station1 = createStation(
         'ST-001',
         'Central Station',
         'Main Ave 123',
@@ -54,15 +54,15 @@ onMounted(() => {
         false,
         true,
         [
-            crearBicicleta('B-100', 'Optimal', 'UrbanX', 'electrica', 87),
-            crearBicicleta('B-101', 'Optimal', 'UrbanLite', 'mecanica'),
-            crearBicicleta('B-102', 'Needs maintenance', 'EcoRide', 'electrica', 55),
-            crearBicicleta('B-103', 'Optimal', 'EcoRide', 'mecanica')
+            createBike('B-100', 'Optimal', 'UrbanX', 'electrica', 87),
+            createBike('B-101', 'Optimal', 'UrbanLite', 'mecanica'),
+            createBike('B-102', 'Needs maintenance', 'EcoRide', 'electrica', 55),
+            createBike('B-103', 'Optimal', 'EcoRide', 'mecanica')
         ]
     )
 
     // Secondary Station
-    const station2 = crearEstacion(
+    const station2 = createStation(
         'ST-002',
         'North Park',
         'North Street 45',
@@ -71,13 +71,13 @@ onMounted(() => {
         true,
         true,
         [
-            crearBicicleta('B-200', 'Optimal', 'UrbanX', 'electrica', 63),
-            crearBicicleta('B-201', 'Optimal', 'UrbanLite', 'mecanica')
+            createBike('B-200', 'Optimal', 'UrbanX', 'electrica', 63),
+            createBike('B-201', 'Optimal', 'UrbanLite', 'mecanica')
         ]
     )
 
     // Small Station
-    const station3 = crearEstacion(
+    const station3 = createStation(
         'ST-003',
         'South Terminal',
         'South Ave 800',

@@ -438,8 +438,8 @@ i {
 .status-pill.off { background: var(--color-red-alert); color: #fff; }
 .status-pill.alert { background: var(--color-red-alert); color:#fff; }
 .type-pill { min-width: 110px; }
-.type-pill.electrica { background: #6366f1; color: #fff; }
-.type-pill.mecanica { background: #0ea5e9; color: #fff; }
+.type-pill.electric { background: #6366f1; color: #fff; }
+.type-pill.mechanical { background: #0ea5e9; color: #fff; }
 
 /* Responsividad para tablas */
 @media (max-width: 1200px) {

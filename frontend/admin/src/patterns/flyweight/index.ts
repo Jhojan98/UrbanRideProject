@@ -12,8 +12,8 @@ export { StationFlyweight, StationFlyweightFactory } from './StationFlyweight'
 export const bikeFlyweightFactory = new BikeFlyweightFactory()
 export const stationFlyweightFactory = new StationFlyweightFactory()
 
-// Helper functions para crear bicicletas y estaciones
-export function crearBicicleta(
+// Helper functions to create bikes and stations
+export function createBike(
     id: string,
     condition: 'Optimal' | 'Needs maintenance',
     modelo: string,
@@ -24,7 +24,7 @@ export function crearBicicleta(
     return new Bike(id, condition, battery, flyweight)
 }
 
-export function crearEstacion(
+export function createStation(
     id: string,
     name: string,
     location: string,
