@@ -38,6 +38,11 @@
   margin-bottom: 1rem;
 }
 
+html[data-theme="dark"] .table-container{
+  background-color: var(--color-text-secondary-dark);
+  color: black;
+}
+
 .trips-table {
   width: 100%;
   border-collapse: collapse; /* Elimina espacio entre bordes */

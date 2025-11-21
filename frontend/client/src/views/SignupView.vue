@@ -3,7 +3,7 @@
         <div class="form-container">
             <img src="@/assets/ECORIDE.webp" alt="Logo" class="form-logo" />
             <h2 class="form-title">Crear Cuenta</h2>
-            <form @submit.prevent="onSubmit">
+            <form @submit.prevent="onSubmit" class="form-grid">
                 <div class="form-group">
                     <label for="id"><i class="fas fa-id-card"></i> Identificación</label>
                     <input id="id" type="text" inputmode="numeric" pattern="[0-9]*" v-model.number="id" placeholder="Número de identificación" required />
