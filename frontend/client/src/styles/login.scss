@@ -11,7 +11,7 @@
 }
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 2 columnas */
+  grid-template-columns: 2fr 2fr; /* 2 columnas */
   gap: 20px; /* separación entre campos */
 }
 
@@ -50,7 +50,7 @@ h3 {
 
 .form-container {
   width: 80%;            
-  max-width: 500px;      
+  max-width: 650px;      
   min-width: 320px;      
   background: #fff;
   padding: 2rem;
