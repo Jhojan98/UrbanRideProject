@@ -17,9 +17,9 @@ RUN pip install -r requirements.txt
 
 COPY app ./app
 
-EXPOSE 5003
+EXPOSE 5006
 
 # Environment variables are passed from docker-compose.yml
 # No default sensitive values in Dockerfile
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5003"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "5006"]
