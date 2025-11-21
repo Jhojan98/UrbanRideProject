@@ -1,4 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import json
+import stripe
+import requests
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from .database import get_db
 from . import models, schemas
@@ -13,7 +17,72 @@ from .messaging import (
     publish_saldo_recargado
 )
 
+
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_DEFAULT_CURRENCY = os.getenv("STRIPE_DEFAULT_CURRENCY", "cop")
+USERS_SERVICE_URL = os.getenv("USERS_SERVICE_URL", "http://users-service:5003")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+if STRIPE_SECRET_KEY:
+    stripe.api_key = STRIPE_SECRET_KEY
+
 router = APIRouter(prefix="/api/metodos-pago", tags=["metodos-pago"])
+
+
+def get_or_create_stripe_customer(k_usuario_cc: int, db: Session) -> str:
+    """Obtiene o crea un Stripe Customer vinculado al usuario k_usuario_cc."""
+    # 1. Buscar en tabla local
+    existing = db.get(models.StripeCustomer, k_usuario_cc)
+    if existing:
+        return existing.stripe_customer_id
+
+    # 2. Consultar datos del usuario en users-service
+    if not USERS_SERVICE_URL:
+        raise HTTPException(status_code=500, detail="USERS_SERVICE_URL not configured")
+
+    try:
+        resp = requests.get(f"{USERS_SERVICE_URL}/api/users/{k_usuario_cc}")
+    except requests.exceptions.RequestException:
+        raise HTTPException(status_code=503, detail="Users service is unavailable")
+
+    if resp.status_code != 200:
+        try:
+            data = resp.json()
+            detail = data.get("detail", data)
+        except ValueError:
+            detail = resp.text or "Error fetching user data"
+        raise HTTPException(status_code=resp.status_code, detail=detail)
+
+    user = resp.json()
+    email = user.get("n_user_email")
+    full_name = " ".join(filter(None, [
+        user.get("n_user_first_name"),
+        user.get("n_user_second_name"),
+        user.get("n_user_first_lastname"),
+        user.get("n_user_second_lastname"),
+    ])).strip() or None
+
+    # 3. Crear Customer en Stripe
+    try:
+        customer = stripe.Customer.create(
+            email=email,
+            name=full_name,
+            metadata={
+                "k_usuario_cc": str(k_usuario_cc),
+            },
+        )
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+
+    # 4. Guardar en BD local
+    sc = models.StripeCustomer(
+        k_usuario_cc=k_usuario_cc,
+        stripe_customer_id=customer["id"],
+    )
+    db.add(sc)
+    db.commit()
+    db.refresh(sc)
+    return sc.stripe_customer_id
 
 @router.get("/usuario/{usuario_cc}", response_model=list[schemas.MetodoPagoOut])
 def listar(usuario_cc: int, db: Session = Depends(get_db)):
@@ -201,6 +270,38 @@ async def recargar_saldo(data: schemas.RecargaSaldoRequest, db: Session = Depend
     # Guardar saldo anterior
     saldo_anterior = mp.v_saldo or 0
     
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe no está configurado en el servidor")
+
+    currency = STRIPE_DEFAULT_CURRENCY or "cop"
+    stripe_amount = data.monto * 100
+
+    customer_id = None
+    try:
+        customer_id = get_or_create_stripe_customer(mp.k_usuario_cc, db)
+    except HTTPException:
+        raise
+    except Exception:
+        customer_id = None
+
+    stripe_kwargs = {
+        "amount": stripe_amount,
+        "currency": currency,
+        "automatic_payment_methods": {"enabled": True},
+        "metadata": {
+            "k_metodo_pago": str(mp.k_metodo_pago),
+            "k_usuario_cc": str(mp.k_usuario_cc),
+            "tipo_operacion": "recarga_saldo",
+        },
+    }
+    if customer_id:
+        stripe_kwargs["customer"] = customer_id
+
+    try:
+        intent = stripe.PaymentIntent.create(**stripe_kwargs)
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+
     # Simular proceso de recarga (MOCK)
     # En producción aquí se integraría con pasarela de pago real
     nuevo_saldo = saldo_anterior + data.monto
@@ -342,3 +443,204 @@ def descontar_saldo(metodo_pago_id: int, data: dict, db: Session = Depends(get_d
         "descripcion": descripcion,
         "mensaje": f"Descuento exitoso de ${monto:,}. Nuevo saldo: ${nuevo_saldo:,}"
     }
+
+
+@router.post("/stripe/payment-intent", response_model=schemas.StripePaymentIntentResponse, status_code=200)
+def crear_payment_intent(data: schemas.StripePaymentIntentRequest, db: Session = Depends(get_db)):
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe no esta configurado en el servidor")
+
+    mp = db.get(models.MetodoPago, data.k_metodo_pago)
+    if not mp:
+        raise HTTPException(status_code=404, detail="Metodo de pago no encontrado")
+
+    if not mp.b_activo:
+        raise HTTPException(status_code=400, detail="El metodo de pago esta inactivo")
+
+    currency = (data.moneda or STRIPE_DEFAULT_CURRENCY or "cop").lower()
+    stripe_amount = data.monto * 100
+    tipo_operacion = data.tipo_operacion or "payment_intent"
+
+    metadata = {
+        "k_metodo_pago": str(mp.k_metodo_pago),
+        "k_usuario_cc": str(mp.k_usuario_cc),
+        "tipo_operacion": tipo_operacion,
+    }
+    if data.k_series is not None:
+        metadata["k_series"] = str(data.k_series)
+    if data.k_id_bicycle is not None:
+        metadata["k_id_bicycle"] = str(data.k_id_bicycle)
+
+    customer_id = None
+    try:
+        customer_id = get_or_create_stripe_customer(mp.k_usuario_cc, db)
+    except HTTPException:
+        raise
+    except Exception:
+        customer_id = None
+
+    stripe_kwargs = {
+        "amount": stripe_amount,
+        "currency": currency,
+        "automatic_payment_methods": {"enabled": True},
+        "metadata": metadata,
+    }
+    if customer_id:
+        stripe_kwargs["customer"] = customer_id
+
+    try:
+        intent = stripe.PaymentIntent.create(**stripe_kwargs)
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+
+    return schemas.StripePaymentIntentResponse(
+        payment_intent_id=intent["id"],
+        client_secret=intent["client_secret"],
+        status=intent["status"],
+        currency=intent["currency"],
+        amount=intent["amount"],
+        k_metodo_pago=mp.k_metodo_pago,
+        k_usuario_cc=mp.k_usuario_cc,
+    )
+
+
+@router.post("/stripe/setup-intent", response_model=schemas.StripeSetupIntentResponse, status_code=200)
+def crear_setup_intent(data: schemas.StripeSetupIntentRequest, db: Session = Depends(get_db)):
+    if not STRIPE_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Stripe no esta configurado en el servidor")
+
+    # Obtener o crear el Stripe Customer asociado al usuario
+    try:
+        customer_id = get_or_create_stripe_customer(data.k_usuario_cc, db)
+    except HTTPException:
+        # Errores controlados (por ejemplo, fallo en users-service) se propagan tal cual
+        raise
+    except Exception:
+        # Errores inesperados se devuelven como 500 genérico
+        raise HTTPException(status_code=500, detail="Error interno al obtener el cliente de Stripe")
+
+    try:
+        intent = stripe.SetupIntent.create(
+            customer=customer_id,
+            payment_method_types=["card"],
+            metadata={
+                "k_usuario_cc": str(data.k_usuario_cc),
+            },
+        )
+    except stripe.error.StripeError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+
+    return schemas.StripeSetupIntentResponse(
+        setup_intent_id=intent["id"],
+        client_secret=intent["client_secret"],
+        customer_id=customer_id,
+    )
+
+
+@router.post("/stripe/webhook")
+async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    """Webhook para recibir eventos de Stripe.
+
+    Principalmente maneja setup_intent.succeeded para crear un MetodoPago
+    interno cuando un usuario registra una tarjeta mediante Stripe.
+    """
+
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature")
+
+    try:
+        if STRIPE_WEBHOOK_SECRET:
+            event = stripe.Webhook.construct_event(
+                payload=payload,
+                sig_header=sig_header,
+                secret=STRIPE_WEBHOOK_SECRET,
+            )
+        else:
+            # Sin verificación de firma (solo para desarrollo)
+            event = json.loads(payload.decode("utf-8"))
+    except (ValueError, stripe.error.SignatureVerificationError) as e:
+        raise HTTPException(status_code=400, detail=f"Invalid webhook payload: {e}")
+
+    event_type = event.get("type")
+
+    if event_type == "setup_intent.succeeded":
+        data_object = event.get("data", {}).get("object", {}) or {}
+        metadata = data_object.get("metadata", {}) or {}
+        k_usuario_cc = metadata.get("k_usuario_cc")
+        payment_method_id = data_object.get("payment_method")
+
+        if not k_usuario_cc or not payment_method_id:
+            return {"received": True}
+
+        try:
+            k_usuario_cc_int = int(k_usuario_cc)
+        except (TypeError, ValueError):
+            return {"received": True}
+
+        try:
+            pm = stripe.PaymentMethod.retrieve(payment_method_id)
+        except stripe.error.StripeError:
+            # Si no podemos obtener el PaymentMethod no creamos registro interno
+            return {"received": True}
+
+        card = pm.get("card", {}) or {}
+        brand = card.get("brand")
+        last4 = card.get("last4")
+        exp_month = card.get("exp_month")
+        exp_year = card.get("exp_year")
+        billing_details = pm.get("billing_details", {}) or {}
+        owner_name = billing_details.get("name") or "Método Stripe"
+
+        # Determinar si será principal (si es el primer método activo del usuario)
+        count = db.scalar(
+            select(func.count()).select_from(models.MetodoPago).where(
+                models.MetodoPago.k_usuario_cc == k_usuario_cc_int,
+                models.MetodoPago.b_activo == True,
+            )
+        ) or 0
+        es_principal = count == 0
+
+        if es_principal:
+            db.execute(
+                update(models.MetodoPago)
+                .where(models.MetodoPago.k_usuario_cc == k_usuario_cc_int)
+                .values(b_principal=False)
+            )
+
+        masked_number = f"**** **** **** {last4}" if last4 else "**** Stripe"
+        marca = brand.upper() if brand else None
+
+        try:
+            if exp_month and exp_year:
+                exp_date = date(exp_year, exp_month, 1)
+            else:
+                exp_date = date.today()
+        except Exception:
+            exp_date = date.today()
+
+        mp = models.MetodoPago(
+            k_usuario_cc=k_usuario_cc_int,
+            t_tipo_tarjeta="CREDITO",
+            n_numero_tarjeta=masked_number,
+            n_numero_tarjeta_completo=None,
+            n_nombre_titular=owner_name,
+            f_fecha_expiracion=exp_date,
+            n_marca=marca,
+            b_principal=es_principal,
+            b_activo=True,
+        )
+
+        db.add(mp)
+        db.commit()
+        db.refresh(mp)
+
+        # Publicar evento de creación para mantener consistencia con el resto del flujo
+        await publish_metodo_pago_created({
+            "k_metodo_pago": mp.k_metodo_pago,
+            "k_usuario_cc": mp.k_usuario_cc,
+            "t_tipo_tarjeta": mp.t_tipo_tarjeta,
+            "n_marca": mp.n_marca,
+            "b_principal": mp.b_principal,
+        })
+
+    return {"received": True}

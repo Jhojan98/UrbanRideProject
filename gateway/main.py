@@ -14,7 +14,21 @@ import datetime as _dt
 from fastapi.middleware.cors import CORSMiddleware
 
 # Import Pydantic schemas
-from schemas import UserCredentials, UserRegisteration, GenerateOtp, VerifyOtp, BicycleBase
+from schemas import (
+    UserCredentials,
+    UserRegisteration,
+    GenerateOtp,
+    VerifyOtp,
+    BicycleBase,
+    BicycleOut,
+    TravelCreateGateway,
+    TravelOutGateway,
+    PaymentMethodCreate,
+    PaymentMethodUpdate,
+    RecargaSaldoGatewayRequest,
+    StripePaymentIntentGatewayRequest,
+    StripeSetupIntentGatewayResponse,
+)
 
 app = FastAPI()
 security = HTTPBearer()
@@ -31,6 +45,8 @@ RABBITMQ_URL = os.environ.get("RABBITMQ_URL", "rabbitmq")
 RABBITMQ_USER = os.environ.get("RABBITMQ_DEFAULT_USER", "guest")
 RABBITMQ_PASS = os.environ.get("RABBITMQ_DEFAULT_PASS", "guest")
 BICYCLE_SERVICE_URL = os.environ.get("BICYCLE_SERVICE_URL")
+PAYMENT_SERVICE_URL = os.environ.get("PAYMENT_SERVICE_URL")
+RESERVATION_SERVICE_URL = os.environ.get("RESERVATION_SERVICE_URL")
 
 # Helper para aplanar errores y evitar doble 'detail'
 def flatten_detail(data):
@@ -221,6 +237,219 @@ def create_bicycle(bicycle: BicycleBase, payload: dict = _fastapi.Depends(jwt_va
             raise HTTPException(status_code=response.status_code, detail=flatten_detail(data))
     except requests.exceptions.ConnectionError:
         raise HTTPException(status_code=503, detail="Bicycle service is unavailable")
+
+@app.post("/reservations", response_model=TravelOutGateway, tags=['Reservation Service'])
+async def create_reservation(data: TravelCreateGateway, payload: dict = _fastapi.Depends(jwt_validation)):
+    if not RESERVATION_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "RESERVATION_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    body = {
+        "k_user_cc": k_user_cc,
+        "k_series": data.k_series,
+        "k_id_bicycle": data.k_id_bicycle,
+        "k_metodo_pago": data.k_metodo_pago,
+    }
+    try:
+        response = requests.post(f"{RESERVATION_SERVICE_URL}/api/reservations/", json=body)
+        data_resp = response.json()
+        if response.status_code in (200, 201):
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Reservation service is unavailable")
+
+@app.get("/reservations", response_model=list[TravelOutGateway], tags=['Reservation Service'])
+async def list_user_reservations(payload: dict = _fastapi.Depends(jwt_validation)):
+    if not RESERVATION_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "RESERVATION_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    try:
+        response = requests.get(f"{RESERVATION_SERVICE_URL}/api/reservations/user/{k_user_cc}")
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Reservation service is unavailable")
+
+@app.get("/reservations/{travel_id}", response_model=TravelOutGateway, tags=['Reservation Service'])
+async def get_reservation(travel_id: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    if not RESERVATION_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "RESERVATION_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    try:
+        response = requests.get(f"{RESERVATION_SERVICE_URL}/api/reservations/{travel_id}/user/{k_user_cc}")
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Reservation service is unavailable")
+
+@app.delete("/reservations/{travel_id}", tags=['Reservation Service'])
+async def cancel_reservation(travel_id: int, payload: dict = _fastapi.Depends(jwt_validation)):
+    if not RESERVATION_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "RESERVATION_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    try:
+        response = requests.delete(f"{RESERVATION_SERVICE_URL}/api/reservations/{travel_id}/user/{k_user_cc}")
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Reservation service is unavailable")
+
+@app.post("/payments/methods", tags=["Payment Service"])
+async def create_payment_method(data: PaymentMethodCreate, payload: dict = _fastapi.Depends(jwt_validation)):
+    if not PAYMENT_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "PAYMENT_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    body = data.dict()
+    # Asegurarnos de que las fechas sean serializables a JSON
+    if body.get("f_fecha_expiracion") is not None:
+        fe = body["f_fecha_expiracion"]
+        if hasattr(fe, "isoformat"):
+            body["f_fecha_expiracion"] = fe.isoformat()
+    body["k_usuario_cc"] = k_user_cc
+
+    try:
+        response = requests.post(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/", json=body)
+        data_resp = response.json()
+        if response.status_code in (200, 201):
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+@app.get("/payments/methods", tags=["Payment Service"])
+async def list_payment_methods(payload: dict = _fastapi.Depends(jwt_validation)):
+    if not PAYMENT_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "PAYMENT_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    try:
+        response = requests.get(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/usuario/{k_user_cc}")
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+@app.get("/payments/methods/principal", tags=["Payment Service"])
+async def get_principal_method(payload: dict = _fastapi.Depends(jwt_validation)):
+    if not PAYMENT_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "PAYMENT_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    try:
+        response = requests.get(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/usuario/{k_user_cc}/principal")
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+@app.put("/payments/methods/{method_id}", tags=["Payment Service"])
+async def update_payment_method(method_id: int, data: PaymentMethodUpdate, payload: dict = _fastapi.Depends(jwt_validation)):
+    if not PAYMENT_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "PAYMENT_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    body = {k: v for k, v in data.dict().items() if v is not None}
+    # Normalizar fecha a string ISO si viene en el body
+    if body.get("f_fecha_expiracion") is not None:
+        fe = body["f_fecha_expiracion"]
+        if hasattr(fe, "isoformat"):
+            body["f_fecha_expiracion"] = fe.isoformat()
+
+    try:
+        response = requests.put(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/{method_id}/usuario/{k_user_cc}", json=body)
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+@app.post("/payments/recharge", tags=["Payment Service"])
+async def recharge_balance(data: RecargaSaldoGatewayRequest, payload: dict = _fastapi.Depends(jwt_validation)):
+    if not PAYMENT_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "PAYMENT_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    try:
+        response = requests.post(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/recarga", json=data.dict())
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+@app.get("/payments/balance", tags=["Payment Service"])
+async def get_total_balance(payload: dict = _fastapi.Depends(jwt_validation)):
+    if not PAYMENT_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "PAYMENT_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+    try:
+        response = requests.get(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/usuario/{k_user_cc}/saldo-total")
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+@app.post("/payments/stripe/setup-intent", response_model=StripeSetupIntentGatewayResponse, tags=["Payment Service"])
+async def create_stripe_setup_intent(payload: dict = _fastapi.Depends(jwt_validation)):
+    if not PAYMENT_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "PAYMENT_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+
+    k_user_cc = payload.get("k_user_cc")
+    if not k_user_cc:
+        raise HTTPException(status_code=401, detail="User ID missing in token")
+
+    body = {"k_usuario_cc": k_user_cc}
+
+    try:
+        response = requests.post(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/stripe/setup-intent", json=body)
+        data_resp = response.json()
+        if response.status_code == 200:
+            # Incluir también el k_usuario_cc asociado al token en la respuesta al frontend
+            data_resp["k_usuario_cc"] = k_user_cc
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
+
+@app.post("/payments/stripe/payment-intent", tags=["Payment Service"])
+async def create_stripe_payment_intent(data: StripePaymentIntentGatewayRequest, payload: dict = _fastapi.Depends(jwt_validation)):
+    if not PAYMENT_SERVICE_URL:
+        raise HTTPException(status_code=500, detail={"message": "PAYMENT_SERVICE_URL not configured", "code": "CONFIG_ERROR"})
+    try:
+        response = requests.post(f"{PAYMENT_SERVICE_URL}/api/metodos-pago/stripe/payment-intent", json=data.dict())
+        data_resp = response.json()
+        if response.status_code == 200:
+            return data_resp
+        raise HTTPException(status_code=response.status_code, detail=flatten_detail(data_resp))
+    except requests.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail="Payment service is unavailable")
 
 if __name__ == "__main__":
     import uvicorn
