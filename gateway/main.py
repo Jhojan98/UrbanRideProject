@@ -50,10 +50,12 @@ RESERVATION_SERVICE_URL = os.environ.get("RESERVATION_SERVICE_URL")
 
 # Helper para aplanar errores y evitar doble 'detail'
 def flatten_detail(data):
-    if isinstance(data, dict) and 'detail' in data and isinstance(data['detail'], dict):
-        inner = data['detail']
-        if isinstance(inner, dict) and 'detail' in inner and isinstance(inner['detail'], dict):
-            inner = inner['detail']
+    
+    if isinstance(data, dict) and "detail" in data:
+        inner = data["detail"]
+        # Caso anidado: {"detail": {"detail": ...}}
+        if isinstance(inner, dict) and "detail" in inner:
+            return inner["detail"]
         return inner
     return data
 
