@@ -8,6 +8,7 @@
             <thead>
                 <tr>
                     <th>{{ t('dashboard.bikes.idC') }}</th>
+                    <th>Estado</th>
                     <th>{{ t('dashboard.bikes.conditionC') }}</th>
                     <th>{{ t('dashboard.bikes.modelC') }}</th>
                     <th>{{ t('dashboard.bikes.typeC') }}</th>
@@ -15,8 +16,13 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="b in station.bikes" :key="b.id">
+                <tr v-for="b in station.bikes" :key="b.id" :class="{ 'bike-traveling': !b.isLocked }">
                     <td>{{ b.id }}</td>
+                    <td>
+                        <span :class="['lock-status', b.isLocked ? 'locked' : 'unlocked']" :title="b.getLockStatus()">
+                            {{ b.getLockIcon() }} {{ b.getLockStatus() }}
+                        </span>
+                    </td>
                     <td>
                         <span v-if="b.condition === 'Optimal'">{{ t('dashboard.bikes.bikeCondition', 0) }}</span>
                         <span v-else>{{ t('dashboard.bikes.bikeCondition', 1) }}</span>
@@ -74,4 +80,28 @@ function batteryClass(value?: number) {
 .bike-info-header { display: flex; align-items: baseline; gap: 1rem; }
 .bike-info-header h3 { margin: 0; }
 .subtitle { margin: 0; font-size: .75rem; letter-spacing: .5px; text-transform: uppercase; color: var(--color-text-secondary-light); }
+
+.lock-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    
+    &.locked {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    &.unlocked {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+}
+
+.bike-traveling {
+    background-color: #fffbeb;
+}
 </style>

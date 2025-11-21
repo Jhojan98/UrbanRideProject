@@ -18,16 +18,21 @@ export function createBike(
     condition: 'Optimal' | 'Needs maintenance',
     modelo: string,
     tipo: 'electrica' | 'mecanica',
-    battery?: number
+    battery: number | undefined,
+    latitude: number,
+    longitude: number,
+    isLocked: boolean
 ): Bike {
     const flyweight = bikeFlyweightFactory.getFlyweight(modelo, tipo)
-    return new Bike(id, condition, battery, flyweight)
+    return new Bike(id, condition, battery, latitude, longitude, isLocked, flyweight)
 }
 
 export function createStation(
     id: string,
     name: string,
     location: string,
+    latitude: number,
+    longitude: number,
     categoria: 'metro' | 'centro financiero' | 'residencial',
     cctvActive: boolean,
     panicButtonActive: boolean,
@@ -39,6 +44,8 @@ export function createStation(
         id,
         name,
         location,
+        latitude,
+        longitude,
         cctvActive,
         panicButtonActive,
         lightingActive,

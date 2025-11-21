@@ -40,16 +40,23 @@
                                 <div
                                     v-for="n in station.maxCapacity"
                                     :key="n"
-                                    :class="['slot-box', n <= station.bikes.length ? 'occupied' : 'empty']"
-                                    :title="t('dashboard.stations.slotStatus', n <= station.bikes.length ? 0 : 1)"
+                                    :class="['slot-box', getSlotClass(station, n)]"
+                                    :title="getSlotTooltip(station, n)"
                                 >
-                                    {{ n }}
+                                    <span class="slot-number">{{ n }}</span>
+                                    <span v-if="n <= station.bikes.length" class="slot-lock">
+                                        {{ station.bikes[n-1]?.getLockIcon() }}
+                                    </span>
+                                    <span v-else-if="n <= station.getTotalOccupied()" class="slot-lock">
+                                        📍
+                                    </span>
                                 </div>
                             </div>
                             <p class="summary">
-                                Ocupados: {{ station.bikes.length }} | 
-                                Libres: {{ station.maxCapacity - station.bikes.length }} |
-                                Disponibles: {{ station.getAvailableBikes() }}
+                                <span>🔒 Estacionadas: {{ station.getLockedBikes() }}</span> |
+                                <span>🔓 En viaje: {{ station.getTravelingBikes() }}</span> |
+                                <span>📍 Reservados: {{ station.getReservedSlots() }}</span> |
+                                <span>✅ Disponibles: {{ station.getAvailableBikes() }}</span>
                             </p>
                         </div>
                     </td>
@@ -93,6 +100,45 @@ function hideSlots() {
     tooltipVisible.value = false
 }
 
+function getSlotClass(station: Station, slotNumber: number): string {
+    const totalOccupied = station.getTotalOccupied()
+    
+    if (slotNumber > totalOccupied) {
+        return 'empty'
+    }
+    
+    // Si está en el rango de bicicletas físicamente presentes
+    if (slotNumber <= station.bikes.length) {
+        const bike = station.bikes[slotNumber - 1]
+        if (!bike.isLocked) {
+            return 'traveling'
+        }
+        return 'occupied'
+    }
+    
+    // Si está en el rango de slots reservados
+    return 'reserved'
+}
+
+function getSlotTooltip(station: Station, slotNumber: number): string {
+    const totalOccupied = station.getTotalOccupied()
+    
+    if (slotNumber > totalOccupied) {
+        return t('dashboard.stations.slotStatus', 1)
+    }
+    
+    // Si está en el rango de bicicletas físicamente presentes
+    if (slotNumber <= station.bikes.length) {
+        const bike = station.bikes[slotNumber - 1]
+        return `${bike.id} - ${bike.getLockStatus()}`
+    }
+    
+    // Si está en el rango de slots reservados
+    const reservedIndex = slotNumber - station.bikes.length - 1
+    const reserved = station.reservedSlots[reservedIndex]
+    return `Reservado para: ${reserved.bikeName} (${reserved.bikeId})`
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -122,9 +168,45 @@ function hideSlots() {
     color: var(--color-text-primary-light);
 }
 .tooltip-title { margin:0 0 6px; font-weight:600; font-size:13px; }
-.summary { margin:8px 0 0; font-size:11px; opacity:.85; }
+.summary { 
+    margin:8px 0 0; 
+    font-size:11px; 
+    opacity:.85;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    
+    span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+}
 .slots-grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; }
-.slot-box { display:flex; align-items:center; justify-content:center; padding:5px 0; border-radius:6px; font-size:11px; font-weight:600; background: var(--color-gray-light); color: var(--color-text-primary-light); }
-.slot-box.occupied { background:#b23a3a; color:#fff; }
-.slot-box.empty { background:#2f7d2f; color:#fff; }
+.slot-box { 
+    display:flex; 
+    flex-direction: column;
+    align-items:center; 
+    justify-content:center; 
+    padding:5px 2px; 
+    border-radius:6px; 
+    font-size:11px; 
+    font-weight:600; 
+    background: var(--color-gray-light); 
+    color: var(--color-text-primary-light);
+    position: relative;
+}
+.slot-box.occupied { background:#16a34a; color:#fff; }
+.slot-box.traveling { background:#f59e0b; color:#fff; }
+.slot-box.reserved { 
+    background:#8b5cf6; 
+    color:#fff;
+    border: 2px dashed #fff;
+}
+.slot-box.empty { background:#e5e7eb; color:#6b7280; }
+.slot-number { font-size: 10px; }
+.slot-lock { 
+    font-size: 12px; 
+    margin-top: 2px;
+}
 </style>
