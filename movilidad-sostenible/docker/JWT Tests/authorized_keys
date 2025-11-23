@@ -1,0 +1,8 @@
+docker exec -it gateway-server bash
+curl -X POST "http://keycloak:8080/realms/oauth2-movilidadsostenible/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=password" \
+  -d "client_id=oauth2-authorization-user" \
+  -d "client_secret=hdmHwBtMWTbTmDTFVExR2uW6ev5wUXNx" \
+  -d "username=user" \
+  -d "password=1234"

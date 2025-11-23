@@ -24,7 +24,7 @@
         <module>email-service</module>
         <module>estaciones-service</module>
         <module>ciudad-service</module>
-        <module>database-migrator</module>
+        <module>payment-service</module>
     </modules>
 
     <properties>

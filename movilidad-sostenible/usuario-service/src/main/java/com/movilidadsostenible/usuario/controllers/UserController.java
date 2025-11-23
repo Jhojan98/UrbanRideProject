@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.*;
 
 @RestController
@@ -50,12 +49,8 @@ public class UserController {
             @Parameter(description = "Identificador del usuario", required = true)
             @PathVariable Integer id) {
         Optional<User> usuarioOptional = service.byId(id);
-
-        if(usuarioOptional.isPresent()) {
-            return ResponseEntity.ok(usuarioOptional.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        return usuarioOptional.<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/register")
@@ -67,22 +62,14 @@ public class UserController {
             })
     public ResponseEntity<?> createUser(@Valid @RequestBody User user,
                                         BindingResult result) {
-        if (!user.getUserEmail().isEmpty() &&
-                service.byUserEmail(user.getUserEmail()).isPresent()){
-            return ResponseEntity.badRequest()
-                    .body(Collections.singletonMap("mensaje", "Ya!!! existe un user con ese correo electrónico"));
-        }
-
         if (result.hasErrors()) {
             return validate(result);
         }
-
+        // Publicar datos para verificación (sin email)
         UserDTO userDTO = new UserDTO();
         userDTO.setUserCc(user.getUserCc());
-        userDTO.setUserEmail(user.getUserEmail());
         userDTO.setVerified(user.getIsVerified());
         publisher.sendJsonMessage(userDTO);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
 
@@ -91,37 +78,23 @@ public class UserController {
     public ResponseEntity<?> updateUser(@Valid @RequestBody User user,
                                         BindingResult result,
                                         @PathVariable Integer id) {
-
-
         if (result.hasErrors()) {
             return validate(result);
         }
-        
         Optional<User> usuarioOptional = service.byId(id);
-        if(usuarioOptional.isPresent()) {
-            User usuarioDB = usuarioOptional.get();
-
-            if (!user.getUserEmail().isEmpty() &&
-                    !user.getUserEmail().equalsIgnoreCase(usuarioDB.getUserEmail()) &&
-                    service.byUserEmail(user.getUserEmail()).isPresent()){
-                return ResponseEntity.badRequest()
-                        .body(Collections.singletonMap("mensaje", "Ya existe un usuario con ese correo electrónico cambielo"));
-            }
-
-            usuarioDB.setFirstName(user.getFirstName());
-            usuarioDB.setSecondName(user.getSecondName());
-            usuarioDB.setFirstLastname(user.getFirstLastname());
-            usuarioDB.setSecondLastname(user.getSecondLastname());
-            usuarioDB.setUserBirthday(user.getUserBirthday());
-            usuarioDB.setUserEmail(user.getUserEmail());
-            usuarioDB.setSubscriptionType(user.getSubscriptionType());
-            usuarioDB.setUserRegistrationDate(user.getUserRegistrationDate());
-            usuarioDB.setIsVerified(user.getIsVerified());
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(service.save(usuarioDB));
-        } else {
+        if(usuarioOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+        User usuarioDB = usuarioOptional.get();
+        usuarioDB.setFirstName(user.getFirstName());
+        usuarioDB.setSecondName(user.getSecondName());
+        usuarioDB.setFirstLastname(user.getFirstLastname());
+        usuarioDB.setSecondLastname(user.getSecondLastname());
+        usuarioDB.setUserBirthday(user.getUserBirthday());
+        usuarioDB.setSubscriptionType(user.getSubscriptionType());
+        usuarioDB.setUserRegistrationDate(user.getUserRegistrationDate());
+        usuarioDB.setIsVerified(user.getIsVerified());
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(usuarioDB));
     }
 
     @DeleteMapping("/{id}")
@@ -131,13 +104,12 @@ public class UserController {
         if (usuarioOptional.isPresent()) {
             service.delete(id);
             return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping("/{userCc}/verification/resend")
-    @Operation(summary = "Reenviar código de verificación", description = "Genera y envía nuevamente el código de verificación al correo del usuario.",
+    @Operation(summary = "Reenviar código de verificación", description = "Regenera y envía nuevamente el código de verificación.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OTP reenviado", content = @Content(schema = @Schema(implementation = Map.class))),
                     @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
@@ -156,11 +128,9 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("resent", false, "message", "El usuario ya está verificado"));
         }
-        // Publicar nuevamente el mensaje al email-service para regenerar OTP
         UserDTO userDTO = new UserDTO();
         userDTO.setUserCc(usuario.getUserCc());
-        userDTO.setUserEmail(usuario.getUserEmail());
-        userDTO.setVerified(false); // sigue sin verificar
+        userDTO.setVerified(false);
         publisher.sendJsonMessage(userDTO);
         return ResponseEntity.ok(Map.of(
                 "resent", true,
@@ -169,12 +139,45 @@ public class UserController {
         ));
     }
 
+    // --- Endpoints de balance ---
+    @GetMapping("/balance/{uid}")
+    @Operation(summary = "Obtener balance de usuario")
+    public ResponseEntity<?> getBalance(@PathVariable("uid") String uidUser) {
+        Integer balance = service.getBalance(uidUser);
+        if (balance == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("message", "Usuario no encontrado"));
+        }
+        return ResponseEntity.ok(Map.of("uid", uidUser, "balance", balance));
+    }
+
+    @PostMapping("/balance/{uid}/add")
+    @Operation(summary = "Agregar saldo al usuario")
+    public ResponseEntity<?> addBalance(@PathVariable("uid") String uidUser,
+                                        @RequestParam("amount") Integer amount) {
+        try {
+            Integer newBalance = service.addBalance(uidUser, amount);
+            return ResponseEntity.ok(Map.of("uid", uidUser, "balance", newBalance));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/balance/{uid}/subtract")
+    @Operation(summary = "Quitar saldo al usuario")
+    public ResponseEntity<?> subtractBalance(@PathVariable("uid") String uidUser,
+                                             @RequestParam("amount") Integer amount) {
+        try {
+            Integer newBalance = service.subtractBalance(uidUser, amount);
+            return ResponseEntity.ok(Map.of("uid", uidUser, "balance", newBalance));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
 
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {
         Map<String,String> errores = new HashMap<>();
-        result.getFieldErrors().forEach(err -> {
-            errores.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage());
-        });
+        result.getFieldErrors().forEach(err -> errores.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errores);
     }
 }

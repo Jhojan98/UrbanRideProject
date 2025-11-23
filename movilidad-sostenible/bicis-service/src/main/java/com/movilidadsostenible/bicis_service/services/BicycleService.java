@@ -1,6 +1,6 @@
 package com.movilidadsostenible.bicis_service.services;
 
-import com.movilidadsostenible.bicis_service.entity.Bicycle;
+import com.movilidadsostenible.bicis_service.model.entity.Bicycle;
 
 import java.util.List;
 import java.util.Optional;
