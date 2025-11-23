@@ -15,8 +15,15 @@ public class Travel {
     private Integer idTravel;
 
     @NotNull
-    @Column(name = "f_request_date")
-    private LocalDateTime requestDate;
+    @Column(name = "f_started_at")
+    private LocalDateTime startedAt;
+
+    @Column(name = "f_ended_at")
+    private LocalDateTime endedAt;
+
+    @NotNull
+    @Column(name = "t_status", length = 50)
+    private String status;
 
     @NotNull
     @Column(name = "k_user_cc")
@@ -27,8 +34,11 @@ public class Travel {
     private Integer idBicycle;
 
     @NotNull
-    @Column(name = "k_series")
-    private Integer series;
+    @Column(name = "k_from_id_station")
+    private Integer fromIdStation;
+
+    @Column(name = "k_to_id_station")
+    private Integer toIdStation;
 
     // Getters and Setters
     public Integer getIdTravel() {
@@ -39,12 +49,12 @@ public class Travel {
         this.idTravel = idTravel;
     }
 
-    public LocalDateTime getRequestDate() {
-        return requestDate;
+    public LocalDateTime getStartedAt() {
+        return startedAt;
     }
 
-    public void setRequestDate(LocalDateTime requestDate) {
-        this.requestDate = requestDate;
+    public void setStartedAt(LocalDateTime startedAt) {
+        this.startedAt = startedAt;
     }
 
     public Integer getUserCc() {
@@ -63,11 +73,35 @@ public class Travel {
         this.idBicycle = idBicycle;
     }
 
-    public Integer getSeries() {
-        return series;
+    public LocalDateTime getEndedAt() {
+        return endedAt;
     }
 
-    public void setSeries(Integer series) {
-        this.series = series;
+    public void setEndedAt(LocalDateTime endedAt) {
+        this.endedAt = endedAt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Integer getFromIdStation() {
+        return fromIdStation;
+    }
+
+    public void setFromIdStation(Integer fromIdStation) {
+        this.fromIdStation = fromIdStation;
+    }
+
+    public Integer getToIdStation() {
+        return toIdStation;
+    }
+
+    public void setToIdStation(Integer toIdStation) {
+        this.toIdStation = toIdStation;
     }
 }

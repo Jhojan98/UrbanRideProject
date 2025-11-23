@@ -1,6 +1,6 @@
 package com.movilidadsostenible.bicis_service.controllers;
 
-import com.movilidadsostenible.bicis_service.entity.Bicycle;
+import com.movilidadsostenible.bicis_service.model.entity.Bicycle;
 import com.movilidadsostenible.bicis_service.services.BicycleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

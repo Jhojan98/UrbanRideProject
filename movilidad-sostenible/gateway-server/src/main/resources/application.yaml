@@ -1,0 +1,90 @@
+server:
+  port: ${SERVER_PORT:8090}
+
+logging:
+  level:
+    org.springframework.security: trace
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+#          issuer-uri: http://keycloak:8080/realms/oauth2-movilidadsostenible
+#          jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
+          issuer-uri: https://securetoken.google.com/test-firebase-8217b
+
+
+  cloud:
+    gateway:
+      routes:
+
+        - id: usuario-service
+          uri: lb://usuario-service
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+
+        - id: bicis-service
+          uri: lb://bicis-service
+          predicates:
+            - Path=/bicy/**
+          filters:
+            - StripPrefix=1
+
+        - id: ciudad-service
+          uri: lb://ciudad-service
+          predicates:
+            - Path=/city/**
+          filters:
+            - StripPrefix=1
+
+        - id: email-service
+          uri: lb://email-service
+          predicates:
+            - Path=/email/**
+          filters:
+            - StripPrefix=1
+
+        - id: estaciones-service
+          uri: lb://estaciones-service
+          predicates:
+            - Path=/station/**
+          filters:
+            - StripPrefix=1
+
+        - id: viaje-service
+          uri: lb://viaje-service
+          predicates:
+            - Path=/travel/**
+          filters:
+            - StripPrefix=1
+
+        - id: bicis-ws
+          uri: lb:ws://bicis-service
+          predicates:
+            - Path=/ws/bicis/**
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - name: Usuario Service
+        url: /v3/api-docs/user
+      - name: Bicis Service
+        url: /v3/api-docs/bicy
+      - name: Viaje Service
+        url: /v3/api-docs/travel
+      - name: Estaciones Service
+        url: /v3/api-docs/station
+      - name: Ciudad Service
+        url: /v3/api-docs/city
+    disable-swagger-default-url: true
+    operation-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true

@@ -1,6 +1,6 @@
 package com.movilidadsostenible.bicis_service.services;
 
-import com.movilidadsostenible.bicis_service.entity.Bicycle;
+import com.movilidadsostenible.bicis_service.model.entity.Bicycle;
 import com.movilidadsostenible.bicis_service.repositories.BicycleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

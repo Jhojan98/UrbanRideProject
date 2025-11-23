@@ -7,11 +7,11 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
 @Entity
-@Table(name = "estation")
+@Table(name = "station")
 public class Stations {
 
     @Id
-    @Column(name = "k_id_estation" )
+    @Column(name = "k_id_station" )
     private Integer idStation;
 
     @Column(name = "n_station_name" )

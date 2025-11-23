@@ -11,7 +11,12 @@ public interface UserService {
     User save(User user);
     void delete(Integer id);
 
-    Optional<User> byUserEmail(String userEmail);
+    // Métodos de verificación
     void updateVerificationStatus(Integer userCc, boolean verified);
 
+    // Nuevos métodos de balance
+    Optional<User> byUid(String uidUser);
+    Integer getBalance(String uidUser);
+    Integer addBalance(String uidUser, Integer amount);
+    Integer subtractBalance(String uidUser, Integer amount);
 }
