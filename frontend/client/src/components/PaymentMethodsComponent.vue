@@ -1,8 +1,8 @@
 <template>
   <div class="payment-methods">
     <div class="header">
-      <h1>Métodos de Pago</h1>
-      <p>Gestiona tus formas de pago para realizar reservas</p>
+      <h1>{{ $t('payments.title') }}</h1>
+      <p>{{ $t('payments.subtitle') }}</p>
     </div>
     
     <div class="payment-list">
@@ -16,7 +16,7 @@
           <div class="card-type">
             <span class="card-icon">{{ getCardIcon(method.type) }}</span>
             <span class="card-name">{{ method.type }}</span>
-            <span v-if="method.isDefault" class="default-badge">Principal</span>
+            <span v-if="method.isDefault" class="default-badge">{{ $t('payments.primary') }}</span>
           </div>
           <div class="card-details">
             <span class="card-number">**** **** **** {{ method.lastFour }}</span>
@@ -29,34 +29,34 @@
             class="btn-secondary"
             @click="setAsDefault(method.id)"
           >
-            Hacer Principal
+            {{ $t('payments.makePrimary') }}
           </button>
           <button 
             class="btn-danger"
             @click="deleteMethod(method.id)"
           >
-            Eliminar
+            {{ $t('payments.delete') }}
           </button>
         </div>
       </div>
     </div>
     
     <div class="add-payment-section">
-      <h3>Agregar nuevo método de pago</h3>
+      <h3>{{ $t('payments.addNewTitle') }}</h3>
       
       <form @submit.prevent="addPaymentMethod" class="payment-form">
         <div class="form-group">
-          <label class="label">Tipo de tarjeta</label>
+          <label class="label">{{ $t('payments.cardType') }}</label>
           <select v-model="newPayment.type" class="form-select" required>
-            <option value="">Seleccionar tipo</option>
-            <option value="Visa">Visa</option>
-            <option value="Mastercard">Mastercard</option>
-            <option value="American Express">American Express</option>
+            <option value="">{{ $t('payments.selectType') }}</option>
+            <option value="Visa">{{ $t('payments.visa') }}</option>
+            <option value="Mastercard">{{ $t('payments.mastercard') }}</option>
+            <option value="American Express">{{ $t('payments.amex') }}</option>
           </select>
         </div>
         
         <div class="form-group">
-          <label class="label">Número de tarjeta</label>
+          <label class="label">{{ $t('payments.cardNumber') }}</label>
           <input 
             v-model="newPayment.cardNumber"
             type="text"
@@ -69,7 +69,7 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label class="label">Fecha de expiración</label>
+            <label class="label">{{ $t('payments.expiry') }}</label>
             <input 
               v-model="newPayment.expiry"
               type="text"
@@ -81,7 +81,7 @@
           </div>
           
           <div class="form-group">
-            <label class="label">CVV</label>
+            <label class="label">{{ $t('payments.cvv') }}</label>
             <input 
               v-model="newPayment.cvv"
               type="text"
@@ -100,12 +100,12 @@
               v-model="newPayment.isDefault"
               class="checkbox"
             >
-            <span>Establecer como método de pago principal</span>
+            <span>{{ $t('payments.setAsPrimary') }}</span>
           </label>
         </div>
         
         <button type="submit" class="butn-primary" :disabled="loading">
-          {{ loading ? 'Agregando...' : 'Agregar Tarjeta' }}
+          {{ loading ? $t('payments.adding') : $t('payments.addCard') }}
         </button>
       </form>
     </div>
@@ -114,6 +114,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { useI18n } from 'vue-i18n';
 
 interface PaymentMethod {
   id: string
@@ -210,8 +211,9 @@ const setAsDefault = (methodId: string) => {
   })
 }
 
+const { t: $t } = useI18n();
 const deleteMethod = (methodId: string) => {
-  if (confirm('¿Estás seguro de que quieres eliminar este método de pago?')) {
+  if (confirm($t('payments.confirmDelete') as string)) {
     const methodToDelete = paymentMethods.value.find(m => m.id === methodId)
     
     // Si es el método principal, asignar otro como principal

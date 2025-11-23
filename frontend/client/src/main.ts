@@ -5,16 +5,34 @@ import { createPinia } from 'pinia'
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "@/styles/global.scss";
 import { initializeApp } from 'firebase/app'
+import { createI18n } from 'vue-i18n';
+import { messages } from '@/lang/messages';
+
+const savedLocale = localStorage.getItem('locale') || 'es';
+const i18n = createI18n({
+  legacy: false,
+  globalInjection: true,
+  locale: savedLocale,
+  fallbackLocale: 'es',
+  messages
+});
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: process.env.VUE_APP_FIREBASE_API_KEY,
+  authDomain: process.env.VUE_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VUE_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VUE_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VUE_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VUE_APP_FIREBASE_APP_ID,
+  measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENT_ID
 }
+
+// Log para verificar que las variables se carguen correctamente
+console.log('=== FIREBASE CONFIG ===');
+console.log('API Key:', firebaseConfig.apiKey ? '✓ Cargada' : '✗ No encontrada');
+console.log('Auth Domain:', firebaseConfig.authDomain);
+console.log('Project ID:', firebaseConfig.projectId);
+console.log('=======================');
 
 initializeApp(firebaseConfig)
 
@@ -23,4 +41,5 @@ const app = createApp(App)
 
 app.use(router)
 app.use(pinia)
+app.use(i18n)
 app.mount('#app')
