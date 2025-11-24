@@ -5,7 +5,7 @@ const userAuth = defineStore("auth", {
     state() {
         return {
             token: null as string | null,
-            baseURL: 'http://localhost:8001',
+            baseURL: 'http://localhost:8090',
             message: '',
             isVerified: false,
             pendingVerification: false,
@@ -42,7 +42,7 @@ const userAuth = defineStore("auth", {
                 console.log('creationTime:', creationTime);
                 console.log('============================================');
 
-                const uri = `${this.baseURL}/register`;
+                const uri = `${this.baseURL}/user/register`;
                 const rawResponse = await fetch(uri, {
                     method: 'POST',
                     headers: {
@@ -108,7 +108,7 @@ const userAuth = defineStore("auth", {
                 console.log('=========================================');
 
                 // Enviar credenciales al backend
-                const uri = `${this.baseURL}/login`;
+                const uri = `${this.baseURL}/login/${userCredential.user.uid}`;
                 const rawResponse = await fetch(uri, {
                     method: 'POST',
                     headers: {
@@ -139,11 +139,11 @@ const userAuth = defineStore("auth", {
                 return { success: true, userData: response };
             } catch (error: unknown) {
                 console.error('Error en login:', error);
-                
+
                 const firebaseError = error as { code?: string };
-                
+
                 console.error('Código de error:', firebaseError.code);
-                
+
                 this.token = null;
                 return { success: false };
             }
@@ -158,7 +158,7 @@ const userAuth = defineStore("auth", {
 
                 // Obtener token Firebase (ID token)
                 const token = await user.getIdToken();
-                
+
                 console.log('=== ENVIANDO DATOS AL BACKEND (GOOGLE LOGIN) ===');
                 console.log('uId:', user.uid);
                 console.log('email:', user.email);
@@ -167,7 +167,7 @@ const userAuth = defineStore("auth", {
                 console.log('================================================');
 
                 // Enviar datos al backend para registro/login con Google
-                const uri = `${this.baseURL}/social-login`;
+                const uri = `${this.baseURL}/user/register`;
                 const rawResponse = await fetch(uri, {
                     method: 'POST',
                     headers: {

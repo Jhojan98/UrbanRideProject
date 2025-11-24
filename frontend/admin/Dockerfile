@@ -8,9 +8,6 @@ COPY package*.json ./
 # Instalar dependencias (fallback a npm install si npm ci falla)
 RUN npm ci --silent || npm install --silent
 
-# Copiar el .env desde la carpeta padre
-COPY ../.env ../.env
-
 # Copiar el resto del código y construir la aplicación
 COPY . .
 
@@ -40,7 +37,8 @@ FROM nginx:stable-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copiar configuración de nginx para soporte SPA (try_files)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Usamos archivo inline generado aquí porque nginx.conf no existe aún en el contexto
+RUN printf "server {\n\n    listen 80;\n    server_name localhost;\n    root /usr/share/nginx/html;\n    index index.html;\n\n    location / {\n        try_files $uri $uri/ /index.html;\n    }\n\n    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n        expires 1y;\n        add_header Cache-Control 'public, immutable';\n    }\n\n    location = /index.html {\n        add_header Cache-Control 'no-cache, no-store, must-revalidate';\n    }\n\n    gzip on;\n    gzip_vary on;\n    gzip_min_length 1024;\n    gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/javascript application/xml+rss application/json;\n}\n" > /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
