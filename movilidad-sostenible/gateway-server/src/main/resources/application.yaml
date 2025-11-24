@@ -39,6 +39,13 @@ spring:
             - Path=/bicycle-fastapi/**
           filters:
             - StripPrefix=1
+            
+        - id: fine-service
+          uri: lb://fine-service
+          predicates:
+            - Path=/fine/**
+          filters:
+            - StripPrefix=1
 
         - id: ciudad-service
           uri: lb://ciudad-service

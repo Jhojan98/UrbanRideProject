@@ -1,0 +1,363 @@
+import asyncio
+import logging
+import os
+import socket
+from datetime import datetime
+from decimal import Decimal
+from typing import Literal, Optional
+
+import sqlalchemy.orm as _orm
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel
+from py_eureka_client import eureka_client as _eureka_client
+
+import database as _database
+import models as _models
+
+app = FastAPI()
+logging.basicConfig(level=logging.INFO)
+_eureka_handle = None
+
+
+# Pydantic models aligned to English DB columns
+class FineBase(BaseModel):
+    n_name: str
+    d_description: Optional[str] = None
+    v_amount: Decimal
+
+
+class FineCreate(FineBase):
+    pass
+
+
+class FineUpdate(BaseModel):
+    n_name: Optional[str] = None
+    d_description: Optional[str] = None
+    v_amount: Optional[Decimal] = None
+
+
+class FineOut(FineBase):
+    k_id_fine: int
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+class UserFineBase(BaseModel):
+    n_reason: str
+    t_state: Literal['PENDING', 'PAID', 'CANCELLED'] = 'PENDING'
+    k_id_multa: int
+    k_user_cc: int
+
+
+class UserFineCreate(UserFineBase):
+    pass
+
+
+class UserFineUpdate(BaseModel):
+    n_reason: Optional[str] = None
+    t_state: Optional[Literal['PENDING', 'PAID', 'CANCELLED']] = None
+    k_id_multa: Optional[int] = None
+    k_user_cc: Optional[int] = None
+
+
+class UserFineOut(UserFineBase):
+    k_user_fine: int
+    v_amount_snapshot: Decimal
+    f_assigned_at: datetime
+    f_updated_at: datetime
+    fine: FineOut
+
+    class Config:
+        orm_mode = True
+        from_attributes = True
+
+
+
+# Dependency to get DB session
+def get_db():
+    db = _database.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def _to_bool(value: Optional[str], default: bool = True) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+@app.on_event("startup")
+async def startup_event():
+    global _eureka_handle
+
+    if not _to_bool(os.getenv("EUREKA_ENABLED"), True):
+        logging.info("Eureka registration disabled by EUREKA_ENABLED flag")
+        return
+
+    eureka_host = os.getenv("EUREKA_HOST", "eureka-server")
+    eureka_port = os.getenv("EUREKA_PORT", "8761")
+    eureka_server_url = f"http://{eureka_host}:{eureka_port}/eureka/"
+
+    app_name = os.getenv("EUREKA_APP_NAME", "bicycle-service")
+    service_port = int(os.getenv("SERVICE_PORT", "5002"))
+    service_host = os.getenv("SERVICE_HOST") or socket.gethostname()
+    service_ip = os.getenv("SERVICE_IP")
+    
+    # Configuración de heartbeat (intervalo de renovación)
+    heartbeat_interval = int(os.getenv("EUREKA_HEARTBEAT_INTERVAL", "30"))
+
+    register_kwargs = {
+        "eureka_server": eureka_server_url,
+        "app_name": app_name,
+        "instance_host": service_host,
+        "instance_port": service_port,
+        "renewal_interval_in_secs": heartbeat_interval,
+        "duration_in_secs": heartbeat_interval * 3,
+        "status_page_url": f"http://{service_host}:{service_port}/",
+        "health_check_url": f"http://{service_host}:{service_port}/health",
+        "home_page_url": f"http://{service_host}:{service_port}/",
+        "metadata": {"framework": "fastapi", "management.port": str(service_port)},
+    }
+
+    if service_ip:
+        register_kwargs["instance_ip"] = service_ip
+
+    try:
+        _eureka_handle = await asyncio.to_thread(_eureka_client.init, **register_kwargs)
+        logging.info("Registered FastAPI service '%s' with Eureka at %s", app_name, eureka_server_url)
+    except Exception as exc:  # pylint: disable=broad-except
+        _eureka_handle = None
+        logging.error("Failed to initialize Eureka client: %s", exc)
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global _eureka_handle
+
+    if _eureka_handle is None:
+        return
+
+    try:
+        await asyncio.to_thread(_eureka_handle.stop)
+        logging.info("Eureka client stopped")
+    except Exception as exc:  # pylint: disable=broad-except
+        logging.warning("Error stopping Eureka client: %s", exc)
+    finally:
+        _eureka_handle = None
+
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {"message": "User Fine Service API", "status": "running"}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}
+
+@app.get("/api/fines", response_model=list[FineOut], tags=["Fines"])
+async def list_fines(db: _orm.Session = Depends(get_db)):
+    """Return all fine catalog entries."""
+    fines = db.query(_models.Fine).order_by(_models.Fine.k_id_fine.asc()).all()
+    return fines
+
+
+@app.get("/api/fines/{fine_id}", response_model=FineOut, tags=["Fines"])
+async def get_fine(fine_id: int, db: _orm.Session = Depends(get_db)):
+    fine = db.query(_models.Fine).filter(_models.Fine.k_id_fine == fine_id).first()
+    if not fine:
+        raise HTTPException(status_code=404, detail="Fine not found")
+    return fine
+
+
+@app.post("/api/fines", response_model=FineOut, status_code=201, tags=["Fines"])
+async def create_fine(data: FineCreate, db: _orm.Session = Depends(get_db)):
+    fine = _models.Fine(**data.model_dump())
+    try:
+        db.add(fine)
+        db.commit()
+        db.refresh(fine)
+        return fine
+    except Exception as exc:
+        logging.error("Error creating fine: %s", exc)
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error creating fine")
+
+
+@app.put("/api/fines/{fine_id}", response_model=FineOut, tags=["Fines"])
+async def update_fine(fine_id: int, data: FineUpdate, db: _orm.Session = Depends(get_db)):
+    fine = db.query(_models.Fine).filter(_models.Fine.k_id_fine == fine_id).first()
+    if not fine:
+        raise HTTPException(status_code=404, detail="Fine not found")
+
+    updated = False
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(fine, field, value)
+        updated = True
+
+    if not updated:
+        return fine
+
+    try:
+        db.commit()
+        db.refresh(fine)
+        return fine
+    except Exception as exc:
+        logging.error("Error updating fine %s: %s", fine_id, exc)
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error updating fine")
+
+
+@app.delete("/api/fines/{fine_id}", status_code=204, tags=["Fines"])
+async def delete_fine(fine_id: int, db: _orm.Session = Depends(get_db)):
+    fine = db.query(_models.Fine).filter(_models.Fine.k_id_fine == fine_id).first()
+    if not fine:
+        raise HTTPException(status_code=404, detail="Fine not found")
+
+    if fine.user_fines:
+        raise HTTPException(status_code=400, detail="Cannot delete fine with assigned user fines")
+
+    try:
+        db.delete(fine)
+        db.commit()
+        return None
+    except Exception as exc:
+        logging.error("Error deleting fine %s: %s", fine_id, exc)
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error deleting fine")
+
+
+@app.get("/api/user_fines", response_model=list[UserFineOut], tags=["User Fines"])
+async def get_user_fines(db: _orm.Session = Depends(get_db)):
+    """Get all user fines"""
+    try:
+        user_fines = db.query(_models.UserFine).options(_orm.joinedload(_models.UserFine.fine)).all()
+        return user_fines
+    except Exception as e:
+        logging.error(f"Error fetching user fines: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/user_fines/{user_fine_id}", response_model=UserFineOut, tags=["User Fines"])
+async def get_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
+    """Get a specific user fine by ID"""
+    user_fine = (
+        db.query(_models.UserFine)
+        .options(_orm.joinedload(_models.UserFine.fine))
+        .filter(_models.UserFine.k_user_fine == user_fine_id)
+        .first()
+    )
+    if not user_fine:
+        raise HTTPException(status_code=404, detail="User Fine not found")
+    return user_fine
+
+@app.post("/api/user_fines", response_model=UserFineOut, tags=["User Fines"])
+async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends(get_db)):
+    """Create a new user fine"""
+    try:
+        logging.info(f"Received data: {user_fine.model_dump()}")
+        fine = (
+            db.query(_models.Fine)
+            .filter(_models.Fine.k_id_fine == user_fine.k_id_multa)
+            .first()
+        )
+        if not fine:
+            raise HTTPException(status_code=400, detail="Fine not found")
+        if fine.v_amount is None:
+            raise HTTPException(status_code=400, detail="Fine amount is not configured")
+
+        assigned_at = datetime.utcnow()
+        new_user_fine = _models.UserFine(
+            n_reason=user_fine.n_reason,
+            t_state=user_fine.t_state,
+            k_id_multa=user_fine.k_id_multa,
+            k_user_cc=user_fine.k_user_cc,
+            v_amount_snapshot=fine.v_amount,
+            f_assigned_at=assigned_at,
+            f_updated_at=assigned_at,
+        )
+
+        logging.info(f"Created user fine object: {new_user_fine.__dict__}")
+        db.add(new_user_fine)
+        db.commit()
+        db.refresh(new_user_fine)
+        _ = new_user_fine.fine
+        logging.info(f"User fine created with ID: {new_user_fine.k_user_fine}")
+        return new_user_fine
+    except Exception as e:
+        logging.error(f"Error creating user fine: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error creating user fine")
+@app.put("/api/user_fines/{user_fine_id}", response_model=UserFineOut, tags=["User Fines"])
+async def update_user_fine(user_fine_id: int, data: UserFineUpdate, db: _orm.Session = Depends(get_db)):
+    """Update a user fine"""
+    user_fine = (
+        db.query(_models.UserFine)
+        .options(_orm.joinedload(_models.UserFine.fine))
+        .filter(_models.UserFine.k_user_fine == user_fine_id)
+        .first()
+    )
+    if not user_fine:
+        raise HTTPException(status_code=404, detail="User Fine not found")
+
+    updated = False
+
+    if data.n_reason is not None:
+        user_fine.n_reason = data.n_reason
+        updated = True
+    if data.t_state is not None:
+        user_fine.t_state = data.t_state
+        updated = True
+    if data.k_id_multa is not None and data.k_id_multa != user_fine.k_id_multa:
+        fine = (
+            db.query(_models.Fine)
+            .filter(_models.Fine.k_id_fine == data.k_id_multa)
+            .first()
+        )
+        if not fine:
+            raise HTTPException(status_code=400, detail="Fine not found")
+        if fine.v_amount is None:
+            raise HTTPException(status_code=400, detail="Fine amount is not configured")
+
+        user_fine.k_id_multa = data.k_id_multa
+        user_fine.v_amount_snapshot = fine.v_amount
+        updated = True
+    if data.k_user_cc is not None:
+        user_fine.k_user_cc = data.k_user_cc
+        updated = True
+
+    if updated:
+        user_fine.f_updated_at = datetime.utcnow()
+
+    try:
+        db.commit()
+        db.refresh(user_fine)
+        _ = user_fine.fine
+        logging.info(f"User Fine {user_fine_id} updated")
+        return user_fine
+    except Exception as e:
+        logging.error(f"Error updating user fine: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error updating user fine")
+
+@app.delete("/api/user_fines/{user_fine_id}", tags=["User Fines"])
+async def delete_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
+    """Delete a user fine"""
+    user_fine = db.query(_models.UserFine).filter(_models.UserFine.k_user_fine == user_fine_id).first()
+    if not user_fine:
+        raise HTTPException(status_code=404, detail="User Fine not found")
+
+    try:
+        db.delete(user_fine)
+        db.commit()
+        logging.info(f"User Fine {user_fine_id} deleted")
+        return {"message": f"User Fine {user_fine_id} deleted successfully"}
+    except Exception as e:
+        logging.error(f"Error deleting user fine: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error deleting user fine")

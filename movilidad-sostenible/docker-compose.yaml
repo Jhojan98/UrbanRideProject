@@ -303,6 +303,33 @@ services:
     depends_on:
       - eureka-server
     restart: always
+  fine-service:
+    container_name: fine-service
+    build:
+      context: ./fine-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5003"]
+    ports:
+      - "5003:5003"
+    environment:
+      SERVICE_PORT: 5003
+      SERVICE_HOST: fine-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: fine-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: manager_fine
+      POSTGRES_PASSWORD: ${FINES_DB_PASSWORD}
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
 
 volumes:
   data-postgres:
