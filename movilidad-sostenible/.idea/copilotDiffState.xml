@@ -27,6 +27,14 @@
             </PendingDiffInfo>
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/estaciones-service/src/main/java/com/movilidadsostenible/estaciones_service/clients/CiudadClientFallback.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/estaciones-service/src/main/java/com/movilidadsostenible/estaciones_service/clients/CiudadClientFallback.java" />
+              <option name="updatedContent" value="package com.movilidadsostenible.estaciones_service.clients;&#10;&#10;import org.springframework.http.HttpStatus;&#10;import org.springframework.http.ResponseEntity;&#10;import org.springframework.stereotype.Component;&#10;&#10;import java.util.Map;&#10;&#10;@Component&#10;public class CiudadClientFallback implements CiudadClient {&#10;    @Override&#10;    public ResponseEntity&lt;?&gt; getCityById(Integer id) {&#10;        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)&#10;                .body(Map.of(&#10;                        &quot;mensaje&quot;, &quot;Servicio ciudad-service no disponible temporalmente&quot;,&#10;                        &quot;detalle&quot;, &quot;Fallback activo para validación de ciudad id=&quot; + id&#10;                ));&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
         <entry key="$PROJECT_DIR$/restart-gateway.sh">
           <value>
             <PendingDiffInfo>

@@ -6,6 +6,7 @@
     <file url="file://$PROJECT_DIR$/bicis-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/bicis-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ciudad-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ciudad-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/database-migrator/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/database-migrator/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/email-rabbit-service/src/main/java" charset="UTF-8" />
