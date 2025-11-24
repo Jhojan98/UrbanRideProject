@@ -23,8 +23,8 @@ public class UsuarioServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<User> byId(Integer id) {
-        return repository.findById(id);
+    public Optional<User> byId(String uid) {
+        return repository.findById(uid);
     }
 
     @Override
@@ -39,18 +39,13 @@ public class UsuarioServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void delete(Integer id) {
-        repository.deleteById(id);
-    }
-
-    @Override
-    public Optional<User> byUid(String uidUser) {
-        return repository.findByUidUser(uidUser);
+    public void delete(String uid) {
+        repository.deleteById(uid);
     }
 
     @Override
     public Integer getBalance(String uidUser) {
-        return byUid(uidUser).map(User::getBalance).orElse(null);
+        return byId(uidUser).map(User::getBalance).orElse(null);
     }
 
     @Override
@@ -59,7 +54,7 @@ public class UsuarioServiceImpl implements UserService {
         if (amount == null || amount <= 0) {
             throw new IllegalArgumentException("El monto debe ser positivo");
         }
-        User user = byUid(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        User user = byId(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
         Integer current = user.getBalance() == null ? 0 : user.getBalance();
         user.setBalance(current + amount);
         repository.save(user);
@@ -72,7 +67,7 @@ public class UsuarioServiceImpl implements UserService {
         if (amount == null || amount <= 0) {
             throw new IllegalArgumentException("El monto debe ser positivo");
         }
-        User user = byUid(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        User user = byId(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
         Integer current = user.getBalance() == null ? 0 : user.getBalance();
         if (current < amount) {
             throw new IllegalArgumentException("Saldo insuficiente");

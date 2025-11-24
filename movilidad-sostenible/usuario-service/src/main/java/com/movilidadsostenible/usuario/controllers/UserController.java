@@ -30,8 +30,8 @@ public class UserController {
         return service.listUsers();
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Obtener usuario por id",
+    @GetMapping("/login/{uid}")
+    @Operation(summary = "Obtener usuario por UID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Encontrado",
                             content = @Content(schema = @Schema(implementation = User.class))),
@@ -39,8 +39,8 @@ public class UserController {
             })
     public ResponseEntity<?> getUserById(
             @Parameter(description = "Identificador del usuario", required = true)
-            @PathVariable Integer id) {
-        Optional<User> usuarioOptional = service.byId(id);
+            @PathVariable String uid) {
+        Optional<User> usuarioOptional = service.byId(uid);
         return usuarioOptional.<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -64,11 +64,11 @@ public class UserController {
     @Operation(summary = "Actualizar usuario")
     public ResponseEntity<?> updateUser(@Valid @RequestBody User user,
                                         BindingResult result,
-                                        @PathVariable Integer id) {
+                                        @PathVariable String uid) {
         if (result.hasErrors()) {
             return validate(result);
         }
-        Optional<User> usuarioOptional = service.byId(id);
+        Optional<User> usuarioOptional = service.byId(uid);
         if(usuarioOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
@@ -80,10 +80,10 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar usuario")
-    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
-        Optional<User> usuarioOptional = service.byId(id);
+    public ResponseEntity<?> deleteUser(@PathVariable String uid) {
+        Optional<User> usuarioOptional = service.byId(uid);
         if (usuarioOptional.isPresent()) {
-            service.delete(id);
+            service.delete(uid);
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
