@@ -61,24 +61,12 @@ const checkVerification = async () => {
         return;
     }
 
-    const res = await store.verifyOtp(email.value, '');
-    
-    if (res) {
-        feedback.value = $t('auth.otp.success');
-        
-        // Verificar si se obtuvo un token (auto-login)
-        setTimeout(() => {
-            if (store.token) {
-                // Si hay token, ir a página protegida
-                router.push('/maps');
-            } else {
-                // Si no hay token, ir al login para que inicie sesión
-                router.push({ name: 'login', query: { verified: 'true' } });
-            }
-        }, 1500);
-    } else {
-        feedback.value = store.message || $t('auth.otp.verifyError');
-    }
+    // Simplemente redirigir al login
+    // La verificación ya se hizo mediante el enlace en el email
+    feedback.value = $t('auth.otp.redirectToLogin');
+    setTimeout(() => {
+        router.push({ name: 'login', query: { verified: 'true' } });
+    }, 1500);
 };
 
 const resendOtp = async () => {

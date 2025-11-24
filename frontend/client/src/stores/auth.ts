@@ -19,7 +19,7 @@ const userAuth = defineStore("auth", {
                 const auth = getAuth();
 
                 const actionCodeSettings = {
-                    url: 'http://localhost:8081/login',
+                    url: 'http://localhost:8080/login',
                     handleCodeInApp: true
                 }
 
@@ -47,16 +47,18 @@ const userAuth = defineStore("auth", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
                     },
                     body: JSON.stringify({
-                        uId: userCredential.user.uid,
-                        username: username,
+                        uidUser: userCredential.user.uid,
+                        userName: username,
                     })
                 });
 
                 if (!rawResponse.ok) {
                     console.error('Error HTTP del backend:', rawResponse.status, rawResponse.statusText);
+                    const errorText = await rawResponse.text();
+                    console.error('Respuesta del servidor:', errorText);
                     this.message = `Error al guardar en backend: ${rawResponse.statusText}`;
                     return false;
                 }
@@ -108,18 +110,13 @@ const userAuth = defineStore("auth", {
                 console.log('=========================================');
 
                 // Enviar credenciales al backend
-                const uri = `${this.baseURL}/login/${userCredential.user.uid}`;
+                const uri = `${this.baseURL}/user/login/${userCredential.user.uid}`;
                 const rawResponse = await fetch(uri, {
-                    method: 'POST',
+                    method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        uId: userCredential.user.uid,
-
-                    })
+                    }
                 });
 
                 if (!rawResponse.ok) {
@@ -173,16 +170,18 @@ const userAuth = defineStore("auth", {
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        uId: user.uid,
-                        username: user.displayName || user.email?.split('@')[0],
+                        uidUser: user.uid,
+                        userName: user.displayName || user.email?.split('@')[0],
                     })
                 });
 
                 if (!rawResponse.ok) {
                     console.error('Error HTTP del backend (Google):', rawResponse.status, rawResponse.statusText);
+                    const errorText = await rawResponse.text();
+                    console.error('Respuesta del servidor:', errorText);
                     this.message = `Error al guardar en backend: ${rawResponse.statusText}`;
                     return { success: false };
                 }
