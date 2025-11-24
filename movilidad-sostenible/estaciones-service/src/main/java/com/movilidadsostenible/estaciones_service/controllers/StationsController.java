@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/stations")
+@RequestMapping
 @Tag(name = "Estaciones", description = "CRUD de estaciones")
 public class StationsController {
 
@@ -55,7 +55,8 @@ public class StationsController {
 
     @PostMapping
     @Operation(summary = "Crear estación")
-    public ResponseEntity<?> create(@Valid @RequestBody Stations station, BindingResult result) {
+    public ResponseEntity<?> create(@Valid @RequestBody Stations station,
+                                    BindingResult result) {
         if (result.hasErrors()) return validate(result);
         // Verificar ciudad vía Feign
         try {
@@ -109,6 +110,11 @@ public class StationsController {
         db.setAvenue(station.getAvenue());
         db.setNumber(station.getNumber());
         db.setIdCity(station.getIdCity());
+        db.setCapacity(station.getCapacity());
+        db.setType(station.getType());
+        db.setLatitude(station.getLatitude());
+        db.setLength(station.getLength());
+
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(db));
     }
 

@@ -11,9 +11,6 @@ public interface UserService {
     User save(User user);
     void delete(Integer id);
 
-    // Métodos de verificación
-    void updateVerificationStatus(Integer userCc, boolean verified);
-
     // Nuevos métodos de balance
     Optional<User> byUid(String uidUser);
     Integer getBalance(String uidUser);

@@ -44,15 +44,6 @@ public class UsuarioServiceImpl implements UserService {
     }
 
     @Override
-    public void updateVerificationStatus(Integer userCc, boolean verified) {
-        Optional<User> optionalUser = repository.findById(userCc);
-        optionalUser.ifPresent(u -> {
-            u.setIsVerified(verified);
-            repository.save(u);
-        });
-    }
-
-    @Override
     public Optional<User> byUid(String uidUser) {
         return repository.findByUidUser(uidUser);
     }
