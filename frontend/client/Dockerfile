@@ -8,6 +8,9 @@ COPY package*.json ./
 # Instalar dependencias (fallback a npm install si npm ci falla)
 RUN npm ci --silent || npm install --silent
 
+# Copiar el .env desde la carpeta padre
+COPY ../.env ../.env
+
 # Copiar el resto del código y construir la aplicación
 COPY . .
 RUN npm run build

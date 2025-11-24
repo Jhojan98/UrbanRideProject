@@ -7,7 +7,7 @@ import "@/styles/global.scss";
 import { initializeApp } from 'firebase/app'
 import { createI18n } from 'vue-i18n';
 import { messages } from '@/lang/messages';
-
+import { createWebSocket } from './services/webSocket';
 const savedLocale = localStorage.getItem('locale') || 'es';
 const i18n = createI18n({
   legacy: false,
@@ -27,13 +27,8 @@ const firebaseConfig = {
   measurementId: process.env.VUE_APP_FIREBASE_MEASUREMENT_ID
 }
 
-// Log para verificar que las variables se carguen correctamente
-console.log('=== FIREBASE CONFIG ===');
-console.log('API Key:', firebaseConfig.apiKey ? '✓ Cargada' : '✗ No encontrada');
-console.log('Auth Domain:', firebaseConfig.authDomain);
-console.log('Project ID:', firebaseConfig.projectId);
-console.log('=======================');
 
+createWebSocket()
 initializeApp(firebaseConfig)
 
 const pinia = createPinia()
