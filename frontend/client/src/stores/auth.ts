@@ -5,7 +5,7 @@ const userAuth = defineStore("auth", {
     state() {
         return {
             token: null as string | null,
-            baseURL: 'http://localhost:5001',
+            baseURL: 'http://localhost:8001',
             message: '',
             isVerified: false,
             pendingVerification: false,
@@ -14,7 +14,7 @@ const userAuth = defineStore("auth", {
     },
     actions: {
 
-        async register(id:number, username: string, password: string, fName: string, sName:string|"", fLastName: string, sLastName: string|"", birthDate: Date, email:string) {
+        async register(username:string, email:string, password:string) {
             try {
                 const auth = getAuth();
 
@@ -22,115 +22,133 @@ const userAuth = defineStore("auth", {
                     url: 'http://localhost:8081/login',
                     handleCodeInApp: true
                 }
-                
-                // Crear usuario en Firebase
+
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                
-                // Enviar email de verificación
+
                 await sendEmailVerification(userCredential.user, actionCodeSettings);
-                
+
                 this.tempEmail = email;
                 this.pendingVerification = true;
                 this.isVerified = false;
                 this.message = 'Registro exitoso. Revisa tu correo para verificar tu cuenta.';
-                
-                // TODO: Enviar datos al backend después de verificar email
-                // const formattedDate = birthDate.toISOString().split('T')[0];
-                // await fetch(`${this.baseURL}/auth/register`, { ... });
-                
+
+                // Obtener fecha de creación de Firebase
+                const creationTime = userCredential.user.metadata.creationTime;
+
+                console.log('=== ENVIANDO DATOS AL BACKEND (REGISTER) ===');
+                console.log('uId:', userCredential.user.uid);
+                console.log('username:', username);
+                console.log('email:', email);
+                console.log('creationTime:', creationTime);
+                console.log('============================================');
+
+                const uri = `${this.baseURL}/register`;
+                const rawResponse = await fetch(uri, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        uId: userCredential.user.uid,
+                        username: username,
+                    })
+                });
+
+                if (!rawResponse.ok) {
+                    console.error('Error HTTP del backend:', rawResponse.status, rawResponse.statusText);
+                    this.message = `Error al guardar en backend: ${rawResponse.statusText}`;
+                    return false;
+                }
+
+                const response = await rawResponse.json();
+                console.log('Respuesta del backend (register):', response);
+
                 return true;
+
             } catch (error: unknown) {
                 console.error('Error en registro (detalle completo):', error);
-                
+
                 const firebaseError = error as { code?: string; message?: string };
-                
+
                 // Log detallado para depuración
                 console.error('Código de error:', firebaseError.code);
                 console.error('Mensaje de error:', firebaseError.message);
-                
-                switch (firebaseError.code) {
-                    case 'auth/email-already-in-use':
-                        this.message = 'El correo ya está registrado';
-                        break;
-                    case 'auth/invalid-email':
-                        this.message = 'Correo inválido';
-                        break;
-                    case 'auth/weak-password':
-                        this.message = 'La contraseña debe tener al menos 6 caracteres';
-                        break;
-                    case 'auth/operation-not-allowed':
-                        this.message = 'Autenticación con email/contraseña no habilitada en Firebase';
-                        break;
-                    case 'auth/network-request-failed':
-                        this.message = 'Error de red. Verifica tu conexión';
-                        break;
-                    default:
-                        this.message = `Error en el registro: ${firebaseError.message || 'Error desconocido'}`;
-                }
+
                 return false;
             }
         },
 
-        async login(email: string, password: string) { 
+        async login(email: string, password: string): Promise<{ success?: boolean; needsVerification?: boolean; userData?: unknown }> {
             try {
                 const auth = getAuth();
-                
+
                 // Iniciar sesión con Firebase
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                
+
                 // Verificar si el email está verificado
                 if (!userCredential.user.emailVerified) {
                     this.tempEmail = email;
                     this.pendingVerification = true;
                     this.isVerified = false;
                     this.message = 'Por favor verifica tu correo antes de iniciar sesión';
-                    
+
                     // Ofrecer reenvío de verificación
                     await sendEmailVerification(userCredential.user);
-                    
+
                     return { needsVerification: true };
                 }
 
                 // Obtener token de Firebase
                 const token = await userCredential.user.getIdToken();
-                
+
+                console.log('=== ENVIANDO DATOS AL BACKEND (LOGIN) ===');
+                console.log('email:', email);
+                console.log('token:', token ? 'Token obtenido' : 'No token');
+                console.log('=========================================');
+
+                // Enviar credenciales al backend
+                const uri = `${this.baseURL}/login`;
+                const rawResponse = await fetch(uri, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        uId: userCredential.user.uid,
+
+                    })
+                });
+
+                if (!rawResponse.ok) {
+                    console.error('Error HTTP del backend (login):', rawResponse.status, rawResponse.statusText);
+                    this.message = `Error al validar con backend: ${rawResponse.statusText}`;
+                    return { success: false };
+                }
+
+                const response = await rawResponse.json();
+                console.log('Respuesta del backend (login):', response);
+
                 this.token = token;
                 this.isVerified = true;
                 this.pendingVerification = false;
                 this.message = 'Login exitoso';
-                
-                // TODO: Enviar token al backend para validar y obtener datos del usuario
-                // await fetch(`${this.baseURL}/auth/validate-token`, { ... });
-                
-                return { success: true };
+
+                return { success: true, userData: response };
             } catch (error: unknown) {
                 console.error('Error en login:', error);
                 
                 const firebaseError = error as { code?: string };
                 
-                switch (firebaseError.code) {
-                    case 'auth/user-not-found':
-                    case 'auth/wrong-password':
-                        this.message = 'Credenciales inválidas';
-                        break;
-                    case 'auth/invalid-email':
-                        this.message = 'Correo inválido';
-                        break;
-                    case 'auth/user-disabled':
-                        this.message = 'Cuenta deshabilitada';
-                        break;
-                    case 'auth/too-many-requests':
-                        this.message = 'Demasiados intentos. Intenta más tarde';
-                        break;
-                    default:
-                        this.message = 'Error en el login';
-                }
+                console.error('Código de error:', firebaseError.code);
                 
                 this.token = null;
                 return { success: false };
             }
         },
-        async socialLoginWithGoogle(): Promise<{ success: boolean; code?: string }> {
+        async socialLoginWithGoogle(): Promise<{ success: boolean; code?: string; userData?: unknown }> {
             try {
                 const auth = getAuth();
                 const provider = new GoogleAuthProvider();
@@ -140,12 +158,44 @@ const userAuth = defineStore("auth", {
 
                 // Obtener token Firebase (ID token)
                 const token = await user.getIdToken();
+                
+                console.log('=== ENVIANDO DATOS AL BACKEND (GOOGLE LOGIN) ===');
+                console.log('uId:', user.uid);
+                console.log('email:', user.email);
+                console.log('displayName:', user.displayName);
+                console.log('creationTime:', user.metadata.creationTime);
+                console.log('================================================');
+
+                // Enviar datos al backend para registro/login con Google
+                const uri = `${this.baseURL}/social-login`;
+                const rawResponse = await fetch(uri, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        uId: user.uid,
+                        username: user.displayName || user.email?.split('@')[0],
+                    })
+                });
+
+                if (!rawResponse.ok) {
+                    console.error('Error HTTP del backend (Google):', rawResponse.status, rawResponse.statusText);
+                    this.message = `Error al guardar en backend: ${rawResponse.statusText}`;
+                    return { success: false };
+                }
+
+                const response = await rawResponse.json();
+                console.log('Respuesta del backend (Google):', response);
+
                 this.token = token;
                 this.isVerified = true; // Con Google el correo ya está verificado
                 this.pendingVerification = false;
                 this.tempEmail = user.email;
                 this.message = 'Login con Google exitoso';
-                return { success: true };
+                return { success: true, userData: response };
             } catch (error: unknown) {
                 console.error('Error en login Google:', error);
                 const firebaseError = error as { code?: string; message?: string };
@@ -207,22 +257,21 @@ const userAuth = defineStore("auth", {
         async verifyOtp(_email: string, _otp: string) {
             try {
                 const auth = getAuth();
-                
+
                 // Recargar usuario actual para obtener el estado actualizado de emailVerified
                 await auth.currentUser?.reload();
-                
+
                 const user = auth.currentUser;
-                
+
                 if (user && user.emailVerified) {
                     // Obtener token de Firebase
                     const token = await user.getIdToken();
-                    
+
                     this.token = token;
                     this.isVerified = true;
                     this.pendingVerification = false;
                     this.tempEmail = null;
                     this.message = 'Cuenta verificada';
-                    
                     return true;
                 } else {
                     this.message = 'Email aún no verificado. Por favor revisa tu correo y haz clic en el enlace de verificación.';
