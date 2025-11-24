@@ -1,11 +1,10 @@
 package com.movilidadsostenible.estaciones_service.models.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.DynamicInsert;
 
+@DynamicInsert
 @Entity
 @Table(name = "station")
 public class Stations {
@@ -30,9 +29,28 @@ public class Stations {
     @NotNull
     private String number;
 
+    @Column(name = "n_latitude")
+    @NotNull
+    private Double latitude;
+
+    @Column(name = "n_length")
+    @NotNull
+    private Double length;
+
     @Column(name = "k_id_city")
     @NotNull
     private Integer idCity;
+
+    @Column(name = "t_type")
+    @NotNull
+    private String type;
+
+    @Column(name = "n_capacity")
+    @NotNull
+    private Integer capacity;
+
+    @Column(name = "t_cctv_status")
+    private boolean cctvStatus;
 
     // Getters and Setters
 
@@ -82,5 +100,45 @@ public class Stations {
 
     public void setIdCity(Integer idCity) {
         this.idCity = idCity;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLength() {
+        return length;
+    }
+
+    public void setLength(Double length) {
+        this.length = length;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Integer getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(Integer capacity) {
+        this.capacity = capacity;
+    }
+
+    public boolean isCctvStatus() {
+        return cctvStatus;
+    }
+
+    public void setCctvStatus(boolean cctvStatus) {
+        this.cctvStatus = cctvStatus;
     }
 }

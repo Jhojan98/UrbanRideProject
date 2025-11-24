@@ -3,10 +3,12 @@ package com.movilidadsostenible.bicis_service.model.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import org.hibernate.annotations.DynamicInsert;
 
 import java.util.Date;
 
 @Entity
+@DynamicInsert
 @Table(name = "bicycle")
 public class Bicycle {
 

@@ -1,8 +1,6 @@
 package com.movilidadsostenible.usuario.controllers;
 
-import com.movilidadsostenible.usuario.models.dto.UserDTO;
 import com.movilidadsostenible.usuario.models.entity.User;
-import com.movilidadsostenible.usuario.publisher.UserPublisher;
 import com.movilidadsostenible.usuario.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,12 +23,6 @@ public class UserController {
 
     @Autowired
     private UserService service;
-
-    private final UserPublisher publisher;
-
-    public UserController(UserPublisher publisher) {
-        this.publisher = publisher;
-    }
 
     @GetMapping
     @Operation(summary = "Listar usuarios")
@@ -65,11 +57,6 @@ public class UserController {
         if (result.hasErrors()) {
             return validate(result);
         }
-        // Publicar datos para verificación (sin email)
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUserCc(user.getUserCc());
-        userDTO.setVerified(user.getIsVerified());
-        publisher.sendJsonMessage(userDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
 
@@ -86,14 +73,8 @@ public class UserController {
             return ResponseEntity.notFound().build();
         }
         User usuarioDB = usuarioOptional.get();
-        usuarioDB.setFirstName(user.getFirstName());
-        usuarioDB.setSecondName(user.getSecondName());
-        usuarioDB.setFirstLastname(user.getFirstLastname());
-        usuarioDB.setSecondLastname(user.getSecondLastname());
-        usuarioDB.setUserBirthday(user.getUserBirthday());
+        usuarioDB.setUserName(user.getUserName());
         usuarioDB.setSubscriptionType(user.getSubscriptionType());
-        usuarioDB.setUserRegistrationDate(user.getUserRegistrationDate());
-        usuarioDB.setIsVerified(user.getIsVerified());
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(usuarioDB));
     }
 
@@ -106,37 +87,6 @@ public class UserController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
-    }
-
-    @PostMapping("/{userCc}/verification/resend")
-    @Operation(summary = "Reenviar código de verificación", description = "Regenera y envía nuevamente el código de verificación.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OTP reenviado", content = @Content(schema = @Schema(implementation = Map.class))),
-                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
-                    @ApiResponse(responseCode = "409", description = "Usuario ya verificado")
-            })
-    public ResponseEntity<?> resendVerification(
-            @Parameter(description = "Documento del usuario", required = true)
-            @PathVariable Integer userCc) {
-        Optional<User> usuarioOptional = service.byId(userCc);
-        if (usuarioOptional.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("resent", false, "message", "Usuario no encontrado"));
-        }
-        User usuario = usuarioOptional.get();
-        if (Boolean.TRUE.equals(usuario.getIsVerified())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("resent", false, "message", "El usuario ya está verificado"));
-        }
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUserCc(usuario.getUserCc());
-        userDTO.setVerified(false);
-        publisher.sendJsonMessage(userDTO);
-        return ResponseEntity.ok(Map.of(
-                "resent", true,
-                "message", "Se solicitó el reenvío del código de verificación",
-                "userCc", usuario.getUserCc()
-        ));
     }
 
     // --- Endpoints de balance ---

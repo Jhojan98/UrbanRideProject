@@ -10,7 +10,7 @@ services:
       - "5532:5432"
     volumes:
       - data-postgres:/var/lib/postgresql/data
-      - ./docker/postgres/version4.0/initdb:/docker-entrypoint-initdb.d
+      - ./docker/postgres/version5.0/initdb:/docker-entrypoint-initdb.d
     networks:
       - movilidad-sostenible-network
     restart: always
@@ -40,29 +40,29 @@ services:
       - movilidad-sostenible-network
     restart: always
 
-  # keycloak:
-  #   container_name: keycloak
-  #   image: quay.io/keycloak/keycloak:26.4.5
-  #   command:
-  #    - start-dev
-  #   environment:
-  #     KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER}
-  #     KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
-
-  #     # CONFIG BD
-  #     KC_DB: postgres
-  #     KC_DB_URL: jdbc:postgresql://postgres17:5432/keycloak
-  #     KC_DB_USERNAME: ${KC_DB_USER}
-  #     KC_DB_PASSWORD: ${KC_DB_PASSWORD}
-  #   expose:
-  #     - 8080
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     - postgres17
-  #   networks:
-  #     - movilidad-sostenible-network
-  #   restart: always
+#  keycloak:
+#    container_name: keycloak
+#    image: quay.io/keycloak/keycloak:26.4.5
+#    command:
+#     - start-dev
+#    environment:
+#      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER}
+#      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
+#
+#      # CONFIG BD
+#      KC_DB: postgres
+#      KC_DB_URL: jdbc:postgresql://postgres17:5432/keycloak
+#      KC_DB_USERNAME: ${KC_DB_USER}
+#      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+#    expose:
+#      - 8080
+#    ports:
+#      - "8080:8080"
+#    depends_on:
+#      - postgres17
+#    networks:
+#      - movilidad-sostenible-network
+#    restart: always
 
   eureka-server:
     container_name: eureka-server
@@ -83,6 +83,28 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  gateway-server:
+    container_name: gateway-server
+    build:
+      context: ./
+      dockerfile: ./gateway-server/Dockerfile
+    expose:
+      - 8090
+    ports:
+      - "8090:8090"
+    environment:
+      SERVER_PORT: 8090
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      #      keycloak:
+      #        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
 
   usuario-service:
     container_name: usuario-service
@@ -110,31 +132,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_started
-    restart: always
-
-  email-service:
-    container_name: email-service
-    build:
-      context: ./
-      dockerfile: ./email-service/Dockerfile
-    ports:
-      - "8004:8004"
-    environment:
-      PORT: 8004
-      DB_HOST: postgres17:5432
-      POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: ${EMAIL_DB_USER}
-      POSTGRES_PASSWORD: ${EMAIL_DB_PASSWORD}
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
-      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
-    networks:
-      - movilidad-sostenible-network
-    depends_on:
-      - postgres17
-      - eureka-server
-      - rabbitmq
     restart: always
 
   bicis-service:
@@ -182,36 +179,6 @@ services:
       - bicis-service
     restart: always
 
-  gateway-server:
-    container_name: gateway-server
-    build:
-      context: ./
-      dockerfile: ./gateway-server/Dockerfile
-    expose:
-      - 8090
-    ports:
-      - "8090:8090"
-    environment:
-      SERVER_PORT: 8090
-      USUARIO_SERVICE_URL: http://usuario-service:8001
-      BICIS_SERVICE_URL: http://bicis-service:8002
-      VIAJE_SERVICE_URL: http://viaje-service:8003
-      EMAIL_SERVICE_URL: http://email-service:8004
-      ESTACIONES_SERVICE_URL: http://estaciones-service:8005
-      CIUDAD_SERVICE_URL: http://ciudad-service:8006
-
-      EUREKA_HOST: eureka-server
-      EUREKA_PORT: 8761
-    networks:
-      - movilidad-sostenible-network
-    depends_on:
-      # keycloak:
-      #   condition: service_started
-      eureka-server:
-        condition: service_healthy
-    restart: always
-
-
   estaciones-service:
     container_name: estaciones-service
     build:
@@ -230,8 +197,10 @@ services:
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - eureka-server
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
     restart: always
 
   ciudad-service:
@@ -252,8 +221,10 @@ services:
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - eureka-server
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
     restart: always
 
   payment-service:
