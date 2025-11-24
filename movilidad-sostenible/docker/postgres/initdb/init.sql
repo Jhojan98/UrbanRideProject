@@ -107,7 +107,7 @@ CREATE TABLE email_verification
 ;
 
 CREATE TABLE public.fine (
-    k_id_fine SERIAL,
+    k_id_fine SERIAL PRIMARY KEY,
     n_name VARCHAR(255) NOT NULL,
     d_description TEXT,
     v_amount NUMERIC(10, 2) NOT NULL

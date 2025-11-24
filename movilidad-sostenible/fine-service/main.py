@@ -10,6 +10,7 @@ import sqlalchemy.orm as _orm
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 from py_eureka_client import eureka_client as _eureka_client
+import httpx
 
 import database as _database
 import models as _models
@@ -255,6 +256,108 @@ async def get_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
     if not user_fine:
         raise HTTPException(status_code=404, detail="User Fine not found")
     return user_fine
+
+
+async def _fetch_user_from_users_service(user_id: int) -> dict:
+    users_url = os.getenv("USERS_SERVICE_URL", "http://usuario-service:8001")
+    users_url = users_url.strip()
+    if users_url and not users_url.startswith("http://") and not users_url.startswith("https://"):
+        users_url = "http://" + users_url
+
+    endpoint = f"{users_url.rstrip('/')}/{user_id}"
+    print(f"Calling users service endpoint: {endpoint}")
+    
+    try:
+        print("1. Creating client...")
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            print("2. Client created, about to GET...")
+            resp = await client.get(endpoint)
+            print(f"3. GET completed! Status: {resp.status_code}")
+            print(f"4. Response body: {resp.text}")
+            
+            if resp.status_code == 200:
+                return resp.json()
+            if resp.status_code == 404:
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            logging.error(f"Users service returned {resp.status_code}: {resp.text}")
+            raise HTTPException(status_code=502, detail="Users service error")
+            
+    except httpx.ConnectError as e:
+        print(f"ConnectError caught: {e}")
+        logging.error("Failed to connect: %s", str(e))
+        raise HTTPException(status_code=503, detail="Users service unavailable")
+    except httpx.TimeoutException as e:
+        print(f"TimeoutException caught: {e}")
+        raise HTTPException(status_code=504, detail="Timeout")
+    except httpx.HTTPStatusError as e:
+        print(f"HTTPStatusError caught: {e}")
+        raise HTTPException(status_code=502, detail="HTTP error")
+    except Exception as e:
+        print(f"Unexpected exception: {type(e).__name__} - {e}")
+        logging.error("Unexpected error: %s", str(e))
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+
+
+@app.get("/api/external/users/{user_id}", tags=["External" ])
+async def proxy_get_user(user_id: int):
+    """Proxy endpoint to fetch a user from the users microservice (for testing)."""
+    return await _fetch_user_from_users_service(user_id)
+
+
+@app.put("/api/user_fines/{user_fine_id}", response_model=UserFineOut, tags=["User Fines"])
+async def pay_user_fine(user_fine_id: int, data: UserFineUpdate, db: _orm.Session = Depends(get_db)):
+    """Update a user fine"""
+    user_fine = (
+        db.query(_models.UserFine)
+        .options(_orm.joinedload(_models.UserFine.fine))
+        .filter(_models.UserFine.k_user_fine == user_fine_id)
+        .first()
+    )
+    if not user_fine:
+        raise HTTPException(status_code=404, detail="User Fine not found")
+
+    updated = False
+
+    if data.n_reason is not None:
+        user_fine.n_reason = data.n_reason
+        updated = True
+    if data.t_state is not None:
+        user_fine.t_state = data.t_state
+        updated = True
+    if data.k_id_multa is not None and data.k_id_multa != user_fine.k_id_multa:
+        fine = (
+            db.query(_models.Fine)
+            .filter(_models.Fine.k_id_fine == data.k_id_multa)
+            .first()
+        )
+        if not fine:
+            raise HTTPException(status_code=400, detail="Fine not found")
+        if fine.v_amount is None:
+            raise HTTPException(status_code=400, detail="Fine amount is not configured")
+
+        user_fine.k_id_multa = data.k_id_multa
+        user_fine.v_amount_snapshot = fine.v_amount
+        updated = True
+    if data.k_user_cc is not None:
+        user_fine.k_user_cc = data.k_user_cc
+        updated = True
+
+    if updated:
+        user_fine.f_updated_at = datetime.utcnow()
+
+    try:
+        db.commit()
+        db.refresh(user_fine)
+        _ = user_fine.fine
+        logging.info(f"User Fine {user_fine_id} updated")
+        return user_fine
+    except Exception as e:
+        logging.error(f"Error updating user fine: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error updating user fine")
+    
+
 
 @app.post("/api/user_fines", response_model=UserFineOut, tags=["User Fines"])
 async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends(get_db)):
