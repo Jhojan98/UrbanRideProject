@@ -23,34 +23,57 @@ public class UsuarioServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<User> byId(Integer id) {
-        return repository.findById(id);
+    public Optional<User> byId(String uid) {
+        return repository.findById(uid);
     }
 
     @Override
     @Transactional
     public User save(User user) {
+        // Inicializar balance si viene null
+        if (user.getBalance() == null) {
+            user.setBalance(0);
+        }
         return repository.save(user);
     }
 
     @Override
     @Transactional
-    public void delete(Integer id) {
-        repository.deleteById(id);
+    public void delete(String uid) {
+        repository.deleteById(uid);
     }
 
     @Override
-    public Optional<User> byUserEmail(String userEmail) {
-        return repository.findByUserEmail(userEmail);
+    public Integer getBalance(String uidUser) {
+        return byId(uidUser).map(User::getBalance).orElse(null);
     }
 
     @Override
-    public void updateVerificationStatus(Integer userCc, boolean verified) {
-        Optional<User> optionalUser = repository.findById(userCc);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            user.setIsVerified(verified);
-            repository.save(user);
+    @Transactional
+    public Integer addBalance(String uidUser, Integer amount) {
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("El monto debe ser positivo");
         }
+        User user = byId(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        Integer current = user.getBalance() == null ? 0 : user.getBalance();
+        user.setBalance(current + amount);
+        repository.save(user);
+        return user.getBalance();
+    }
+
+    @Override
+    @Transactional
+    public Integer subtractBalance(String uidUser, Integer amount) {
+        if (amount == null || amount <= 0) {
+            throw new IllegalArgumentException("El monto debe ser positivo");
+        }
+        User user = byId(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        Integer current = user.getBalance() == null ? 0 : user.getBalance();
+        if (current < amount) {
+            throw new IllegalArgumentException("Saldo insuficiente");
+        }
+        user.setBalance(current - amount);
+        repository.save(user);
+        return user.getBalance();
     }
 }

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Test WebSocket Bicis</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs/lib/stomp.min.js"></script>
+</head>
+
+<body>
+<h1>WebSocket Test Bicis</h1>
+
+<script>
+const socket = new SockJS("http://localhost:8002/ws");
+const stompClient = Stomp.over(socket);
+
+stompClient.connect({}, () => {
+    console.log("Conectado al WebSocket!");
+
+    // Suscripción global
+    stompClient.subscribe("/topic/bicycle.location", (msg) => {
+        console.log("Nueva ubicación:", JSON.parse(msg.body));
+    });
+
+    // Ejemplo si quieres suscribirte a una bici específica:
+    // stompClient.subscribe("/topic/bicycle.location.5", (msg) => {
+    //     console.log("Bici 5:", JSON.parse(msg.body));
+    // });
+});
+</script>
+
+</body>
+</html>

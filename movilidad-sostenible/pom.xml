@@ -21,10 +21,10 @@
         <module>viaje-service</module>
         <module>eureka-server</module>
         <module>gateway-server</module>
-        <module>email-service</module>
         <module>estaciones-service</module>
         <module>ciudad-service</module>
-        <module>database-migrator</module>
+        <module>payment-service</module>
+        <module>slots-service</module>
     </modules>
 
     <properties>

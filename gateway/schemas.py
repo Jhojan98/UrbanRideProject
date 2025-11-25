@@ -67,3 +67,56 @@ class GenerateOtp(BaseModel):
 class VerifyOtp(BaseModel):
     email: EmailStr
     otp: str  # Cambiado a string
+
+
+class TravelCreateGateway(BaseModel):
+    k_series: int
+    k_id_bicycle: int
+    k_metodo_pago: int
+
+
+class TravelOutGateway(BaseModel):
+    k_id_travel: int
+    f_request_date: Optional[_dt.datetime]
+    k_user_cc: int
+    k_series: int
+    k_id_bicycle: int
+
+    class Config:
+        from_attributes = True
+
+
+class PaymentMethodCreate(BaseModel):
+    t_tipo_tarjeta: str
+    n_nombre_titular: str
+    f_fecha_expiracion: _dt.date
+    n_direccion_facturacion: Optional[str] = None
+    n_codigo_postal: Optional[str] = None
+    b_principal: Optional[bool] = False
+    n_numero_tarjeta_completo: Optional[str] = None
+
+
+class PaymentMethodUpdate(BaseModel):
+    n_nombre_titular: Optional[str] = None
+    f_fecha_expiracion: Optional[_dt.date] = None
+    n_direccion_facturacion: Optional[str] = None
+    n_codigo_postal: Optional[str] = None
+
+
+class RecargaSaldoGatewayRequest(BaseModel):
+    k_metodo_pago: int
+    monto: int
+    descripcion: Optional[str] = None
+
+
+class StripePaymentIntentGatewayRequest(BaseModel):
+    k_metodo_pago: int
+    monto: int
+    moneda: Optional[str] = None
+
+
+class StripeSetupIntentGatewayResponse(BaseModel):
+    setup_intent_id: str
+    client_secret: str
+    customer_id: str
+    k_usuario_cc: int

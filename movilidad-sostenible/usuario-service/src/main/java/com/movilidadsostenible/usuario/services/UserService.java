@@ -1,17 +1,18 @@
 package com.movilidadsostenible.usuario.services;
 
 import com.movilidadsostenible.usuario.models.entity.User;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
     List<User> listUsers();
-    Optional<User> byId(Integer id);
     User save(User user);
-    void delete(Integer id);
+    void delete(String uid);
+    Optional<User> byId(String uidUser);
 
-    Optional<User> byUserEmail(String userEmail);
-    void updateVerificationStatus(Integer userCc, boolean verified);
-
+    Integer getBalance(String uidUser);
+    Integer addBalance(String uidUser, Integer amount);
+    Integer subtractBalance(String uidUser, Integer amount);
 }

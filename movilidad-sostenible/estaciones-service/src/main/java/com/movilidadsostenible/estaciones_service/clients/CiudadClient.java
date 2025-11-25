@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "ciudad-service")
 public interface CiudadClient {
 
-    @GetMapping("/cities/{id}")
+    @GetMapping("/{id}")
     ResponseEntity<?> getCityById(@PathVariable("id") Integer id);
 }
-
