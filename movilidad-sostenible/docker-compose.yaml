@@ -10,7 +10,7 @@ services:
       - "5532:5432"
     volumes:
       - data-postgres:/var/lib/postgresql/data
-      - ./docker/postgres/version5.0/initdb:/docker-entrypoint-initdb.d
+      - ./docker/postgres/version6.0/initdb:/docker-entrypoint-initdb.d
     networks:
       - movilidad-sostenible-network
     restart: always
@@ -177,6 +177,30 @@ services:
       - postgres17
       - usuario-service
       - bicis-service
+    restart: always
+
+  slots-service:
+    container_name: slots-service
+    build:
+      context: ./
+      dockerfile: ./slots-service/Dockerfile
+    ports:
+      - "8004:8004"
+    environment:
+      PORT: 8004
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${SLOTS_DB_USER}
+      POSTGRES_PASSWORD: ${SLOTS_DB_PASSWORD}
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
     restart: always
 
   estaciones-service:

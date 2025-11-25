@@ -1,6 +1,8 @@
 package com.movilidadsostenible.estaciones_service.controllers;
 
 import com.movilidadsostenible.estaciones_service.clients.CiudadClient;
+import com.movilidadsostenible.estaciones_service.clients.SlotsClient;
+import com.movilidadsostenible.estaciones_service.clients.SlotRequest;
 import com.movilidadsostenible.estaciones_service.models.entity.Stations;
 import com.movilidadsostenible.estaciones_service.services.StationsService;
 import feign.FeignException;
@@ -14,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.HashMap;
 import java.util.List;
@@ -28,10 +29,12 @@ public class StationsController {
 
     private final StationsService service;
     private final CiudadClient ciudadClient;
+    private final SlotsClient slotsClient;
 
-    public StationsController(StationsService service, CiudadClient ciudadClient) {
+    public StationsController(StationsService service, CiudadClient ciudadClient, SlotsClient slotsClient) {
         this.service = service;
         this.ciudadClient = ciudadClient;
+        this.slotsClient = slotsClient;
     }
 
     @GetMapping
@@ -58,7 +61,6 @@ public class StationsController {
     public ResponseEntity<?> create(@Valid @RequestBody Stations station,
                                     BindingResult result) {
         if (result.hasErrors()) return validate(result);
-        // Verificar ciudad vía Feign
         try {
             var resp = ciudadClient.getCityById(station.getIdCity());
             if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
@@ -76,7 +78,41 @@ public class StationsController {
                     ));
         }
         Stations saved = service.save(station);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+
+        // Prefijos robustos (manejo de nulos y longitud < 3)
+        String stationName = saved.getStationName() != null ? saved.getStationName().trim() : "EST";
+        if (stationName.isEmpty()) stationName = "EST";
+        String typeValue = saved.getType() != null ? saved.getType().trim() : "GEN";
+        if (typeValue.isEmpty()) typeValue = "GEN";
+
+        String stationPrefix = stationName.length() >= 3 ? stationName.substring(0,3).toUpperCase() : stationName.toUpperCase();
+        String typePrefix = typeValue.length() >= 3 ? typeValue.substring(0,3).toUpperCase() : typeValue.toUpperCase();
+
+        var slotsCreados = new java.util.ArrayList<Map<String,Object>>();
+        for (int i = 1; i <= 15; i++) {
+            String slotId = stationPrefix + "-" + typePrefix + "-" + i;
+            try {
+                SlotRequest slotReq = new SlotRequest();
+                slotReq.setSlotId(slotId);
+                slotReq.setPadlockStatus("LOCKED");
+                slotReq.setStationId(saved.getIdStation());
+                slotReq.setBicycleId(null);
+                ResponseEntity<?> slotResp = slotsClient.createSlot(slotReq);
+                Map<String,Object> info = new HashMap<>();
+                info.put("slotId", slotId);
+                info.put("status", slotResp.getStatusCode().value());
+                slotsCreados.add(info);
+            } catch (Exception e) {
+                Map<String,Object> errorInfo = new HashMap<>();
+                errorInfo.put("slotId", slotId);
+                errorInfo.put("error", e.getMessage());
+                slotsCreados.add(errorInfo);
+            }
+        }
+        Map<String,Object> respuesta = new HashMap<>();
+        respuesta.put("estacion", saved);
+        respuesta.put("slotsGenerados", slotsCreados);
+        return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }
 
     @PutMapping("/{id}")
@@ -87,7 +123,6 @@ public class StationsController {
         if (result.hasErrors()) return validate(result);
         Optional<Stations> opt = service.findById(id);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
-        // Verificar ciudad si cambia o siempre validar
         try {
             var resp = ciudadClient.getCityById(station.getIdCity());
             if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {
@@ -106,11 +141,7 @@ public class StationsController {
         }
         Stations db = opt.get();
         db.setStationName(station.getStationName());
-        db.setStreet(station.getStreet());
-        db.setAvenue(station.getAvenue());
-        db.setNumber(station.getNumber());
         db.setIdCity(station.getIdCity());
-        db.setCapacity(station.getCapacity());
         db.setType(station.getType());
         db.setLatitude(station.getLatitude());
         db.setLength(station.getLength());
