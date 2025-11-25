@@ -7,7 +7,6 @@ import "@/styles/global.scss";
 import { initializeApp } from 'firebase/app'
 import { createI18n } from 'vue-i18n';
 import { messages } from '@/lang/messages';
-import { createWebSocket } from './services/webSocket';
 const savedLocale = localStorage.getItem('locale') || 'es';
 const i18n = createI18n({
   legacy: false,
@@ -28,7 +27,6 @@ const firebaseConfig = {
 }
 
 
-createWebSocket()
 initializeApp(firebaseConfig)
 
 const pinia = createPinia()

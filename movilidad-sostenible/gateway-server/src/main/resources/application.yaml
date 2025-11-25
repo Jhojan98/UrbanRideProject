@@ -79,7 +79,9 @@ spring:
         - id: bicis-ws
           uri: lb:ws://bicis-service
           predicates:
-            - Path=/ws/bicis/**
+            - Path=/bicis/ws/**
+          filters:
+            - StripPrefix=1
 
 springdoc:
   api-docs:
