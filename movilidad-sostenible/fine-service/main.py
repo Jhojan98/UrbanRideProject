@@ -88,6 +88,14 @@ def _to_bool(value: Optional[str], default: bool = True) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "y", "on"}
 
 
+def _get_users_service_base_url() -> str:
+    users_url = os.getenv("USERS_SERVICE_URL", "http://usuario-service:8001")
+    users_url = users_url.strip()
+    if users_url and not users_url.startswith("http://") and not users_url.startswith("https://"):
+        users_url = "http://" + users_url
+    return users_url.rstrip("/")
+
+
 @app.on_event("startup")
 async def startup_event():
     global _eureka_handle
@@ -258,12 +266,8 @@ async def get_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
 
 
 async def _fetch_user_from_users_service(user_id: str) -> dict:
-    users_url = os.getenv("USERS_SERVICE_URL", "http://usuario-service:8001")
-    users_url = users_url.strip()
-    if users_url and not users_url.startswith("http://") and not users_url.startswith("https://"):
-        users_url = "http://" + users_url
-
-    endpoint = f"{users_url.rstrip('/')}/login/{user_id}"
+    base_url = _get_users_service_base_url()
+    endpoint = f"{base_url}/login/{user_id}"
     print(f"Calling users service endpoint: {endpoint}")
     
     try:
@@ -304,6 +308,48 @@ async def proxy_get_user(user_id: str):
     return await _fetch_user_from_users_service(user_id)
 
 
+async def _subtract_balance_from_users_service(user_id: str, amount: int) -> dict:
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than zero")
+
+    base_url = _get_users_service_base_url()
+    endpoint = f"{base_url}/balance/{user_id}/subtract"
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(endpoint, params={"amount": amount})
+    except httpx.ConnectError as exc:
+        logging.error("Failed to connect to users service: %s", exc)
+        raise HTTPException(status_code=503, detail="Users service unavailable") from exc
+    except httpx.TimeoutException as exc:
+        logging.error("Users service request timed out: %s", exc)
+        raise HTTPException(status_code=504, detail="Users service timeout") from exc
+    except Exception as exc:  # pylint: disable=broad-except
+        logging.error("Unexpected error calling users service: %s", exc)
+        raise HTTPException(status_code=500, detail="Unexpected error contacting users service") from exc
+
+    if resp.status_code == 200:
+        try:
+            return resp.json()
+        except ValueError:
+            logging.error("Users service returned invalid JSON when subtracting balance: %s", resp.text)
+            raise HTTPException(status_code=502, detail="Invalid response from users service")
+
+    if resp.status_code == 400:
+        try:
+            payload = resp.json()
+        except ValueError:
+            payload = {"error": resp.text or "Saldo insuficiente"}
+        message = payload.get("error", "Saldo insuficiente")
+        raise HTTPException(status_code=400, detail=message)
+
+    if resp.status_code == 404:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    logging.error("Users service subtract balance returned %s: %s", resp.status_code, resp.text)
+    raise HTTPException(status_code=502, detail="Users service error")
+
+
 @app.post("/api/user_fines", response_model=UserFineOut, tags=["User Fines"])
 async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends(get_db)):
     """Create a new user fine"""
@@ -339,6 +385,57 @@ async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends
         logging.error(f"Error creating user fine: {e}")
         db.rollback()
         raise HTTPException(status_code=500, detail="Error creating user fine")
+
+
+@app.post("/api/user_fines/{user_fine_id}/pay", response_model=UserFineOut, tags=["User Fines"])
+async def pay_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
+    """Attempt to pay the user fine by subtracting balance from the users service."""
+    user_fine = (
+        db.query(_models.UserFine)
+        .options(_orm.joinedload(_models.UserFine.fine))
+        .filter(_models.UserFine.k_user_fine == user_fine_id)
+        .first()
+    )
+
+    if not user_fine:
+        raise HTTPException(status_code=404, detail="User Fine not found")
+
+    if user_fine.t_state == 'PAID':
+        raise HTTPException(status_code=400, detail="Fine already paid")
+
+    if not user_fine.k_uid_user:
+        raise HTTPException(status_code=400, detail="User identifier not available for this fine")
+
+    amount = user_fine.v_amount_snapshot
+    if amount is None and user_fine.fine is not None:
+        amount = user_fine.fine.v_amount
+
+    if amount is None:
+        raise HTTPException(status_code=400, detail="Fine amount is not available")
+
+    try:
+        int_amount = int(amount)
+    except (TypeError, ValueError) as exc:
+        logging.error("Invalid fine amount %s for user fine %s: %s", amount, user_fine_id, exc)
+        raise HTTPException(status_code=400, detail="Fine amount is invalid") from exc
+
+    await _subtract_balance_from_users_service(user_fine.k_uid_user, int_amount)
+
+    user_fine.t_state = 'PAID'
+    user_fine.v_amount_snapshot = int_amount
+    user_fine.f_update_at = datetime.utcnow()
+
+    try:
+        db.commit()
+        db.refresh(user_fine)
+        _ = user_fine.fine
+        logging.info("User Fine %s paid", user_fine_id)
+        return user_fine
+    except Exception as exc:
+        logging.error("Error marking user fine %s as paid: %s", user_fine_id, exc)
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error updating user fine")
+
 
 @app.put("/api/user_fines/{user_fine_id}", response_model=UserFineOut, tags=["User Fines"])
 async def update_user_fine(user_fine_id: int, data: UserFineUpdate, db: _orm.Session = Depends(get_db)):
