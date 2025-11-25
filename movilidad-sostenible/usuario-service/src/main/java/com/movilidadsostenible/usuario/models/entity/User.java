@@ -5,12 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 
 
 @DynamicInsert
 @Entity
 @Table(name = "users")
+@Data
 public class User {
 
     @Id
@@ -26,17 +28,4 @@ public class User {
 
     @Column(name = "v_balance")
     private Integer balance;
-
-    // Getters y Setters (email eliminado)
-    public String getUidUser() { return uidUser; }
-    public void setUidUser(String uidUser) { this.uidUser = uidUser; }
-
-    public String getUserName() { return userName; }
-    public void setUserName(String userName) { this.userName = userName; }
-
-    public String getSubscriptionType() { return subscriptionType; }
-    public void setSubscriptionType(String subscriptionType) { this.subscriptionType = subscriptionType; }
-
-    public Integer getBalance() { return balance; }
-    public void setBalance(Integer balance) { this.balance = balance; }
 }
