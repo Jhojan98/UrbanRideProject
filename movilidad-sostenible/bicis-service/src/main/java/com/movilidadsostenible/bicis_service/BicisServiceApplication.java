@@ -5,11 +5,13 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableFeignClients
+@CrossOrigin
 public class BicisServiceApplication {
 
 	@PostConstruct

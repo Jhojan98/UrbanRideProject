@@ -1,37 +1,29 @@
 <template>
     <div class="form-container">
         <img src="@/assets/ECORIDE.webp" alt="Logo" class="form-logo" />
-        <h2 class="form-title">Verificación OTP</h2>
+        <h2 class="form-title">{{ $t('auth.otp.title') }}</h2>
         
         <!-- Mostramos el email que viene del store -->
         <div class="email-info">
-            <p>Código enviado a: <strong>{{ email }}</strong></p>
+            <p>{{ $t('auth.otp.codeSentTo') }} <strong>{{ email }}</strong></p>
         </div>
         
-        <form @submit.prevent="verifyOtp">
-            <div class="form-group">
-                <label for="otp">Código OTP</label>
-                <input
-                    id="otp"
-                    type="text"
-                    v-model="otp"
-                    placeholder="Ingresa el código de 6 dígitos"
-                    required
-                    maxlength="6"
-                />
-            </div>
-            <button type="submit" class="form-submit">Verificar Código</button>
-        </form>
+        <div class="verification-info">
+            <p>{{ $t('auth.otp.emailSent') }}</p>
+            <p>{{ $t('auth.otp.checkInbox') }}</p>
+            <p>{{ $t('auth.otp.afterVerify') }}</p>
+        </div>
+        
+        <button @click="checkVerification" class="form-submit">{{ $t('auth.otp.verify') }}</button>
         
         <div class="otp-actions">
-            <button @click="resendOtp" class="btn-resend">Reenviar OTP</button>
+            <button @click="resendOtp" class="btn-resend">{{ $t('auth.otp.resend') }}</button>
         </div>
         
         <br>
         <h4>
-            ¿Volver al
             <router-link class="link-inline" :to="{ name: 'login' }" @click="clearEmail">
-                Inicio de Sesión
+                {{ $t('auth.otp.backToLogin') }}
             </router-link>
             <p>{{ feedback }}</p>
         </h4>
@@ -40,10 +32,11 @@
 
 <script setup lang="ts">
 import { ref, Ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import userAuth from '@/stores/auth';
 
-const otp: Ref<string> = ref('');
+const { t: $t } = useI18n();
 const feedback: Ref<string> = ref('');
 const email: Ref<string> = ref('');
 
@@ -55,57 +48,39 @@ onMounted(() => {
     if (store.tempEmail) {
         email.value = store.tempEmail;
     } else {
-        feedback.value = 'No se encontró email para verificar. Redirigiendo al login...';
+        feedback.value = $t('auth.otp.noEmailFound');
         setTimeout(() => {
             router.push('/login');
         }, 2000);
     }
 });
 
-const verifyOtp = async () => {
+const checkVerification = async () => {
     if (!email.value) {
-        feedback.value = 'No hay email disponible para verificar';
+        feedback.value = $t('auth.otp.noEmail');
         return;
     }
 
-    // Validar que sea un número pero enviarlo como string
-    if (!/^\d{6}$/.test(otp.value)) {
-        feedback.value = 'El OTP debe ser un número válido de 6 dígitos';
-        return;
-    }
-
-    const res = await store.verifyOtp(email.value, otp.value);
-    
-    if (res) {
-        feedback.value = '¡Verificación exitosa! Redirigiendo...';
-        
-        // Verificar si se obtuvo un token (auto-login)
-        setTimeout(() => {
-            if (store.token) {
-                // Si hay token, ir a página protegida
-                router.push('/maps');
-            } else {
-                // Si no hay token, ir al login para que inicie sesión
-                router.push({ name: 'login', query: { verified: 'true' } });
-            }
-        }, 1500);
-    } else {
-        feedback.value = store.message || 'Error al verificar el OTP';
-    }
+    // Simplemente redirigir al login
+    // La verificación ya se hizo mediante el enlace en el email
+    feedback.value = $t('auth.otp.redirectToLogin');
+    setTimeout(() => {
+        router.push({ name: 'login', query: { verified: 'true' } });
+    }, 1500);
 };
 
 const resendOtp = async () => {
     if (!email.value) {
-        feedback.value = 'No hay email disponible para reenviar OTP';
+        feedback.value = $t('auth.otp.noEmailResend');
         return;
     }
 
     const res = await store.generateOtp(email.value);
     
     if (res) {
-        feedback.value = 'Nuevo código OTP enviado a tu correo';
+        feedback.value = $t('auth.otp.resendSuccess');
     } else {
-        feedback.value = store.message || 'Error al reenviar el OTP';
+        feedback.value = store.message || $t('auth.otp.resendError');
     }
 };
 
@@ -155,6 +130,29 @@ const clearEmail = () => {
     padding: 0.5rem;
     background: rgba(46, 125, 50, 0.1);
     border-radius: 6px;
+}
+
+.verification-info {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(33, 150, 243, 0.1);
+    border-radius: 8px;
+    border-left: 4px solid #2196F3;
+}
+
+.verification-info p {
+    margin: 0.5rem 0;
+    color: var(--color-text-primary-light);
+    line-height: 1.6;
+}
+
+[data-theme="dark"] .verification-info {
+    background: rgba(33, 150, 243, 0.2);
+}
+
+[data-theme="dark"] .verification-info p {
+    color: var(--color-text-primary-dark);
 }
 
 .email-info p {

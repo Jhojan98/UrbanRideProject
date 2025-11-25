@@ -1,22 +1,22 @@
 <template>
   <div class="profile">
     <div class="profile-header">
-      <h1>Bienvenido de nuevo, CLIENTE EJEMPLO</h1>
+      <h1>{{ $t('profile.header.welcome_user', { name: 'CLIENTE EJEMPLO' }) }}</h1>
     </div>
     
     <div class="profile-content">
       <!-- Sección de Historial de Viajes -->
       <section class="profile-section">
-        <h2 class="section-title">Historial de Viajes</h2>
+        <h2 class="section-title">{{ $t('profile.trips.title') }}</h2>
         <div class="table-container">
           <table class="trips-table">
             <thead>
               <tr>
-                <th>Ruta</th>
-                <th>Fecha</th>
-                <th>Duración</th>
-                <th>Costo</th>
-                <th>Est</th>
+                <th>{{ $t('profile.trips.route') }}</th>
+                <th>{{ $t('profile.trips.date') }}</th>
+                <th>{{ $t('profile.trips.duration') }}</th>
+                <th>{{ $t('profile.trips.cost') }}</th>
+                <th>{{ $t('profile.trips.status') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -31,49 +31,49 @@
             </tbody>
           </table>
         </div>
-        <button class="btn-view-all">Ver todos los viajes</button>
+        <button class="btn-view-all">{{ $t('profile.trips.viewAll') }}</button>
       </section>
 
       <!-- Sección de Puntos de Fidelización -->
       <section class="profile-section">
-        <h2 class="section-title">Puntos de Fidelización</h2>
+        <h2 class="section-title">{{ $t('profile.loyalty.title') }}</h2>
         <div class="loyalty-card">
           <div class="points-display">
-            <span class="points-label">Puntos actuales</span>
+            <span class="points-label">{{ $t('profile.loyalty.pointsLabel') }}</span>
             <span class="points-value">1250</span>
           </div>
-          <p class="points-info">Faltan 750 puntos para el siguiente nivel.</p>
+          <p class="points-info">{{ $t('profile.loyalty.missingPoints', { points: 750 }) }}</p>
           <div class="rewards">
-            <h4>Tus recompensas</h4>
+            <h4>{{ $t('profile.loyalty.rewardsTitle') }}</h4>
             <ul class="rewards-list">
-              <li>1 hora de viaje gratis</li>
-              <li>10% de descuento en suscripción</li>
-              <li>Acceso a bicicletas premium</li>
+              <li>{{ $t('profile.loyalty.reward1') }}</li>
+              <li>{{ $t('profile.loyalty.reward2') }}</li>
+              <li>{{ $t('profile.loyalty.reward3') }}</li>
             </ul>
           </div>
-          <button class="btn-redeem">Canjear puntos</button>
+          <button class="btn-redeem">{{ $t('profile.loyalty.redeem') }}</button>
         </div>
       </section>
 
       <!-- Sección de Saldo y Tarjeta -->
       <section class="profile-section">
-        <h2 class="section-title">Saldo / Tarjeta Registrada</h2>
+        <h2 class="section-title">{{ $t('profile.balance.title') }}</h2>
         <div class="balance-card">
           <div class="balance-display">
-            <span class="balance-label">Saldo actual</span>
+            <span class="balance-label">{{ $t('profile.balance.currentBalance') }}</span>
             <span class="balance-value">$12.000 COP</span>
           </div>
           <div class="card-info">
-            <h4>Tarjeta Registrada</h4>
+            <h4>{{ $t('profile.balance.registeredCard') }}</h4>
             <div class="card-details">
               <span class="card-type">Visa</span>
               <span class="card-number">**** **** **** 1234</span>
-              <span class="card-expiry">Expira: 12/28</span>
+              <span class="card-expiry">{{ $t('profile.balance.expires') }} 12/28</span>
             </div>
           </div>
           <div class="payment-actions">
-            <button class="btn-payment" @click="managePayMethod">Gestionar métodos de pago</button>
-            <button class="btn-add-balance" @click="addBalance">Añadir saldo</button>
+            <button class="btn-payment" @click="managePayMethod">{{ $t('profile.balance.managePayments') }}</button>
+            <button class="btn-add-balance" @click="addBalance">{{ $t('profile.balance.addBalance') }}</button>
           </div>
         </div>
       </section>
@@ -83,6 +83,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 interface Trip {
@@ -100,6 +101,7 @@ const managePayMethod = () => {
 const addBalance = () => {
   router.push({ name: 'add-balance' });
 };
+const { t: $t } = useI18n();
 const trips = ref<Trip[]>([
   {
     id: 1,
