@@ -5,7 +5,6 @@ import { createPinia } from 'pinia'
 import { messages } from '@/lang/messages'
 import{initializeApp} from "firebase/app";
 import { createI18n } from 'vue-i18n'
-import { createWebSocket } from './services/webSocket'
 import '@/styles/global.scss'
 
 const firebaseConfig = {
@@ -27,7 +26,7 @@ const i18n = createI18n({
     messages
 })
 initializeApp(firebaseConfig);
-createWebSocket
+
 const app = createApp(App)
 app.use(router)
 app.use(pinia)
