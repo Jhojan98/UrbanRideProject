@@ -291,7 +291,7 @@ services:
       EUREKA_HEARTBEAT_INTERVAL: 30
       POSTGRES_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: manager_fine
+      POSTGRES_USER: ${FINES_DB_USER}
       POSTGRES_PASSWORD: ${FINES_DB_PASSWORD}
     networks:
       - movilidad-sostenible-network

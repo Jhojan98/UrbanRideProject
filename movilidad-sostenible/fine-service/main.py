@@ -3,7 +3,6 @@ import logging
 import os
 import socket
 from datetime import datetime
-from decimal import Decimal
 from typing import Literal, Optional
 
 import sqlalchemy.orm as _orm
@@ -22,9 +21,8 @@ _eureka_handle = None
 
 # Pydantic models aligned to English DB columns
 class FineBase(BaseModel):
-    n_name: str
-    d_description: Optional[str] = None
-    v_amount: Decimal
+    d_descripcion: str
+    v_amount: int
 
 
 class FineCreate(FineBase):
@@ -32,9 +30,8 @@ class FineCreate(FineBase):
 
 
 class FineUpdate(BaseModel):
-    n_name: Optional[str] = None
-    d_description: Optional[str] = None
-    v_amount: Optional[Decimal] = None
+    d_descripcion: Optional[str] = None
+    v_amount: Optional[int] = None
 
 
 class FineOut(FineBase):
@@ -47,9 +44,9 @@ class FineOut(FineBase):
 
 class UserFineBase(BaseModel):
     n_reason: str
-    t_state: Literal['PENDING', 'PAID', 'CANCELLED'] = 'PENDING'
-    k_id_multa: int
-    k_user_cc: int
+    t_state: Literal['PENDING', 'PAID'] = 'PENDING'
+    k_id_fine: int
+    k_uid_user: Optional[str] = None
 
 
 class UserFineCreate(UserFineBase):
@@ -58,17 +55,17 @@ class UserFineCreate(UserFineBase):
 
 class UserFineUpdate(BaseModel):
     n_reason: Optional[str] = None
-    t_state: Optional[Literal['PENDING', 'PAID', 'CANCELLED']] = None
-    k_id_multa: Optional[int] = None
-    k_user_cc: Optional[int] = None
+    t_state: Optional[Literal['PENDING', 'PAID']] = None
+    k_id_fine: Optional[int] = None
+    k_uid_user: Optional[str] = None
 
 
 class UserFineOut(UserFineBase):
     k_user_fine: int
-    v_amount_snapshot: Decimal
+    v_amount_snapshot: Optional[int] = None
     f_assigned_at: datetime
-    f_updated_at: datetime
-    fine: FineOut
+    f_update_at: Optional[datetime] = None
+    fine: Optional[FineOut] = None
 
     class Config:
         orm_mode = True
@@ -199,6 +196,8 @@ async def update_fine(fine_id: int, data: FineUpdate, db: _orm.Session = Depends
     updated = False
     update_data = data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
+        if value is None:
+            continue
         setattr(fine, field, value)
         updated = True
 
@@ -258,13 +257,13 @@ async def get_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
     return user_fine
 
 
-async def _fetch_user_from_users_service(user_id: int) -> dict:
+async def _fetch_user_from_users_service(user_id: str) -> dict:
     users_url = os.getenv("USERS_SERVICE_URL", "http://usuario-service:8001")
     users_url = users_url.strip()
     if users_url and not users_url.startswith("http://") and not users_url.startswith("https://"):
         users_url = "http://" + users_url
 
-    endpoint = f"{users_url.rstrip('/')}/{user_id}"
+    endpoint = f"{users_url.rstrip('/')}/login/{user_id}"
     print(f"Calling users service endpoint: {endpoint}")
     
     try:
@@ -300,63 +299,9 @@ async def _fetch_user_from_users_service(user_id: int) -> dict:
 
 
 @app.get("/api/external/users/{user_id}", tags=["External" ])
-async def proxy_get_user(user_id: int):
+async def proxy_get_user(user_id: str):
     """Proxy endpoint to fetch a user from the users microservice (for testing)."""
     return await _fetch_user_from_users_service(user_id)
-
-
-@app.put("/api/user_fines/{user_fine_id}", response_model=UserFineOut, tags=["User Fines"])
-async def pay_user_fine(user_fine_id: int, data: UserFineUpdate, db: _orm.Session = Depends(get_db)):
-    """Update a user fine"""
-    user_fine = (
-        db.query(_models.UserFine)
-        .options(_orm.joinedload(_models.UserFine.fine))
-        .filter(_models.UserFine.k_user_fine == user_fine_id)
-        .first()
-    )
-    if not user_fine:
-        raise HTTPException(status_code=404, detail="User Fine not found")
-
-    updated = False
-
-    if data.n_reason is not None:
-        user_fine.n_reason = data.n_reason
-        updated = True
-    if data.t_state is not None:
-        user_fine.t_state = data.t_state
-        updated = True
-    if data.k_id_multa is not None and data.k_id_multa != user_fine.k_id_multa:
-        fine = (
-            db.query(_models.Fine)
-            .filter(_models.Fine.k_id_fine == data.k_id_multa)
-            .first()
-        )
-        if not fine:
-            raise HTTPException(status_code=400, detail="Fine not found")
-        if fine.v_amount is None:
-            raise HTTPException(status_code=400, detail="Fine amount is not configured")
-
-        user_fine.k_id_multa = data.k_id_multa
-        user_fine.v_amount_snapshot = fine.v_amount
-        updated = True
-    if data.k_user_cc is not None:
-        user_fine.k_user_cc = data.k_user_cc
-        updated = True
-
-    if updated:
-        user_fine.f_updated_at = datetime.utcnow()
-
-    try:
-        db.commit()
-        db.refresh(user_fine)
-        _ = user_fine.fine
-        logging.info(f"User Fine {user_fine_id} updated")
-        return user_fine
-    except Exception as e:
-        logging.error(f"Error updating user fine: {e}")
-        db.rollback()
-        raise HTTPException(status_code=500, detail="Error updating user fine")
-    
 
 
 @app.post("/api/user_fines", response_model=UserFineOut, tags=["User Fines"])
@@ -366,23 +311,21 @@ async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends
         logging.info(f"Received data: {user_fine.model_dump()}")
         fine = (
             db.query(_models.Fine)
-            .filter(_models.Fine.k_id_fine == user_fine.k_id_multa)
+            .filter(_models.Fine.k_id_fine == user_fine.k_id_fine)
             .first()
         )
         if not fine:
             raise HTTPException(status_code=400, detail="Fine not found")
-        if fine.v_amount is None:
-            raise HTTPException(status_code=400, detail="Fine amount is not configured")
 
         assigned_at = datetime.utcnow()
         new_user_fine = _models.UserFine(
             n_reason=user_fine.n_reason,
             t_state=user_fine.t_state,
-            k_id_multa=user_fine.k_id_multa,
-            k_user_cc=user_fine.k_user_cc,
+            k_id_fine=user_fine.k_id_fine,
+            k_uid_user=user_fine.k_uid_user,
             v_amount_snapshot=fine.v_amount,
             f_assigned_at=assigned_at,
-            f_updated_at=assigned_at,
+            f_update_at=assigned_at,
         )
 
         logging.info(f"Created user fine object: {new_user_fine.__dict__}")
@@ -396,6 +339,7 @@ async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends
         logging.error(f"Error creating user fine: {e}")
         db.rollback()
         raise HTTPException(status_code=500, detail="Error creating user fine")
+
 @app.put("/api/user_fines/{user_fine_id}", response_model=UserFineOut, tags=["User Fines"])
 async def update_user_fine(user_fine_id: int, data: UserFineUpdate, db: _orm.Session = Depends(get_db)):
     """Update a user fine"""
@@ -416,35 +360,33 @@ async def update_user_fine(user_fine_id: int, data: UserFineUpdate, db: _orm.Ses
     if data.t_state is not None:
         user_fine.t_state = data.t_state
         updated = True
-    if data.k_id_multa is not None and data.k_id_multa != user_fine.k_id_multa:
+    if data.k_id_fine is not None and data.k_id_fine != user_fine.k_id_fine:
         fine = (
             db.query(_models.Fine)
-            .filter(_models.Fine.k_id_fine == data.k_id_multa)
+            .filter(_models.Fine.k_id_fine == data.k_id_fine)
             .first()
         )
         if not fine:
             raise HTTPException(status_code=400, detail="Fine not found")
-        if fine.v_amount is None:
-            raise HTTPException(status_code=400, detail="Fine amount is not configured")
 
-        user_fine.k_id_multa = data.k_id_multa
+        user_fine.k_id_fine = data.k_id_fine
         user_fine.v_amount_snapshot = fine.v_amount
         updated = True
-    if data.k_user_cc is not None:
-        user_fine.k_user_cc = data.k_user_cc
+    if data.k_uid_user is not None:
+        user_fine.k_uid_user = data.k_uid_user
         updated = True
 
     if updated:
-        user_fine.f_updated_at = datetime.utcnow()
+        user_fine.f_update_at = datetime.utcnow()
 
     try:
         db.commit()
         db.refresh(user_fine)
         _ = user_fine.fine
-        logging.info(f"User Fine {user_fine_id} updated")
+        logging.info("User Fine %s updated", user_fine_id)
         return user_fine
     except Exception as e:
-        logging.error(f"Error updating user fine: {e}")
+        logging.error("Error updating user fine: %s", e)
         db.rollback()
         raise HTTPException(status_code=500, detail="Error updating user fine")
 
