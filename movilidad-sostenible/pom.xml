@@ -24,6 +24,7 @@
         <module>estaciones-service</module>
         <module>ciudad-service</module>
         <module>payment-service</module>
+        <module>slots-service</module>
     </modules>
 
     <properties>

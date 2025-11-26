@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/city")
 @Tag(name = "Ciudades", description = "CRUD de ciudades")
 public class CityController {
 

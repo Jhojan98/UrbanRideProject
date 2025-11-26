@@ -7,11 +7,10 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.CorsWebFilter;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -35,29 +34,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        // Orígenes explícitos para REST endpoints
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "http://localhost:8080",
-            "http://localhost:8081",
-            "http://client-frontend",
-            "http://client-frontend:80"
-        ));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-        
+    public CorsWebFilter corsWebFilter() {
+        CorsConfiguration corsConfig = new CorsConfiguration();
+        corsConfig.setAllowedOrigins(Arrays.asList("http://localhost:8080"));
+        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        corsConfig.setAllowedHeaders(Arrays.asList("*"));
+        corsConfig.setAllowCredentials(true);
+        corsConfig.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplicar CORS solo a rutas que NO son WebSocket para evitar duplicación
-        source.registerCorsConfiguration("/user/**", configuration);
-        source.registerCorsConfiguration("/bicy/**", configuration);
-        source.registerCorsConfiguration("/city/**", configuration);
-        source.registerCorsConfiguration("/email/**", configuration);
-        source.registerCorsConfiguration("/station/**", configuration);
-        source.registerCorsConfiguration("/travel/**", configuration);
-        // NO aplicar a /bicis/** ni /ws/** - el servicio maneja su propio CORS para WebSocket
-        return source;
+        source.registerCorsConfiguration("/**", corsConfig);
+
+        return new CorsWebFilter(source);
     }
 }
