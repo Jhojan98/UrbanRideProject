@@ -134,6 +134,28 @@ services:
         condition: service_started
     restart: always
 
+  admin-service:
+    container_name: admin-service
+    build:
+      context: ./
+      dockerfile: ./admin-service/Dockerfile
+    ports:
+      - "8008:8008"
+    environment:
+      PORT: 8008
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${ADMIN_DB_USER}
+      POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD}
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
   bicis-service:
     container_name: bicis-service
     build:
