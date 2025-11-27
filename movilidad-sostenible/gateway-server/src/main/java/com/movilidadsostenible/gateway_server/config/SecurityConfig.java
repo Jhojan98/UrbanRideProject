@@ -38,16 +38,7 @@ public class SecurityConfig {
         corsConfig.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        // Aplicar CORS solo a rutas REST, NO a WebSockets (SockJS maneja su propio CORS)
-        source.registerCorsConfiguration("/user/**", corsConfig);
-        source.registerCorsConfiguration("/bicy/**", corsConfig);
-        source.registerCorsConfiguration("/city/**", corsConfig);
-        source.registerCorsConfiguration("/email/**", corsConfig);
-        source.registerCorsConfiguration("/station/**", corsConfig);
-        source.registerCorsConfiguration("/travel/**", corsConfig);
-        source.registerCorsConfiguration("/v3/api-docs/**", corsConfig);
-        source.registerCorsConfiguration("/swagger-ui/**", corsConfig);
-        // NO registrar /** para evitar conflictos con /ws/bicis/** y /ws/estaciones/**
+        source.registerCorsConfiguration("/**", corsConfig);
 
         return new CorsWebFilter(source);
     }

@@ -313,4 +313,3 @@ volumes:
 networks:
   movilidad-sostenible-network:
     driver: bridge
-    

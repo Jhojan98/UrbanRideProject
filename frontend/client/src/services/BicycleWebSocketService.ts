@@ -25,8 +25,12 @@ export class BicycleWebSocketService {
 
         // Obtener la URL del WebSocket desde variables de entorno
         // SockJS requiere http/https, NO ws/wss (maneja la actualización automáticamente)
-        const baseUrl = process.env.VUE_APP_WEBSOCKET_URL || 'http://localhost:8090';
-        const wsUrl = `${baseUrl}/ws/bicis/ws`;
+        // Conexión directa al servicio de bicis (no vía gateway)
+        const baseUrl = process.env.VUE_APP_WEBSOCKET_BICYCLES_URL || 'http://localhost:8092';
+        // Importante: cuando conectamos directo al microservicio de bicis,
+        // el endpoint SockJS expuesto por Spring suele ser solo `/ws`
+        // (la ruta `/ws/bicis/**` es propia del gateway y no aplica aquí).
+        const wsUrl = `${baseUrl}/ws`;
         
         console.log('🔌 Conectando a WebSocket:', wsUrl);
 
