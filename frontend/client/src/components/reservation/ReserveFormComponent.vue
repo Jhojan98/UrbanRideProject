@@ -2,7 +2,6 @@
   <div class="reservation-panel">
     <h1>{{ $t('reservation.form.stationDetails') }}</h1>
 
-
     <h3>{{ props.station.name }}</h3>
 
     <p class="availability">
@@ -18,6 +17,7 @@
       <label><input type="radio" v-model="bikeType" value="mechanical" /> {{ $t('reservation.form.mechanical') }}</label>
       <label><input type="radio" v-model="bikeType" value="electric" /> {{ $t('reservation.form.electric') }}</label>
     </div>
+
     <label class="label">{{ $t('reservation.form.rideType') }}</label>
     <div class="ride-options">
       <label class="ride-card">
@@ -38,10 +38,16 @@
         </div>
       </label>
     </div>
-    <div v-if="rideType === 'short_trip'">
-      <UltimaMilla :currentStation="props.station" @select="onStationSelected" />
-    </div>
 
+    <div v-if="rideType === 'short_trip'">
+      <!-- reenviamos los eventos de UltimaMilla hacia el padre -->
+      <UltimaMilla
+        :currentStation="props.station"
+        @select="onStationSelected"
+        @update:origin="onOriginUpdate"
+        @update:destination="onDestinationUpdate"
+      />
+    </div>
 
     <div class="balance-container">
       {{ $t('reservation.form.balance') }} <strong>${{ props.balance }}</strong>
@@ -64,16 +70,16 @@ import { ref, defineEmits, withDefaults, defineProps } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { useReservation } from '@/composables/useReservation'
 import { useRouter } from 'vue-router'
-const router = useRouter()
 
-
-function onStationSelected(station: Station) {
-  console.log("Estación elegida por última milla:", station)
-}
 interface Station {
+  id?: number
   name: string
   available: number
   status: string
+  // opcionales que UltimaMilla puede enviar
+  latitude?: number
+  longitude?: number
+  free_spots?: number
 }
 
 interface Props {
@@ -81,28 +87,28 @@ interface Props {
   balance?: number
 }
 
-const recharge = () => {
-  router.push({ name: 'profile' })
-}
+const router = useRouter()
+const { t: $t } = useI18n();
+const { setReservation } = useReservation()
 
-// withDefaults + defineProps con factory function para objetos
+// props con valores por defecto
 const props = withDefaults(defineProps<Props>(), {
   station: () => ({ name: 'Selecciona una estación', available: 0, status: 'N/A' }),
   balance: 0
 })
 
-// defineEmits tipado
+// emits tipados (incluye forwarding)
 const emit = defineEmits<{
   reserve: [payload: { bikeType: string; rideType: string }]
   close: []
+  "update:origin": [any | null]
+  "update:destination": [any | null]
 }>()
-
-const { setReservation } = useReservation()
 
 const bikeType = ref<string>('')
 const rideType = ref<string>('')
 
-const { t: $t } = useI18n();
+// acciones
 function reserve() {
   if (!bikeType.value || !rideType.value) {
     window.alert($t('reservation.form.selectionAlert'))
@@ -123,6 +129,26 @@ function reserve() {
     bikeType: bikeType.value,
     rideType: rideType.value
   })
+}
+
+const recharge = () => {
+  router.push({ name: 'profile' })
+}
+
+// Handlers para reenviar eventos recibidos desde UltimaMilla hacia el padre
+function onStationSelected(station: Station) {
+  console.log("Estación elegida por última milla:", station)
+  emit("update:destination", station ?? null)
+}
+
+function onOriginUpdate(origin: any) {
+  console.log("ReserveForm forward origin:", origin)
+  emit("update:origin", origin ?? null)
+}
+
+function onDestinationUpdate(destination: any) {
+  console.log("ReserveForm forward destination:", destination)
+  emit("update:destination", destination ?? null)
 }
 </script>
 
