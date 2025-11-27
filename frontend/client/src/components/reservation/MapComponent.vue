@@ -32,52 +32,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import L, { Map as LeafletMap } from 'leaflet'
-import 'leaflet/dist/leaflet.css'
-// Fix de íconos por defecto de Leaflet para bundlers (evita 404 de marker-icon.png)
-// Importamos las imágenes y configuramos el Default Icon
-// Nota: Esto no afecta nuestros DivIcon personalizados para bicicletas
-// pero corrige los markers de ejemplo/otros que usen el ícono por defecto
-//
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import markerIcon from 'leaflet/dist/images/marker-icon.png'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+import { ref, onMounted, onUnmounted, defineProps, watch, computed } from "vue";
+import L, { Map as LeafletMap, Marker, Polyline } from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-// El prototipo cambia entre versiones; forzamos mergeOptions con rutas explícitas
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: markerIcon2x,
-    iconUrl: markerIcon,
-    shadowUrl: markerShadow
-})
-import { BicycleFactory } from '@/patterns/BicycleFlyweight'
-import { BicycleWebSocketService } from '@/services/BicycleWebSocketService'
-import { StationFactory } from '@/patterns/StationFlyweight'
-import { StationWebSocketService } from '@/services/StationWebSocketService'
+const props = defineProps<{
+  origin?: { lat: number; lng: number; name?: string; free_spots?: number; status?: string } | null;
+  destination?: { lat: number; lng: number; name?: string; free_spots?: number; status?: string } | null;
+}>();
 
-// Arreglar rutas de íconos por defecto de Leaflet en bundlers
-// Ajuste para íconos: en proyectos con vue-cli los assets de leaflet se sirven desde /img
-// Si los íconos no aparecen, se puede configurar via CSS o copiar los archivos.
-// De momento mantenemos configuración por defecto.
+const map = ref<LeafletMap | null>(null);
+let originMarker: Marker | null = null;
+let destMarker: Marker | null = null;
+let routeLine: Polyline | null = null;
 
-const map = ref<LeafletMap | null>(null)
-const bicycleFactory = new BicycleFactory()
-const wsService = new BicycleWebSocketService(bicycleFactory)
-const stationFactory = new StationFactory()
-const stationWsService = new StationWebSocketService(stationFactory)
+const propsOrigin = computed(() => props.origin ?? null);
+const propsDestination = computed(() => props.destination ?? null);
 
-function renderStationMarkers() {
-    if (!map.value) return
-    stationFactory.getAllMarkers().forEach(m => m.render(map.value as LeafletMap))
-}
+const propsOriginJson = computed(() => propsOrigin.value ? JSON.stringify(propsOrigin.value, null, 2) : "");
+const propsDestinationJson = computed(() => propsDestination.value ? JSON.stringify(propsDestination.value, null, 2) : "");
 
 onMounted(() => {
   map.value = L.map("map", {
@@ -86,59 +59,96 @@ onMounted(() => {
     preferCanvas: true
   });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution:
-            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map.value as LeafletMap)
-
-    // Conectar estaciones via WebSocket (bulk + updates)
-    stationWsService.connect(
-        (stations) => {
-            // Bulk inicial recibido
-            console.log(`🏁 Bulk estaciones recibido: ${stations.length}`)
-            renderStationMarkers()
-        },
-        (station) => {
-            // Actualización incremental de una estación
-            console.log(`♻️ Estación actualizada: ${station.idStation}`)
-            renderStationMarkers()
-        }
-    )
-
-    // Conectar al WebSocket y renderizar bicicletas cuando lleguen
-    wsService.connect((factory: BicycleFactory) => {
-        if (!map.value) return
-
-        // Renderizar todos los marcadores de bicicletas en el mapa
-        factory.getAllMarkers().forEach(marker => {
-            marker.render(map.value as LeafletMap)
-        })
-
-        console.log(`🚲 Total de bicicletas en el mapa: ${factory.size()}`)
-    })
-
-    console.log('🗺️ Mapa inicializado y WebSocket conectado')
-})
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+  }).addTo(map.value);
+});
 
 onUnmounted(() => {
-    // Desconectar WebSocket
-    wsService.disconnect()
-    stationWsService.disconnect()
-    
-    // Limpiar marcadores de bicicletas
-    bicycleFactory.clear()
-    // Limpiar marcadores de estaciones
-    stationFactory.clear()
+  if (originMarker) { originMarker.remove(); originMarker = null; }
+  if (destMarker) { destMarker.remove(); destMarker = null; }
+  if (routeLine) { routeLine.remove(); routeLine = null; }
+  map.value?.remove();
+  map.value = null;
+});
 
-    // Destruir mapa
-    if (map.value) {
-        map.value.remove()
-        map.value = null
-    }
+function clearRouteLine() {
+  if (routeLine) {
+    routeLine.remove();
+    routeLine = null;
+  }
+}
 
-    console.log('🗺️ Mapa y WebSocket desconectados')
-})
+function addOriginMarker(o: { lat: number; lng: number; name?: string }) {
+  if (!map.value) return;
+  if (originMarker) { originMarker.remove(); originMarker = null; }
+  originMarker = L.marker([o.lat, o.lng]).addTo(map.value);
+  if (o.name) originMarker.bindPopup(`<strong>Origen</strong><br/>${o.name}`);
+  setTimeout(() => originMarker?.openPopup(), 200);
+}
+
+function addDestMarker(d: { lat: number; lng: number; name?: string }) {
+  if (!map.value) return;
+  if (destMarker) { destMarker.remove(); destMarker = null; }
+  destMarker = L.marker([d.lat, d.lng]).addTo(map.value);
+  if (d.name) destMarker.bindPopup(`<strong>Destino</strong><br/>${d.name}`);
+  setTimeout(() => destMarker?.openPopup(), 200);
+}
+
+function drawLine() {
+  if (!map.value) return;
+  if (!props.origin || !props.destination) {
+    clearRouteLine();
+    return;
+  }
+  clearRouteLine();
+  routeLine = L.polyline(
+    [
+      [props.origin.lat, props.origin.lng],
+      [props.destination.lat, props.destination.lng],
+    ],
+    { color: "blue", weight: 4, opacity: 0.85 }
+  ).addTo(map.value);
+}
+
+function fitMap() {
+  if (!map.value) return;
+  if (props.origin && props.destination) {
+    const bounds = L.latLngBounds([
+      [props.origin.lat, props.origin.lng],
+      [props.destination.lat, props.destination.lng],
+    ]);
+    map.value.fitBounds(bounds, { padding: [40, 40] });
+    return;
+  }
+  if (props.origin && !props.destination) {
+    map.value.setView([props.origin.lat, props.origin.lng], 14);
+    return;
+  }
+  if (!props.origin && props.destination) {
+    map.value.setView([props.destination.lat, props.destination.lng], 14);
+    return;
+  }
+}
+
+// logs para depuración
+watch(() => props.origin, (o) => {
+  console.log("MapComponent received origin:", o);
+  if (!map.value) return;
+  if (o) addOriginMarker(o);
+  else if (originMarker) { originMarker.remove(); originMarker = null; }
+  drawLine();
+  fitMap();
+}, { immediate: true });
+
+watch(() => props.destination, (d) => {
+  console.log("MapComponent received destination:", d);
+  if (!map.value) return;
+  if (d) addDestMarker(d);
+  else if (destMarker) { destMarker.remove(); destMarker = null; }
+  drawLine();
+  fitMap();
+}, { immediate: true });
 </script>
 
 <style scoped>
