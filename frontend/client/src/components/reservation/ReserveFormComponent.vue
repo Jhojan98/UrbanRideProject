@@ -38,6 +38,9 @@
         </div>
       </label>
     </div>
+    <div v-if="rideType === 'short_trip'">
+      <UltimaMilla :currentStation="props.station" @select="onStationSelected" />
+    </div>
 
 
     <div class="balance-container">
@@ -48,7 +51,7 @@
     <p class="warning">
       ⚠️ {{ $t('reservation.form.warning') }} <strong>{{ $t('reservation.form.warningMinutes') }}</strong>.
     </p>
-    
+
     <button class="butn-primary" @click="reserve">
       {{ $t('reservation.form.reserveBike') }}
     </button>
@@ -56,12 +59,17 @@
 </template>
 
 <script setup lang="ts">
+import UltimaMilla from "@/components/reservation/UltimaMilla.vue"
 import { ref, defineEmits, withDefaults, defineProps } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { useReservation } from '@/composables/useReservation'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 
+
+function onStationSelected(station: Station) {
+  console.log("Estación elegida por última milla:", station)
+}
 interface Station {
   name: string
   available: number
