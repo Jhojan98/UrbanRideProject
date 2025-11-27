@@ -18,3 +18,4 @@ public class City {
     @NotNull
     private String cityName;
 }
+
