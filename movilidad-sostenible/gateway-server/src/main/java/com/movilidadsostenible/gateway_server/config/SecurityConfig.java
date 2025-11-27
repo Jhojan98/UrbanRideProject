@@ -19,15 +19,10 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(ServerHttpSecurity.CsrfSpec::disable)
-            .authorizeExchange(exchange -> exchange
-                    .pathMatchers("/eureka/**").permitAll()
-                    .pathMatchers("/user/register").permitAll()
-                    .pathMatchers("/user/login/**").permitAll()
-                    .pathMatchers("/bicis/**").permitAll()
-                    .pathMatchers("/ws/**").permitAll() // WebSocket endpoints
-                    .anyExchange().permitAll() //authenticated() 
+            .authorizeExchange(exchange -> exchange.pathMatchers("/eureka/**")
+                    .permitAll()
+                    .anyExchange().permitAll()
             ).oauth2ResourceServer((oauth2) -> oauth2
                         .jwt(Customizer.withDefaults()));
         return http.build();
