@@ -27,12 +27,13 @@ import StationInfo from '@/components/dashboard/StationInfo.vue'
 import BikeInfo from '@/components/dashboard/BikeInfo.vue'
 import MapComponent from '@/components/dashboard/MapComponent.vue'
 import {
-    Station,
+    type Station,
     createBike,
     createStation,
     bikeFlyweightFactory,
     stationFlyweightFactory
 } from '@/patterns/flyweight'
+
 
 // Datos mock usando el patrón Flyweight
 // Use an untyped array for internal storage to avoid structural mismatch with private members,
@@ -135,7 +136,6 @@ onMounted(() => {
     console.log('📊 Estadísticas de Flyweight:')
     console.log(`   🚲 Flyweights de bicicletas creados: ${bikeFlyweightFactory.getFlyweightCount()}`)
     console.log(`   🏢 Flyweights de estaciones creados: ${stationFlyweightFactory.getFlyweightCount()}`)
-    bikeFlyweightFactory.listFlyweights()
 })
 
 const selectedStationId = ref<string | null>(null)
