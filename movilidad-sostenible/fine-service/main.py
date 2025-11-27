@@ -386,7 +386,22 @@ async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends
         db.rollback()
         raise HTTPException(status_code=500, detail="Error creating user fine")
 
-
+@app.get("/api/user_fines/user/{user_id}", response_model=list[UserFineOut], tags=["User Fines"])
+async def get_user_fines_by_user(user_id: str, db: _orm.Session = Depends(get_db)):
+    """Get all fines for a specific user by their user ID"""
+    try:
+        user_fines = (
+            db.query(_models.UserFine)
+            .options(_orm.joinedload(_models.UserFine.fine))
+            .filter(_models.UserFine.k_uid_user == user_id)
+            .all()
+        )
+        return user_fines
+    except Exception as e:
+        logging.error(f"Error fetching user fines for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+    
+    
 @app.post("/api/user_fines/{user_fine_id}/pay", response_model=UserFineOut, tags=["User Fines"])
 async def pay_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
     """Attempt to pay the user fine by subtracting balance from the users service."""

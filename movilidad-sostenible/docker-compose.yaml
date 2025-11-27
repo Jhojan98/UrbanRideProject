@@ -326,6 +326,40 @@ services:
         condition: service_healthy
     restart: always
 
+  reports-service:
+    container_name: reports-service
+    build:
+      context: ./reports-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5004"]
+    ports:
+      - "5004:5004"
+    environment:
+      SERVICE_PORT: 5004
+      SERVICE_HOST: reports-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: reports-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      USERS_SERVICE_URL: http://usuario-service:8001
+      BICYCLE_SERVICE_URL: http://bicis-service:8002
+      RESERVATIONS_SERVICE_URL: http://viaje-service:8003
+      FINES_SERVICE_URL: http://fine-service:5003
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      usuario-service:
+        condition: service_started
+      bicis-service:
+        condition: service_started
+      viaje-service:
+        condition: service_started
+      fine-service:
+        condition: service_started
+    restart: always
+
 volumes:
   data-postgres:
     name: data-postgres
