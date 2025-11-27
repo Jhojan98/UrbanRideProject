@@ -26,6 +26,13 @@ spring:
           filters:
             - StripPrefix=1
 
+        - id: admin-service
+          uri: lb://admin-service
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=1
+
         - id: bicis-service
           uri: lb://bicis-service
           predicates:
@@ -61,12 +68,6 @@ spring:
           filters:
             - StripPrefix=1
 
-        - id: bicis-ws
-          uri: lb:ws://bicis-service
-          predicates:
-            - Path=/ws/bicis/**
-          filters:
-            - StripPrefix=2
 
 springdoc:
   api-docs:
