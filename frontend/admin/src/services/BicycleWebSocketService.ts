@@ -23,10 +23,10 @@ export class BicycleWebSocketService {
     public connect(onUpdate?: (factory: BicycleFactory) => void): void {
         this.onBicycleUpdate = onUpdate;
 
-        // Obtener la URL del WebSocket desde variables de entorno
+        // Conexión directa al microservicio de bicis (no vía gateway)
         // SockJS requiere http/https, NO ws/wss (maneja la actualización automáticamente)
-        const baseUrl = process.env.VUE_APP_WEBSOCKET_URL || 'http://localhost:8090';
-        const wsUrl = `${baseUrl}/ws/bicis/ws`;
+        const baseUrl = process.env.VUE_APP_WEBSOCKET_BICYCLES_URL || 'http://localhost:8002';
+        const wsUrl = `${baseUrl}/ws`;
         
         console.log('🔌 Conectando a WebSocket:', wsUrl);
 

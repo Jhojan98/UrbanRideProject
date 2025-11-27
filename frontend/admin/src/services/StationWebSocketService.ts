@@ -30,8 +30,9 @@ export class StationWebSocketService {
     this.onInitialLoad = onInitialLoad;
     this.onUpdate = onUpdate;
 
-    const baseUrl = process.env.VUE_APP_WEBSOCKET_STATIONS_URL || 'http://localhost:8090';
-    const wsUrl = `${baseUrl}/ws/estaciones/ws`;
+    // Conexión directa al microservicio de estaciones (no vía gateway)
+    const baseUrl = process.env.VUE_APP_WEBSOCKET_STATIONS_URL || 'http://localhost:8005';
+    const wsUrl = `${baseUrl}/ws`;
     console.log('[Stations WS] Conectando a', wsUrl);
 
     this.client = new Client({
