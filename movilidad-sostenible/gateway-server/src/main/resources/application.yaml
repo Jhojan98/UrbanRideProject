@@ -18,26 +18,18 @@ spring:
   cloud:
     gateway:
       routes:
-        # WebSocket routes FIRST (more specific paths take precedence)
-        - id: bicis-ws
-          uri: lb:ws://bicis-service
-          predicates:
-            - Path=/ws/bicis/**
-          filters:
-            - StripPrefix=2
 
-        - id: estaciones-ws
-          uri: lb:ws://estaciones-service
-          predicates:
-            - Path=/ws/estaciones/**
-          filters:
-            - StripPrefix=2
-
-        # REST routes AFTER WebSocket
         - id: usuario-service
           uri: lb://usuario-service
           predicates:
             - Path=/user/**
+          filters:
+            - StripPrefix=1
+
+        - id: admin-service
+          uri: lb://admin-service
+          predicates:
+            - Path=/admin/**
           filters:
             - StripPrefix=1
 
@@ -75,6 +67,7 @@ spring:
             - Path=/travel/**
           filters:
             - StripPrefix=1
+
 
 springdoc:
   api-docs:
