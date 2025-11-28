@@ -134,6 +134,28 @@ services:
         condition: service_started
     restart: always
 
+  admin-service:
+    container_name: admin-service
+    build:
+      context: ./
+      dockerfile: ./admin-service/Dockerfile
+    ports:
+      - "8008:8008"
+    environment:
+      PORT: 8008
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${ADMIN_DB_USER}
+      POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD}
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
   bicis-service:
     container_name: bicis-service
     build:
@@ -153,9 +175,12 @@ services:
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - eureka-server
-      - mosquitto
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
     restart: always
 
   bicycle-service:
@@ -225,6 +250,10 @@ services:
     networks:
       - movilidad-sostenible-network
     depends_on:
+      estaciones-service:
+        condition: service_started
+      ciudad-service:
+        condition: service_started
       postgres17:
         condition: service_started
       eureka-server:
@@ -246,6 +275,9 @@ services:
       POSTGRES_PASSWORD: ${ESTACIONES_DB_PASSWORD}
       EUREKA_HOST: eureka-server
       EUREKA_PORT: 8761
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_QOS: 1
+      MQTT_CLIENT_ID: "station-service-${HOSTNAME:-local-dev}"
     networks:
       - movilidad-sostenible-network
     depends_on:
@@ -253,6 +285,8 @@ services:
         condition: service_started
       eureka-server:
         condition: service_healthy
+      mosquitto:
+        condition: service_started
     restart: always
 
   ciudad-service:
@@ -296,7 +330,8 @@ services:
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     restart: always
   fine-service:
     container_name: fine-service
