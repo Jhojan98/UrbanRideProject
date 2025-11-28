@@ -90,6 +90,7 @@ def _to_bool(value: Optional[str], default: bool = True) -> bool:
 
 def _get_users_service_base_url() -> str:
     users_url = os.getenv("USERS_SERVICE_URL", "http://usuario-service:8001")
+    print(f"Users service URL from env: {users_url}")
     users_url = users_url.strip()
     if users_url and not users_url.startswith("http://") and not users_url.startswith("https://"):
         users_url = "http://" + users_url

@@ -34,6 +34,7 @@ def _to_bool(value: Optional[str], default: bool = True) -> bool:
 
 def _get_users_service_base_url() -> str:
     users_url = os.getenv("USERS_SERVICE_URL", "http://usuario-service:8001")
+    print(f"Users service URL from env: {users_url}")
     users_url = users_url.strip()
     if users_url and not users_url.startswith("http://") and not users_url.startswith("https://"):
         users_url = "http://" + users_url
@@ -291,5 +292,66 @@ async def user_dashboard_excel(user_id: str):
     except Exception as e:
         logging.error("Unexpected error generating excel: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
-    
- 
+
+
+# --- New Reports Endpoints ---
+
+@app.get("/api/reports/bicycle-usage", tags=["Reports"])
+async def report_bicycle_usage():
+    """Frecuencia de uso de bicicletas."""
+    aggregator = ReportAggregator()
+    try:
+        return await aggregator.aggregate_bicycle_usage()
+    except Exception as e:
+        logging.error("Error in bicycle usage report: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/reports/station-demand", tags=["Reports"])
+async def report_station_demand():
+    """Estaciones de mayor demanda."""
+    aggregator = ReportAggregator()
+    try:
+        return await aggregator.aggregate_station_demand()
+    except Exception as e:
+        logging.error("Error in station demand report: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/reports/service-demand", tags=["Reports"])
+async def report_service_demand():
+    """Servicio con mayor demanda (última milla vs recorrido largo)."""
+    aggregator = ReportAggregator()
+    try:
+        return await aggregator.aggregate_service_demand()
+    except Exception as e:
+        logging.error("Error in service demand report: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/reports/bicycle-demand", tags=["Reports"])
+async def report_bicycle_demand():
+    """Bicicleta de mayor demanda (Eléctrica o Mecánica)."""
+    aggregator = ReportAggregator()
+    try:
+        return await aggregator.aggregate_bicycle_demand_by_type()
+    except Exception as e:
+        logging.error("Error in bicycle demand report: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/reports/daily-trips", tags=["Reports"])
+async def report_daily_trips():
+    """Viajes por dia."""
+    aggregator = ReportAggregator()
+    try:
+        return await aggregator.aggregate_daily_trips()
+    except Exception as e:
+        logging.error("Error in daily trips report: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.get("/api/reports/maintenances", tags=["Reports"])
+async def report_maintenances():
+    """Mantenimientos."""
+    aggregator = ReportAggregator()
+    try:
+        return await aggregator.aggregate_maintenances()
+    except Exception as e:
+        logging.error("Error in maintenances report: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
