@@ -1,30 +1,30 @@
 <template>
   <div class="reservation-panel">
-    <h1>Detalles de la Estación</h1>
+    <h1>{{ $t('reservation.form.stationDetails') }}</h1>
 
 
     <h3>{{ props.station.name }}</h3>
 
     <p class="availability">
-      🚲 Bicicletas Disponibles: <strong>{{ props.station.available }}</strong>
+      🚲 {{ $t('reservation.form.bikesAvailable') }}: <strong>{{ props.station.available }}</strong>
     </p>
 
     <p class="status" :class="props.station.status.toLowerCase()">
       {{ props.station.status }}
     </p>
 
-    <label class="label">Tipo de Bicicleta:</label>
+    <label class="label">{{ $t('reservation.form.bikeType') }}</label>
     <div class="select-group">
-      <label><input type="radio" v-model="bikeType" value="mechanical" /> Mecánica</label>
-      <label><input type="radio" v-model="bikeType" value="electric" /> Eléctrica</label>
+      <label><input type="radio" v-model="bikeType" value="mechanical" /> {{ $t('reservation.form.mechanical') }}</label>
+      <label><input type="radio" v-model="bikeType" value="electric" /> {{ $t('reservation.form.electric') }}</label>
     </div>
-    <label class="label">Tipo de Viaje:</label>
+    <label class="label">{{ $t('reservation.form.rideType') }}</label>
     <div class="ride-options">
       <label class="ride-card">
         <input type="radio" v-model="rideType" value="short_trip" />
         <div>
-          <strong>Última Milla</strong>
-          <p>Máx 45 min</p>
+          <strong>{{ $t('reservation.form.lastMile') }}</strong>
+          <p>{{ $t('reservation.form.lastMileMax') }}</p>
           <span class="price">$17.500 + $250/min</span>
         </div>
       </label>
@@ -32,8 +32,8 @@
       <label class="ride-card">
         <input type="radio" v-model="rideType" value="long_trip" />
         <div>
-          <strong>Recorrido Largo</strong>
-          <p>Máx 75 min</p>
+          <strong>{{ $t('reservation.form.longTrip') }}</strong>
+          <p>{{ $t('reservation.form.longTripMax') }}</p>
           <span class="price">$25.000 + $1.000/min</span>
         </div>
       </label>
@@ -41,22 +41,23 @@
 
 
     <div class="balance-container">
-      Saldo: <strong>${{ props.balance }}</strong>
-      <button class="btn-secondary" @click="recharge">Recargar</button>
+      {{ $t('reservation.form.balance') }} <strong>${{ props.balance }}</strong>
+      <button class="btn-secondary" @click="recharge">{{ $t('reservation.form.recharge') }}</button>
     </div>
 
     <p class="warning">
-      ⚠️ La bicicleta se reservará por <strong>10 minutos</strong>.
+      ⚠️ {{ $t('reservation.form.warning') }} <strong>{{ $t('reservation.form.warningMinutes') }}</strong>.
     </p>
     
     <button class="butn-primary" @click="reserve">
-      Reservar Bicicleta
+      {{ $t('reservation.form.reserveBike') }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, defineEmits, withDefaults, defineProps } from 'vue'
+import { useI18n } from 'vue-i18n';
 import { useReservation } from '@/composables/useReservation'
 import { useRouter } from 'vue-router'
 const router = useRouter()
@@ -93,9 +94,10 @@ const { setReservation } = useReservation()
 const bikeType = ref<string>('')
 const rideType = ref<string>('')
 
+const { t: $t } = useI18n();
 function reserve() {
   if (!bikeType.value || !rideType.value) {
-    window.alert('Por favor selecciona el tipo de bicicleta y el tipo de viaje.')
+    window.alert($t('reservation.form.selectionAlert'))
     return
   }
 

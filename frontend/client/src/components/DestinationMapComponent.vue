@@ -1,8 +1,8 @@
 <template>
   <div class="destination-map">
     <div class="map-header">
-      <h2>Estación Destino</h2>
-      <p>Ubicación de la estación donde debes dejar la bicicleta</p>
+      <h2>{{ $t('destination.title') }}</h2>
+      <p>{{ $t('destination.subtitle') }}</p>
     </div>
     
     <div class="map-wrapper">
@@ -13,25 +13,25 @@
       <div class="info-card">
         <h3>{{ destinationStation.name }}</h3>
         <div class="detail-item">
-          <span class="label">Dirección:</span>
+          <span class="label">{{ $t('destination.address') }}</span>
           <span class="value">{{ destinationStation.address }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">Espacios disponibles:</span>
+          <span class="label">{{ $t('destination.availableSlots') }}</span>
           <span class="value">{{ destinationStation.availableSlots }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">Distancia aproximada:</span>
+          <span class="label">{{ $t('destination.distance') }}</span>
           <span class="value">{{ destinationStation.distance }}</span>
         </div>
         <div class="detail-item">
-          <span class="label">Tiempo estimado:</span>
+          <span class="label">{{ $t('destination.estimatedTime') }}</span>
           <span class="value">{{ destinationStation.estimatedTime }}</span>
         </div>
       </div>
       
       <button class="butn-primary" @click="confirmDestination">
-        Confirmar Destino
+        {{ $t('destination.confirm') }}
       </button>
     </div>
   </div>
@@ -39,11 +39,13 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router'
 import L, { Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const router = useRouter()
+useI18n();
 
 // Datos de la estación destino (en un caso real vendrían de props o store)
 const destinationStation = ref({
