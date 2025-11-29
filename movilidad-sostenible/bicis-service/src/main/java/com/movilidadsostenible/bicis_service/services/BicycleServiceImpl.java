@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class BicicletaServiceImpl implements BicycleService {
+public class BicycleServiceImpl implements BicycleService {
 
     @Autowired
     private BicycleRepository repository;
