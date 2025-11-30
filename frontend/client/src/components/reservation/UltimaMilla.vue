@@ -1,60 +1,44 @@
 // filepath: /home/xmara/UD/DIseño de Software/UrbanRideProject/frontend/client/src/components/reservation/UltimaMilla.vue
 <template>
   <div class="ultima-milla">
-    <h2>Viaje de Última Milla</h2>
-    <p class="sub">Selecciona tu punto de partida y la estación de destino</p>
+    <h2>{{ rideType === 'short_trip' ? 'Viaje de Última Milla' : 'Recorrido Largo' }}</h2>
+    <p class="sub">{{ rideType === 'short_trip' ? 'Selecciona tu punto de partida (metro) y la estación de bicicletas destino' : 'Selecciona estación de origen y destino (bici a bici)' }}</p>
 
     <!-- ORIGEN -->
     <div class="select-box">
-      <label>📍 Punto de Partida (Metro / Estación)</label>
+      <label>📍 {{ rideType === 'short_trip' ? 'Punto de Partida (Metro)' : 'Estación de Origen (Bici)' }}</label>
       <select v-model="selectedOrigin">
         <option :value="null" disabled>Seleccione un punto</option>
         <option
-          v-for="m in metros"
+          v-for="m in (rideType === 'short_trip' ? metros : stationsFiltered)"
           :key="m.id"
           :value="m"
+          :disabled="isStationDisabled(m)"
         >
           {{ m.name }}
         </option>
       </select>
     </div>
 
-    <!-- Mostrar info origen -->
-    <div v-if="selectedOrigin" class="info-card">
-      <h3>{{ selectedOrigin.name }}</h3>
-      <p>🚲 Bicicletas disponibles: <strong>{{ selectedOrigin.free_spots ?? '—' }}</strong></p>
-      <p :class="['status', (selectedOrigin.status ?? '').toLowerCase()]">
-        Estado: {{ selectedOrigin.status ?? 'N/A' }}
-      </p>
-    </div>
-
     <!-- DESTINO -->
     <div class="select-box">
-      <label>🚲 Estación de Bicicletas (Destino)</label>
+      <label>🚲 Estación de Destino (Bici)</label>
       <select v-model="selectedDest">
         <option :value="null" disabled>Seleccione estación</option>
         <option
-          v-for="s in stations"
+          v-for="s in stationsFiltered"
           :key="s.id"
           :value="s"
+          :disabled="isStationDisabled(s)"
         >
-          {{ s.name }} — {{ s.free_spots }} puestos libres
+          {{ s.name }}
         </option>
       </select>
     </div>
 
-    <!-- DETALLES DE LA ESTACIÓN DESTINO -->
-    <div v-if="selectedDest" class="info-card">
-      <h3>{{ selectedDest.name }}</h3>
-      <p>🚲 Puestos libres: <strong>{{ selectedDest.free_spots }}</strong></p>
-      <p :class="['status', selectedDest.status.toLowerCase()]">
-        Estado: {{ selectedDest.status }}
-      </p>
-    </div>
-
     <button
       class="btn-confirm"
-      :disabled="!selectedOrigin || !selectedDest"
+      :disabled="!selectedOrigin || !selectedDest || !bikeType"
       @click="confirm"
     >
       Confirmar Ruta
@@ -63,44 +47,112 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, defineEmits } from "vue"
+import { ref, watch, defineEmits, computed, defineProps } from "vue"
+
+// Props recibidos desde ReserveFormComponent
+const props = defineProps<{
+  bikeType?: string
+  rideType?: string
+}>()
 
 // Datos de prueba con coordenadas en Villavicencio
 const metros = [
-  { id: 1, name: "Metro Estación Central", latitude: 4.1425, longitude: -73.6312, free_spots: 5, status: "ACTIVE" },
-  { id: 2, name: "Metro Sikuani", latitude: 4.1480, longitude: -73.6270, free_spots: 2, status: "ACTIVE" }
+  { id: 1, name: "Metro Estación Central", latitude: 4.1425, longitude: -73.6312, free_spots: 5, status: "ACTIVE", type: 'metro' },
+  { id: 2, name: "Metro Sikuani", latitude: 4.1480, longitude: -73.6270, free_spots: 2, status: "ACTIVE", type: 'metro' }
 ]
 
 const stations = [
-  { id: 10, name: "Estación Centro", free_spots: 5, status: "ACTIVE", latitude: 4.1430, longitude: -73.6290 },
-  { id: 11, name: "Parque Sikuani", free_spots: 2, status: "ACTIVE", latitude: 4.1475, longitude: -73.6260 },
-  { id: 12, name: "Zona Universitaria", free_spots: 0, status: "FULL", latitude: 4.1505, longitude: -73.6235 }
+  { id: 10, name: "Estación Centro", latitude: 4.1430, longitude: -73.6290, type: 'bike', mechanical: 3, electric: 2 },
+  { id: 11, name: "Parque Sikuani", latitude: 4.1475, longitude: -73.6260, type: 'bike', mechanical: 1, electric: 1 },
+  { id: 12, name: "Zona Universitaria", latitude: 4.1505, longitude: -73.6235, type: 'bike', mechanical: 0, electric: 0 }
 ]
 
 const selectedOrigin = ref<any | null>(null)
 const selectedDest = ref<any | null>(null)
 
+// Use props values
+const bikeType = computed(() => props.bikeType ?? '')
+const rideType = computed(() => props.rideType ?? 'short_trip')
+
 const emit = defineEmits<{
-  confirm: [{ origin: any; destination: any }]
+  confirm: [{ origin: any; destination: any; bikeType: string; rideType: string }]
   "update:origin": [any | null]
   "update:destination": [any | null]
 }>()
 
-// Emitir objetos completos inmediatamente
+// Filtrar estaciones según tipo de bicicleta seleccionada
+const stationsFiltered = computed(() => {
+  if (!bikeType.value) return stations
+  return stations.map(s => ({
+    ...s,
+    availableForType: bikeType.value === 'mechanical' ? s.mechanical : s.electric
+  }))
+})
+
+// Formato de disponibilidad según tipo de bici
+function formatAvailability(station: any) {
+  if (!bikeType.value) return '(Seleccione tipo de bici primero)'
+  if (station.type === 'metro') return ''
+  const available = bikeType.value === 'mechanical' ? station.mechanical : station.electric
+  const label = bikeType.value === 'mechanical' ? '⚙️' : '⚡'
+  return `${label} ${available} disponibles`
+}
+
+// Deshabilitar estaciones sin bicis del tipo seleccionado
+function isStationDisabled(station: any) {
+  if (!bikeType.value || station.type === 'metro') return false
+  const mechanical = station.mechanical ?? 0
+  const electric = station.electric ?? 0
+  const available = bikeType.value === 'mechanical' ? mechanical : electric
+  return available === 0
+}
+
+// Emit transformed objects when user selects from dropdown (no bidirectional sync to avoid loops)
 watch(selectedOrigin, (o) => {
-  console.log("UltimaMilla emit origin:", o)
-  emit("update:origin", o ?? null)
-}, { immediate: true })
+  if (o) {
+    const mechanical = o.mechanical ?? 0
+    const electric = o.electric ?? 0
+    const origin = {
+      latitude: o.latitude,
+      longitude: o.longitude,
+      name: o.name,
+      free_spots: bikeType.value === 'mechanical' ? mechanical : electric,
+      status: o.status ?? "ACTIVE"
+    }
+    emit("update:origin", origin)
+  } else {
+    emit("update:origin", null)
+  }
+})
 
 watch(selectedDest, (d) => {
-  console.log("UltimaMilla emit destination:", d)
-  emit("update:destination", d ?? null)
-}, { immediate: true })
+  if (d) {
+    const mechanical = d.mechanical ?? 0
+    const electric = d.electric ?? 0
+    const destination = {
+      latitude: d.latitude,
+      longitude: d.longitude,
+      name: d.name,
+      free_spots: bikeType.value === 'mechanical' ? mechanical : electric
+    }
+    emit("update:destination", destination)
+  } else {
+    emit("update:destination", null)
+  }
+})
+
+// Reset selections when bike type or ride type changes
+watch(() => [props.bikeType, props.rideType], () => {
+  selectedOrigin.value = null
+  selectedDest.value = null
+})
 
 function confirm() {
   emit("confirm", {
     origin: selectedOrigin.value,
-    destination: selectedDest.value
+    destination: selectedDest.value,
+    bikeType: bikeType.value,
+    rideType: rideType.value
   })
 }
 </script>

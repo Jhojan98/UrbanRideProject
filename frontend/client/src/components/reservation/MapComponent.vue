@@ -2,35 +2,29 @@
   <div class="map-wrapper">
     <div id="map" class="map-container"></div>
 
-    <!-- Overlay con datos recibidos -->
-    <div class="map-overlay">
+    <!-- Overlay: solo muestra info cuando hay ruta seleccionada (origen + destino) -->
+    <div v-if="originPlain && destinationPlain" class="map-overlay">
       <div class="overlay-section">
-        <h4>Origen</h4>
-        <div v-if="originPlain">
-          <div class="row"><strong>Nombre:</strong> {{ originPlain.name ?? '—' }}</div>
-          <div class="row"><strong>Bicis:</strong> {{ originPlain.free_spots ?? '—' }}</div>
-          <div class="row"><strong>Estado:</strong> {{ originPlain.status ?? '—' }}</div>
-          <div class="row"><strong>Coords:</strong> {{ originPlain.latitude }}, {{ originPlain.longitude }}</div>
+        <h4>📍 Estación Origen</h4>
+        <div>
+          <div class="row"><strong>{{ originPlain.name ?? '—' }}</strong></div>
+          <div class="row">🚲 {{ originPlain.free_spots ?? '—' }} bicicletas</div>
         </div>
-        <div v-else class="muted">No seleccionado</div>
       </div>
 
       <div class="overlay-section">
-        <h4>Destino</h4>
-        <div v-if="destinationPlain">
-          <div class="row"><strong>Nombre:</strong> {{ destinationPlain.name ?? '—' }}</div>
-          <div class="row"><strong>Puestos libres:</strong> {{ destinationPlain.free_spots ?? '—' }}</div>
-          <div class="row"><strong>Estado:</strong> {{ destinationPlain.status ?? '—' }}</div>
-          <div class="row"><strong>Coords:</strong> {{ destinationPlain.latitude }}, {{ destinationPlain.longitude }}</div>
+        <h4>🅿️ Estación Destino</h4>
+        <div>
+          <div class="row"><strong>{{ destinationPlain.name ?? '—' }}</strong></div>
+          <div class="row">📍 {{ destinationPlain.free_spots ?? '—' }} puestos libres</div>
         </div>
-        <div v-else class="muted">No seleccionado</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, defineProps, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, defineProps, watch, computed, defineEmits } from 'vue'
 import L, { Map as LeafletMap, Marker, Polyline } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -56,16 +50,29 @@ import { BicycleWebSocketService } from '@/services/BicycleWebSocketService'
 import { StationFactory } from '@/patterns/StationFlyweight'
 import { StationWebSocketService } from '@/services/StationWebSocketService'
 
+// Datos locales de prueba para estaciones (cuando WebSocket no está disponible)
+const mockStations = [
+  { idStation: 10, nameStation: "Estación Centro", latitude: 4.1430, longitude: -73.6290, availableSlots: 5, totalSlots: 10, type: 'bike', mechanical: 3, electric: 2, slots: [] as any[] },
+  { idStation: 11, nameStation: "Parque Sikuani", latitude: 4.1475, longitude: -73.6260, availableSlots: 2, totalSlots: 10, type: 'bike', mechanical: 1, electric: 1, slots: [] as any[] },
+  { idStation: 12, nameStation: "Zona Universitaria", latitude: 4.1505, longitude: -73.6235, availableSlots: 0, totalSlots: 10, type: 'bike', mechanical: 0, electric: 0, slots: [] as any[] },
+  { idStation: 1, nameStation: "Metro Estación Central", latitude: 4.1425, longitude: -73.6312, availableSlots: 5, totalSlots: 10, type: 'metro', mechanical: 0, electric: 0, slots: [] as any[] },
+  { idStation: 2, nameStation: "Metro Sikuani", latitude: 4.1480, longitude: -73.6270, availableSlots: 2, totalSlots: 10, type: 'metro', mechanical: 0, electric: 0, slots: [] as any[] }
+]
+
 const props = defineProps<{
   origin?: { latitude: number; longitude: number; name?: string; free_spots?: number; status?: string } | null
   destination?: { latitude: number; longitude: number; name?: string; free_spots?: number; status?: string } | null
 }>()
+
+// No longer emit station-click from the map; clicks only show info in the overlay
 
 const map = ref<LeafletMap | null>(null)
 const bicycleFactory = new BicycleFactory()
 const wsService = new BicycleWebSocketService(bicycleFactory)
 const stationFactory = new StationFactory()
 const stationWsService = new StationWebSocketService(stationFactory)
+const stationsRendered = ref<boolean>(false) // flag para evitar re-renderizar
+const clickedStation = ref<any | null>(null)
 
 // Para marcadores de ruta (origen/destino)
 let originMarker: Marker | null = null
@@ -75,9 +82,37 @@ let routeLine: Polyline | null = null
 const originPlain = computed(() => (props.origin ? JSON.parse(JSON.stringify(props.origin)) : null))
 const destinationPlain = computed(() => (props.destination ? JSON.parse(JSON.stringify(props.destination)) : null))
 
+// NOTE: always show all stations; selection will be done via dropdowns
+
 function renderStationMarkers() {
-  if (!map.value) return
-  stationFactory.getAllMarkers().forEach(m => m.render(map.value as LeafletMap))
+  if (!map.value || stationsRendered.value) return
+  stationFactory.getAllMarkers().forEach(m => {
+    m.render(map.value as LeafletMap)
+    // show station info in the overlay when marker is clicked (does not select origin/destination)
+    try {
+      m.onClick((st) => {
+        const payload = {
+          id: (st as any).idStation ?? (st as any).id,
+          name: (st as any).nameStation ?? (st as any).name,
+          latitude: st.latitude,
+          longitude: st.longitude,
+          free_spots: (st as any).availableSlots ?? (st as any).free_spots,
+          type: (st as any).type ?? 'bike'
+        }
+        // toggle: click same station again to clear
+        if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
+        else clickedStation.value = payload
+      })
+    } catch (e) {
+      void e
+    }
+  })
+  stationsRendered.value = true
+}
+
+function hideStationMarkers() {
+  // Remover todos los marcadores de estaciones del mapa
+  stationFactory.getAllMarkers().forEach(m => m.remove())
 }
 
 function addOriginMarker(o: { latitude: number; longitude: number; name?: string }) {
@@ -86,8 +121,21 @@ function addOriginMarker(o: { latitude: number; longitude: number; name?: string
     originMarker.remove()
     originMarker = null
   }
-  originMarker = L.marker([o.latitude, o.longitude]).addTo(map.value)
-  if (o.name) originMarker.bindPopup(`<strong>Origen</strong><br/>${o.name}`)
+  console.log('🔵 Agregando marcador ORIGEN en:', { lat: o.latitude, lng: o.longitude, name: o.name })
+  console.log('🔵 Verificar estaciones mock:', mockStations.map(s => ({ name: s.nameStation, lat: s.latitude, lng: s.longitude })))
+  
+  // Usar icono estándar de Leaflet con color verde para origen
+  const greenIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: markerShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+  
+  originMarker = L.marker([o.latitude, o.longitude], { icon: greenIcon }).addTo(map.value as any)
+  if (o.name) originMarker.bindPopup(`<strong>Origen</strong><br/>${o.name}<br/>Lat: ${o.latitude}, Lng: ${o.longitude}`)
   setTimeout(() => originMarker?.openPopup(), 200)
 }
 
@@ -97,8 +145,20 @@ function addDestMarker(d: { latitude: number; longitude: number; name?: string }
     destMarker.remove()
     destMarker = null
   }
-  destMarker = L.marker([d.latitude, d.longitude]).addTo(map.value)
-  if (d.name) destMarker.bindPopup(`<strong>Destino</strong><br/>${d.name}`)
+  console.log('🔵 Agregando marcador DESTINO en:', { lat: d.latitude, lng: d.longitude, name: d.name })
+  
+  // Usar icono estándar de Leaflet con color rojo para destino
+  const redIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl: markerShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+  
+  destMarker = L.marker([d.latitude, d.longitude], { icon: redIcon }).addTo(map.value as any)
+  if (d.name) destMarker.bindPopup(`<strong>Destino</strong><br/>${d.name}<br/>Lat: ${d.latitude}, Lng: ${d.longitude}`)
   setTimeout(() => destMarker?.openPopup(), 200)
 }
 
@@ -120,7 +180,7 @@ function drawLine() {
   routeLine = L.polyline(
     [[props.origin.latitude, props.origin.longitude], [props.destination.latitude, props.destination.longitude]],
     { color: 'blue', weight: 4, opacity: 0.85 }
-  ).addTo(map.value)
+  ).addTo(map.value as any)
 }
 
 function fitMap() {
@@ -160,33 +220,39 @@ onMounted(() => {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map.value as LeafletMap)
 
-  // Conectar estaciones via WebSocket
-  stationWsService.connect(
-    (stations) => {
-      console.log(`🏁 Bulk estaciones recibido: ${stations.length}`)
-      renderStationMarkers()
-    },
-    (station) => {
-      console.log(`♻️ Estación actualizada: ${station.idStation}`)
-      renderStationMarkers()
-    }
-  )
-
-  // Conectar al WebSocket de bicicletas
-  wsService.connect((factory: BicycleFactory) => {
-    if (!map.value) return
-    factory.getAllMarkers().forEach(marker => {
-      marker.render(map.value as LeafletMap)
-    })
-    console.log(`🚲 Total de bicicletas en el mapa: ${factory.size()}`)
+  // Cargar datos locales de prueba inmediatamente
+  mockStations.forEach(st => {
+    const marker = stationFactory.getStationMarker(st as any)
+    marker.render(map.value as LeafletMap)
+    try {
+      marker.onClick((station) => {
+        const payload = {
+          id: (station as any).idStation ?? (station as any).id,
+          name: (station as any).nameStation ?? (station as any).name,
+          latitude: station.latitude,
+          longitude: station.longitude,
+          free_spots: (station as any).availableSlots ?? (station as any).free_spots,
+          type: (station as any).type ?? 'bike'
+        }
+        if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
+        else clickedStation.value = payload
+      })
+    } catch (e) { void e }
   })
+  stationsRendered.value = true
 
-  console.log('🗺️ Mapa inicializado y WebSocket conectado')
+  // WebSocket de estaciones (fallback, no esencial)
+  // stationWsService.connect(...) - comentado para evitar ruido
+
+  // WebSocket de bicicletas (opcional)
+  // wsService.connect(...) - comentado para evitar ruido
 })
 
 onUnmounted(() => {
-  wsService.disconnect()
-  stationWsService.disconnect()
+  // Desconectar WebSocket si se conectó
+  try { wsService.disconnect() } catch (e) { void e }
+  try { stationWsService.disconnect() } catch (e) { void e }
+  
   bicycleFactory.clear()
   stationFactory.clear()
 
@@ -194,32 +260,49 @@ onUnmounted(() => {
   if (destMarker) { destMarker.remove(); destMarker = null }
   if (routeLine) { routeLine.remove(); routeLine = null }
 
+  clickedStation.value = null
+
   if (map.value) {
     map.value.remove()
     map.value = null
   }
-
-  console.log('🗺️ Mapa y WebSocket desconectados')
 })
 
-// Watchers para origen/destino
-watch(() => props.origin, (o) => {
-  console.log('MapComponent received origin:', o)
-  if (!map.value) return
-  if (o) addOriginMarker(o as any)
-  else if (originMarker) { originMarker.remove(); originMarker = null }
-  drawLine()
-  fitMap()
-}, { immediate: true })
+// Watcher para cambios en hasRouteSelected (mostrar/ocultar estaciones)
+// No automatic hiding of stations when a route is selected. Selection
+// of origin/destination is handled via dropdowns per product requirement.
 
-watch(() => props.destination, (d) => {
-  console.log('MapComponent received destination:', d)
+// Watchers para origen/destino (dibujar línea y ajustar vista)
+watch(() => props.origin, () => {
   if (!map.value) return
-  if (d) addDestMarker(d as any)
-  else if (destMarker) { destMarker.remove(); destMarker = null }
+  if (props.origin) {
+    addOriginMarker(props.origin as any)
+  } else if (originMarker) { 
+    originMarker.remove()
+    originMarker = null
+  }
   drawLine()
   fitMap()
-}, { immediate: true })
+})
+
+watch(() => props.destination, () => {
+  if (!map.value) return
+  if (props.destination) {
+    addDestMarker(props.destination as any)
+  } else if (destMarker) { 
+    destMarker.remove()
+    destMarker = null
+  }
+  drawLine()
+  fitMap()
+})
+
+// Ensure line and view update whenever either endpoint changes together
+watch(() => [props.origin, props.destination], () => {
+  if (!map.value) return
+  drawLine()
+  fitMap()
+})
 </script>
 
 <style scoped>

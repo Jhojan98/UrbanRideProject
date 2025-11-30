@@ -39,10 +39,12 @@
       </label>
     </div>
 
-    <div v-if="rideType === 'short_trip'">
-      <!-- reenviamos los eventos de UltimaMilla hacia el padre -->
+    <div v-if="rideType === 'short_trip' || rideType === 'long_trip'">
+      <!-- Pasar bikeType y rideType a UltimaMilla -->
       <UltimaMilla
         :currentStation="props.station"
+        :bikeType="bikeType"
+        :rideType="rideType"
         @select="onStationSelected"
         @update:origin="onOriginUpdate"
         @update:destination="onDestinationUpdate"
@@ -91,10 +93,17 @@ const router = useRouter()
 const { t: $t } = useI18n();
 const { setReservation } = useReservation()
 
-// props con valores por defecto
-const props = withDefaults(defineProps<Props>(), {
+// props con valores por defecto (incluye origin/destination opcionales para sincronizar selección desde el mapa)
+interface PropsWithSelection extends Props {
+  origin?: any | null
+  destination?: any | null
+}
+
+const props = withDefaults(defineProps<PropsWithSelection>(), {
   station: () => ({ name: 'Selecciona una estación', available: 0, status: 'N/A' }),
-  balance: 0
+  balance: 0,
+  origin: null,
+  destination: null
 })
 
 // emits tipados (incluye forwarding)
@@ -137,17 +146,14 @@ const recharge = () => {
 
 // Handlers para reenviar eventos recibidos desde UltimaMilla hacia el padre
 function onStationSelected(station: Station) {
-  console.log("Estación elegida por última milla:", station)
   emit("update:destination", station ?? null)
 }
 
 function onOriginUpdate(origin: any) {
-  console.log("ReserveForm forward origin:", origin)
   emit("update:origin", origin ?? null)
 }
 
 function onDestinationUpdate(destination: any) {
-  console.log("ReserveForm forward destination:", destination)
   emit("update:destination", destination ?? null)
 }
 </script>
