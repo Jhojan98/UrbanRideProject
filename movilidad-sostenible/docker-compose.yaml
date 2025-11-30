@@ -10,7 +10,7 @@ services:
       - "5532:5432"
     volumes:
       - data-postgres:/var/lib/postgresql/data
-      - ./docker/postgres/version6.0/initdb:/docker-entrypoint-initdb.d
+      - ./docker/postgres/version7.0/initdb:/docker-entrypoint-initdb.d
     networks:
       - movilidad-sostenible-network
     restart: always
@@ -377,7 +377,7 @@ services:
       EUREKA_APP_NAME: reports-service
       EUREKA_HEARTBEAT_INTERVAL: 30
       USERS_SERVICE_URL: http://usuario-service:8001
-      BICYCLE_SERVICE_URL: http://bicycle-service:8002
+      BICYCLE_SERVICE_URL: http://bicis-service:8002
       RESERVATIONS_SERVICE_URL: http://viaje-service:8003
       FINES_SERVICE_URL: http://fine-service:5003
     networks:
@@ -395,6 +395,34 @@ services:
         condition: service_started
     restart: always
 
+  maintenance-service:
+    container_name: maintenance-service
+    build:
+      context: ./maintenance-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5006"]
+    ports:
+      - "5006:5006"
+    environment:
+      SERVICE_PORT: 5006
+      SERVICE_HOST: maintenance-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: maintenance-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${MANTENIMIENTO_DB_USER}
+      POSTGRES_PASSWORD: ${MANTENIMIENTO_DB_PASSWORD}
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
 volumes:
   data-postgres:
     name: data-postgres
@@ -402,4 +430,3 @@ volumes:
 networks:
   movilidad-sostenible-network:
     driver: bridge
-    
