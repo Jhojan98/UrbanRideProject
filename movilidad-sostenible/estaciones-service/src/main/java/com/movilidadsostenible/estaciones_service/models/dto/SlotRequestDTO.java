@@ -1,11 +1,11 @@
-package com.movilidadsostenible.estaciones_service.clients;
+package com.movilidadsostenible.estaciones_service.models.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class SlotRequest {
+public class SlotRequestDTO {
     private String idSlot;
     private String padlockStatus;
     private Integer stationId;

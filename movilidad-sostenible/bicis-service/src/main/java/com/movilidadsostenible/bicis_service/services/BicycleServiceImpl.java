@@ -23,7 +23,7 @@ public class BicycleServiceImpl implements BicycleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Bicycle> byId(Integer id) {
+    public Optional<Bicycle> byId(String id) {
         return repository.findById(id);
     }
 
@@ -35,7 +35,7 @@ public class BicycleServiceImpl implements BicycleService {
 
     @Override
     @Transactional
-    public void delete(Integer id) {
+    public void delete(String id) {
         repository.deleteById(id);
     }
 }
