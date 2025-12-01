@@ -1,6 +1,20 @@
 <template>
   <div class="map-wrapper">
-    <div id="map" class="map-container"></div>
+    <div id="map" :class="['map-container', { 'map-disabled': showAuthModal }]"></div>
+
+    <!-- Modal: requiere iniciar sesión para acceder al mapa -->
+    <div v-if="showAuthModal" class="modal-overlay">
+      <div class="modal">
+        <div class="modal-content">
+          <div class="success-icon">🔒</div>
+          <h3>Acceso restringido</h3>
+          <p>Para acceder a nuestros servicios y ver el mapa, debes iniciar sesión primero.</p>
+          <div style="display:flex;gap:12px;justify-content:center;margin-top:18px;">
+            <button class="butn-primary" @click="goToLogin">Aceptar</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Overlay: solo muestra info cuando hay ruta seleccionada (origen + destino) -->
     <div v-if="originPlain && destinationPlain" class="map-overlay">
@@ -24,7 +38,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, defineProps, watch, computed, defineEmits } from 'vue'
+import { ref, onMounted, onUnmounted, defineProps, watch, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import userAuth from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 import L, { Map as LeafletMap, Marker, Polyline } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -73,6 +90,26 @@ const stationFactory = new StationFactory()
 const stationWsService = new StationWebSocketService(stationFactory)
 const stationsRendered = ref<boolean>(false) // flag para evitar re-renderizar
 const clickedStation = ref<any | null>(null)
+
+// Auth modal: si no está autenticado, mostrar modal que obliga a iniciar sesión
+const router = useRouter()
+const authStore = userAuth()
+const { token } = storeToRefs(authStore)
+// Temporalmente deshabilitamos la restricción de login para facilitar
+// la comprobación de la obtención/renderizado de estaciones.
+// Antes: showAuthModal dependía de `token`; ahora forzamos `false`.
+const showAuthModal = ref<boolean>(false)
+
+// Comentado temporalmente: evitar que cambios en el token cierren/abran el modal
+// watch(token, (val) => {
+//   showAuthModal.value = !val
+// })
+
+function goToLogin() {
+  router.push({ name: 'login' }).catch(() => void 0)
+}
+
+// Nota: no existe función de "cancelar" para evitar que el usuario interactúe sin iniciar sesión.
 
 // Para marcadores de ruta (origen/destino)
 let originMarker: Marker | null = null
@@ -220,7 +257,7 @@ onMounted(() => {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map.value as LeafletMap)
 
-  // Cargar datos locales de prueba inmediatamente
+  // Cargar datos locales de prueba inmediatamente (fallback)
   mockStations.forEach(st => {
     const marker = stationFactory.getStationMarker(st as any)
     marker.render(map.value as LeafletMap)
@@ -241,6 +278,72 @@ onMounted(() => {
   })
   stationsRendered.value = true
 
+  // Intentar conectar al WebSocket de estaciones y solicitar carga inicial.
+  try {
+    stationWsService.connect((stations, factory) => {
+      // Bulk inicial recibido: renderizar todas las estaciones en el mapa
+      try {
+        stations.forEach(st => {
+          const mk = factory.getStationMarker(st)
+          mk.render(map.value as LeafletMap)
+          mk.onClick((station) => {
+            const payload = {
+              id: (station as any).idStation ?? (station as any).id,
+              name: (station as any).nameStation ?? (station as any).name,
+              latitude: station.latitude,
+              longitude: station.longitude,
+              free_spots: (station as any).availableSlots ?? (station as any).free_spots,
+              type: (station as any).type ?? 'bike'
+            }
+            if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
+            else clickedStation.value = payload
+          })
+        })
+        stationsRendered.value = true
+      } catch (e) { console.error('[Map] Error rendering bulk stations', e) }
+    }, (station, factory) => {
+      // Update incremental: render/update single station
+      try {
+        const mk = factory.getStationMarker(station)
+        mk.render(map.value as LeafletMap)
+        mk.onClick((st) => {
+          const payload = {
+            id: (st as any).idStation ?? (st as any).id,
+            name: (st as any).nameStation ?? (st as any).name,
+            latitude: st.latitude,
+            longitude: st.longitude,
+            free_spots: (st as any).availableSlots ?? (st as any).free_spots,
+            type: (st as any).type ?? 'bike'
+          }
+          if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
+          else clickedStation.value = payload
+        })
+      } catch (e) { console.error('[Map] Error updating station', e) }
+    })
+  } catch (e) { console.warn('[Map] No se pudo conectar al Stations WS', e) }
+
+  // Debug temporal: comprobar estado del WS y cantidad de estaciones almacenadas
+  setTimeout(() => {
+    try {
+      console.log('[Map DEBUG] Stations WS connected?', stationWsService.getIsConnected());
+      console.log('[Map DEBUG] Stations WS has initial bulk?', stationWsService.getHasInitialBulk());
+      console.log('[Map DEBUG] Station factory size:', stationWsService.getFactory().size());
+      console.log('[Map DEBUG] Stations cache count:', stationWsService.getStationCount());
+      console.log('[Map DEBUG] Stations from service:', stationWsService.getStations());
+    } catch (err) {
+      console.warn('[Map DEBUG] Error leyendo estado Stations WS', err);
+    }
+  }, 2000);
+
+  // Re-check más tarde por si la conexión tarda en establecerse
+  setTimeout(() => {
+    try {
+      console.log('[Map DEBUG] (later) Stations WS connected?', stationWsService.getIsConnected());
+      console.log('[Map DEBUG] (later) Stations WS has initial bulk?', stationWsService.getHasInitialBulk());
+      console.log('[Map DEBUG] (later) Station factory size:', stationWsService.getFactory().size());
+      console.log('[Map DEBUG] (later) Stations cache count:', stationWsService.getStationCount());
+    } catch (err) { void err }
+  }, 6000);
   // WebSocket de estaciones (fallback, no esencial)
   // stationWsService.connect(...) - comentado para evitar ruido
 
@@ -319,6 +422,11 @@ watch(() => [props.origin, props.destination], () => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
+.map-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .map-overlay {
   position: absolute;
   top: 12px;
@@ -343,4 +451,32 @@ watch(() => [props.origin, props.destination], () => {
     min-height: 50vh;
   }
 }
+
+/* Modal local: aseguramos que quede por encima del overlay de estación */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000; /* superior al z-index del overlay de estación */
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 22px;
+  max-width: 480px;
+  width: 92%;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+}
+
+.modal-content h3 { margin: 0 0 8px 0; }
+
+.success-icon { font-size: 36px; margin-bottom: 8px; }
 </style>
