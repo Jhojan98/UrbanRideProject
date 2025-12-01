@@ -1,14 +1,21 @@
-from typing import List, Optional, Literal
-from fastapi import FastAPI, HTTPException, Depends
-import sqlalchemy.orm as _orm
-import models as _models
-import database as _database
+import asyncio
 import logging
-from pydantic import BaseModel, Field
+import os
+import socket
 from datetime import datetime
+from typing import Literal, Optional
+
+import sqlalchemy.orm as _orm
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel, Field
+from py_eureka_client import eureka_client as _eureka_client
+
+import database as _database
+import models as _models
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
+_eureka_handle = None
 
 
 # Pydantic models aligned to English DB columns
@@ -45,6 +52,72 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def _to_bool(value: Optional[str], default: bool = True) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+@app.on_event("startup")
+async def startup_event():
+    global _eureka_handle
+
+    if not _to_bool(os.getenv("EUREKA_ENABLED"), True):
+        logging.info("Eureka registration disabled by EUREKA_ENABLED flag")
+        return
+
+    eureka_host = os.getenv("EUREKA_HOST", "eureka-server")
+    eureka_port = os.getenv("EUREKA_PORT", "8761")
+    eureka_server_url = f"http://{eureka_host}:{eureka_port}/eureka/"
+
+    app_name = os.getenv("EUREKA_APP_NAME", "bicycle-service")
+    service_port = int(os.getenv("SERVICE_PORT", "5002"))
+    service_host = os.getenv("SERVICE_HOST") or socket.gethostname()
+    service_ip = os.getenv("SERVICE_IP")
+    
+    # Configuración de heartbeat (intervalo de renovación)
+    heartbeat_interval = int(os.getenv("EUREKA_HEARTBEAT_INTERVAL", "30"))
+
+    register_kwargs = {
+        "eureka_server": eureka_server_url,
+        "app_name": app_name,
+        "instance_host": service_host,
+        "instance_port": service_port,
+        "renewal_interval_in_secs": heartbeat_interval,
+        "duration_in_secs": heartbeat_interval * 3,
+        "status_page_url": f"http://{service_host}:{service_port}/",
+        "health_check_url": f"http://{service_host}:{service_port}/health",
+        "home_page_url": f"http://{service_host}:{service_port}/",
+        "metadata": {"framework": "fastapi", "management.port": str(service_port)},
+    }
+
+    if service_ip:
+        register_kwargs["instance_ip"] = service_ip
+
+    try:
+        _eureka_handle = await asyncio.to_thread(_eureka_client.init, **register_kwargs)
+        logging.info("Registered FastAPI service '%s' with Eureka at %s", app_name, eureka_server_url)
+    except Exception as exc:  # pylint: disable=broad-except
+        _eureka_handle = None
+        logging.error("Failed to initialize Eureka client: %s", exc)
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global _eureka_handle
+
+    if _eureka_handle is None:
+        return
+
+    try:
+        await asyncio.to_thread(_eureka_handle.stop)
+        logging.info("Eureka client stopped")
+    except Exception as exc:  # pylint: disable=broad-except
+        logging.warning("Error stopping Eureka client: %s", exc)
+    finally:
+        _eureka_handle = None
 
 @app.get("/")
 async def root():

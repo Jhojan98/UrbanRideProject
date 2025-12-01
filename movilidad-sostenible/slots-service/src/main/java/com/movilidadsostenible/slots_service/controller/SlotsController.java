@@ -87,6 +87,8 @@ public class SlotsController {
         return ResponseEntity.ok(service.updatePadlockStatus(id, padlockStatus));
     }
 
+
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar slot por ID")
     @ApiResponses(value = {
@@ -98,5 +100,91 @@ public class SlotsController {
     ) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // reservar primer slot disponible (LOCKED -> RESERVED) devolviendo con bicicleta MECHANIC (bicycleId = "MECH-******) solo el ID
+    @PostMapping("/stations/{stationId}/reserve-mechanic")
+    @Operation(summary = "Reservar el primer slot LOCKED (bicicleta mecanica)",
+            description = "Devuelve el ID del primer slot con estado LOCKED de la estación indicada y cambia su estado a RESERVED. Uso destinado para bicicletas con ID tipo MECH-###### (no se asigna aquí el bicycleId).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "ID del slot reservado",
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string", example = "EST-TIP-01"))),
+            @ApiResponse(responseCode = "400", description = "No hay slots LOCKED disponibles", content = @Content)
+    })
+    public ResponseEntity<String> reserveFirstAvailable(
+        @Parameter(description = "Identificador de la estación", example = "1")
+        @PathVariable Integer stationId
+    ) {
+        try {
+            Slot reserved = service.reserveFirstAvailableSlotMechanicBicy(stationId);
+            return ResponseEntity.ok(reserved.getIdSlot());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body("NO_SLOT_AVAILABLE");
+        }
+    }
+
+    // reservar primer slot disponible (LOCKED -> RESERVED) devolviendo con bicicleta ELECTRIC (bicycleId = "ELEC-******) solo el ID
+    @PostMapping("/stations/{stationId}/reserve-electric")
+    @Operation(summary = "Reservar el primer slot LOCKED (bicicleta eléctrica)",
+        description = "Devuelve el ID del primer slot con estado LOCKED de la estación indicada y cambia su estado a RESERVED. Uso destinado para bicicletas con ID tipo ELEC-###### (no se asigna aquí el bicycleId).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "ID del slot reservado",
+            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string", example = "EST-TIP-01"))),
+        @ApiResponse(responseCode = "400", description = "No hay slots LOCKED disponibles", content = @Content)
+    })
+    public ResponseEntity<String> reserveFirstAvailableElectric(
+        @Parameter(description = "Identificador de la estación", example = "1")
+        @PathVariable Integer stationId
+    ) {
+        try {
+            Slot reserved = service.reserveFirstAvailableSlotElectricBicy(stationId);
+            return ResponseEntity.ok(reserved.getIdSlot());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body("NO_SLOT_AVAILABLE");
+        }
+    }
+
+    // reservar primer slot disponible (UNLOCKED -> RESERVED) devolviendo solo el ID
+    @PostMapping("/stations/{stationId}/reserve-first-unlocked")
+    @Operation(summary = "Reservar el primer slot UNLOCKED de una estación",
+        description = "Devuelve el ID del primer slot con estado UNLOCKED de la estación indicada y cambia su estado a RESERVED.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "ID del slot reservado",
+            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string", example = "EST-TIP-02"))),
+        @ApiResponse(responseCode = "400", description = "No hay slots UNLOCKED disponibles", content = @Content)
+    })
+    public ResponseEntity<String> reserveFirstUnlocked(
+        @Parameter(description = "Identificador de la estación", example = "1")
+        @PathVariable Integer stationId
+    ) {
+        try {
+            Slot reserved = service.reserveFirstUnlockedSlot(stationId);
+            return ResponseEntity.ok(reserved.getIdSlot());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body("NO_UNLOCKED_SLOT_AVAILABLE");
+        }
+    }
+
+    // Nuevo endpoint: bloquear slot asignando bicicleta (padlockStatus -> LOCKED)
+    @PostMapping("/{slotId}/lock")
+    @Operation(summary = "Bloquear un slot asignando una bicicleta",
+        description = "Cambia el estado del candado a LOCKED y asigna el ID de la bicicleta al slot indicado.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Slot bloqueado",
+            content = @Content(mediaType = "text/plain", schema = @Schema(type = "string", example = "S-001"))),
+        @ApiResponse(responseCode = "404", description = "Slot no encontrado", content = @Content)
+    })
+    public ResponseEntity<String> lockSlotWithBicycle(
+        @Parameter(description = "Identificador del slot", example = "S-001")
+        @PathVariable String slotId,
+        @Parameter(description = "Identificador de la bicicleta", example = "123")
+        @RequestParam String bicycleId
+    ) {
+        try {
+            Slot locked = service.lockSlotWithBicycle(slotId, bicycleId);
+            return ResponseEntity.ok(locked.getIdSlot());
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

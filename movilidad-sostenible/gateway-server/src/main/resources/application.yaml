@@ -41,10 +41,31 @@ spring:
           filters:
             - StripPrefix=1
 
+        - id: admin-service
+          uri: lb://admin-service
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=1
+
         - id: bicis-service
           uri: lb://bicis-service
           predicates:
             - Path=/bicy/**
+          filters:
+            - StripPrefix=1
+
+        - id: bicycle-fastapi
+          uri: lb://bicycle-service
+          predicates:
+            - Path=/bicycle-fastapi/**
+          filters:
+            - StripPrefix=1
+            
+        - id: fine-service
+          uri: lb://fine-service
+          predicates:
+            - Path=/fine/**
           filters:
             - StripPrefix=1
 
@@ -75,6 +96,7 @@ spring:
             - Path=/travel/**
           filters:
             - StripPrefix=1
+
 
 springdoc:
   api-docs:

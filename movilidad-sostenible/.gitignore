@@ -11,6 +11,7 @@ target/
 *.iws
 *.iml
 *.ipr
+reports-service/test_aggregator_mock.py
 
 ### Eclipse ###
 .apt_generated

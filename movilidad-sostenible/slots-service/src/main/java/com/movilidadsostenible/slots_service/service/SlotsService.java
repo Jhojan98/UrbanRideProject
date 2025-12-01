@@ -10,4 +10,8 @@ public interface SlotsService {
     List<Slot> findAll();
     Slot updatePadlockStatus(String id, String padlockStatus);
     void delete(String id);
-}
+
+    Slot reserveFirstAvailableSlotElectricBicy(Integer stationId);
+    Slot reserveFirstAvailableSlotMechanicBicy(Integer stationId);
+    Slot reserveFirstUnlockedSlot(Integer stationId);
+    Slot lockSlotWithBicycle(String slotId, String bicycleId);}

@@ -11,10 +11,10 @@ public class City {
 
     @Id
     @Column(name = "k_id_city")
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer idCity;
 
     @Column(name = "n_city_name")
     @NotNull
     private String cityName;
 }
+

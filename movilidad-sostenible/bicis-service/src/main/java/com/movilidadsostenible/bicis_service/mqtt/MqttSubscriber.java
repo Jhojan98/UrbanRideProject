@@ -123,7 +123,7 @@ public class MqttSubscriber implements MqttCallbackExtended {
     public void messageArrived(String topic, MqttMessage message) {
         try {
             String payloadStr = new String(message.getPayload(), StandardCharsets.UTF_8);
-            Integer idFromTopic = extractBikeId(topic);
+            String idFromTopic = extractBikeId(topic);
             BicycleTelemetryDTO telemetry = objectMapper.readValue(payloadStr, BicycleTelemetryDTO.class);
             if (telemetry.getIdBicycle() == null) {
                 telemetry.setIdBicycle(idFromTopic);
@@ -158,12 +158,12 @@ public class MqttSubscriber implements MqttCallbackExtended {
         // no publicamos desde este componente
     }
 
-    private Integer extractBikeId(String topic) {
+    private String extractBikeId(String topic) {
         // Espera: bikes/{id}/telemetry
         if (topic == null) return null;
         String[] parts = topic.split("/");
         if (parts.length >= 3 && "bikes".equals(parts[0]) && "telemetry".equals(parts[2])) {
-            try { return Integer.parseInt(parts[1]); } catch (NumberFormatException ignored) {}
+            try { return parts[1];} catch (NumberFormatException ignored) {}
         }
         return null;
     }

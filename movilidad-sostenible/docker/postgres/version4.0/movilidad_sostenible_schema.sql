@@ -153,7 +153,10 @@ CREATE TABLE user_fine
 	n_reason varchar(250) NOT NULL,
 	t_state varchar(50) NOT NULL   DEFAULT 'PENDING',
 	k_id_multa integer NOT NULL,
-	k_user_cc integer NOT NULL
+	k_user_cc integer NOT NULL,
+	v_amount_snapshot numeric(9) NOT NULL,
+	f_assigned_at timestamp without time zone NOT NULL   DEFAULT NOW(),
+	f_updated_at timestamp without time zone NOT NULL   DEFAULT NOW()
 )
 ;
 
@@ -262,7 +265,7 @@ ALTER TABLE user_fine ADD CONSTRAINT "PK_User_fine"
 	PRIMARY KEY (k_user_fine)
 ;
 
-ALTER TABLE user_fine ADD CONSTRAINT "CHK_t_state" CHECK (t_state IN ('PENDING', 'PAID'))
+ALTER TABLE user_fine ADD CONSTRAINT "CHK_t_state" CHECK (t_state IN ('PENDING', 'PAID', 'CANCELLED'))
 ;
 
 CREATE INDEX "IXFK_User_fine_Fine" ON user_fine (k_id_multa ASC)
@@ -535,6 +538,18 @@ COMMENT ON COLUMN travel.k_to_id_station
 
 COMMENT ON TABLE user_fine
 	IS 'En esta tabla se van a guardar todas las multas de los usuarios.'
+;
+
+COMMENT ON COLUMN user_fine.v_amount_snapshot
+	IS 'Monto histórico asociado a la multa al momento de la asignación.'
+;
+
+COMMENT ON COLUMN user_fine.f_assigned_at
+	IS 'Fecha y hora en la que se asignó la multa al usuario.'
+;
+
+COMMENT ON COLUMN user_fine.f_updated_at
+	IS 'Fecha y hora de la última modificación de la multa del usuario.'
 ;
 
  
