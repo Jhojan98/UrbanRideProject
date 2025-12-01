@@ -9,6 +9,9 @@ import BalanceComponent from '@/components/BalanceComponent.vue'
 import PaymentMethodsComponent from '@/components/PaymentMethodsComponent.vue'
 import DestinationMapComponent from '@/components/DestinationMapComponent.vue'
 import ReportProblemComponent from '@/components/ReportProblemComponent.vue'
+import PaymentSuccesComponent from '@/components/payments/PaymentSuccesComponent.vue'
+import PaymentCancelComponent from '@/components/payments/PaymentCancelComponent.vue'
+import PaymentCheckoutComponent from '@/components/payments/PaymentCheckoutComponent.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -74,18 +77,29 @@ const routes: Array<RouteRecordRaw> = [
     meta: {requireAuth: false, layout: 'main'}
   },
   {
-    path: '/payment',
-    name: 'payment-methods',
-    component: PaymentMethodsComponent,
-    meta: {requireAuth: false, layout: 'main'}
-
-  },
-  {
     path: '/report-problem',
     name: 'report-problem',
     component: ReportProblemComponent,
     meta: {requireAuth: false, layout: 'main'}
 
+  },
+  {
+    path: '/pago/success',
+    name: 'payment-success',
+    component: PaymentSuccesComponent,
+    meta: { requireAuth: false, layout: 'main' }
+  },
+  {
+    path: '/pago/cancel',
+    name: 'payment-cancel', 
+    component: PaymentCancelComponent,
+    meta: { requireAuth: false, layout: 'main' }
+  },
+  {
+    path: '/pago/checkout',
+    name: 'payment-checkout', 
+    component: PaymentCheckoutComponent,
+    meta: { requireAuth: false, layout: 'main' }
   }
   
 
