@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class BicicletaServiceImpl implements BicycleService {
+public class BicycleServiceImpl implements BicycleService {
 
     @Autowired
     private BicycleRepository repository;
@@ -23,7 +23,7 @@ public class BicicletaServiceImpl implements BicycleService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<Bicycle> byId(Integer id) {
+    public Optional<Bicycle> byId(String id) {
         return repository.findById(id);
     }
 
@@ -35,7 +35,7 @@ public class BicicletaServiceImpl implements BicycleService {
 
     @Override
     @Transactional
-    public void delete(Integer id) {
+    public void delete(String id) {
         repository.deleteById(id);
     }
 }

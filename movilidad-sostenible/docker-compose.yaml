@@ -28,6 +28,25 @@ services:
       - movilidad-sostenible-network
     restart: always
 
+  redis:
+    container_name: redis
+    image: redis:alpine3.22
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+    volumes:
+      - redis_data:/data
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+
   mosquitto:
     container_name: mosquitto
     image: eclipse-mosquitto:2
@@ -224,12 +243,25 @@ services:
       POSTGRES_DB: movilidad_sostenible
       POSTGRES_USER: ${VIAJE_DB_USER}
       POSTGRES_PASSWORD: ${VIAJE_DB_PASSWORD}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - usuario-service
-      - bicis-service
+      slots-service:
+        condition: service_started
+      usuario-service:
+        condition: service_started
+      postgres17:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     restart: always
 
   slots-service:
@@ -251,6 +283,8 @@ services:
       - movilidad-sostenible-network
     depends_on:
       estaciones-service:
+        condition: service_started
+      bicis-service:
         condition: service_started
       ciudad-service:
         condition: service_started
@@ -333,6 +367,7 @@ services:
       eureka-server:
         condition: service_healthy
     restart: always
+
   fine-service:
     container_name: fine-service
     build:
@@ -426,6 +461,9 @@ services:
 volumes:
   data-postgres:
     name: data-postgres
+
+  redis_data:
+    name: redis_data
 
 networks:
   movilidad-sostenible-network:

@@ -15,13 +15,12 @@ public class Bicycle {
 
     @Id
     @Column(name = "k_id_bicycle")
-    private Integer idBicycle;
+    private String idBicycle;
 
     @NotNull
     @Column(name = "k_series")
     private Integer series;
 
-    @NotEmpty
     @Column(name = "n_model")
     private String model;
 
