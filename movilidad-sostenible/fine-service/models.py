@@ -44,7 +44,7 @@ class Fine(Base):
     __table_args__ = {"schema": "public"}
 
     k_id_fine = _sql.Column(_sql.Integer, primary_key=True, autoincrement=True)
-    d_descripcion = _sql.Column(_sql.String(250), nullable=False)
+    d_description = _sql.Column(_sql.String(250), nullable=False)
     v_amount = _sql.Column(_sql.Integer, nullable=False)
 
     user_fines = _orm.relationship("UserFine", back_populates="fine")

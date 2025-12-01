@@ -667,11 +667,15 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO manager_city;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.station TO manager_station;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.fine TO manager_fine;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.fine_k_id_fine_seq TO manager_fine;
+
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.travel TO manager_travel;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO manager_travel;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_fine TO manager_fine;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.user_fine_k_user_fine_seq TO manager_fine;	
+
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.slots TO manager_slots;
 
