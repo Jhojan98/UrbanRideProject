@@ -3,27 +3,27 @@ import { Station, SlotStatus } from '@/models/Station';
 
 // Íconos compartidos (estado intrínseco)
 class StationFlyweight {
-  private static readonly high: DivIcon = new DivIcon({
+  private static readonly high: L.DivIcon = new L.DivIcon({
     html: `<div style="width:36px;height:36px;background:#4caf50;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35)"><i class="fa fa-bicycle"></i></div>`,
     className: 'station-high', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
-  private static readonly medium: DivIcon = new DivIcon({
+  private static readonly medium: L.DivIcon = new L.DivIcon({
     html: `<div style="width:36px;height:36px;background:#ff9800;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35)"><i class="fa fa-bicycle"></i></div>`,
     className: 'station-medium', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
-  private static readonly low: DivIcon = new DivIcon({
+  private static readonly low: L.DivIcon = new L.DivIcon({
     html: `<div style="width:36px;height:36px;background:#f44336;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35);animation:pulse 1.8s infinite"><i class="fa fa-bicycle"></i></div><style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}</style>`,
     className: 'station-low', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
-  private static readonly none: DivIcon = new DivIcon({
+  private static readonly none: L.DivIcon = new L.DivIcon({
     html: `<div style="width:36px;height:36px;background:#757575;border:3px solid #eee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#e0e0e0;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25)"><i class="fa fa-bicycle"></i></div>`,
     className: 'station-none', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
 
   // ahora acepta un tipo opcional ('metro'|'bike') para cambiar el icono
-  static icon(available: number, total: number, type?: string): DivIcon {
+  static icon(available: number, total: number, type?: string): L.DivIcon {
     // elegir el set base según porcentaje
-    let base: DivIcon
+    let base: L.DivIcon
     if (available === 0) base = this.none;
     else {
       const pct = (available/total)*100;
@@ -36,7 +36,7 @@ class StationFlyweight {
       // clonar pero con icono de metro — solo si el html es string
       if (typeof base.options.html === 'string') {
         const replaced = base.options.html.replace('fa-bicycle', 'fa-subway')
-        return new DivIcon({
+        return new L.DivIcon({
           html: replaced,
           className: base.options.className,
           iconSize: base.options.iconSize,
@@ -52,14 +52,14 @@ class StationFlyweight {
 }
 
 export class StationMarker {
-  private marker: Marker | null = null;
+  private marker: L.Marker | null = null;
   private clickHandler: ((station: Station)=>void) | null = null;
   constructor(private station: Station) {}
 
   render(map: L.Map): L.Marker {
     const pos: L.LatLngExpression = [this.station.latitude, this.station.longitude];
     if (!this.marker) {
-      this.marker = new Marker(pos, { icon: StationFlyweight.icon(this.station.availableSlots, this.station.totalSlots, (this.station as any).type) });
+      this.marker = new L.Marker(pos, { icon: StationFlyweight.icon(this.station.availableSlots, this.station.totalSlots, (this.station as any).type) });
       this.marker.addTo(map);
       // show popup on hover for quick info
       this.marker.on('mouseover', () => { try { this.marker?.openPopup() } catch(e){ void e } });
