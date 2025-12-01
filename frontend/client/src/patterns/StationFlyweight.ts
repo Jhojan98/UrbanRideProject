@@ -1,4 +1,4 @@
-import { Marker, LatLngExpression, DivIcon } from 'leaflet';
+import * as L from 'leaflet';
 import { Station, SlotStatus } from '@/models/Station';
 
 // Íconos compartidos (estado intrínseco)
@@ -56,8 +56,8 @@ export class StationMarker {
   private clickHandler: ((station: Station)=>void) | null = null;
   constructor(private station: Station) {}
 
-  render(map: L.Map): Marker {
-    const pos: LatLngExpression = [this.station.latitude, this.station.longitude];
+  render(map: L.Map): L.Marker {
+    const pos: L.LatLngExpression = [this.station.latitude, this.station.longitude];
     if (!this.marker) {
       this.marker = new Marker(pos, { icon: StationFlyweight.icon(this.station.availableSlots, this.station.totalSlots, (this.station as any).type) });
       this.marker.addTo(map);

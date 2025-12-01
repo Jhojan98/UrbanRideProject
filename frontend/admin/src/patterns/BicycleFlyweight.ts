@@ -1,4 +1,4 @@
-import { Marker, LatLngExpression, DivIcon } from 'leaflet';
+import * as L from 'leaflet';
 import { Bicycle } from '@/models/Bicycle';
 
 /**
@@ -6,7 +6,7 @@ import { Bicycle } from '@/models/Bicycle';
  * Contiene datos que NO cambian entre instancias (el ícono del marcador)
  */
 class BicycleFlyweight {
-    private static readonly icon: DivIcon = new DivIcon({
+    private static readonly icon: L.DivIcon = L.divIcon({
         html: `
             <div style="
                 width: 32px; 
@@ -28,7 +28,7 @@ class BicycleFlyweight {
     });
 
     // Ícono alternativo para bicicletas con batería baja
-    private static readonly lowBatteryIcon: DivIcon = new DivIcon({
+    private static readonly lowBatteryIcon: L.DivIcon = L.divIcon({
         html: `
             <div style="
                 width: 32px; 
@@ -59,7 +59,7 @@ class BicycleFlyweight {
     /**
      * Obtiene el ícono compartido basado en el nivel de batería
      */
-    public static getIcon(battery: string): DivIcon {
+    public static getIcon(battery: string): L.DivIcon {
         const batteryLevel = parseInt(battery);
         return batteryLevel < 20 ? this.lowBatteryIcon : this.icon;
     }
@@ -71,7 +71,7 @@ class BicycleFlyweight {
  */
 export class BicycleMarker {
     private bicycle: Bicycle;
-    private marker: Marker | null = null;
+    private marker: L.Marker | null = null;
 
     constructor(bicycle: Bicycle) {
         this.bicycle = bicycle;
@@ -80,14 +80,12 @@ export class BicycleMarker {
     /**
      * Crea o actualiza el marcador en el mapa
      */
-    public render(map: L.Map): Marker {
-        const position: LatLngExpression = [this.bicycle.lat, this.bicycle.lon];
+    public render(map: L.Map): L.Marker {
+        const position: L.LatLngExpression = [this.bicycle.lat, this.bicycle.lon];
         
         if (!this.marker) {
             // Crear nuevo marcador usando el Flyweight (ícono compartido)
-            this.marker = new Marker(position, {
-                icon: BicycleFlyweight.getIcon(this.bicycle.battery)
-            });
+            this.marker = L.marker(position, { icon: BicycleFlyweight.getIcon(this.bicycle.battery) });
 
             this.marker.addTo(map);
         } else {

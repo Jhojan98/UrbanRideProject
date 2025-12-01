@@ -1,26 +1,26 @@
-import { Marker, LatLngExpression, DivIcon } from 'leaflet';
+import * as L from 'leaflet';
 import { Station, SlotStatus } from '@/models/Station';
 
 // Íconos compartidos (estado intrínseco)
 class StationFlyweight {
-  private static readonly high: DivIcon = new DivIcon({
+  private static readonly high: L.DivIcon = L.divIcon({
     html: `<div style="width:36px;height:36px;background:#4caf50;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35)">🅿️</div>`,
     className: 'station-high', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
-  private static readonly medium: DivIcon = new DivIcon({
+  private static readonly medium: L.DivIcon = L.divIcon({
     html: `<div style="width:36px;height:36px;background:#ff9800;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35)">🅿️</div>`,
     className: 'station-medium', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
-  private static readonly low: DivIcon = new DivIcon({
+  private static readonly low: L.DivIcon = L.divIcon({
     html: `<div style="width:36px;height:36px;background:#f44336;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35);animation:pulse 1.8s infinite">🅿️</div><style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}</style>`,
     className: 'station-low', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
-  private static readonly none: DivIcon = new DivIcon({
+  private static readonly none: L.DivIcon = L.divIcon({
     html: `<div style="width:36px;height:36px;background:#757575;border:3px solid #eee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#e0e0e0;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25)">🅿️</div>`,
     className: 'station-none', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
 
-  static icon(available: number, total: number): DivIcon {
+  static icon(available: number, total: number): L.DivIcon {
     if (available === 0) return this.none;
     const pct = (available/total)*100;
     if (pct > 50) return this.high;
@@ -30,13 +30,13 @@ class StationFlyweight {
 }
 
 export class StationMarker {
-  private marker: Marker | null = null;
+  private marker: L.Marker | null = null;
   constructor(private station: Station) {}
 
-  render(map: L.Map): Marker {
-    const pos: LatLngExpression = [this.station.latitude, this.station.longitude];
+  render(map: L.Map): L.Marker {
+    const pos: L.LatLngExpression = [this.station.latitude, this.station.longitude];
     if (!this.marker) {
-      this.marker = new Marker(pos, { icon: StationFlyweight.icon(this.station.availableSlots, this.station.totalSlots) });
+      this.marker = L.marker(pos, { icon: StationFlyweight.icon(this.station.availableSlots, this.station.totalSlots) });
       this.marker.addTo(map);
     } else {
       this.marker.setLatLng(pos);

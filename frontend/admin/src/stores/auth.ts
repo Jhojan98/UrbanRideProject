@@ -5,7 +5,7 @@ const userAuthStore = defineStore('auth', {
     state() {
         return {
             token: null as string | null,
-            baseURL: 'http://localhost:8090',
+            baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8090',
             message: '',
             isVerified: false,
             pendingVerification: false,
@@ -24,12 +24,13 @@ const userAuthStore = defineStore('auth', {
                 // Obtener token de Firebase
                 const token = await userCredential.user.getIdToken();
 
-                console.log('=== ENVIANDO DATOS AL BACKEND (LOGIN) ===');
+                console.log('=== ENVIANDO DATOS AL BACKEND (ADMIN LOGIN) ===');
                 console.log('email:', email);
+                console.log('uid:', userCredential.user.uid);
                 console.log('token:', token ? 'Token obtenido' : 'No token');
-                console.log('=========================================');
+                console.log('================================================');
 
-                // Enviar credenciales al backend
+                // Verificar si el administrador existe en la base de datos
                 const uri = `${this.baseURL}/admin/login/${userCredential.user.uid}`;
                 const rawResponse = await fetch(uri, {
                     method: 'GET',
@@ -40,13 +41,18 @@ const userAuthStore = defineStore('auth', {
                 });
 
                 if (!rawResponse.ok) {
-                    console.error('Error HTTP del backend (login):', rawResponse.status, rawResponse.statusText);
-                    this.message = `Error al validar con backend: ${rawResponse.statusText}`;
+                    if (rawResponse.status === 404) {
+                        console.error('Administrador no encontrado en la base de datos');
+                        this.message = 'No tienes permisos de administrador. Contacta al soporte.';
+                    } else {
+                        console.error('Error HTTP del backend (login):', rawResponse.status, rawResponse.statusText);
+                        this.message = `Error al validar con backend: ${rawResponse.statusText}`;
+                    }
                     return { success: false };
                 }
 
                 const response = await rawResponse.json();
-                console.log('Respuesta del backend (login):', response);
+                console.log('Administrador verificado:', response);
 
                 this.token = token;
                 this.isVerified = true;

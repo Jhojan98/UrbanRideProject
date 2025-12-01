@@ -42,6 +42,7 @@ const userAuth = defineStore("auth", {
                 console.log('creationTime:', creationTime);
                 console.log('============================================');
 
+                // Gateway enruta /user/register → usuario-service /register
                 const uri = `${this.baseURL}/user/register`;
                 const rawResponse = await fetch(uri, {
                     method: 'POST',
@@ -51,7 +52,8 @@ const userAuth = defineStore("auth", {
                     },
                     body: JSON.stringify({
                         uidUser: userCredential.user.uid,
-                        userName: username,
+                        userName: username
+                        // Backend User solo acepta: uidUser, userName, subscriptionType, balance
                     })
                 });
 
@@ -163,38 +165,60 @@ const userAuth = defineStore("auth", {
                 console.log('creationTime:', user.metadata.creationTime);
                 console.log('================================================');
 
-                // Enviar datos al backend para registro/login con Google
-                const uri = `${this.baseURL}/user/register`;
-                const rawResponse = await fetch(uri, {
-                    method: 'POST',
+                // Primero verificar si el usuario ya existe
+                const checkUri = `${this.baseURL}/user/login/${user.uid}`;
+                const checkResponse = await fetch(checkUri, {
+                    method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'Authorization': `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        uidUser: user.uid,
-                        userName: user.displayName || user.email?.split('@')[0],
-                    })
+                    }
                 });
 
-                if (!rawResponse.ok) {
-                    console.error('Error HTTP del backend (Google):', rawResponse.status, rawResponse.statusText);
-                    const errorText = await rawResponse.text();
-                    console.error('Respuesta del servidor:', errorText);
-                    this.message = `Error al guardar en backend: ${rawResponse.statusText}`;
+                let userData;
+                if (checkResponse.ok) {
+                    // Usuario existe, solo obtener datos
+                    userData = await checkResponse.json();
+                    console.log('Usuario existente encontrado:', userData);
+                } else if (checkResponse.status === 404) {
+                    // Usuario no existe, registrar
+                    console.log('Usuario no encontrado, registrando...');
+                    const registerUri = `${this.baseURL}/user/register`;
+                    const registerResponse = await fetch(registerUri, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            uidUser: user.uid,
+                            userName: user.displayName || (user.email ? user.email.split('@')[0] : `user_${user.uid.substring(0,6)}`)
+                        })
+                    });
+
+                    if (!registerResponse.ok) {
+                        console.error('Error HTTP al registrar (Google):', registerResponse.status, registerResponse.statusText);
+                        const errorText = await registerResponse.text();
+                        console.error('Respuesta del servidor:', errorText);
+                        this.message = `Error al registrar en backend: ${registerResponse.statusText}`;
+                        return { success: false };
+                    }
+
+                    userData = await registerResponse.json();
+                    console.log('Usuario registrado exitosamente:', userData);
+                } else {
+                    console.error('Error inesperado al verificar usuario:', checkResponse.status, checkResponse.statusText);
+                    this.message = `Error al verificar usuario: ${checkResponse.statusText}`;
                     return { success: false };
                 }
-
-                const response = await rawResponse.json();
-                console.log('Respuesta del backend (Google):', response);
 
                 this.token = token;
                 this.isVerified = true; // Con Google el correo ya está verificado
                 this.pendingVerification = false;
                 this.tempEmail = user.email;
                 this.message = 'Login con Google exitoso';
-                return { success: true, userData: response };
+                return { success: true, userData };
             } catch (error: unknown) {
                 console.error('Error en login Google:', error);
                 const firebaseError = error as { code?: string; message?: string };
