@@ -1,18 +1,16 @@
-from sqlalchemy import Column, Integer, String, DateTime, Numeric, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Date, ForeignKey, Integer, Numeric, String
 from database import Base
 
+
 class MaintenanceRecord(Base):
-    __tablename__ = "maintenance_record"
+    __tablename__ = "maintenance"
 
     k_id_maintenance = Column(Integer, primary_key=True, index=True)
-    k_id_bicycle = Column(Integer, nullable=False, index=True)
     t_maintenance_type = Column(String(50), nullable=False)
-    f_scheduled_date = Column(DateTime, nullable=False)
-    f_completed_date = Column(DateTime, nullable=True)
-    v_total_trips = Column(Integer, nullable=True)
+    v_total_trips = Column(Integer, nullable=False)
     t_triggered_by = Column(String(50), nullable=False)
-    k_technician_id = Column(String(50), nullable=False)
-    k_id_station = Column(Integer, nullable=False, index=True)
+    d_description = Column(String(250), nullable=False)
+    t_status = Column(String(50), nullable=False)
+    f_date = Column(Date, nullable=False)
+    k_id_bicycle = Column(String(11), ForeignKey("bicycle.k_id_bicycle"), nullable=True)
     v_cost_usd = Column(Numeric(10, 2), nullable=True)
-    n_notes = Column(String(500), nullable=True)
