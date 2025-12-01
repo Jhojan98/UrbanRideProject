@@ -1,6 +1,6 @@
 package com.movilidadsostenible.estaciones_service.services;
 
-import com.movilidadsostenible.estaciones_service.models.entity.Stations;
+import com.movilidadsostenible.estaciones_service.models.entity.Station;
 import com.movilidadsostenible.estaciones_service.repositories.StationsRepository;
 import org.springframework.stereotype.Service;
 
@@ -17,17 +17,17 @@ public class StationsServiceImpl implements StationsService {
     }
 
     @Override
-    public List<Stations> findAll() {
+    public List<Station> findAll() {
         return repository.findAll();
     }
 
     @Override
-    public Optional<Stations> findById(Integer id) {
+    public Optional<Station> findById(Integer id) {
         return repository.findById(id);
     }
 
     @Override
-    public Stations save(Stations station) {
+    public Station save(Station station) {
         return repository.save(station);
     }
 

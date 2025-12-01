@@ -8,6 +8,33 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import L, { Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+// Fix de íconos por defecto de Leaflet para bundlers (evita 404 de marker-icon.png)
+// Importamos las imágenes y configuramos el Default Icon
+// Nota: Esto no afecta nuestros DivIcon personalizados para bicicletas
+// pero corrige los markers de ejemplo/otros que usen el ícono por defecto
+//
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import markerIcon from 'leaflet/dist/images/marker-icon.png'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import markerShadow from 'leaflet/dist/images/marker-shadow.png'
+
+// El prototipo cambia entre versiones; forzamos mergeOptions con rutas explícitas
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as any)._getIconUrl
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: markerIcon2x,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow
+})
+import { BicycleFactory } from '@/patterns/BicycleFlyweight'
+import { BicycleWebSocketService } from '@/services/BicycleWebSocketService'
+import { StationFactory } from '@/patterns/StationFlyweight'
+import { StationWebSocketService } from '@/services/StationWebSocketService'
 
 // Arreglar rutas de íconos por defecto de Leaflet en bundlers
 // Ajuste para íconos: en proyectos con vue-cli los assets de leaflet se sirven desde /img
@@ -15,6 +42,15 @@ import 'leaflet/dist/leaflet.css'
 // De momento mantenemos configuración por defecto.
 
 const map = ref<LeafletMap | null>(null)
+const bicycleFactory = new BicycleFactory()
+const wsService = new BicycleWebSocketService(bicycleFactory)
+const stationFactory = new StationFactory()
+const stationWsService = new StationWebSocketService(stationFactory)
+
+function renderStationMarkers() {
+    if (!map.value) return
+    stationFactory.getAllMarkers().forEach(m => m.render(map.value as LeafletMap))
+}
 
 onMounted(() => {
     // Centro inicial: Villavicencio (Meta, Colombia)
@@ -30,29 +66,54 @@ onMounted(() => {
         maxZoom: 19,
         attribution:
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(map.value)
+    }).addTo(map.value as LeafletMap)
 
-    // Marcadores de ejemplo en Villavicencio (puedes reemplazarlos por estaciones reales)
-    const stations: Array<{ name: string; coords: [number, number] }> = [
-        { name: 'Estación Centro', coords: [4.1519, -73.6365] },
-        { name: 'Parque Sikuani', coords: [4.1460, -73.6500] },
-        { name: 'Zona Universitaria', coords: [4.1630, -73.6220] },
-        { name: 'Estación Sur', coords: [4.1390, -73.6550] },
-    ]
-
-        if (map.value) {
-            stations.forEach((s) => {
-                L.marker(s.coords).addTo(map.value as LeafletMap)
-                    .bindPopup(`<b>${s.name}</b>`)
-            })
+    // Conectar estaciones via WebSocket (bulk + updates)
+    stationWsService.connect(
+        (stations) => {
+            // Bulk inicial recibido
+            console.log(`🏁 Bulk estaciones recibido: ${stations.length}`)
+            renderStationMarkers()
+        },
+        (station) => {
+            // Actualización incremental de una estación
+            console.log(`♻️ Estación actualizada: ${station.idStation}`)
+            renderStationMarkers()
         }
+    )
+
+    // Conectar al WebSocket y renderizar bicicletas cuando lleguen
+    wsService.connect((factory: BicycleFactory) => {
+        if (!map.value) return
+
+        // Renderizar todos los marcadores de bicicletas en el mapa
+        factory.getAllMarkers().forEach(marker => {
+            marker.render(map.value as LeafletMap)
+        })
+
+        console.log(`🚲 Total de bicicletas en el mapa: ${factory.size()}`)
+    })
+
+    console.log('🗺️ Mapa inicializado y WebSocket conectado')
 })
 
 onUnmounted(() => {
+    // Desconectar WebSocket
+    wsService.disconnect()
+    stationWsService.disconnect()
+    
+    // Limpiar marcadores de bicicletas
+    bicycleFactory.clear()
+    // Limpiar marcadores de estaciones
+    stationFactory.clear()
+
+    // Destruir mapa
     if (map.value) {
         map.value.remove()
         map.value = null
     }
+
+    console.log('🗺️ Mapa y WebSocket desconectados')
 })
 </script>
 

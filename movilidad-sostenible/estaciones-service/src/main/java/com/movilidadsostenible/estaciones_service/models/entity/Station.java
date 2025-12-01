@@ -9,7 +9,7 @@ import org.hibernate.annotations.DynamicInsert;
 @Entity
 @Table(name = "station")
 @Data
-public class Stations {
+public class Station {
 
     @Id
     @Column(name = "k_id_station" )

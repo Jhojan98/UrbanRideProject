@@ -31,8 +31,8 @@ const routes: Array<RouteRecordRaw> = [
   },
 
   {
-    path: '/verify-otp',
-    name: 'verify-otp',
+    path: '/verify-email',
+    name: 'verify-email',
     component: VerifyOtpView,
     meta: { layout: 'blank' }
   },

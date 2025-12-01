@@ -2,14 +2,14 @@
   <div class="form-container">
     <div id="balance">
       <h3 :class="balanceClass">{{ amount }}</h3>
-      <p>Moneda </p>
+      <p>{{ $t('balance.currencyLabel') }}</p>
       <select name="currency" id="currency">
         <option v-for="c in currencies" :key="c.code" :value="c.code">
-          {{ c.code }} - {{ c.name }}
+          {{ c.code }} - {{ $t('balance.currencies.' + c.code) }}
         </option>
       </select>
       <input type="test" v-model="amount" />
-      <button>Recargar saldo</button>
+      <button>{{ $t('balance.reload') }}</button>
     </div>
   </div>
 
@@ -17,14 +17,16 @@
 
 <script lang="ts" setup>
 import { ref, Ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n';
 
 const amount: Ref<number> = ref(5000);
 
 const currencies = [
-  { code: 'USD', name: 'Dólar' },
-  { code: 'EUR', name: 'Euro' },
-  { code: 'COP', name: 'Peso colombiano' },
+  { code: 'USD' },
+  { code: 'EUR' },
+  { code: 'COP' },
 ]
+useI18n();
 
 /**
  * Balance status.

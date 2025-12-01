@@ -3,7 +3,7 @@ package com.movilidadsostenible.estaciones_service.controllers;
 import com.movilidadsostenible.estaciones_service.clients.CiudadClient;
 import com.movilidadsostenible.estaciones_service.clients.SlotsClient;
 import com.movilidadsostenible.estaciones_service.clients.SlotRequest;
-import com.movilidadsostenible.estaciones_service.models.entity.Stations;
+import com.movilidadsostenible.estaciones_service.models.entity.Station;
 import com.movilidadsostenible.estaciones_service.services.StationsService;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,7 +39,7 @@ public class StationsController {
 
     @GetMapping
     @Operation(summary = "Listar estaciones")
-    public ResponseEntity<List<Stations>> list() {
+    public ResponseEntity<List<Station>> list() {
         return ResponseEntity.ok(service.findAll());
     }
 
@@ -47,18 +47,18 @@ public class StationsController {
     @Operation(summary = "Obtener estación por id",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Encontrada",
-                            content = @Content(schema = @Schema(implementation = Stations.class))),
+                            content = @Content(schema = @Schema(implementation = Station.class))),
                     @ApiResponse(responseCode = "404", description = "No encontrada")
             })
     public ResponseEntity<?> getById(@PathVariable Integer id) {
-        Optional<Stations> opt = service.findById(id);
+        Optional<Station> opt = service.findById(id);
         return opt.<ResponseEntity<?>>map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
     @Operation(summary = "Crear estación")
-    public ResponseEntity<?> create(@Valid @RequestBody Stations station,
+    public ResponseEntity<?> create(@Valid @RequestBody Station station,
                                     BindingResult result) {
         if (result.hasErrors()) return validate(result);
         try {
@@ -77,7 +77,7 @@ public class StationsController {
                             "detalle", ex.getMessage()
                     ));
         }
-        Stations saved = service.save(station);
+        Station saved = service.save(station);
 
         // Prefijos robustos (manejo de nulos y longitud < 3)
         String stationName = saved.getStationName() != null ? saved.getStationName().trim() : "EST";
@@ -89,15 +89,18 @@ public class StationsController {
         String typePrefix = typeValue.length() >= 3 ? typeValue.substring(0,3).toUpperCase() : typeValue.toUpperCase();
 
         var slotsCreados = new java.util.ArrayList<Map<String,Object>>();
+
         for (int i = 1; i <= 15; i++) {
             String slotId = stationPrefix + "-" + typePrefix + "-" + i;
             try {
                 SlotRequest slotReq = new SlotRequest();
-                slotReq.setSlotId(slotId);
-                slotReq.setPadlockStatus("LOCKED");
+
+                slotReq.setIdSlot(slotId);
+                slotReq.setPadlockStatus("UNLOCKED");
                 slotReq.setStationId(saved.getIdStation());
                 slotReq.setBicycleId(null);
                 ResponseEntity<?> slotResp = slotsClient.createSlot(slotReq);
+
                 Map<String,Object> info = new HashMap<>();
                 info.put("slotId", slotId);
                 info.put("status", slotResp.getStatusCode().value());
@@ -118,10 +121,10 @@ public class StationsController {
     @PutMapping("/{id}")
     @Operation(summary = "Actualizar estación")
     public ResponseEntity<?> update(@PathVariable Integer id,
-                                    @Valid @RequestBody Stations station,
+                                    @Valid @RequestBody Station station,
                                     BindingResult result) {
         if (result.hasErrors()) return validate(result);
-        Optional<Stations> opt = service.findById(id);
+        Optional<Station> opt = service.findById(id);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
         try {
             var resp = ciudadClient.getCityById(station.getIdCity());
@@ -139,7 +142,7 @@ public class StationsController {
                             "detalle", ex.getMessage()
                     ));
         }
-        Stations db = opt.get();
+        Station db = opt.get();
         db.setStationName(station.getStationName());
         db.setIdCity(station.getIdCity());
         db.setType(station.getType());
@@ -152,7 +155,7 @@ public class StationsController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar estación")
     public ResponseEntity<?> delete(@PathVariable Integer id) {
-        Optional<Stations> opt = service.findById(id);
+        Optional<Station> opt = service.findById(id);
         if (opt.isEmpty()) return ResponseEntity.notFound().build();
         service.deleteById(id);
         return ResponseEntity.noContent().build();

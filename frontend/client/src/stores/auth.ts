@@ -1,10 +1,11 @@
 import { defineStore } from "pinia";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification, GoogleAuthProvider, signInWithPopup} from 'firebase/auth';
 
 const userAuth = defineStore("auth", {
     state() {
         return {
             token: null as string | null,
-            baseURL: 'http://localhost:5001',
+            baseURL: 'http://localhost:8090',
             message: '',
             isVerified: false,
             pendingVerification: false,
@@ -13,181 +14,295 @@ const userAuth = defineStore("auth", {
     },
     actions: {
 
-        async register(id:number, username: string, password: string, fName: string, sName:string|"", fLastName: string, sLastName: string|"", birthDate: Date, email:string) {
-            const uri = `${this.baseURL}/auth/register`;
+        async register(username:string, email:string, password:string) {
             try {
-                // Formatear fecha a YYYY-MM-DD para el backend
-                const formattedDate = birthDate.toISOString().split('T')[0];
-                
-                const payload = {
-                    k_user_cc: id,
-                    n_username: username,
-                    password: password,
-                    n_user_first_name: fName,
-                    n_user_second_name: sName || null,
-                    n_user_first_lastname: fLastName,
-                    n_user_second_lastname: sLastName || null,
-                    f_user_birthdate: formattedDate,
-                    n_user_email: email
-                };
-                
-                const res = await fetch(uri, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                if (!res.ok) {
-                    const err: unknown = await res.json().catch(() => ({}));
-                    const detail = (err && typeof err === 'object') ? (err as Record<string, unknown>).detail : undefined;
-                    this.message = (typeof detail === 'string')
-                        ? detail
-                        : (detail && typeof detail === 'object' && 'msg' in (detail as Record<string, unknown>))
-                            ? String((detail as Record<string, unknown>).msg)
-                            : 'Error en el registro';
-                    return false;
+                const auth = getAuth();
+
+                const actionCodeSettings = {
+                    url: 'http://localhost:8080/login',
+                    handleCodeInApp: true
                 }
-                // Éxito: marcar pendiente de verificación y generar OTP
+
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+                await sendEmailVerification(userCredential.user, actionCodeSettings);
+
                 this.tempEmail = email;
                 this.pendingVerification = true;
-                await this.generateOtp(email); // no bloquear por errores de OTP
-                this.message = 'Registro exitoso. Te enviamos un OTP';
-                return true;
-            } catch {
-                this.message = 'Error de red en el registro';
-                return false;
-            }
-        },
+                this.isVerified = false;
+                this.message = 'Registro exitoso. Revisa tu correo para verificar tu cuenta.';
 
-        async login(email: string, password: string) { 
-            const uri = `${this.baseURL}/auth/login`;
-            try {
-                const res = await fetch(uri, {
+                // Obtener fecha de creación de Firebase
+                const creationTime = userCredential.user.metadata.creationTime;
+
+                console.log('=== ENVIANDO DATOS AL BACKEND (REGISTER) ===');
+                console.log('uId:', userCredential.user.uid);
+                console.log('username:', username);
+                console.log('email:', email);
+                console.log('creationTime:', creationTime);
+                console.log('============================================');
+
+                // Gateway enruta /user/register → usuario-service /register
+                const uri = `${this.baseURL}/user/register`;
+                const rawResponse = await fetch(uri, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
                     },
                     body: JSON.stringify({
-                        username: email,
-                        password: password
+                        uidUser: userCredential.user.uid,
+                        userName: username
+                        // Backend User solo acepta: uidUser, userName, subscriptionType, balance
                     })
                 });
-                
-                let json: unknown = null;
-                try {
-                    json = await res.json();
-                } catch {
-                    json = null;
-                }
 
-                // 403 => necesita verificación
-                if (res.status === 403) {
-                    this.tempEmail = email;
-                    this.pendingVerification = true;
-                    await this.generateOtp(email);
-                    const detail403 = (json && typeof json === 'object') ? (json as Record<string, unknown>).detail : undefined;
-                    this.message = (typeof detail403 === 'string') ? detail403 : 'Por favor verifica tu cuenta primero';
-                    return { needsVerification: true };
-                }
-
-                // Otros errores HTTP
-                if (!res.ok) {
-                    const detail = (json && typeof json === 'object') ? (json as Record<string, unknown>).detail : undefined;
-                    this.message = (typeof detail === 'string') ? detail : 'Credenciales inválidas';
-                    this.token = null;
-                    return { success: false };
-                }
-
-                // Éxito: validar estructura { access_token: string, token_type: string, is_verified: bool, expires_in: number }
-                const jsonObj = json as Record<string, unknown>;
-                const accessToken: unknown = jsonObj.access_token;
-                const isVerified: unknown = jsonObj.is_verified;
-                
-                if (typeof accessToken !== 'string' || !accessToken) {
-                    this.message = 'Respuesta inválida del servidor';
-                    this.token = null;
-                    return { success: false };
-                }
-
-                this.token = accessToken;
-                this.isVerified = typeof isVerified === 'boolean' ? isVerified : true;
-                this.pendingVerification = false;
-                this.message = 'Login exitoso';
-                return { success: true };
-            } catch {
-                this.message = 'Error de red en el login';
-                return { success: false };
-            }
-        },
-        async logout() {
-            this.token = null;
-        },
-        async generateOtp(email: string) {
-            const uri = `${this.baseURL}/auth/generate_otp`;
-            try {
-                const res = await fetch(uri, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                if (!res.ok) {
-                    const err: unknown = await res.json().catch(() => ({}));
-                    const detail = (err && typeof err === 'object') ? (err as Record<string, unknown>).detail : undefined;
-                    this.message = (typeof detail === 'string')
-                        ? detail
-                        : (detail && typeof detail === 'object' && 'msg' in (detail as Record<string, unknown>))
-                            ? String((detail as Record<string, unknown>).msg)
-                            : 'Error al generar OTP';
+                if (!rawResponse.ok) {
+                    console.error('Error HTTP del backend:', rawResponse.status, rawResponse.statusText);
+                    const errorText = await rawResponse.text();
+                    console.error('Respuesta del servidor:', errorText);
+                    this.message = `Error al guardar en backend: ${rawResponse.statusText}`;
                     return false;
                 }
-                this.message = 'OTP enviado';
+
+                const response = await rawResponse.json();
+                console.log('Respuesta del backend (register):', response);
+
                 return true;
-            } catch {
-                this.message = 'Error de red al generar OTP';
+
+            } catch (error: unknown) {
+                console.error('Error en registro (detalle completo):', error);
+
+                const firebaseError = error as { code?: string; message?: string };
+
+                // Log detallado para depuración
+                console.error('Código de error:', firebaseError.code);
+                console.error('Mensaje de error:', firebaseError.message);
+
                 return false;
             }
         },
-        async verifyOtp(email: string, otp: string) {
-            const uri = `${this.baseURL}/auth/verify_otp`;
+
+        async login(email: string, password: string): Promise<{ success?: boolean; needsVerification?: boolean; userData?: unknown }> {
             try {
-                const res = await fetch(uri, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, otp: otp })
+                const auth = getAuth();
+
+                // Iniciar sesión con Firebase
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+                // Verificar si el email está verificado
+                if (!userCredential.user.emailVerified) {
+                    this.tempEmail = email;
+                    this.pendingVerification = true;
+                    this.isVerified = false;
+                    this.message = 'Por favor verifica tu correo antes de iniciar sesión';
+
+                    // Ofrecer reenvío de verificación
+                    await sendEmailVerification(userCredential.user);
+
+                    return { needsVerification: true };
+                }
+
+                // Obtener token de Firebase
+                const token = await userCredential.user.getIdToken();
+
+                console.log('=== ENVIANDO DATOS AL BACKEND (LOGIN) ===');
+                console.log('email:', email);
+                console.log('token:', token ? 'Token obtenido' : 'No token');
+                console.log('=========================================');
+
+                // Enviar credenciales al backend
+                const uri = `${this.baseURL}/user/login/${userCredential.user.uid}`;
+                const rawResponse = await fetch(uri, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
-                
-                let json: unknown = null;
-                try {
-                    json = await res.json();
-                } catch {
-                    json = null;
+
+                if (!rawResponse.ok) {
+                    console.error('Error HTTP del backend (login):', rawResponse.status, rawResponse.statusText);
+                    this.message = `Error al validar con backend: ${rawResponse.statusText}`;
+                    return { success: false };
                 }
 
-                if (!res.ok) {
-                    const detail = (json && typeof json === 'object') ? (json as Record<string, unknown>).detail : undefined;
-                    this.message = (typeof detail === 'string')
-                        ? detail
-                        : (detail && typeof detail === 'object' && 'msg' in (detail as Record<string, unknown>))
-                            ? String((detail as Record<string, unknown>).msg)
-                            : 'OTP inválido';
-                    return false;
-                }
+                const response = await rawResponse.json();
+                console.log('Respuesta del backend (login):', response);
 
-                // Verificar si el servidor devuelve un token tras verificación exitosa
-                const token: unknown = (json && typeof json === 'object') ? (json as Record<string, unknown>).token : undefined;
-                if (typeof token === 'string' && token) {
-                    // Si el servidor devuelve token, establecerlo (auto-login tras verificación)
-                    this.token = token;
-                }
-
+                this.token = token;
                 this.isVerified = true;
                 this.pendingVerification = false;
-                this.tempEmail = null;
-                this.message = 'Cuenta verificada';
-                return true;
-            } catch {
-                this.message = 'Error al verificar el código OTP';
+                this.message = 'Login exitoso';
+
+                return { success: true, userData: response };
+            } catch (error: unknown) {
+                console.error('Error en login:', error);
+
+                const firebaseError = error as { code?: string };
+
+                console.error('Código de error:', firebaseError.code);
+
+                this.token = null;
+                return { success: false };
+            }
+        },
+        async socialLoginWithGoogle(): Promise<{ success: boolean; code?: string; userData?: unknown }> {
+            try {
+                const auth = getAuth();
+                const provider = new GoogleAuthProvider();
+
+                const result = await signInWithPopup(auth, provider);
+                const user = result.user;
+
+                // Obtener token Firebase (ID token)
+                const token = await user.getIdToken();
+
+                console.log('=== ENVIANDO DATOS AL BACKEND (GOOGLE LOGIN) ===');
+                console.log('uId:', user.uid);
+                console.log('email:', user.email);
+                console.log('displayName:', user.displayName);
+                console.log('creationTime:', user.metadata.creationTime);
+                console.log('================================================');
+
+                // Primero verificar si el usuario ya existe
+                const checkUri = `${this.baseURL}/user/login/${user.uid}`;
+                const checkResponse = await fetch(checkUri, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+                let userData;
+                if (checkResponse.ok) {
+                    // Usuario existe, solo obtener datos
+                    userData = await checkResponse.json();
+                    console.log('Usuario existente encontrado:', userData);
+                } else if (checkResponse.status === 404) {
+                    // Usuario no existe, registrar
+                    console.log('Usuario no encontrado, registrando...');
+                    const registerUri = `${this.baseURL}/user/register`;
+                    const registerResponse = await fetch(registerUri, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            uidUser: user.uid,
+                            userName: user.displayName || (user.email ? user.email.split('@')[0] : `user_${user.uid.substring(0,6)}`)
+                        })
+                    });
+
+                    if (!registerResponse.ok) {
+                        console.error('Error HTTP al registrar (Google):', registerResponse.status, registerResponse.statusText);
+                        const errorText = await registerResponse.text();
+                        console.error('Respuesta del servidor:', errorText);
+                        this.message = `Error al registrar en backend: ${registerResponse.statusText}`;
+                        return { success: false };
+                    }
+
+                    userData = await registerResponse.json();
+                    console.log('Usuario registrado exitosamente:', userData);
+                } else {
+                    console.error('Error inesperado al verificar usuario:', checkResponse.status, checkResponse.statusText);
+                    this.message = `Error al verificar usuario: ${checkResponse.statusText}`;
+                    return { success: false };
+                }
+
+                this.token = token;
+                this.isVerified = true; // Con Google el correo ya está verificado
+                this.pendingVerification = false;
+                this.tempEmail = user.email;
+                this.message = 'Login con Google exitoso';
+                return { success: true, userData };
+            } catch (error: unknown) {
+                console.error('Error en login Google:', error);
+                const firebaseError = error as { code?: string; message?: string };
+
+                switch (firebaseError.code) {
+                    case 'auth/popup-closed-by-user':
+                        this.message = 'Ventana cerrada antes de completar el login';
+                        break;
+                    case 'auth/cancelled-popup-request':
+                        this.message = 'Solicitud de popup cancelada';
+                        break;
+                    case 'auth/account-exists-with-different-credential':
+                        this.message = 'La cuenta existe con otra credencial. Usa el método correcto.';
+                        break;
+                    case 'auth/popup-blocked':
+                        this.message = 'Popup bloqueado por el navegador';
+                        break;
+                    case 'auth/network-request-failed':
+                        this.message = 'Error de red. Intenta nuevamente';
+                        break;
+                    default:
+                        this.message = `Error en login Google: ${firebaseError.message || 'Desconocido'}`;
+                }
+                return { success: false, code: firebaseError.code };
+            }
+        },
+        async logout() {
+            try {
+                const auth = getAuth();
+                await signOut(auth);
+                this.token = null;
+                this.isVerified = false;
+                this.message = 'Sesión cerrada';
+            } catch (error: unknown) {
+                console.error('Error en logout:', error);
+                this.message = 'Error al cerrar sesión';
+            }
+        },
+        async generateOtp(email: string) {
+            try {
+                const auth = getAuth();
+                const user = auth.currentUser;
+                
+                if (user && user.email === email) {
+                    // Reenviar email de verificación
+                    await sendEmailVerification(user);
+                    this.message = 'Email de verificación reenviado';
+                    return true;
+                } else {
+                    this.message = 'No se encontró usuario activo';
+                    return false;
+                }
+            } catch (error: unknown) {
+                console.error('Error al reenviar verificación:', error);
+                this.message = 'Error al reenviar email de verificación';
+                return false;
+            }
+        },
+        async verifyOtp(_email: string, _otp: string) {
+            try {
+                const auth = getAuth();
+
+                // Recargar usuario actual para obtener el estado actualizado de emailVerified
+                await auth.currentUser?.reload();
+
+                const user = auth.currentUser;
+
+                if (user && user.emailVerified) {
+                    // Obtener token de Firebase
+                    const token = await user.getIdToken();
+
+                    this.token = token;
+                    this.isVerified = true;
+                    this.pendingVerification = false;
+                    this.tempEmail = null;
+                    this.message = 'Cuenta verificada';
+                    return true;
+                } else {
+                    this.message = 'Email aún no verificado. Por favor revisa tu correo y haz clic en el enlace de verificación.';
+                    return false;
+                }
+            } catch (error: unknown) {
+                console.error('Error al verificar:', error);
+                this.message = 'Error al verificar la cuenta';
                 return false;
             }
         }

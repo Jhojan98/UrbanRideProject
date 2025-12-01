@@ -1,16 +1,16 @@
 <template>
   <div class="report-problem">
     <div class="header">
-      <h1>Reportar Problema</h1>
-      <p>Informa sobre cualquier inconveniente con tu bicicleta</p>
+      <h1>{{ $t('report.title') }}</h1>
+      <p>{{ $t('report.subtitle') }}</p>
     </div>
     
     <form @submit.prevent="submitReport" class="report-form">
       <div class="form-section">
-        <h3>Información de la bicicleta</h3>
+        <h3>{{ $t('report.bikeInfo') }}</h3>
         
         <div class="form-group">
-          <label class="label">ID de la bicicleta</label>
+          <label class="label">{{ $t('report.bikeId') }}</label>
           <input 
             v-model="formData.bikeId"
             type="text"
@@ -21,9 +21,9 @@
         </div>
         
         <div class="form-group">
-          <label class="label">Estación donde se encuentra</label>
+          <label class="label">{{ $t('report.stationWhere') }}</label>
           <select v-model="formData.stationId" class="form-select" required>
-            <option value="">Seleccionar estación</option>
+            <option value="">{{ $t('report.selectStation') }}</option>
             <option 
               v-for="station in stations" 
               :key="station.id"
@@ -36,10 +36,10 @@
       </div>
       
       <div class="form-section">
-        <h3>Detalles del problema</h3>
+        <h3>{{ $t('report.problemDetails') }}</h3>
         
         <div class="form-group">
-          <label class="label">Tipo de problema</label>
+          <label class="label">{{ $t('report.problemType') }}</label>
           <div class="problem-types">
             <label 
               v-for="problem in problemTypes" 
@@ -55,14 +55,14 @@
               >
               <div class="problem-content">
                 <span class="problem-icon">{{ problem.icon }}</span>
-                <span class="problem-name">{{ problem.name }}</span>
+                <span class="problem-name">{{ $t('report.problems.' + problem.id) }}</span>
               </div>
             </label>
           </div>
         </div>
         
         <div class="form-group">
-          <label class="label">Gravedad del problema</label>
+          <label class="label">{{ $t('report.severity') }}</label>
           <div class="severity-levels">
             <label 
               v-for="level in severityLevels" 
@@ -80,18 +80,18 @@
                 class="radio-input"
               >
               <div class="severity-content">
-                <span class="severity-name">{{ level.name }}</span>
-                <span class="severity-desc">{{ level.description }}</span>
+                <span class="severity-name">{{ $t('report.severityLevels.' + level.id + '.name') }}</span>
+                <span class="severity-desc">{{ $t('report.severityLevels.' + level.id + '.desc') }}</span>
               </div>
             </label>
           </div>
         </div>
         
         <div class="form-group">
-          <label class="label">Descripción detallada</label>
+          <label class="label">{{ $t('report.description') }}</label>
           <textarea 
             v-model="formData.description"
-            placeholder="Describe el problema con tanto detalle como sea posible..."
+            :placeholder="$t('report.descriptionPlaceholder')"
             class="form-textarea"
             rows="4"
             required
@@ -99,7 +99,7 @@
         </div>
         
         <div class="form-group">
-          <label class="label">¿Permite el uso de la bicicleta?</label>
+          <label class="label">{{ $t('report.allowsUse') }}</label>
           <div class="radio-group">
             <label class="radio-label">
               <input 
@@ -108,7 +108,7 @@
                 :value="false"
                 class="radio-input"
               >
-              <span>No, es peligroso usarla</span>
+              <span>{{ $t('report.noUse') }}</span>
             </label>
             <label class="radio-label">
               <input 
@@ -117,7 +117,7 @@
                 :value="true"
                 class="radio-input"
               >
-              <span>Sí, pero con precaución</span>
+              <span>{{ $t('report.yesUse') }}</span>
             </label>
           </div>
         </div>
@@ -129,14 +129,14 @@
           class="btn-secondary"
           @click="resetForm"
         >
-          Cancelar
+          {{ $t('common.cancel') }}
         </button>
         <button 
           type="submit" 
           class="butn-primary"
           :disabled="loading"
         >
-          {{ loading ? 'Enviando reporte...' : 'Enviar Reporte' }}
+          {{ loading ? $t('report.sending') : $t('report.sendReport') }}
         </button>
       </div>
     </form>
@@ -146,11 +146,11 @@
       <div class="modal">
         <div class="modal-content">
           <div class="success-icon">✅</div>
-          <h3>Reporte Enviado</h3>
-          <p>Hemos recibido tu reporte y lo estamos revisando. Te contactaremos si necesitamos más información.</p>
-          <p class="report-id">ID del reporte: <strong>{{ reportId }}</strong></p>
+          <h3>{{ $t('report.successTitle') }}</h3>
+          <p>{{ $t('report.successMsg') }}</p>
+          <p class="report-id">{{ $t('report.reportId') }} <strong>{{ reportId }}</strong></p>
           <button class="butn-primary" @click="closeModal">
-            Aceptar
+            {{ $t('common.accept') }}
           </button>
         </div>
       </div>
@@ -160,6 +160,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { useI18n } from 'vue-i18n';
 
 interface ProblemForm {
   bikeId: string
@@ -183,30 +184,18 @@ const stations = ref([
 ])
 
 const problemTypes = ref([
-  { id: 'mechanical', name: 'Problema Mecánico', icon: '🔧' },
-  { id: 'electrical', name: 'Problema Eléctrico', icon: '🔌' },
-  { id: 'brakes', name: 'Frenos', icon: '🛑' },
-  { id: 'tire', name: 'Llantas', icon: '🚲' },
-  { id: 'chain', name: 'Cadena', icon: '⛓️' },
-  { id: 'other', name: 'Otro', icon: '❓' }
+  { id: 'mechanical', icon: '🔧' },
+  { id: 'electrical', icon: '🔌' },
+  { id: 'brakes', icon: '🛑' },
+  { id: 'tire', icon: '🚲' },
+  { id: 'chain', icon: '⛓️' },
+  { id: 'other', icon: '❓' }
 ])
 
 const severityLevels = ref([
-  { 
-    id: 'low', 
-    name: 'Baja', 
-    description: 'Problema menor, no afecta uso' 
-  },
-  { 
-    id: 'medium', 
-    name: 'Media', 
-    description: 'Afecta uso pero es manejable' 
-  },
-  { 
-    id: 'high', 
-    name: 'Alta', 
-    description: 'Problema grave, no usar la bicicleta' 
-  }
+  { id: 'low' },
+  { id: 'medium' },
+  { id: 'high' }
 ])
 
 const formData = reactive<ProblemForm>({
@@ -218,6 +207,7 @@ const formData = reactive<ProblemForm>({
   allowsUse: null
 })
 
+const { t: $t } = useI18n();
 const submitReport = async () => {
   if (loading.value) return
   
@@ -236,14 +226,14 @@ const submitReport = async () => {
     
   } catch (error) {
     console.error('Error enviando reporte:', error)
-    alert('Error al enviar el reporte. Intenta nuevamente.')
+    alert($t('report.sendError'))
   } finally {
     loading.value = false
   }
 }
 
 const resetForm = () => {
-  if (confirm('¿Estás seguro de que quieres cancelar? Se perderán los datos del formulario.')) {
+  if (confirm($t('report.cancelConfirm') as string)) {
     formData.bikeId = ''
     formData.stationId = ''
     formData.problemType = ''
