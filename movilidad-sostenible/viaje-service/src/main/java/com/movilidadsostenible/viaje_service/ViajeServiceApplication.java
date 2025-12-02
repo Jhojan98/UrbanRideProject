@@ -9,7 +9,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableRabbit
 @EnableFeignClients
 @SpringBootApplication
-@EnableCaching
 public class ViajeServiceApplication {
 
 	public static void main(String[] args) {
