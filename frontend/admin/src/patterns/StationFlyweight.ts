@@ -1,5 +1,5 @@
 import * as L from 'leaflet';
-import { Station, SlotStatus } from '@/models/Station';
+import { type Station, SlotStatus } from '@/models/Station';
 
 // Íconos compartidos (estado intrínseco)
 class StationFlyweight {

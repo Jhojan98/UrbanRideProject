@@ -19,7 +19,7 @@
             </div>
         </div>
     </div>
-    
+
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
@@ -123,19 +123,18 @@ onMounted(() => {
     // B-101 va de Centro (ST-001) a Parque Sikuani (ST-002)
     const bikeB101 = createBike('B-101', 'Optimal', 'UrbanLite', 'mecanica', undefined, 4.1490, -73.6430, false)
     station2.reserveSlot(bikeB101, '15 minutos')
-    
+
     // B-202 va de Parque Sikuani (ST-002) a Zona Universitaria (ST-003)
     const bikeB202 = createBike('B-202', 'Optimal', 'EcoRide', 'electrica', 95, 4.1545, -73.6360, false)
     station3.reserveSlot(bikeB202, '20 minutos')
-    
+
     // B-301 va de Zona Universitaria (ST-003) a Terminal (ST-004)
     const bikeB301 = createBike('B-301', 'Optimal', 'UrbanX', 'electrica', 72, 4.1510, -73.6385, false)
     station4.reserveSlot(bikeB301, '10 minutos')
 
     // Mostrar estadísticas de optimización
     console.log('📊 Estadísticas de Flyweight:')
-    console.log(`   🚲 Flyweights de bicicletas creados: ${bikeFlyweightFactory.getFlyweightCount()}`)
-    console.log(`   🏢 Flyweights de estaciones creados: ${stationFlyweightFactory.getFlyweightCount()}`)
+
 })
 
 const selectedStationId = ref<string | null>(null)

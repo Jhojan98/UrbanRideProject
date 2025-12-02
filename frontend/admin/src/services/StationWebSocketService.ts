@@ -1,6 +1,6 @@
-import { Client, IMessage } from '@stomp/stompjs';
+import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Station, StationWithSlotsDTO, toStationWithSlots } from '@/models/Station';
+import { type Station, type StationWithSlotsDTO, toStationWithSlots } from '@/models/Station';
 import { StationFactory } from '@/patterns/StationFlyweight';
 
 /**

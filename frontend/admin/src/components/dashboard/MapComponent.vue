@@ -33,14 +33,14 @@ function updateMarkers() {
         console.log('⚠️ Mapa no disponible o no montado correctamente')
         return
     }
-    
+
     if (!props.stations || props.stations.length === 0) {
         console.log('⚠️ No hay estaciones para mostrar')
         return
     }
-    
+
     console.log('🗺️ Actualizando marcadores con', props.stations.length, 'estaciones')
-    
+
     clearMarkers()
 
     // Crear iconos personalizados para estaciones
@@ -62,7 +62,7 @@ function updateMarkers() {
         // Agregar marcadores de estaciones
         props.stations.forEach((station) => {
             if (!map.value) return
-            
+
             const popup = L.popup({
                 closeButton: true,
                 autoClose: false,
@@ -83,11 +83,11 @@ function updateMarkers() {
                     <p style="margin: 4px 0;"><strong>Iluminación:</strong> ${station.lightingActive ? '✅' : '❌'}</p>
                 </div>
             `)
-            
+
             const stationMarker = L.marker([station.latitude, station.longitude], { icon: stationIcon })
                 .addTo(map.value)
                 .bindPopup(popup)
-            
+
             // Prevenir errores al cerrar el popup
             stationMarker.on('popupclose', (e) => {
                 try {
@@ -98,13 +98,13 @@ function updateMarkers() {
                     // Ignorar errores de cierre
                 }
             })
-            
+
             markers.value.push(stationMarker)
 
             // Agregar marcadores de bicicletas en la estación
             station.bikes.forEach((bike) => {
                 if (!map.value) return
-                
+
                 const bikePopup = L.popup({
                     closeButton: true,
                     autoClose: false,
@@ -122,11 +122,11 @@ function updateMarkers() {
                         <p style="margin: 4px 0; color: #6b7280; font-size: 11px;">Estación: ${station.name}</p>
                     </div>
                 `)
-                
+
                 const bikeMarker = L.marker([bike.latitude, bike.longitude], { icon: bikeIcon })
                     .addTo(map.value)
                     .bindPopup(bikePopup)
-                
+
                 // Prevenir errores al cerrar el popup
                 bikeMarker.on('popupclose', (e) => {
                     try {
@@ -137,7 +137,7 @@ function updateMarkers() {
                         // Ignorar errores de cierre
                     }
                 })
-                
+
                 markers.value.push(bikeMarker)
             })
         })
@@ -182,7 +182,7 @@ onMounted(() => {
                     console.debug('Error al cerrar popup en zoomstart:', error)
                 }
             })
-            
+
             // Manejar doble click de forma segura
             map.value.on('dblclick', () => {
                 try {
@@ -193,7 +193,7 @@ onMounted(() => {
                     console.debug('Error al cerrar popup en dblclick:', error)
                 }
             })
-            
+
             // Limpiar referencias cuando se cierra un popup
             map.value.on('popupclose', (e) => {
                 try {
