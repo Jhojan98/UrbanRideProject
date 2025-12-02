@@ -68,7 +68,7 @@ export class StationMarker {
 
   private slotsHtml(): string {
     const slots = this.station.slots;
-    if (!slots || slots.length===0) return `<em style='color:#888;font-size:11px'>Sin slots</em>`;
+    if (!slots || slots.length === 0) return `<em style='color:#888;font-size:11px'>Sin slots</em>`;
     const sorted = [...slots].sort((a,b)=>a.slotNumber-b.slotNumber);
     const cells = sorted.map(sl=>{
       let bg='#999', icon='?', title='Desconocido';

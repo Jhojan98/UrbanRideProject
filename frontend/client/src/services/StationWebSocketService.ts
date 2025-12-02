@@ -1,6 +1,6 @@
-import { Client, IMessage } from '@stomp/stompjs';
+import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { Station, StationWithSlotsDTO, toStationWithSlots } from '@/models/Station';
+import { type Station, type StationDTO, toStation } from '@/models/Station';
 import { StationFactory } from '@/patterns/StationFlyweight';
 
 /**
@@ -79,8 +79,8 @@ export class StationWebSocketService {
 
   private handleBulk(message: IMessage){
     try {
-      const arr: StationWithSlotsDTO[] = JSON.parse(message.body);
-      const stations: Station[] = arr.map(toStationWithSlots);
+      const arr: StationDTO[] = JSON.parse(message.body);
+      const stations: Station[] = arr.map(toStation);
       stations.forEach(st => {
         this.stationsCache.set(st.idStation, st);
         this.factory.getStationMarker(st); // actualiza/crea en pool
@@ -95,8 +95,8 @@ export class StationWebSocketService {
 
   private handleUpdate(message: IMessage){
     try {
-      const dto: StationWithSlotsDTO = JSON.parse(message.body);
-      const station = toStationWithSlots(dto);
+      const dto: StationDTO = JSON.parse(message.body);
+      const station = toStation(dto);
       this.stationsCache.set(station.idStation, station);
       this.factory.getStationMarker(station);
       if(this.onUpdate){ this.onUpdate(station, this.factory); }
