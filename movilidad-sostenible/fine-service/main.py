@@ -1,3 +1,4 @@
+import asyncio
 from contextlib import asynccontextmanager
 import logging
 import os
@@ -21,7 +22,7 @@ async def lifespan(_: FastAPI):
         await stop_eureka(eureka_handle)
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, title="User Fine Service")
 logging.basicConfig(level=logging.INFO)
 
 
@@ -33,6 +34,33 @@ def _get_users_service_base_url() -> str:
         users_url = "http://" + users_url
     return users_url.rstrip("/")
 
+async def _subtract_balance_from_users_service(user_id: str, amount: int) -> None:
+    """Subtract balance from the user in the users service."""
+    base_url = _get_users_service_base_url()
+    endpoint = f"{base_url}/balance/{user_id}/subtract"
+    print(f"Calling users service to subtract balance at: {endpoint}")
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(endpoint, params={"amount": amount})
+    except (httpx.ConnectError, httpx.TimeoutException) as exc:
+        logging.error("Users service call failed: %s", exc)
+        raise HTTPException(status_code=503, detail="Users service unavailable") from exc
+
+    print(f"Users service response status: {resp.status_code}")
+    if resp.status_code == 200:
+        return
+    if resp.status_code == 404:
+        raise HTTPException(status_code=404, detail="User not found in users service")
+    if resp.status_code == 400:
+        try:
+            detail = resp.json().get("error", resp.text)
+        except ValueError:
+            detail = resp.text
+        raise HTTPException(status_code=400, detail=f"Users service rejected request: {detail}")
+
+    logging.error(f"Users service returned {resp.status_code}: {resp.text}")
+    raise HTTPException(status_code=502, detail="Users service error")
 
 
 @app.get("/")
