@@ -60,6 +60,14 @@
             </PendingDiffInfo>
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/viaje-service/src/main/java/com/movilidadsostenible/viaje_service/clients/dto/SlotRequestDTO.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/viaje-service/src/main/java/com/movilidadsostenible/viaje_service/clients/dto/SlotRequestDTO.java" />
+              <option name="updatedContent" value="package com.movilidadsostenible.viaje_service.clients.dto;&#10;&#10;public class SlotRequestDTO {&#10;    private String idSlot;&#10;    private String padlockStatus;&#10;    private Integer stationId;&#10;    private String bicycleId;&#10;&#10;    public SlotRequestDTO() {}&#10;&#10;    public SlotRequestDTO(String idSlot, String padlockStatus, Integer stationId, String bicycleId) {&#10;        this.idSlot = idSlot;&#10;        this.padlockStatus = padlockStatus;&#10;        this.stationId = stationId;&#10;        this.bicycleId = bicycleId;&#10;    }&#10;&#10;    public String getIdSlot() { return idSlot; }&#10;    public void setIdSlot(String idSlot) { this.idSlot = idSlot; }&#10;&#10;    public String getPadlockStatus() { return padlockStatus; }&#10;    public void setPadlockStatus(String padlockStatus) { this.padlockStatus = padlockStatus; }&#10;&#10;    public Integer getStationId() { return stationId; }&#10;    public void setStationId(Integer stationId) { this.stationId = stationId; }&#10;&#10;    public String getBicycleId() { return bicycleId; }&#10;    public void setBicycleId(String bicycleId) { this.bicycleId = bicycleId; }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

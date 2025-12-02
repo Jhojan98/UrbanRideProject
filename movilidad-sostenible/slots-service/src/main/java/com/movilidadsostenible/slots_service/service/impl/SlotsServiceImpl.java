@@ -47,4 +47,37 @@ public class SlotsServiceImpl implements SlotsService {
     public void delete(String id) {
         repository.deleteById(id);
     }
+
+    @Override
+    public Slot reserveFirstAvailableSlotElectricBicy(Integer stationId) {
+        Slot slot = repository.findFirstAvailableSlotByPrefix(stationId, "LOCKED", "ELEC")
+                .orElseThrow(() -> new IllegalArgumentException("No hay bicicletas electricas disponibles en la estación: " + stationId));
+        slot.setPadlockStatus("RESERVED");
+        return repository.save(slot);
+    }
+
+    @Override
+    public Slot reserveFirstAvailableSlotMechanicBicy(Integer stationId) {
+        Slot slot = repository.findFirstAvailableSlotByPrefix(stationId, "LOCKED", "MECH")
+                .orElseThrow(() -> new IllegalArgumentException("No hay bicicletas electricas disponibles en la estación: " + stationId));
+        slot.setPadlockStatus("RESERVED");
+        return repository.save(slot);
+    }
+
+    @Override
+    public Slot reserveFirstUnlockedSlot(Integer stationId) {
+        Slot slot = repository.findFirstByStationIdAndPadlockStatusOrderByIdSlotAsc(stationId, "UNLOCKED")
+                .orElseThrow(() -> new IllegalArgumentException("No hay slots UNLOCKED disponibles en la estación: " + stationId));
+        slot.setPadlockStatus("RESERVED");
+        return repository.save(slot);
+    }
+
+    @Override
+    public Slot lockSlotWithBicycle(String slotId, String bicycleId) {
+        Slot slot = repository.findById(slotId)
+                .orElseThrow(() -> new IllegalArgumentException("Slot no encontrado: " + slotId));
+        slot.setBicycleId(bicycleId);
+        slot.setPadlockStatus("LOCKED");
+        return repository.save(slot);
+    }
 }

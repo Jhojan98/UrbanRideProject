@@ -40,6 +40,20 @@ spring:
           filters:
             - StripPrefix=1
 
+        - id: bicycle-fastapi
+          uri: lb://bicycle-service
+          predicates:
+            - Path=/bicycle-fastapi/**
+          filters:
+            - StripPrefix=1
+            
+        - id: fine-service
+          uri: lb://fine-service
+          predicates:
+            - Path=/fine/**
+          filters:
+            - StripPrefix=1
+
         - id: ciudad-service
           uri: lb://ciudad-service
           predicates:

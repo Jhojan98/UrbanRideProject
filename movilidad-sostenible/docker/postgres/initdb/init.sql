@@ -106,11 +106,12 @@ CREATE TABLE email_verification
 )
 ;
 
-CREATE TABLE fine
-(
-	k_id_fine serial NOT NULL,
-	v_amount numeric(9) NULL
-)
+CREATE TABLE public.fine (
+    k_id_fine SERIAL PRIMARY KEY,
+    n_name VARCHAR(255) NOT NULL,
+    d_description TEXT,
+    v_amount NUMERIC(10, 2) NOT NULL
+);
 ;
 
 CREATE TABLE payment_method
@@ -155,7 +156,10 @@ CREATE TABLE user_fine
 	n_reason varchar(250) NOT NULL,
 	t_state varchar(50) NOT NULL   DEFAULT 'PENDING',
 	k_id_multa integer NOT NULL,
-	k_user_cc integer NOT NULL
+	k_user_cc integer NOT NULL,
+	v_amount_snapshot numeric(9) NOT NULL,
+	f_assigned_at timestamp without time zone NOT NULL   DEFAULT NOW(),
+	f_updated_at timestamp without time zone NOT NULL   DEFAULT NOW()
 )
 ;
 
@@ -266,7 +270,7 @@ ALTER TABLE user_fine ADD CONSTRAINT "PK_User_fine"
 	PRIMARY KEY (k_user_fine)
 ;
 
-ALTER TABLE user_fine ADD CONSTRAINT "CHK_t_state" CHECK (t_state IN ('PENDING', 'PAID'))
+ALTER TABLE user_fine ADD CONSTRAINT "CHK_t_state" CHECK (t_state IN ('PENDING', 'PAID', 'CANCELLED'))
 ;
 
 CREATE INDEX "IXFK_User_fine_Fine" ON user_fine (k_id_multa ASC)
@@ -491,6 +495,18 @@ COMMENT ON TABLE user_fine
 	IS 'En esta tabla se van a guardar todas las multas de los usuarios.'
 ;
 
+COMMENT ON COLUMN user_fine.v_amount_snapshot
+	IS 'Monto histórico asociado a la multa al momento de la asignación.'
+;
+
+COMMENT ON COLUMN user_fine.f_assigned_at
+	IS 'Fecha y hora en la que se asignó la multa al usuario.'
+;
+
+COMMENT ON COLUMN user_fine.f_updated_at
+	IS 'Fecha y hora de la última modificación de la multa del usuario.'
+;
+
 
 
 COMMENT ON TABLE users
@@ -543,7 +559,6 @@ CREATE ROLE manager_travel LOGIN PASSWORD 'g_travel';
 CREATE ROLE manager_admins LOGIN PASSWORD 'g_admin';
 CREATE ROLE manager_pay_method LOGIN PASSWORD 'g_pay_meth';
 CREATE ROLE manager_fine LOGIN PASSWORD 'g_fine';
-CREATE ROLE manager_user_fine LOGIN PASSWORD 'g_user_fine';
 CREATE ROLE manager_station LOGIN PASSWORD 'g_station';
 CREATE ROLE manager_city LOGIN PASSWORD 'g_city';
 CREATE ROLE manager_email LOGIN PASSWORD 'g_email';
@@ -560,7 +575,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.payment_method TO manager_pay_met
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.travel TO manager_travel;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO manager_travel;
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_fine TO manager_user_fine;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_fine TO manager_fine;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.email_verification TO manager_email;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO manager_email;
