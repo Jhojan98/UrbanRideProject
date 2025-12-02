@@ -6,12 +6,13 @@ import VerifyOtpView from '@/views/VerifyOtpView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ReservationView from '@/views/ReservationView.vue'
 import BalanceComponent from '@/components/BalanceComponent.vue'
-import PaymentMethodsComponent from '@/components/PaymentMethodsComponent.vue'
+import PaymentMethodsComponent from '@/components/payments/PaymentMethodsComponent.vue'
 import DestinationMapComponent from '@/components/DestinationMapComponent.vue'
 import ReportProblemComponent from '@/components/ReportProblemComponent.vue'
 import PaymentSuccesComponent from '@/components/payments/PaymentSuccesComponent.vue'
 import PaymentCancelComponent from '@/components/payments/PaymentCancelComponent.vue'
 import PaymentCheckoutComponent from '@/components/payments/PaymentCheckoutComponent.vue'
+
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -96,9 +97,9 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requireAuth: false, layout: 'main' }
   },
   {
-    path: '/pago/checkout',
-    name: 'payment-checkout', 
-    component: PaymentCheckoutComponent,
+    path: '/pago/methods',
+    name: 'payment-methods', 
+    component: PaymentMethodsComponent,
     meta: { requireAuth: false, layout: 'main' }
   }
   
