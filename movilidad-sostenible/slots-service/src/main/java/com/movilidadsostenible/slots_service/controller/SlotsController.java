@@ -75,7 +75,7 @@ public class SlotsController {
         return service.findAll();
     }
 
-    @PatchMapping("/{id}/padlock-status")
+    @PutMapping("/{id}/padlock-status")
     @Operation(summary = "Actualizar estado del candado",
             description = "Actualiza el estado del candado del slot (por ejemplo, LOCKED o UNLOCKED)")
     @ApiResponses(value = {

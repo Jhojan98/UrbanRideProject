@@ -1,6 +1,7 @@
 package com.movilidadsostenible.viaje_service.redis;
 
 import com.movilidadsostenible.viaje_service.clients.BicycleClient;
+import com.movilidadsostenible.viaje_service.clients.SlotsClient;
 import com.movilidadsostenible.viaje_service.services.ReservationTempService;
 import com.movilidadsostenible.viaje_service.models.dto.ReservationTempDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,9 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
     @Autowired
     private BicycleClient bicycleClient;
 
+    @Autowired
+    private SlotsClient slotsClient;
+
     public RedisKeyExpirationListener(RedisMessageListenerContainer listenerContainer) {
         super(listenerContainer);
     }
@@ -34,6 +38,10 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
             reservationTempService.releaseResources(reservationTempDTO);
             log.info("[Redis] Recursos liberados para la reserva temporal: {}", reservationTempDTO.toString());
 
+            slotsClient.lockSlotById(reservationTempDTO.getSlotStartId());
+            slotsClient.updatePadlockStatus(reservationTempDTO.getSlotStartId(), "UNLOCKED");
+
+            reservationTempService.remove(expiredKey.replace(":ttl", ":data"));
 
         } else {
             log.warn("[Redis] No se encontró la reserva temporal para la clave expirada: {}", expiredKey);

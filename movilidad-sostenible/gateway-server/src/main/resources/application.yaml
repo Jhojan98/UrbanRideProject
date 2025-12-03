@@ -6,6 +6,8 @@ logging:
     org.springframework.security: trace
 
 spring:
+  application:
+    name: gateway-server
   security:
     oauth2:
       resourceserver:
@@ -13,8 +15,6 @@ spring:
 #          issuer-uri: http://keycloak:8080/realms/oauth2-movilidadsostenible
 #          jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
           issuer-uri: https://securetoken.google.com/test-firebase-8217b
-
-
   cloud:
     gateway:
       routes:
@@ -82,6 +82,19 @@ spring:
           filters:
             - StripPrefix=1
 
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/payment/**
+          filters:
+            - StripPrefix=1
+
+        - id: slots-service
+          uri: lb://slots-service
+          predicates:
+            - Path=/slot/**
+          filters:
+            - StripPrefix=1
 
 springdoc:
   api-docs:
@@ -92,16 +105,29 @@ springdoc:
     config-url: /v3/api-docs/swagger-config
     urls:
       - name: Usuario Service
-        url: /v3/api-docs/user
+        url: /user/v3/api-docs
       - name: Bicis Service
-        url: /v3/api-docs/bicy
+        url: /bicy/v3/api-docs
       - name: Viaje Service
-        url: /v3/api-docs/travel
+        url: /travel/v3/api-docs
       - name: Estaciones Service
-        url: /v3/api-docs/station
+        url: /station/v3/api-docs
       - name: Ciudad Service
-        url: /v3/api-docs/city
+        url: /city/v3/api-docs
+      - name: Admin Service
+        url: /admin/v3/api-docs
+      - name: Payment Service
+        url: /payment/v3/api-docs
+      - name: Slots Service
+        url: /slot/v3/api-docs
+      - name: Fine Service
+        url: /fine/openapi.json
     disable-swagger-default-url: true
     operation-sorter: alpha
     tags-sorter: alpha
     display-request-duration: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:eureka-server}:${EUREKA_PORT:8761}/eureka/

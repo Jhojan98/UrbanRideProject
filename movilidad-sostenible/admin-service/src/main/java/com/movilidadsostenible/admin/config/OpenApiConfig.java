@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Configuration;
         ),
         servers = {
                 @Server(url = "http://localhost:8008", description = "Local"),
+                @Server(url = "http://localhost:8090/admin", description = "Gateway")
         }
 )
 public class OpenApiConfig {

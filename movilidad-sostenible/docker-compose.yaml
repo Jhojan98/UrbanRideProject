@@ -194,34 +194,6 @@ services:
         condition: service_started
     restart: always
 
-  bicycle-service:
-    container_name: bicycle-service
-    build:
-      context: ../microservices/bicycle
-      dockerfile: Dockerfile
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5002"]
-    ports:
-      - "5002:5002"
-    environment:
-      SERVICE_PORT: 5002
-      SERVICE_HOST: bicycle-service
-      EUREKA_HOST: eureka-server
-      EUREKA_PORT: 8761
-      EUREKA_APP_NAME: bicycle-service
-      EUREKA_HEARTBEAT_INTERVAL: 30
-      POSTGRES_HOST: postgres17:5432
-      POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: ${BICIS_DB_USER}
-      POSTGRES_PASSWORD: ${BICIS_DB_PASSWORD}
-    networks:
-      - movilidad-sostenible-network
-    depends_on:
-      postgres17:
-        condition: service_started
-      eureka-server:
-        condition: service_healthy
-    restart: always
-
   viaje-service:
     container_name: viaje-service
     build:
@@ -264,7 +236,7 @@ services:
     ports:
       - "8004:8004"
     environment:
-      PORT: 8004
+      PORT: 0048
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
       POSTGRES_USER: ${SLOTS_DB_USER}
@@ -404,7 +376,7 @@ services:
       EUREKA_APP_NAME: reports-service
       EUREKA_HEARTBEAT_INTERVAL: 30
       USERS_SERVICE_URL: http://usuario-service:8001
-      BICYCLE_SERVICE_URL: http://bicycle-service:8002
+      BICYCLE_SERVICE_URL: http://bicis-service:8002
       RESERVATIONS_SERVICE_URL: http://viaje-service:8003
       FINES_SERVICE_URL: http://fine-service:5003
     networks:
@@ -420,6 +392,34 @@ services:
         condition: service_started
       fine-service:
         condition: service_started
+    restart: always
+
+  maintenance-service:
+    container_name: maintenance-service
+    build:
+      context: ./maintenance-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5006"]
+    ports:
+      - "5006:5006"
+    environment:
+      SERVICE_PORT: 5006
+      SERVICE_HOST: maintenance-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: maintenance-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${MANTENIMIENTO_DB_USER}
+      POSTGRES_PASSWORD: ${MANTENIMIENTO_DB_PASSWORD}
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
     restart: always
 
 volumes:

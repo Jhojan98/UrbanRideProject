@@ -1,91 +1,29 @@
 import asyncio
+from contextlib import asynccontextmanager
 import logging
 import os
-import socket
 from datetime import datetime
-from typing import Literal, Optional
 
-import sqlalchemy.orm as _orm
-from fastapi import Depends, FastAPI, HTTPException
-from pydantic import BaseModel
-from py_eureka_client import eureka_client as _eureka_client
 import httpx
-
-import database as _database
+from sqlalchemy.orm import Session, joinedload
+from fastapi import Depends, FastAPI, HTTPException
+import database
 import models as _models
-
-app = FastAPI()
-logging.basicConfig(level=logging.INFO)
-_eureka_handle = None
+from schemas import FineCreate, FineOut, FineUpdate, UserFineCreate, UserFineOut, UserFineUpdate
+from eureka import start as start_eureka, stop as stop_eureka
 
 
-# Pydantic models aligned to English DB columns
-class FineBase(BaseModel):
-    d_descripcion: str
-    v_amount: int
-
-
-class FineCreate(FineBase):
-    pass
-
-
-class FineUpdate(BaseModel):
-    d_descripcion: Optional[str] = None
-    v_amount: Optional[int] = None
-
-
-class FineOut(FineBase):
-    k_id_fine: int
-
-    class Config:
-        orm_mode = True
-        from_attributes = True
-
-
-class UserFineBase(BaseModel):
-    n_reason: str
-    t_state: Literal['PENDING', 'PAID'] = 'PENDING'
-    k_id_fine: int
-    k_uid_user: Optional[str] = None
-
-
-class UserFineCreate(UserFineBase):
-    pass
-
-
-class UserFineUpdate(BaseModel):
-    n_reason: Optional[str] = None
-    t_state: Optional[Literal['PENDING', 'PAID']] = None
-    k_id_fine: Optional[int] = None
-    k_uid_user: Optional[str] = None
-
-
-class UserFineOut(UserFineBase):
-    k_user_fine: int
-    v_amount_snapshot: Optional[int] = None
-    f_assigned_at: datetime
-    f_update_at: Optional[datetime] = None
-    fine: Optional[FineOut] = None
-
-    class Config:
-        orm_mode = True
-        from_attributes = True
-
-
-
-# Dependency to get DB session
-def get_db():
-    db = _database.SessionLocal()
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    eureka_handle = await start_eureka()
     try:
-        yield db
+        yield
     finally:
-        db.close()
+        await stop_eureka(eureka_handle)
 
 
-def _to_bool(value: Optional[str], default: bool = True) -> bool:
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+app = FastAPI(lifespan=lifespan, title="User Fine Service")
+logging.basicConfig(level=logging.INFO)
 
 
 def _get_users_service_base_url() -> str:
@@ -96,65 +34,33 @@ def _get_users_service_base_url() -> str:
         users_url = "http://" + users_url
     return users_url.rstrip("/")
 
-
-@app.on_event("startup")
-async def startup_event():
-    global _eureka_handle
-
-    if not _to_bool(os.getenv("EUREKA_ENABLED"), True):
-        logging.info("Eureka registration disabled by EUREKA_ENABLED flag")
-        return
-
-    eureka_host = os.getenv("EUREKA_HOST", "eureka-server")
-    eureka_port = os.getenv("EUREKA_PORT", "8761")
-    eureka_server_url = f"http://{eureka_host}:{eureka_port}/eureka/"
-
-    app_name = os.getenv("EUREKA_APP_NAME", "bicycle-service")
-    service_port = int(os.getenv("SERVICE_PORT", "5002"))
-    service_host = os.getenv("SERVICE_HOST") or socket.gethostname()
-    service_ip = os.getenv("SERVICE_IP")
-    
-    # Configuración de heartbeat (intervalo de renovación)
-    heartbeat_interval = int(os.getenv("EUREKA_HEARTBEAT_INTERVAL", "30"))
-
-    register_kwargs = {
-        "eureka_server": eureka_server_url,
-        "app_name": app_name,
-        "instance_host": service_host,
-        "instance_port": service_port,
-        "renewal_interval_in_secs": heartbeat_interval,
-        "duration_in_secs": heartbeat_interval * 3,
-        "status_page_url": f"http://{service_host}:{service_port}/",
-        "health_check_url": f"http://{service_host}:{service_port}/health",
-        "home_page_url": f"http://{service_host}:{service_port}/",
-        "metadata": {"framework": "fastapi", "management.port": str(service_port)},
-    }
-
-    if service_ip:
-        register_kwargs["instance_ip"] = service_ip
+async def _subtract_balance_from_users_service(user_id: str, amount: int) -> None:
+    """Subtract balance from the user in the users service."""
+    base_url = _get_users_service_base_url()
+    endpoint = f"{base_url}/balance/{user_id}/subtract"
+    print(f"Calling users service to subtract balance at: {endpoint}")
 
     try:
-        _eureka_handle = await asyncio.to_thread(_eureka_client.init, **register_kwargs)
-        logging.info("Registered FastAPI service '%s' with Eureka at %s", app_name, eureka_server_url)
-    except Exception as exc:  # pylint: disable=broad-except
-        _eureka_handle = None
-        logging.error("Failed to initialize Eureka client: %s", exc)
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(endpoint, params={"amount": amount})
+    except (httpx.ConnectError, httpx.TimeoutException) as exc:
+        logging.error("Users service call failed: %s", exc)
+        raise HTTPException(status_code=503, detail="Users service unavailable") from exc
 
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    global _eureka_handle
-
-    if _eureka_handle is None:
+    print(f"Users service response status: {resp.status_code}")
+    if resp.status_code == 200:
         return
+    if resp.status_code == 404:
+        raise HTTPException(status_code=404, detail="User not found in users service")
+    if resp.status_code == 400:
+        try:
+            detail = resp.json().get("error", resp.text)
+        except ValueError:
+            detail = resp.text
+        raise HTTPException(status_code=400, detail=f"Users service rejected request: {detail}")
 
-    try:
-        await asyncio.to_thread(_eureka_handle.stop)
-        logging.info("Eureka client stopped")
-    except Exception as exc:  # pylint: disable=broad-except
-        logging.warning("Error stopping Eureka client: %s", exc)
-    finally:
-        _eureka_handle = None
+    logging.error(f"Users service returned {resp.status_code}: {resp.text}")
+    raise HTTPException(status_code=502, detail="Users service error")
 
 
 @app.get("/")
@@ -168,14 +74,14 @@ async def health_check():
     return {"status": "healthy"}
 
 @app.get("/api/fines", response_model=list[FineOut], tags=["Fines"])
-async def list_fines(db: _orm.Session = Depends(get_db)):
+async def list_fines(db: Session = Depends(database.get_db)):
     """Return all fine catalog entries."""
     fines = db.query(_models.Fine).order_by(_models.Fine.k_id_fine.asc()).all()
     return fines
 
 
 @app.get("/api/fines/{fine_id}", response_model=FineOut, tags=["Fines"])
-async def get_fine(fine_id: int, db: _orm.Session = Depends(get_db)):
+async def get_fine(fine_id: int, db: Session = Depends(database.get_db)):
     fine = db.query(_models.Fine).filter(_models.Fine.k_id_fine == fine_id).first()
     if not fine:
         raise HTTPException(status_code=404, detail="Fine not found")
@@ -183,7 +89,7 @@ async def get_fine(fine_id: int, db: _orm.Session = Depends(get_db)):
 
 
 @app.post("/api/fines", response_model=FineOut, status_code=201, tags=["Fines"])
-async def create_fine(data: FineCreate, db: _orm.Session = Depends(get_db)):
+async def create_fine(data: FineCreate, db: Session = Depends(database.get_db)):
     fine = _models.Fine(**data.model_dump())
     try:
         db.add(fine)
@@ -197,7 +103,7 @@ async def create_fine(data: FineCreate, db: _orm.Session = Depends(get_db)):
 
 
 @app.put("/api/fines/{fine_id}", response_model=FineOut, tags=["Fines"])
-async def update_fine(fine_id: int, data: FineUpdate, db: _orm.Session = Depends(get_db)):
+async def update_fine(fine_id: int, data: FineUpdate, db: Session = Depends(database.get_db)):
     fine = db.query(_models.Fine).filter(_models.Fine.k_id_fine == fine_id).first()
     if not fine:
         raise HTTPException(status_code=404, detail="Fine not found")
@@ -224,7 +130,7 @@ async def update_fine(fine_id: int, data: FineUpdate, db: _orm.Session = Depends
 
 
 @app.delete("/api/fines/{fine_id}", status_code=204, tags=["Fines"])
-async def delete_fine(fine_id: int, db: _orm.Session = Depends(get_db)):
+async def delete_fine(fine_id: int, db: Session = Depends(database.get_db)):
     fine = db.query(_models.Fine).filter(_models.Fine.k_id_fine == fine_id).first()
     if not fine:
         raise HTTPException(status_code=404, detail="Fine not found")
@@ -243,21 +149,21 @@ async def delete_fine(fine_id: int, db: _orm.Session = Depends(get_db)):
 
 
 @app.get("/api/user_fines", response_model=list[UserFineOut], tags=["User Fines"])
-async def get_user_fines(db: _orm.Session = Depends(get_db)):
+async def get_user_fines(db: Session = Depends(database.get_db)):
     """Get all user fines"""
     try:
-        user_fines = db.query(_models.UserFine).options(_orm.joinedload(_models.UserFine.fine)).all()
+        user_fines = db.query(_models.UserFine).options(joinedload(_models.UserFine.fine)).all()
         return user_fines
     except Exception as e:
         logging.error(f"Error fetching user fines: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.get("/api/user_fines/{user_fine_id}", response_model=UserFineOut, tags=["User Fines"])
-async def get_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
+async def get_user_fine(user_fine_id: int, db: Session = Depends(database.get_db)):
     """Get a specific user fine by ID"""
     user_fine = (
         db.query(_models.UserFine)
-        .options(_orm.joinedload(_models.UserFine.fine))
+        .options(joinedload(_models.UserFine.fine))
         .filter(_models.UserFine.k_user_fine == user_fine_id)
         .first()
     )
@@ -303,56 +209,8 @@ async def _fetch_user_from_users_service(user_id: str) -> dict:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-@app.get("/api/external/users/{user_id}", tags=["External" ])
-async def proxy_get_user(user_id: str):
-    """Proxy endpoint to fetch a user from the users microservice (for testing)."""
-    return await _fetch_user_from_users_service(user_id)
-
-
-async def _subtract_balance_from_users_service(user_id: str, amount: int) -> dict:
-    if amount <= 0:
-        raise HTTPException(status_code=400, detail="Amount must be greater than zero")
-
-    base_url = _get_users_service_base_url()
-    endpoint = f"{base_url}/balance/{user_id}/subtract"
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.post(endpoint, params={"amount": amount})
-    except httpx.ConnectError as exc:
-        logging.error("Failed to connect to users service: %s", exc)
-        raise HTTPException(status_code=503, detail="Users service unavailable") from exc
-    except httpx.TimeoutException as exc:
-        logging.error("Users service request timed out: %s", exc)
-        raise HTTPException(status_code=504, detail="Users service timeout") from exc
-    except Exception as exc:  # pylint: disable=broad-except
-        logging.error("Unexpected error calling users service: %s", exc)
-        raise HTTPException(status_code=500, detail="Unexpected error contacting users service") from exc
-
-    if resp.status_code == 200:
-        try:
-            return resp.json()
-        except ValueError:
-            logging.error("Users service returned invalid JSON when subtracting balance: %s", resp.text)
-            raise HTTPException(status_code=502, detail="Invalid response from users service")
-
-    if resp.status_code == 400:
-        try:
-            payload = resp.json()
-        except ValueError:
-            payload = {"error": resp.text or "Saldo insuficiente"}
-        message = payload.get("error", "Saldo insuficiente")
-        raise HTTPException(status_code=400, detail=message)
-
-    if resp.status_code == 404:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    logging.error("Users service subtract balance returned %s: %s", resp.status_code, resp.text)
-    raise HTTPException(status_code=502, detail="Users service error")
-
-
 @app.post("/api/user_fines", response_model=UserFineOut, tags=["User Fines"])
-async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends(get_db)):
+async def create_user_fine(user_fine: UserFineCreate, db: Session = Depends(database.get_db)):
     """Create a new user fine"""
     try:
         logging.info(f"Received data: {user_fine.model_dump()}")
@@ -388,12 +246,12 @@ async def create_user_fine(user_fine: UserFineCreate, db: _orm.Session = Depends
         raise HTTPException(status_code=500, detail="Error creating user fine")
 
 @app.get("/api/user_fines/user/{user_id}", response_model=list[UserFineOut], tags=["User Fines"])
-async def get_user_fines_by_user(user_id: str, db: _orm.Session = Depends(get_db)):
+async def get_user_fines_by_user(user_id: str, db: Session = Depends(database.get_db)):
     """Get all fines for a specific user by their user ID"""
     try:
         user_fines = (
             db.query(_models.UserFine)
-            .options(_orm.joinedload(_models.UserFine.fine))
+            .options(joinedload(_models.UserFine.fine))
             .filter(_models.UserFine.k_uid_user == user_id)
             .all()
         )
@@ -404,11 +262,11 @@ async def get_user_fines_by_user(user_id: str, db: _orm.Session = Depends(get_db
     
     
 @app.post("/api/user_fines/{user_fine_id}/pay", response_model=UserFineOut, tags=["User Fines"])
-async def pay_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
+async def pay_user_fine(user_fine_id: int, db: Session = Depends(database.get_db)):
     """Attempt to pay the user fine by subtracting balance from the users service."""
     user_fine = (
         db.query(_models.UserFine)
-        .options(_orm.joinedload(_models.UserFine.fine))
+        .options(joinedload(_models.UserFine.fine))
         .filter(_models.UserFine.k_user_fine == user_fine_id)
         .first()
     )
@@ -454,11 +312,11 @@ async def pay_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
 
 
 @app.put("/api/user_fines/{user_fine_id}", response_model=UserFineOut, tags=["User Fines"])
-async def update_user_fine(user_fine_id: int, data: UserFineUpdate, db: _orm.Session = Depends(get_db)):
+async def update_user_fine(user_fine_id: int, data: UserFineUpdate, db: Session = Depends(database.get_db)):
     """Update a user fine"""
     user_fine = (
         db.query(_models.UserFine)
-        .options(_orm.joinedload(_models.UserFine.fine))
+        .options(joinedload(_models.UserFine.fine))
         .filter(_models.UserFine.k_user_fine == user_fine_id)
         .first()
     )
@@ -504,7 +362,7 @@ async def update_user_fine(user_fine_id: int, data: UserFineUpdate, db: _orm.Ses
         raise HTTPException(status_code=500, detail="Error updating user fine")
 
 @app.delete("/api/user_fines/{user_fine_id}", tags=["User Fines"])
-async def delete_user_fine(user_fine_id: int, db: _orm.Session = Depends(get_db)):
+async def delete_user_fine(user_fine_id: int, db: Session = Depends(database.get_db)):
     """Delete a user fine"""
     user_fine = db.query(_models.UserFine).filter(_models.UserFine.k_user_fine == user_fine_id).first()
     if not user_fine:
