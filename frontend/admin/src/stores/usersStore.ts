@@ -32,7 +32,7 @@ const usersStore = defineStore('users', {
     },
     async fetchTravels(id: string) {
       try {
-        const response = await fetch(`${this.baseURL}/travels/user/${id}`, {
+        const response = await fetch(`${this.baseURL}/travel/usuario/${id}`, {
           headers: { Accept: 'application/json' }
         })
         if (!response.ok) {
@@ -47,6 +47,23 @@ const usersStore = defineStore('users', {
         this.travels = []
       }
 
+    },
+    async fetchAllTravels() {
+      try {
+        const response = await fetch(`${this.baseURL}/travel/`, {
+          headers: { Accept: 'application/json' }
+        })
+        if (!response.ok) {
+          console.error('HTTP error fetching all travels:', response.status, response.statusText)
+          this.travels = []
+          return
+        }
+        const data = await response.json()
+        this.travels = Array.isArray(data) ? data as Travel[] : []
+      } catch (error) {
+        console.error('Error fetching all travels:', error)
+        this.travels = []
+      }
     },
     async fetchFines(id: string) {
       try {
