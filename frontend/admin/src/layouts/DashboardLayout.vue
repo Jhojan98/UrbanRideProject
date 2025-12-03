@@ -23,9 +23,9 @@
 </template>
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import StationInfo from '@/components/dashboard/StationInfo.vue'
-import BikeInfo from '@/components/dashboard/BikeInfo.vue'
-import MapComponent from '@/components/dashboard/MapComponent.vue'
+import StationInfo from '@/components/stations-dashboard/StationInfo.vue'
+import BikeInfo from '@/components/stations-dashboard/BikeInfo.vue'
+import MapComponent from '@/components/stations-dashboard/MapComponent.vue'
 import {
     type Station,
     createBike,

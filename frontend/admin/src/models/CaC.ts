@@ -1,6 +1,7 @@
-export interface CaC {
+export default interface CaC {
   idCaC: number;
   description: string;
   status: string;
   idTravel: number;
+  date
 }

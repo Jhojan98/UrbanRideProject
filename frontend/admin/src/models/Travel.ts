@@ -1,4 +1,4 @@
-export interface Travel{
+export default interface Travel{
   idTravel: number;
   idBicycle: number;
   startStation: string;

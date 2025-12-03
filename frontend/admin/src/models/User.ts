@@ -1,4 +1,4 @@
-export interface User{
+export default interface User{
   idUser: number;
   username: string;
   subscription: string | 'NONE';

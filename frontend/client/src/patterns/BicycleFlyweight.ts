@@ -1,5 +1,5 @@
 import * as L from 'leaflet';
-import { Bicycle } from '@/models/Bicycle';
+import { type Bicycle } from '@/models/Bicycle';
 
 /**
  * BicycleFlyweight - Estado intrínseco (compartido) de las bicicletas

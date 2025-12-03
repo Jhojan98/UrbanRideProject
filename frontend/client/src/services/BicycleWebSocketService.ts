@@ -1,7 +1,7 @@
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { BicycleDTO, toBicycle } from '@/models/Bicycle';
-import { BicycleFactory } from '@/patterns/BicycleFlyweight';
+import { type BicycleDTO, toBicycle } from '@/models/Bicycle';
+import { type BicycleFactory } from '@/patterns/BicycleFlyweight';
 
 /**
  * BicycleWebSocketService - Servicio para gestionar la conexión WebSocket
