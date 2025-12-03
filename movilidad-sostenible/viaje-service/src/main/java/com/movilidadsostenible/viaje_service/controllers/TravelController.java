@@ -59,22 +59,8 @@ public class TravelController {
         }
     }
 
-    @GetMapping("/viaje/usuario/{id}")
-    @Operation(summary = "Obtener viaje por id de usuario")
-    public ResponseEntity<?> obtenerViajesPorIdUsuario(
-            @Parameter(description = "Identificador del usuario", required = true)
-            @PathVariable Integer id) {
-        Optional<Travel> usuarioOptional = service.byId(id);
-
-        if(usuarioOptional.isPresent()) {
-            return ResponseEntity.ok(usuarioOptional.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
     // Nuevo endpoint: Obtener todos los viajes de un usuario a partir de su UID (identificador único del usuario)
-    @GetMapping("/viaje/usuario/uid/{uid}")
+    @GetMapping("/usuario/{uid}")
     @Operation(summary = "Obtener todos los viajes por UID de usuario",
             description = "Devuelve la lista de viajes asociados al UID del usuario")
     public ResponseEntity<?> obtenerViajesPorUID(
@@ -89,20 +75,6 @@ public class TravelController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("mensaje", "Error al obtener viajes: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping("/viaje/bicicleta/{id}")
-    @Operation(summary = "Obtener viaje por id de bicicleta")
-    public ResponseEntity<?> obtenerViajesPorIdBicicleta(
-            @Parameter(description = "Identificador de la bicicleta", required = true)
-            @PathVariable Integer id) {
-        Optional<Travel> usuarioOptional = service.byId(id);
-
-        if(usuarioOptional.isPresent()) {
-            return ResponseEntity.ok(usuarioOptional.get());
-        } else {
-            return ResponseEntity.notFound().build();
         }
     }
 
