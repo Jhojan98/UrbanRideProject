@@ -71,8 +71,33 @@ public class StationsController {
     @Operation(
             summary = "Crear estación",
             description = "Crea una nueva estación y genera automáticamente 15 slots asociados. Valida que la ciudad exista mediante ciudad-service.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Objeto Station a crear",
+                    required = true,
+                    content = @Content(
+                            schema = @Schema(implementation = Station.class),
+                            examples = {
+                                    @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                            name = "Ejemplo de solicitud",
+                                            summary = "Estación METRO en ciudad 1",
+                                            value = "{\n  \"idStation\": 1,\n  \"stationName\": \"POLO\",\n  \"latitude\": 0,\n  \"length\": 0,\n  \"idCity\": 1,\n  \"type\": \"METRO\",\n  \"cctvStatus\": true\n}"
+                                    )
+                            }
+                    )
+            ),
             responses = {
-                    @ApiResponse(responseCode = "201", description = "Estación creada correctamente"),
+                    @ApiResponse(responseCode = "201", description = "Estación creada correctamente",
+                            content = @Content(
+                                    schema = @Schema(implementation = Station.class),
+                                    examples = {
+                                            @io.swagger.v3.oas.annotations.media.ExampleObject(
+                                                    name = "Respuesta de creación",
+                                                    summary = "Estructura simplificada",
+                                                    value = "{\n  \"estacion\": {\n    \"idStation\": 1,\n    \"stationName\": \"POLO\",\n    \"latitude\": 0,\n    \"length\": 0,\n    \"idCity\": 1,\n    \"type\": \"METRO\",\n    \"cctvStatus\": true\n  },\n  \"slotsGenerados\": [\n    { \"slotId\": \"POL-MET-1\", \"status\": 201 },\n    { \"slotId\": \"POL-MET-2\", \"status\": 201 }\n  ]\n}"
+                                            )
+                                    }
+                            )
+                    ),
                     @ApiResponse(responseCode = "400", description = "Solicitud inválida o la ciudad especificada no existe"),
                     @ApiResponse(responseCode = "502", description = "No fue posible validar la ciudad en ciudad-service"),
                     @ApiResponse(responseCode = "500", description = "Error interno al crear slots o estación")
@@ -137,13 +162,6 @@ public class StationsController {
         respuesta.put("estacion", saved);
         respuesta.put("slotsGenerados", slotsCreados);
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
-    }
-
-    @PostMapping("/simple")
-    @Operation(summary = "Crear estación simple", description = "Creación mínima sin validaciones ni llamadas externas")
-    public ResponseEntity<Station> createSimple(@Valid @RequestBody Station station) {
-      Station saved = service.save(station);
-      return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @PutMapping("/{id}")
