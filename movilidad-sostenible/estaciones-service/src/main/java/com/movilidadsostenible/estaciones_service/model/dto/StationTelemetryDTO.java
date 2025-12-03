@@ -1,4 +1,4 @@
-package com.movilidadsostenible.estaciones_service.models.dto;
+package com.movilidadsostenible.estaciones_service.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

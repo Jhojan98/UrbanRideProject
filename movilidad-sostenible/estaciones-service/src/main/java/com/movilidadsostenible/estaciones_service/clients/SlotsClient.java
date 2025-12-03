@@ -1,6 +1,6 @@
 package com.movilidadsostenible.estaciones_service.clients;
 
-import com.movilidadsostenible.estaciones_service.models.dto.SlotRequestDTO;
+import com.movilidadsostenible.estaciones_service.model.dto.SlotRequestDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

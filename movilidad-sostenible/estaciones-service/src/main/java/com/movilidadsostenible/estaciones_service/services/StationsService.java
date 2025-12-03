@@ -1,6 +1,6 @@
 package com.movilidadsostenible.estaciones_service.services;
 
-import com.movilidadsostenible.estaciones_service.models.entity.Station;
+import com.movilidadsostenible.estaciones_service.model.entity.Station;
 
 import java.util.List;
 import java.util.Optional;

@@ -13,6 +13,7 @@
     <file url="file://$PROJECT_DIR$/email-rabbit-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/email-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/estaciones-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/estaciones-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/eureka-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/gateway-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/gateway-service/src/main/java" charset="UTF-8" />
