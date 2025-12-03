@@ -680,3 +680,4 @@ GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.user_fine_k_user_fine_seq TO mana
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.slots TO manager_slots;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.maintenance TO manager_maintenance;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.maintenance_k_id_maintenance_seq TO manager_maintenance;
