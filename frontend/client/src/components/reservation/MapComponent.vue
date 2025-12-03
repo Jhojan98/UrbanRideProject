@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import L, { Map as LeafletMap } from 'leaflet'
+import L, { type Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 // Fix de íconos por defecto de Leaflet para bundlers (evita 404 de marker-icon.png)
 // Importamos las imágenes y configuramos el Default Icon

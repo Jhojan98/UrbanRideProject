@@ -1,6 +1,6 @@
 package com.movilidadsostenible.estaciones_service.services.websocket;
 
-import com.movilidadsostenible.estaciones_service.models.dto.StationTelemetryDTO;
+import com.movilidadsostenible.estaciones_service.model.dto.StationTelemetryDTO;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 

@@ -1,6 +1,6 @@
 package com.movilidadsostenible.estaciones_service.services;
 
-import com.movilidadsostenible.estaciones_service.models.entity.Station;
+import com.movilidadsostenible.estaciones_service.model.entity.Station;
 import com.movilidadsostenible.estaciones_service.repositories.StationsRepository;
 import org.springframework.stereotype.Service;
 

@@ -1,8 +1,8 @@
 package com.movilidadsostenible.estaciones_service.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.movilidadsostenible.estaciones_service.models.dto.StationTelemetryDTO;
-import com.movilidadsostenible.estaciones_service.models.entity.Station;
+import com.movilidadsostenible.estaciones_service.model.dto.StationTelemetryDTO;
+import com.movilidadsostenible.estaciones_service.model.entity.Station;
 import com.movilidadsostenible.estaciones_service.services.StationsService;
 import com.movilidadsostenible.estaciones_service.services.websocket.TelemetryWebSocketPublisher;
 import jakarta.annotation.PostConstruct;
@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -146,7 +145,7 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
             webSocketPublisher.sendTelemetry(telemetry);
 
-            log.info("Actualizada estacion {} cctvStatus={}", station.getIdStation(), station.isCctvStatus());
+            log.info("Actualizada estacion {} cctvStatus={}", station.getIdStation(), station.getCctvStatus());
         } catch (Exception e) {
             log.error("Error procesando mensaje MQTT", e);
         }

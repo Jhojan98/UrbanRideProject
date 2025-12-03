@@ -41,7 +41,7 @@
 import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router'
-import L, { Map as LeafletMap } from 'leaflet'
+import L, { type Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const router = useRouter()

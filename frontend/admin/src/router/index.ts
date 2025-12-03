@@ -1,7 +1,8 @@
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import LoginView from '@/views/LoginView.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
-
+import RegisterView from '@/views/RegisterView.vue'
+import UserLayout from '@/layouts/UserLayout.vue'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -10,10 +11,22 @@ const routes: Array<RouteRecordRaw> = [
     meta: { layout: 'main' }
   },
   {
-    path: '/dashboard',
-    name: 'dashboard',
+    path: '/stations-dashboard',
+    name: 'stationsDashboard',
     component: DashboardLayout
-  }
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: RegisterView,
+    meta: { layout: 'main', requiresAuth: true }
+  },
+  {
+  path: '/users-dashboard',
+  name: 'usersDashboard',
+  component: UserLayout,
+  meta: { layout: 'main', requiresAuth: true }
+}
 ]
 
 const router = createRouter({

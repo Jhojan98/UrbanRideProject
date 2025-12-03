@@ -24,11 +24,10 @@ public class Slot {
     private String padlockStatus;
 
     @Column(name = "k_id_station")
-    @NotNull
     @Schema(description = "Identificador de la estación a la que pertenece el slot", example = "1")
     private Integer stationId;
 
     @Column(name = "k_id_bicycle")
     @Schema(description = "Identificador de la bicicleta anclada (si hay)", example = "B-123")
-    private Integer bicycleId;
+    private String bicycleId;
 }
