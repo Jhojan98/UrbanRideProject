@@ -15,6 +15,10 @@ public interface SlotsClient {
     // Consumir endpoint que reserva primer slot LOCKED para bicicleta MECHANIC
     @PostMapping("/stations/{stationId}/reserve-mechanic")
     ResponseEntity<String> reserveFirstAvailableMechanic(@PathVariable("stationId") Integer stationId);
+
+    // Consumir endpoint que reserva primer slot UNLOCKED para bicicleta MECHANIC
+    @PostMapping("/stations/{stationId}/reserve-first-unlocked")
+    ResponseEntity<String> reserveFirstUnlocked(@PathVariable("stationId") Integer stationId);
 }
 
 
