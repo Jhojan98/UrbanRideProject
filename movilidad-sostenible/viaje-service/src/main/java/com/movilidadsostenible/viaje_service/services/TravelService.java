@@ -10,5 +10,5 @@ public interface TravelService {
     Optional<Travel> byId(Integer id);
     Travel save(Travel travel);
     void delete(Integer id);
-
+    List<Travel> findAllByUid(String uid);
 }

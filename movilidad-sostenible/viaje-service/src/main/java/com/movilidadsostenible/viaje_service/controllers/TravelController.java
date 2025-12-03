@@ -73,6 +73,25 @@ public class TravelController {
         }
     }
 
+    // Nuevo endpoint: Obtener todos los viajes de un usuario a partir de su UID (identificador único del usuario)
+    @GetMapping("/viaje/usuario/uid/{uid}")
+    @Operation(summary = "Obtener todos los viajes por UID de usuario",
+            description = "Devuelve la lista de viajes asociados al UID del usuario")
+    public ResponseEntity<?> obtenerViajesPorUID(
+            @Parameter(description = "UID del usuario", required = true)
+            @PathVariable String uid) {
+        try {
+            List<Travel> viajes = service.findAllByUid(uid);
+            if (viajes == null || viajes.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(viajes);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("mensaje", "Error al obtener viajes: " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/viaje/bicicleta/{id}")
     @Operation(summary = "Obtener viaje por id de bicicleta")
     public ResponseEntity<?> obtenerViajesPorIdBicicleta(
@@ -208,7 +227,7 @@ public class TravelController {
             }
         } catch (Exception ex) {
             // limpiar temporal si falla la publicación
-            reservationTempService.remove(reservationId);
+            reservationTempService.removeExpired(reservationId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("mensaje", "Error al publicar mensaje de expiración: " + ex.getMessage()));
         }
@@ -218,6 +237,74 @@ public class TravelController {
         resp.put("slotId", slotId);
         return ResponseEntity.ok(resp);
     }
+
+    @PostMapping("/verify-bicycle")
+    @Operation(summary = "Verificar bicicleta por código",
+            description = "Recibe el UID del usuario y un código de 6 dígitos. Busca la reserva temporal del usuario en Redis y verifica que el código coincida con los últimos 6 dígitos del ID de la bicicleta. Si coincide, remueve las claves de la reserva en Redis. (La persistencia en BD se omite por ahora).",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Verificación exitosa"),
+                    @ApiResponse(responseCode = "400", description = "Datos inválidos o bicicleta equivocada"),
+                    @ApiResponse(responseCode = "404", description = "Reserva no encontrada o expirada")
+            })
+    public ResponseEntity<?> verifyBicycleCode(
+            @Parameter(description = "UID del usuario", required = true) @RequestParam("uid") String uid,
+            @Parameter(description = "Código de verificación de 6 dígitos", example = "123456", required = true) @RequestParam("code") String code
+    ) {
+        // Validaciones básicas
+        if (uid == null || uid.isBlank() || code == null || code.length() != 6 || !code.matches("\\d{6}")) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "Parámetros inválidos: uid y code(6 dígitos) son requeridos"));
+        }
+
+        // Obtener reserva temporal por UID
+        ReservationTempDTO dto = reservationTempService.getByUID(uid);
+        if (dto == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Reserva no encontrada o expirada"));
+        }
+        String bicycleId = dto.getBicycleId();
+        if (bicycleId == null || bicycleId.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "BicycleId inválido o no presente en la reserva"));
+        }
+        String lastSix = bicycleId.substring(bicycleId.length() - 6);
+        if (!code.equals(lastSix)) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "BICICLETA_EQUIVOCADA", "detalle", "El código no coincide con la bicicleta reservada"));
+        }
+
+        // Remover claves en Redis: necesitamos el UUID de la reserva para usar reservationTempService.remove(reservationId)
+        String storedKey = dto.getReservationId();
+        String reservationUuid = extractReservationUuidFromKey(storedKey);
+        if (reservationUuid == null) {
+            // fallback: intentar quitar usando la clave base que se conoce
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "No se pudo determinar el identificador de la reserva para limpieza"));
+        }
+        reservationTempService.remove(reservationUuid);
+
+        return ResponseEntity.ok(Map.of(
+                "status", "OK",
+                "message", "Verificación exitosa y claves removidas",
+                "bicycleId", bicycleId
+        ));
+    }
+
+
+
+    // Extrae el UUID de una clave como: reservation_temp:{UUID}:user_id:{UID}:data
+    private String extractReservationUuidFromKey(String key) {
+        if (key == null) return null;
+        try {
+            // Buscar el prefijo y separar por ":user_id:"
+            int prefixIdx = key.indexOf("reservation_temp:");
+            int userIdx = key.indexOf(":user_id:");
+            if (prefixIdx != -1 && userIdx != -1 && userIdx > prefixIdx) {
+                String between = key.substring(prefixIdx + "reservation_temp:".length(), userIdx);
+                // Validación simple de UUID
+                java.util.UUID.fromString(between);
+                return between;
+            }
+        } catch (Exception ignored) { }
+        return null;
+    }
+
 
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {
         Map<String,String> errors = new HashMap<>();

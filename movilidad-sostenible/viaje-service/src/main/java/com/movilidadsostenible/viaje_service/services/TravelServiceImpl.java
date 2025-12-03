@@ -39,14 +39,7 @@ public class TravelServiceImpl implements TravelService {
     @Override
     @Transactional
     public Travel save(Travel travel) {
-        Optional<User> usuarioOptional = Optional.ofNullable(userClientRest.userDetail(travel.getUserCc()));
-        Optional<Bicycle> bicicletaOptional = Optional.ofNullable(bicycleClient.bicycleDetail(travel.getIdBicycle()));
-
-        if (usuarioOptional.isPresent() && bicicletaOptional.isPresent()) {
-            return repository.save(travel);
-        }
-        return null;
-
+        return repository.save(travel);
     }
 
     @Override
@@ -55,5 +48,10 @@ public class TravelServiceImpl implements TravelService {
         repository.deleteById(id);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Travel> findAllByUid(String uid) {
+        return repository.findAllByUid(uid);
+    }
 
 }
