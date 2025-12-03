@@ -16,10 +16,10 @@
       <table class="users-table">
         <thead>
           <tr>
-            <th>ID</th>
             <th>Usuario</th>
             <th>Email</th>
-            <th>Suscripción</th>
+            <th>Tipo de Suscripción</th>
+            <th>Balance</th>
             <th>Fecha de Registro</th>
             <th>Acciones</th>
           </tr>
@@ -27,26 +27,26 @@
         <tbody>
           <tr
             v-for="user in filteredUsers"
-            :key="user.idUser"
+            :key="user.uidUser"
             @click="selectUser(user)"
-            :class="{ 'selected': selectedUser?.idUser === user.idUser }"
+            :class="{ 'selected': userIdFor(selectedUser as any) === userIdFor(user) }"
             class="user-row"
           >
-            <td>{{ user.idUser }}</td>
-            <td>{{ user.username }}</td>
+            <td>{{ user.userName }}</td>
             <td>{{ user.email }}</td>
             <td>
-              <span :class="['badge', `badge-${getSubscriptionClass(user.subscription)}`]">
-                {{ user.subscription }}
+              <span :class="['badge', `badge-${getSubscriptionClass(user.subscriptionType)}`]">
+                {{ user.subscriptionType ?? 'Sin suscripción' }}
               </span>
             </td>
-            <td>{{ formatDate(user.timestamp) }}</td>
+            <td>${{ user.balance?.toLocaleString('es-ES') ?? 0 }}</td>
+            <td>{{ user.timestamp ? formatDate(user.timestamp) : '' }}</td>
             <td>
               <button
                 @click.stop="selectUser(user)"
                 class="btn-view"
               >
-                Ver Historial
+                Ver información
               </button>
             </td>
           </tr>
@@ -62,52 +62,76 @@
     <div v-if="selectedUser" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Historial de Viajes - {{ selectedUser.username }}</h2>
+          <h2>Información del Usuario - {{ ( selectedUser?.userName) }}</h2>
           <button @click="closeModal" class="btn-close">✕</button>
         </div>
 
         <div class="modal-body">
-          <div v-if="loadingTravels" class="loading">
-            Cargando viajes...
+          <div class="tabs">
+            <button :class="['tab', {active: activeTab === 'travels'}]" @click="activeTab = 'travels'">Viajes ({{ userTravels.length }})</button>
+            <button :class="['tab', {active: activeTab === 'fines'}]" @click="activeTab = 'fines'">Multas ({{ userFines.length }})</button>
+            <button :class="['tab', {active: activeTab === 'cacs'}]" @click="activeTab = 'cacs'">Quejas/Comentarios ({{ userCaCs.length }})</button>
           </div>
 
-          <div v-else-if="userTravels.length === 0" class="no-data">
-            <p>Este usuario no tiene viajes registrados</p>
-          </div>
+          <div v-if="loadingDetails" class="loading">Cargando información...</div>
 
-          <div v-else class="travels-list">
-            <div
-              v-for="travel in userTravels"
-              :key="travel.idTravel"
-              class="travel-card"
-            >
-              <div class="travel-header">
-                <span class="travel-id">Viaje #{{ travel.idTravel }}</span>
-                <span :class="['status-badge', `status-${travel.status.toLowerCase()}`]">
-                  {{ travel.status }}
-                </span>
+          <!-- Viajes -->
+          <div v-if="activeTab === 'travels'">
+            <div v-if="userTravels.length === 0" class="no-data">
+              <p>Este usuario no tiene viajes registrados</p>
+            </div>
+            <div v-else class="travels-list">
+              <div v-for="travel in userTravels" :key="travel.idTravel" class="travel-card">
+                <div class="travel-header">
+                  <span class="travel-id">Viaje #{{ travel.idTravel }}</span>
+                  <span :class="['status-badge', `status-${(travel.status ?? '').toLowerCase()}`]">{{ travel.status }}</span>
+                </div>
+                <div class="travel-details">
+                  <div class="detail-row"><span class="label">Bicicleta:</span><span class="value">{{ travel.idBicycle }}</span></div>
+                  <div class="detail-row"><span class="label">Estación de Inicio:</span><span class="value">{{ travel.startStation }}</span></div>
+                  <div class="detail-row"><span class="label">Estación de Fin:</span><span class="value">{{ travel.endStation ?? '' }}</span></div>
+                  <div class="detail-row"><span class="label">Inicio:</span><span class="value">{{ travel.startTimestamp ? formatDateTime(travel.startTimestamp) : '' }}</span></div>
+                  <div class="detail-row" v-if="travel.endTimestamp"><span class="label">Fin:</span><span class="value">{{ formatDateTime(travel.endTimestamp) }}</span></div>
+                </div>
               </div>
+            </div>
+          </div>
 
-              <div class="travel-details">
-                <div class="detail-row">
-                  <span class="label">Bicicleta:</span>
-                  <span class="value">{{ travel.idBicycle }}</span>
+          <!-- Multas -->
+          <div v-if="activeTab === 'fines'">
+            <div v-if="userFines.length === 0" class="no-data">
+              <p>Este usuario no registra multas</p>
+            </div>
+            <div v-else class="fines-list">
+              <div v-for="fine in userFines" :key="fine.k_user_fine ?? fine.idFine" class="fine-card">
+                <div class="fine-header">
+                  <span class="fine-id">Multa #{{ fine.k_user_fine ?? fine.idFine }}</span>
+                  <span :class="['status-badge', `status-${(fine.t_state ?? fine.state ?? '').toLowerCase()}`]">{{ fine.t_state ?? fine.state }}</span>
                 </div>
-                <div class="detail-row">
-                  <span class="label">Estación de Inicio:</span>
-                  <span class="value">{{ travel.startStation }}</span>
+                <div class="fine-details">
+                  <div class="detail-row"><span class="label">Razón:</span><span class="value">{{ fine.n_reason ?? fine.fine?.d_description ?? fine.reason ?? '' }}</span></div>
+                  <div class="detail-row"><span class="label">Monto:</span><span class="value">${{ (fine.v_amount_snapshot ?? fine.amount ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span></div>
+                  <div class="detail-row"><span class="label">Fecha:</span><span class="value">{{ (fine.f_assigned_at ?? fine.timestamp) ? formatDateTime(fine.f_assigned_at as any ?? fine.timestamp as any) : '' }}</span></div>
                 </div>
-                <div class="detail-row">
-                  <span class="label">Estación de Fin:</span>
-                  <span class="value">{{ travel.endStation || 'En curso' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quejas y Comentarios -->
+          <div v-if="activeTab === 'cacs'">
+            <div v-if="userCaCs.length === 0" class="no-data">
+              <p>Este usuario no registra quejas o comentarios</p>
+            </div>
+            <div v-else class="cacs-list">
+              <div v-for="cac in userCaCs" :key="cac.idCaC" class="cac-card">
+                <div class="cac-header">
+                  <span class="cac-id">Ticket #{{ cac.idCaC }}</span>
+                  <span :class="['status-badge', `status-${(cac.status ?? '').toLowerCase()}`]">{{ cac.status }}</span>
                 </div>
-                <div class="detail-row">
-                  <span class="label">Inicio:</span>
-                  <span class="value">{{ formatDateTime(travel.startTimestamp) }}</span>
-                </div>
-                <div class="detail-row" v-if="travel.endTimestamp">
-                  <span class="label">Fin:</span>
-                  <span class="value">{{ formatDateTime(travel.endTimestamp) }}</span>
+                <div class="cac-details">
+                  <div class="detail-row"><span class="label">Descripción:</span><span class="value">{{ cac.description }}</span></div>
+                  <div class="detail-row"><span class="label">Viaje:</span><span class="value">#{{ cac.idTravel }}</span></div>
+                  <div class="detail-row"><span class="label">Fecha:</span><span class="value">{{ cac.date ? formatDate(cac.date as Date) : '' }}</span></div>
                 </div>
               </div>
             </div>
@@ -124,12 +148,35 @@ import type { Ref } from 'vue'
 import usersStore from '@/stores/usersStore'
 import type User from '@/models/User'
 import type Travel from '@/models/Travel'
+import type Fine from '@/models/Fine'
+import type CaC from '@/models/CaC'
 
 const userStore = usersStore()
+type UserWithIdVariants = User & { id?: string; userId?: number; uidUser?: string }
+const hasProp = <K extends PropertyKey>(obj: object, key: K): obj is Record<K, unknown> => {
+  return obj != null && Object.prototype.hasOwnProperty.call(obj, key)
+}
+
+const getUserId = (u: UserWithIdVariants): number | string | null => {
+  if (hasProp(u, 'idUser') && typeof u['idUser'] === 'number') return u['idUser'] as number
+  if (hasProp(u, 'id') && typeof u['id'] === 'string') return u['id'] as string
+  if (hasProp(u, 'userId') && typeof u['userId'] === 'number') return u['userId'] as number
+  if (hasProp(u, 'uidUser') && typeof u['uidUser'] === 'string') return u['uidUser'] as string
+  return null
+}
+
+const userIdFor = (u: UserWithIdVariants | User | null): number | string | null => {
+  if (!u) return null
+  return getUserId(u as UserWithIdVariants)
+}
+
 const selectedUser: Ref<User | null> = ref(null)
 const searchQuery = ref('')
-const loadingTravels = ref(false)
+const loadingDetails = ref(false)
 const userTravels: Ref<Travel[]> = ref([])
+const userFines: Ref<Fine[]> = ref([])
+const userCaCs: Ref<CaC[]> = ref([])
+const activeTab = ref<'travels' | 'fines' | 'cacs'>('travels')
 
 onMounted(() => {
   userStore.fetchUsers()
@@ -140,23 +187,38 @@ const filteredUsers = computed(() => {
     return userStore.users
   }
   const query = searchQuery.value.toLowerCase()
-  return userStore.users.filter(user =>
-    user.username.toLowerCase().includes(query) ||
-    user.email.toLowerCase().includes(query)
-  )
+  return userStore.users.filter(user => {
+    const name = (user.userName ?? '').toLowerCase()
+    const mail = (user.email ?? '').toLowerCase()
+    return name.includes(query) || mail.includes(query)
+  })
 })
 
-const selectUser = async (user: User) => {
+const selectUser = async (user: UserWithIdVariants) => {
   selectedUser.value = user
-  loadingTravels.value = true
-  await userStore.fetchTravels(user.idUser)
+  const userId = getUserId(user)
+  if (userId == null) {
+    console.error('No se encontró ID de usuario válido en el objeto seleccionado:', user)
+    return
+  }
+  activeTab.value = 'travels'
+  loadingDetails.value = true
+  await Promise.all([
+    userStore.fetchTravels(String(userId)),
+    userStore.fetchFines(String(userId)),
+    userStore.fetchCaCs(String(userId))
+  ])
   userTravels.value = userStore.travels
-  loadingTravels.value = false
+  userFines.value = userStore.fines
+  userCaCs.value = userStore.cacs
+  loadingDetails.value = false
 }
 
 const closeModal = () => {
   selectedUser.value = null
   userTravels.value = []
+  userFines.value = []
+  userCaCs.value = []
 }
 
 const formatDate = (date: Date) => {
@@ -177,10 +239,10 @@ const formatDateTime = (date: Date) => {
   })
 }
 
-const getSubscriptionClass = (subscription: string) => {
-  const sub = subscription.toLowerCase()
-  if (sub === 'none') return 'none'
-  if (sub.includes('premium') || sub.includes('gold')) return 'premium'
+const getSubscriptionClass = (subscription: unknown) => {
+  const sub = typeof subscription === 'string' ? subscription.toLowerCase() : 'none'
+  if (!sub || sub === 'none' || sub === 'null' || sub === 'undefined') return 'none'
+
   return 'basic'
 }
 </script>
@@ -402,6 +464,53 @@ const getSubscriptionClass = (subscription: string) => {
 .modal-body {
   padding: 2rem;
   overflow-y: auto;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.tab {
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-light);
+  background: var(--color-background-light);
+  color: var(--color-text-primary-light);
+  font-weight: 600;
+}
+.tab.active {
+  background: var(--color-primary-light);
+  color: var(--color-white);
+  border-color: var(--color-primary-light);
+}
+
+.fines-list,
+.cacs-list {
+  display: grid;
+  gap: 1rem;
+}
+.fine-card,
+.cac-card {
+  background: var(--color-gray-very-light);
+  border-radius: 12px;
+  padding: 1.2rem;
+  border-left: 4px solid var(--color-gray-medium);
+  transition: all 0.3s ease;
+}
+.fine-card:hover,
+.cac-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateX(4px);
+}
+.fine-header,
+.cac-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border-light);
+  padding-bottom: 0.5rem;
 }
 
 .loading {
