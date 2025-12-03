@@ -27,7 +27,7 @@ public class ReservationTempServiceImpl implements ReservationTempService {
         String baseKey = TEMP_PREFIX + dto.getReservationId();
         redisTemplate.opsForHash().putAll(baseKey+ UID_PREF + dto.getUserId() + DATA_SUFFIX, dto.toMap());
         redisTemplate.opsForValue().set(baseKey + UID_PREF + dto.getUserId() + TTL_SUFFIX, "",
-                10, TimeUnit.SECONDS);
+                10, TimeUnit.MINUTES);
     }
 
 

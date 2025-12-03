@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.UUID;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 @RestController
 @Tag(name = "Viajes", description = "Operaciones para gestionar viajes")
@@ -251,11 +254,33 @@ public class TravelController {
         }
         reservationTempService.remove(reservationUuid);
 
-        return ResponseEntity.ok(Map.of(
-                "status", "OK",
-                "message", "Verificación exitosa y claves removidas",
-                "bicycleId", bicycleId
-        ));
+        // Crear y persistir el Travel en la base de datos
+        try {
+            Travel travel = new Travel();
+            // requiredAt: usar createdAt de la reserva (epoch millis -> LocalDateTime)
+            LocalDateTime requiredAt = LocalDateTime.ofInstant(Instant.ofEpochMilli(dto.getCreatedAt()), ZoneId.systemDefault());
+            travel.setRequiredAt(requiredAt);
+            // startedAt: ahora
+            travel.setStartedAt(LocalDateTime.now());
+            travel.setEndedAt(null);
+            travel.setStatus("IN_PROGRESS");
+            travel.setUid(dto.getUserId());
+            travel.setIdBicycle(bicycleId);
+            travel.setFromIdStation(dto.getStationStartId());
+            travel.setToIdStation(dto.getStationEndId());
+            travel.setTravelType(dto.getTravelType() != null ? dto.getTravelType() : "MECHANIC");
+
+            Travel saved = service.save(travel);
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "OK",
+                    "message", "Verificación exitosa, claves removidas y viaje guardado",
+                    "travel", saved
+            ));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "Error al guardar el travel: " + ex.getMessage()));
+        }
     }
 
 
