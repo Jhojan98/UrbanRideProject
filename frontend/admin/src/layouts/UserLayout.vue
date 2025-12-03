@@ -24,6 +24,12 @@
         >
           <span>Quejas y Comentarios</span>
         </button>
+        <button
+          @click="activeComponent = 'travel'"
+          :class="['nav-item', { active: activeComponent === 'travel' }]"
+        >
+          <span>Quejas y Comentarios</span>
+        </button>
       </nav>
     </aside>
 
@@ -32,6 +38,7 @@
       <UserListComponent v-if="activeComponent === 'users'" />
       <FinesComponent v-else-if="activeComponent === 'fines'" />
       <CaCComponent v-else-if="activeComponent === 'cac'" />
+      <TravelComponent v-else-if="activeComponent === 'travel'" />
     </main>
   </div>
 </template>
@@ -41,8 +48,9 @@ import { ref } from 'vue'
 import UserListComponent from '@/components/users-dashboard/UserListComponent.vue'
 import FinesComponent from '@/components/users-dashboard/FinesComponent.vue'
 import CaCComponent from '@/components/users-dashboard/CaCComponent.vue'
+import TravelComponent from '@/components/users-dashboard/TravelComponent.vue'
 
-const activeComponent = ref<'users' | 'fines' | 'cac'>('users')
+const activeComponent = ref<'users' | 'fines' | 'cac' | 'travel'>('users')
 </script>
 
 <style scoped>

@@ -32,16 +32,16 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
     public void onMessage(Message message, byte[] pattern) {
         String expiredKey = message.toString();
         System.out.println(expiredKey.replace(":ttl", ":data"));
-        ReservationTempDTO reservationTempDTO = reservationTempService.get(expiredKey.replace(":ttl", ":data"));
+        ReservationTempDTO reservationTempDTO = reservationTempService.getExpired(expiredKey.replace(":ttl", ":data"));
 
         if (reservationTempDTO != null) {
             reservationTempService.releaseResources(reservationTempDTO);
             log.info("[Redis] Recursos liberados para la reserva temporal: {}", reservationTempDTO.toString());
 
             slotsClient.lockSlotById(reservationTempDTO.getSlotStartId());
-            slotsClient.updatePadlockStatus(reservationTempDTO.getSlotStartId(), "UNLOCKED");
+            slotsClient.updatePadlockStatus(reservationTempDTO.getSlotEndId(), "UNLOCKED");
 
-            reservationTempService.remove(expiredKey.replace(":ttl", ":data"));
+            reservationTempService.removeExpired(expiredKey.replace(":ttl", ":data"));
 
         } else {
             log.warn("[Redis] No se encontró la reserva temporal para la clave expirada: {}", expiredKey);
