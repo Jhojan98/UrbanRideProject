@@ -2,16 +2,14 @@ package com.movilidadsostenible.estaciones_service.controllers;
 
 import com.movilidadsostenible.estaciones_service.clients.CiudadClient;
 import com.movilidadsostenible.estaciones_service.clients.SlotsClient;
-import com.movilidadsostenible.estaciones_service.models.dto.SlotRequestDTO;
-import com.movilidadsostenible.estaciones_service.models.entity.Station;
+import com.movilidadsostenible.estaciones_service.model.dto.SlotRequestDTO;
+import com.movilidadsostenible.estaciones_service.model.entity.Station;
 import com.movilidadsostenible.estaciones_service.services.StationsService;
 import feign.FeignException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,8 +24,8 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping
 @Tag(name = "Estaciones", description = "CRUD de estaciones y creación automática de slots")
+@RequestMapping("/stations")
 public class StationsController {
 
     private final StationsService service;
@@ -46,14 +44,7 @@ public class StationsController {
             description = "Devuelve la lista completa de estaciones registradas.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Lista de estaciones",
-                            content = @Content(
-                                    array = @ArraySchema(schema = @Schema(implementation = Station.class)),
-                                    examples = {@ExampleObject(name = "Lista de estaciones",
-                                            value = "[{\n  \"idStation\": 1,\n  \"stationName\": \"Central Park\",\n  \"idCity\": 10,\n  \"type\": \"ELECTRIC\",\n  \"latitude\": 40.785091,\n  \"length\": -73.968285\n}]",
-                                            summary = "Ejemplo de respuesta exitosa")}
-                            )
-                    ),
-                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                            content = @Content(array = @ArraySchema(schema = @Schema(implementation = Station.class))))
             }
     )
     public ResponseEntity<List<Station>> list() {
@@ -66,15 +57,8 @@ public class StationsController {
             description = "Busca una estación por su identificador numérico.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Estación encontrada",
-                            content = @Content(
-                                    schema = @Schema(implementation = Station.class),
-                                    examples = {@ExampleObject(name = "Estación",
-                                            value = "{\n  \"idStation\": 1,\n  \"stationName\": \"Central Park\",\n  \"idCity\": 10,\n  \"type\": \"ELECTRIC\",\n  \"latitude\": 40.785091,\n  \"length\": -73.968285\n}",
-                                            summary = "Ejemplo de respuesta exitosa")}
-                            )
-                    ),
-                    @ApiResponse(responseCode = "404", description = "Estación no encontrada",
-                            content = @Content(examples = {@ExampleObject(value = "", summary = "Sin contenido")}))
+                            content = @Content(schema = @Schema(implementation = Station.class))),
+                    @ApiResponse(responseCode = "404", description = "Estación no encontrada")
             }
     )
     public ResponseEntity<?> getById(@PathVariable Integer id) {
@@ -87,31 +71,16 @@ public class StationsController {
     @Operation(
             summary = "Crear estación",
             description = "Crea una nueva estación y genera automáticamente 15 slots asociados. Valida que la ciudad exista mediante ciudad-service.",
-            requestBody = @RequestBody(description = "Objeto Station a crear", required = true,
-                    content = @Content(
-                            schema = @Schema(implementation = Station.class),
-                            examples = {@ExampleObject(name = "Crear estación",
-                                    value = "{\n  \"stationName\": \"Central Park\",\n  \"idCity\": 10,\n  \"type\": \"ELECTRIC\",\n  \"latitude\": 40.785091,\n  \"length\": -73.968285\n}",
-                                    summary = "Ejemplo de solicitud")}
-                    )),
             responses = {
-                    @ApiResponse(responseCode = "201", description = "Estación creada correctamente (se devuelve la estación y el detalle de los slots creados)",
-                            content = @Content(
-                                    schema = @Schema(implementation = Station.class),
-                                    examples = {@ExampleObject(name = "Creación exitosa",
-                                            value = "{\n  \"estacion\": {\n    \"idStation\": 5,\n    \"stationName\": \"Central Park\",\n    \"idCity\": 10,\n    \"type\": \"ELECTRIC\",\n    \"latitude\": 40.785091,\n    \"length\": -73.968285\n  },\n  \"slotsGenerados\": [\n    { \"slotId\": \"CEN-ELE-1\", \"status\": 201 },\n    { \"slotId\": \"CEN-ELE-2\", \"status\": 201 }\n  ]\n}",
-                                            summary = "Ejemplo de respuesta con slots")}
-                            )
-                    ),
-                    @ApiResponse(responseCode = "400", description = "Solicitud inválida o la ciudad especificada no existe",
-                            content = @Content(examples = {@ExampleObject(value = "{\n  \"mensaje\": \"La ciudad especificada no existe\"\n}", summary = "Ciudad no válida")})),
-                    @ApiResponse(responseCode = "502", description = "No fue posible validar la ciudad en ciudad-service",
-                            content = @Content(examples = {@ExampleObject(value = "{\n  \"mensaje\": \"No fue posible validar la ciudad en ciudad-service\",\n  \"detalle\": \"Timeout\"\n}", summary = "Error de comunicación con ciudad-service")})),
+                    @ApiResponse(responseCode = "201", description = "Estación creada correctamente"),
+                    @ApiResponse(responseCode = "400", description = "Solicitud inválida o la ciudad especificada no existe"),
+                    @ApiResponse(responseCode = "502", description = "No fue posible validar la ciudad en ciudad-service"),
                     @ApiResponse(responseCode = "500", description = "Error interno al crear slots o estación")
             }
     )
     public ResponseEntity<?> create(@Valid @RequestBody Station station,
                                     BindingResult result) {
+        System.out.println("Creando estación: " + station);
         if (result.hasErrors()) return validate(result);
         try {
             var resp = ciudadClient.getCityById(station.getIdCity());
@@ -170,26 +139,21 @@ public class StationsController {
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }
 
+    @PostMapping("/simple")
+    @Operation(summary = "Crear estación simple", description = "Creación mínima sin validaciones ni llamadas externas")
+    public ResponseEntity<Station> createSimple(@Valid @RequestBody Station station) {
+      Station saved = service.save(station);
+      return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
     @PutMapping("/{id}")
     @Operation(
             summary = "Actualizar estación",
             description = "Actualiza los datos de una estación existente. Valida ciudad mediante ciudad-service.",
-            requestBody = @RequestBody(description = "Objeto Station con los cambios", required = true,
-                    content = @Content(
-                            schema = @Schema(implementation = Station.class),
-                            examples = {@ExampleObject(name = "Actualizar estación",
-                                    value = "{\n  \"stationName\": \"Central Park Renovado\",\n  \"idCity\": 10,\n  \"type\": \"MECHANIC\",\n  \"latitude\": 40.785091,\n  \"length\": -73.968285\n}",
-                                    summary = "Ejemplo de solicitud")}
-                    )),
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Objeto Station con los cambios", required = true,
+                    content = @Content(schema = @Schema(implementation = Station.class))),
             responses = {
-                    @ApiResponse(responseCode = "201", description = "Estación actualizada correctamente",
-                            content = @Content(
-                                    schema = @Schema(implementation = Station.class),
-                                    examples = {@ExampleObject(name = "Actualización exitosa",
-                                            value = "{\n  \"idStation\": 1,\n  \"stationName\": \"Central Park Renovado\",\n  \"idCity\": 10,\n  \"type\": \"MECHANIC\",\n  \"latitude\": 40.785091,\n  \"length\": -73.968285\n}",
-                                            summary = "Ejemplo de respuesta")}
-                            )
-                    ),
+                    @ApiResponse(responseCode = "201", description = "Estación actualizada correctamente"),
                     @ApiResponse(responseCode = "400", description = "Solicitud inválida o la ciudad especificada no existe"),
                     @ApiResponse(responseCode = "404", description = "Estación no encontrada"),
                     @ApiResponse(responseCode = "502", description = "No fue posible validar la ciudad en ciudad-service")
@@ -232,11 +196,8 @@ public class StationsController {
             summary = "Eliminar estación",
             description = "Elimina la estación indicada por id. No elimina recursos remotos (ej. slots) automáticamente.",
             responses = {
-                    @ApiResponse(responseCode = "204", description = "Estación eliminada correctamente",
-                            content = @Content(examples = {@ExampleObject(value = "", summary = "Sin contenido")})),
-                    @ApiResponse(responseCode = "404", description = "Estación no encontrada",
-                            content = @Content(examples = {@ExampleObject(value = "", summary = "Sin contenido")})),
-                    @ApiResponse(responseCode = "500", description = "Error interno del servidor")
+                    @ApiResponse(responseCode = "204", description = "Estación eliminada correctamente"),
+                    @ApiResponse(responseCode = "404", description = "Estación no encontrada")
             }
     )
     public ResponseEntity<?> delete(@PathVariable Integer id) {

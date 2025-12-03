@@ -125,7 +125,7 @@ services:
     ports:
       - "8001:8100"
     environment:
-      PORT: 8001
+      PORT: 8100
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
       POSTGRES_USER: ${USUARIO_DB_USER}
