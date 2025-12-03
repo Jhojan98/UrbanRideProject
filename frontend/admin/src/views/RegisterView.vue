@@ -106,7 +106,7 @@ const onSubmit = async () => {
     if (!validate()) return
     submitting.value = true
     try {
-        const created = await authStore.createAdminAccount(form.email, form.password)
+        const created = await authStore.createAdminAccount(form.email, form.password,form.name)
         if (!created) {
             throw new Error('No se pudo registrar el administrador')
         }

@@ -87,7 +87,7 @@ const userAuthStore = defineStore("auth", {
         return { success: false };
       }
     },
-    async createAdminAccount(email: string, password: string) {
+    async createAdminAccount(email: string, password: string,username:string) {
       try {
         const auth = getAuth();
         const newAdmin = await createUserWithEmailAndPassword(
@@ -105,7 +105,7 @@ const userAuthStore = defineStore("auth", {
           },
           body: JSON.stringify({
             uidUser: newAdmin.user.uid,
-            userName: newAdmin.user.email,
+            userName: username,
           }),
         });
         if (!rawResponse.ok) {
