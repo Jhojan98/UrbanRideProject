@@ -9,3 +9,4 @@ public interface TravelRepository extends CrudRepository<Travel, Integer> {
     // Método para obtener todos los viajes de un usuario por su UID
     List<Travel> findAllByUid(String uid);
 }
+
