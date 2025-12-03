@@ -8,10 +8,10 @@ import os
 load_dotenv()
 
 # Retrieve environment variables se supone que aca cambioamos las variables
-postgres_host = os.environ.get("POSTGRES_HOST")
-postgres_db = os.environ.get("POSTGRES_DB")
-postgres_user = os.environ.get("POSTGRES_USER")
-postgres_password = os.environ.get("POSTGRES_PASSWORD")
+postgres_host = os.environ.get("POSTGRES_HOST", "postgres17")
+postgres_db = os.environ.get("POSTGRES_DB", "movilidad_sostenible")
+postgres_user = os.environ.get("POSTGRES_USER", "manager_maintenance")
+postgres_password = os.environ.get("POSTGRES_PASSWORD", "g_maintenance")
 service_schema = os.environ.get("DB_SCHEMA", "public")
 explicit_url = os.environ.get("DATABASE_URL")
 
@@ -32,11 +32,11 @@ else:
         f"?options=-csearch_path%3D{search_path}"
     )
 
-engine_2 = _sql.create_engine(DATABASE_URL)
-SessionLocal = _orm.sessionmaker(autocommit=False, autoflush=False, bind=engine_2)
+engine = _sql.create_engine(DATABASE_URL)
+SessionLocal = _orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = _declarative.declarative_base()
 
-# Dependency to get DB session
+
 def get_db():
     db = SessionLocal()
     try:
