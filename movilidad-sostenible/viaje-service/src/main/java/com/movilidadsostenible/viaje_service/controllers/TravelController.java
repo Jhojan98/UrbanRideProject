@@ -13,9 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -35,15 +33,6 @@ public class TravelController {
 
     @Autowired
     private ReservationTempService reservationTempService;
-
-    @Autowired
-    private AmqpTemplate amqpTemplate;
-
-    @Value("${rabbitmq.exchange.name}")
-    private String reservationExchange;
-
-    @Value("${rabbitmq.routing.delay.key}")
-    private String reservationDelayRoutingKey;
 
     @GetMapping
     @Operation(summary = "Listar viajes")
@@ -150,6 +139,7 @@ public class TravelController {
 
         String bikeType = req.getBikeType().trim().toUpperCase(Locale.ROOT);
         ResponseEntity<String> slotResp;
+        ResponseEntity<String> slotEndId;
         try {
             if ("ELECTRIC".equals(bikeType)) {
                 slotResp = slotsClient.reserveFirstAvailableElectric(req.getStationStartId());
@@ -162,29 +152,49 @@ public class TravelController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("mensaje", "Error al solicitar slot: " + ex.getMessage()));
         }
+        try {
+            slotEndId = slotsClient.reserveFirstUnlocked(req.getStationEndId());
+
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("mensaje", "Error al solicitar slot: " + ex.getMessage()));
+        }
 
         if (slotResp == null || !slotResp.getStatusCode().is2xxSuccessful() || slotResp.getBody() == null || slotResp.getBody().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonMap("mensaje", "No hay slots disponibles en la estación solicitada"));
         }
 
-        String slotId = slotResp.getBody();
+        // Separar slotId y bicycleId del cuerpo recibido (formato: "slotId|bicycleId")
+        String slotIdRaw = slotResp.getBody();
+        String slotId;
+        String bicycleIdParsed = null;
+        String[] parts = slotIdRaw.split("\\|");
+        if (parts.length >= 2) {
+            slotId = parts[0];
+            bicycleIdParsed = parts[1];
+        } else {
+            // Si no viene con '|', se asume que solo es el slotId
+            slotId = slotIdRaw;
+        }
+
+        String slotEndIdBody = slotEndId.getBody();
         String reservationId = UUID.randomUUID().toString();
 
         // Crear DTO temporal y guardarlo en Redis (bicycleId = 0 por ahora)
         ReservationTempDTO dto = new ReservationTempDTO();
         dto.setReservationId(reservationId);
         dto.setUserId(req.getUserUid());
-        dto.setBicycleId(0);
+        dto.setBicycleId(bicycleIdParsed);
         dto.setStationStartId(req.getStationStartId());
         dto.setSlotStartId(slotId);
         dto.setStationEndId(req.getStationEndId());
-        dto.setSlotEndId(null);
+        dto.setSlotEndId(slotEndIdBody);
         dto.setTravelType(bikeType);
         dto.setCreatedAt(System.currentTimeMillis());
 
         reservationTempService.save(dto);
 
-        // Publicar mensaje TTL en Rabbit para manejar expiración
+        // Publicar mensaje TTL en Rabbit para manejar expiración (incluye bicycleId si está disponible)
         try {
             Map<String, Object> message = new HashMap<>();
             message.put("reservationId", reservationId);
@@ -193,8 +203,9 @@ public class TravelController {
             message.put("stationStartId", req.getStationStartId());
             message.put("stationEndId", req.getStationEndId());
             message.put("bikeType", bikeType);
-
-            amqpTemplate.convertAndSend(reservationExchange, reservationDelayRoutingKey, message);
+            if (bicycleIdParsed != null) {
+                message.put("bicycleId", bicycleIdParsed);
+            }
         } catch (Exception ex) {
             // limpiar temporal si falla la publicación
             reservationTempService.remove(reservationId);

@@ -5,8 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "bicis-service", url = "${service.bicis.url}")
-public interface BicycleClientRest {
+@FeignClient(name = "bicis-service")
+public interface BicycleClient {
 
     @GetMapping("/{id}")
     Bicycle bicycleDetail(@PathVariable Integer id);
