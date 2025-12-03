@@ -28,24 +28,16 @@ services:
       - movilidad-sostenible-network
     restart: always
 
-  redis:
-    container_name: redis
-    image: redis:alpine3.22
-    command: ["redis-server", "--appendonly", "yes"]
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
     ports:
       - "6379:6379"
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
-    volumes:
-      - redis_data:/data
+      - "8100:8001"
     networks:
       - movilidad-sostenible-network
-    restart: always
-
+    volumes:
+      - redis_data:/data
 
   mosquitto:
     container_name: mosquitto
@@ -131,7 +123,7 @@ services:
       context: ./
       dockerfile: ./usuario-service/Dockerfile
     ports:
-      - "8001:8001"
+      - "8001:8100"
     environment:
       PORT: 8001
       DB_HOST: postgres17:5432
@@ -247,7 +239,7 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
-      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_HOST: redis-stack
       SPRING_REDIS_PORT: 6379
     networks:
       - movilidad-sostenible-network
@@ -258,8 +250,8 @@ services:
         condition: service_started
       postgres17:
         condition: service_started
-      redis:
-        condition: service_healthy
+      redis-stack:
+        condition: service_started
       eureka-server:
         condition: service_healthy
     restart: always
