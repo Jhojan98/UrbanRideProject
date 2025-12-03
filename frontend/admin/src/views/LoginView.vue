@@ -16,13 +16,13 @@
                 <button type="submit" class="form-submit">{{ t('login.button') }}</button>
             </form>
 
-            <br>       
+            <br>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, Ref } from 'vue';
+import { ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 
@@ -39,12 +39,8 @@ const logUser = async () => {
     feedback.value = ''
 
     try {
-        // TODO: Implementar validación y llamada a API
-        // const authStore = useAuthStore()
-        // await authStore.login(email.value, password.value)
-        
-        // Simulación de login exitoso - remover cuando se implemente la API
-        router.push({ name: 'dashboard' })
+
+        router.push({ name: 'stationsDashboard' })
     } catch (error) {
         feedback.value = 'Error al iniciar sesión. Verifica tus credenciales.'
         console.error('Login error:', error)

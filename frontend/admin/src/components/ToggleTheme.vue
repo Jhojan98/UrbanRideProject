@@ -1,15 +1,15 @@
 
 <template>
   <button @click="toggleTheme" class="theme-toggle">
-    <img 
-      v-if="isDark" 
-      src="@/assets/icons/dark.webp" 
-      alt="Tema Claro" 
+    <img
+      v-if="isDark"
+      src="@/assets/icons/dark.webp"
+      alt="Tema Claro"
     />
-    <img 
-      v-else 
-      src="@/assets/icons/light.webp" 
-      alt="Tema Oscuro" 
+    <img
+      v-else
+      src="@/assets/icons/light.webp"
+      alt="Tema Oscuro"
     />
   </button>
 </template>

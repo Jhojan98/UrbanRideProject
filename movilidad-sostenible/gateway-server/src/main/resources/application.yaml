@@ -12,26 +12,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
+#          issuer-uri: http://keycloak:8080/realms/oauth2-movilidadsostenible
+#          jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
           issuer-uri: https://securetoken.google.com/test-firebase-8217b
   cloud:
     gateway:
-      # globalcors:
-      #   corsconfiguration:
-      #     '[/**]':
-      #       allowedOrigins:
-      #         - "http://localhost:8080"
-      #         - "http://localhost:8081"
-      #         - "http://client-frontend:80"
-      #       allowedMethods:
-      #         - GET
-      #         - POST
-      #         - PUT
-      #         - DELETE
-      #         - PATCH
-      #         - OPTIONS
-      #       allowedHeaders: "*"
-      #       allowCredentials: true
-      #       maxAge: 3600
       routes:
 
         - id: usuario-service

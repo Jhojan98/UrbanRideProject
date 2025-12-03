@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import L, { Map as LeafletMap } from 'leaflet'
+import L, { type Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 // Fix de íconos por defecto de Leaflet para bundlers (evita 404 de marker-icon.png)
 // Importamos las imágenes y configuramos el Default Icon
@@ -33,6 +33,8 @@ L.Icon.Default.mergeOptions({
 })
 import { BicycleFactory } from '@/patterns/BicycleFlyweight'
 import { BicycleWebSocketService } from '@/services/BicycleWebSocketService'
+import { StationFactory } from '@/patterns/StationFlyweight'
+import { StationWebSocketService } from '@/services/StationWebSocketService'
 
 // Arreglar rutas de íconos por defecto de Leaflet en bundlers
 // Ajuste para íconos: en proyectos con vue-cli los assets de leaflet se sirven desde /img
@@ -42,6 +44,13 @@ import { BicycleWebSocketService } from '@/services/BicycleWebSocketService'
 const map = ref<LeafletMap | null>(null)
 const bicycleFactory = new BicycleFactory()
 const wsService = new BicycleWebSocketService(bicycleFactory)
+const stationFactory = new StationFactory()
+const stationWsService = new StationWebSocketService(stationFactory)
+
+function renderStationMarkers() {
+    if (!map.value) return
+    stationFactory.getAllMarkers().forEach(m => m.render(map.value as LeafletMap))
+}
 
 onMounted(() => {
     // Centro inicial: Villavicencio (Meta, Colombia)
@@ -59,20 +68,19 @@ onMounted(() => {
             '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map.value as LeafletMap)
 
-    // Marcadores de ejemplo en Villavicencio (puedes reemplazarlos por estaciones reales)
-    const stations: Array<{ name: string; coords: [number, number] }> = [
-        { name: 'Estación Centro', coords: [4.1519, -73.6365] },
-        { name: 'Parque Sikuani', coords: [4.1460, -73.6500] },
-        { name: 'Zona Universitaria', coords: [4.1630, -73.6220] },
-        { name: 'Estación Sur', coords: [4.1390, -73.6550] },
-    ]
-
-    if (map.value) {
-        stations.forEach((s) => {
-            L.marker(s.coords).addTo(map.value as LeafletMap)
-                .bindPopup(`<b>${s.name}</b>`)
-        })
-    }
+    // Conectar estaciones via WebSocket (bulk + updates)
+    stationWsService.connect(
+        (stations) => {
+            // Bulk inicial recibido
+            console.log(`🏁 Bulk estaciones recibido: ${stations.length}`)
+            renderStationMarkers()
+        },
+        (station) => {
+            // Actualización incremental de una estación
+            console.log(`♻️ Estación actualizada: ${station.idStation}`)
+            renderStationMarkers()
+        }
+    )
 
     // Conectar al WebSocket y renderizar bicicletas cuando lleguen
     wsService.connect((factory: BicycleFactory) => {
@@ -92,9 +100,12 @@ onMounted(() => {
 onUnmounted(() => {
     // Desconectar WebSocket
     wsService.disconnect()
+    stationWsService.disconnect()
     
     // Limpiar marcadores de bicicletas
     bicycleFactory.clear()
+    // Limpiar marcadores de estaciones
+    stationFactory.clear()
 
     // Destruir mapa
     if (map.value) {

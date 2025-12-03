@@ -1,6 +1,0 @@
-com/movilidadsostenible/usuario/models/entity/Usuario.class
-com/movilidadsostenible/usuario/repositories/UsuarioRepository.class
-com/movilidadsostenible/usuario/UsuarioServiceApplication.class
-com/movilidadsostenible/usuario/services/UsuarioService.class
-com/movilidadsostenible/usuario/services/UsuarioServiceImpl.class
-com/movilidadsostenible/usuario/controllers/UsuarioController.class

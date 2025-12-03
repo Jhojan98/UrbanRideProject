@@ -1,7 +1,9 @@
 let socket: WebSocket | null = null
 
 export function createWebSocket() {
-    socket = new WebSocket(process.env.VUE_APP_WEBSOCKET_URL)
+    // Fallback para asegurar tipo string
+    const wsUrl = process.env.VUE_APP_WEBSOCKET_BICYCLES_URL || 'http://localhost:8002';
+    socket = new WebSocket(wsUrl)
     
     socket.onopen = () => {
         console.log('WebSocket connection established')
