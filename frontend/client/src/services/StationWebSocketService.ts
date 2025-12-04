@@ -31,7 +31,8 @@ export class StationWebSocketService {
     this.onUpdate = onUpdate;
 
     // Conexión directa al servicio de estaciones (no vía gateway)
-    const baseUrl = process.env.VUE_APP_WEBSOCKET_STATIONS_URL || 'http://localhost:8091';
+    // Por defecto apuntar al `estaciones-service` en el puerto 8005 (docker-compose lo expone así)
+    const baseUrl = process.env.VUE_APP_WEBSOCKET_STATIONS_URL || 'http://localhost:8005';
     // Conexión directa al microservicio de estaciones: endpoint SockJS `/ws`
     const wsUrl = `${baseUrl}/ws`;
     console.log('[Stations WS] Conectando a', wsUrl);

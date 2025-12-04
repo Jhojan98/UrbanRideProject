@@ -84,8 +84,9 @@ const props = defineProps<{
   initialStations?: Array<{ idStation?: number; stationName?: string; latitude: number; length?: number; availableSlots?: number; type?: string }>
 }>()
 
-// REST base URL (Swagger UI showed port 8005). Can be overridden via prop `restStationsUrl`.
-const restUrl = props.restStationsUrl ?? 'http://localhost:8005/estaciones'
+// REST base URL (Swagger UI mostró puerto 8005). Can be overridden via prop `restStationsUrl`.
+// El endpoint en `estaciones-service` expone `GET /stations` (controller), así que apuntamos ahí.
+const restUrl = props.restStationsUrl ?? 'http://localhost:8005/stations'
 
 // No longer emit station-click from the map; clicks only show info in the overlay
 
