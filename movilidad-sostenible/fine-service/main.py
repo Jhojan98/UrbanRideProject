@@ -259,8 +259,39 @@ async def get_user_fines_by_user(user_id: str, db: Session = Depends(database.ge
     except Exception as e:
         logging.error(f"Error fetching user fines for user {user_id}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-    
-    
+
+@app.get("/api/user_fines/user/{user_id}/unpaid", response_model=list[UserFineOut], tags=["User Fines"])   
+async def get_unpaid_user_fines_by_user(user_id: str, db: Session = Depends(database.get_db)):
+    """Get all unpaid fines for a specific user by their user ID"""
+    try:
+        user_fines = (
+            db.query(_models.UserFine)
+            .options(joinedload(_models.UserFine.fine))
+            .filter(_models.UserFine.k_uid_user == user_id)
+            .filter(_models.UserFine.t_state != 'PAID')
+            .all()
+        )
+        return user_fines
+    except Exception as e:
+        logging.error(f"Error fetching unpaid user fines for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/user_fines/{user}/has_fines_unpaid", response_model=bool, tags=["User Fines"])
+async def has_unpaid_fines(user: str, db: Session = Depends(database.get_db)):
+    """Check if a user has any unpaid fines."""
+    try:
+        count = (
+            db.query(_models.UserFine)
+            .filter(_models.UserFine.k_uid_user == user)
+            .filter(_models.UserFine.t_state != 'PAID')
+            .count()
+        )
+        return count > 0
+    except Exception as e:
+        logging.error(f"Error checking unpaid fines for user {user}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error, el usuario depronto no existe")
+
 @app.post("/api/user_fines/{user_fine_id}/pay", response_model=UserFineOut, tags=["User Fines"])
 async def pay_user_fine(user_fine_id: int, db: Session = Depends(database.get_db)):
     """Attempt to pay the user fine by subtracting balance from the users service."""
