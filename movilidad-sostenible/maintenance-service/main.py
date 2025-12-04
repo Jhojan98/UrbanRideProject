@@ -1,20 +1,32 @@
+import logging
+import os
+from contextlib import asynccontextmanager
+from typing import List
+
+import httpx
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-import os
+
 import database
 import models
 import schemas
-from contextlib import asynccontextmanager
-import logging
 from eureka import start as start_eureka, stop as stop_eureka
-import httpx
+from rabbit import EXCHANGE, close_rabbit_channel, open_rabbit_channel
+
+
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     eureka_handle = await start_eureka()
+    rabbit_connection = None
+    rabbit_channel = None
     try:
+        rabbit_connection, rabbit_channel = open_rabbit_channel()
+        app.state.rabbit_connection = rabbit_connection
+        app.state.rabbit_channel = rabbit_channel
+        logging.info("RabbitMQ channel ready on exchange '%s'", EXCHANGE)
         yield
     finally:
+        close_rabbit_channel(rabbit_connection, rabbit_channel)
         await stop_eureka(eureka_handle)
 
 

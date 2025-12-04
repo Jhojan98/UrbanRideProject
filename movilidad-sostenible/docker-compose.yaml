@@ -415,6 +415,11 @@ services:
       POSTGRES_DB: movilidad_sostenible
       POSTGRES_USER: ${MANTENIMIENTO_DB_USER}
       POSTGRES_PASSWORD: ${MANTENIMIENTO_DB_PASSWORD}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/
+      RABBITMQ_QUEUE: maintenance_tasks
+      RABBITMQ_EXCHANGE: maintenance_exchange
+      RABBITMQ_ROUTING_KEY: maintenance.key
+      RABBITMQ_BINDING_PATTERN: maintenance.#
     networks:
       - movilidad-sostenible-network
     depends_on:
