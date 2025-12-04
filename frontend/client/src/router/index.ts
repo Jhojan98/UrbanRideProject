@@ -5,10 +5,13 @@ import SignupView from '@/views/SignupView.vue'
 import VerifyOtpView from '@/views/VerifyOtpView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ReservationView from '@/views/ReservationView.vue'
-import BalanceComponent from '@/components/BalanceComponent.vue'
-import PaymentMethodsComponent from '@/components/PaymentMethodsComponent.vue'
+import PaymentMethodsComponent from '@/components/payments/PaymentMethodsComponent.vue'
 import DestinationMapComponent from '@/components/DestinationMapComponent.vue'
 import ReportProblemComponent from '@/components/ReportProblemComponent.vue'
+import PaymentSuccesComponent from '@/components/payments/PaymentSuccesComponent.vue'
+import PaymentCancelComponent from '@/components/payments/PaymentCancelComponent.vue'
+import PaymentCheckoutComponent from '@/components/payments/PaymentCheckoutComponent.vue'
+
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -55,12 +58,6 @@ const routes: Array<RouteRecordRaw> = [
     meta:{ requireAuth: true, layout: 'main' }
   },
   {
-    path: '/balance',
-    name: 'balance',
-    component: BalanceComponent,
-    meta:{ requireAuth: true, layout: 'main' }
-  },
-  {
     path: '/plan-your-trip',
     name: 'plan-your-trip',
     component: ReservationView,
@@ -74,18 +71,29 @@ const routes: Array<RouteRecordRaw> = [
     meta: {requireAuth: false, layout: 'main'}
   },
   {
-    path: '/payment',
-    name: 'payment-methods',
-    component: PaymentMethodsComponent,
-    meta: {requireAuth: false, layout: 'main'}
-
-  },
-  {
     path: '/report-problem',
     name: 'report-problem',
     component: ReportProblemComponent,
     meta: {requireAuth: false, layout: 'main'}
 
+  },
+  {
+    path: '/pago/success',
+    name: 'payment-success',
+    component: PaymentSuccesComponent,
+    meta: { requireAuth: false, layout: 'main' }
+  },
+  {
+    path: '/pago/cancel',
+    name: 'payment-cancel', 
+    component: PaymentCancelComponent,
+    meta: { requireAuth: false, layout: 'main' }
+  },
+  {
+    path: '/pago/methods',
+    name: 'payment-methods', 
+    component: PaymentMethodsComponent,
+    meta: { requireAuth: false, layout: 'main' }
   }
   
 

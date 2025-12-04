@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   client-frontend:
     build:
@@ -24,11 +26,11 @@ services:
       - movilidad-sostenible-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:80 || exit 1"]
-      interval: 10s
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
+      interval: 30s
       timeout: 5s
-      retries: 5
-      start_period: 15s
+      retries: 3
+      start_period: 10s
 
   admin-frontend:
     build:
@@ -55,11 +57,11 @@ services:
       - movilidad-sostenible-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:80 || exit 1"]
-      interval: 10s
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
+      interval: 30s
       timeout: 5s
-      retries: 5
-      start_period: 15s
+      retries: 3
+      start_period: 10s
 
 networks:
   frontend-network:
