@@ -5,7 +5,6 @@ import SignupView from '@/views/SignupView.vue'
 import VerifyOtpView from '@/views/VerifyOtpView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ReservationView from '@/views/ReservationView.vue'
-import BalanceComponent from '@/components/BalanceComponent.vue'
 import PaymentMethodsComponent from '@/components/payments/PaymentMethodsComponent.vue'
 import DestinationMapComponent from '@/components/DestinationMapComponent.vue'
 import ReportProblemComponent from '@/components/ReportProblemComponent.vue'
@@ -56,12 +55,6 @@ const routes: Array<RouteRecordRaw> = [
     path: '/reservation',
     name: 'reservation',
     component: ReservationView,
-    meta:{ requireAuth: true, layout: 'main' }
-  },
-  {
-    path: '/balance',
-    name: 'balance',
-    component: BalanceComponent,
     meta:{ requireAuth: true, layout: 'main' }
   },
   {
