@@ -79,7 +79,13 @@ const mockStations = [
 const props = defineProps<{
   origin?: { latitude: number; longitude: number; name?: string; free_spots?: number; status?: string } | null
   destination?: { latitude: number; longitude: number; name?: string; free_spots?: number; status?: string } | null
+  useSockets?: boolean
+  restStationsUrl?: string
+  initialStations?: Array<{ idStation?: number; stationName?: string; latitude: number; length?: number; availableSlots?: number; type?: string }>
 }>()
+
+// REST base URL (Swagger UI showed port 8005). Can be overridden via prop `restStationsUrl`.
+const restUrl = props.restStationsUrl ?? 'http://localhost:8005/estaciones'
 
 // No longer emit station-click from the map; clicks only show info in the overlay
 
@@ -243,6 +249,66 @@ function fitMap() {
   }
 }
 
+// Fetch stations from REST endpoint and render them. Returns true if successful.
+async function fetchStationsFromRest(): Promise<boolean> {
+  const candidates = [restUrl]
+  // try common suffix
+  if (!restUrl.endsWith('/list')) candidates.push(restUrl.replace(/\/$/, '') + '/list')
+  if (!restUrl.endsWith('/all')) candidates.push(restUrl.replace(/\/$/, '') + '/all')
+
+  for (const url of candidates) {
+    try {
+      console.log('[Map] trying REST stations URL:', url)
+      const res = await fetch(url)
+      if (!res.ok) {
+        console.warn('[Map] REST stations fetch failed, status', res.status, 'for', url)
+        continue
+      }
+      const data = await res.json()
+
+      // try common shapes (array or wrapped)
+      let list: any[] = []
+      if (Array.isArray(data)) list = data
+      else if (Array.isArray(data.content)) list = data.content
+      else if (Array.isArray(data._embedded?.estaciones)) list = data._embedded.estaciones
+      else {
+        for (const v of Object.values(data)) if (Array.isArray(v)) { list = v as any[]; break }
+      }
+
+      if (!list.length) {
+        console.warn('[Map] REST returned no station list for', url)
+        continue
+      }
+
+      // render markers for each station
+      list.forEach(s => {
+        const lat = s.latitude ?? s.lat
+        const lng = s.length ?? s.longitude ?? s.lng
+        const name = s.stationName ?? s.nameStation ?? s.name
+        const id = s.idStation ?? s.id
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          const mk = L.marker([lat, lng]).addTo(map.value as LeafletMap)
+          const popup = `<strong>${name ?? 'Estación'}</strong><br/>Tipo: ${s.type ?? '-'}<br/>CCTV: ${s.cctvStatus ?? '-'}<br/>ID: ${id}`
+          mk.bindPopup(popup)
+          // on hover show popup
+          mk.on('mouseover', () => mk.openPopup())
+          mk.on('mouseout', () => mk.closePopup())
+        }
+      })
+
+      stationsRendered.value = true
+      console.log('[Map] stations loaded from', url, 'count:', list.length)
+      return true
+    } catch (err) {
+      console.warn('[Map] Error trying URL', url, err)
+      continue
+    }
+  }
+
+  console.warn('[Map] All REST station URL candidates failed')
+  return false
+}
+
 onMounted(() => {
   const initialCenter: [number, number] = [4.1514, -73.6370]
 
@@ -257,26 +323,55 @@ onMounted(() => {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map.value as LeafletMap)
 
-  // Cargar datos locales de prueba inmediatamente (fallback)
-  mockStations.forEach(st => {
-    const marker = stationFactory.getStationMarker(st as any)
-    marker.render(map.value as LeafletMap)
-    try {
-      marker.onClick((station) => {
-        const payload = {
-          id: (station as any).idStation ?? (station as any).id,
-          name: (station as any).nameStation ?? (station as any).name,
-          latitude: station.latitude,
-          longitude: station.longitude,
-          free_spots: (station as any).availableSlots ?? (station as any).free_spots,
-          type: (station as any).type ?? 'bike'
-        }
-        if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-        else clickedStation.value = payload
-      })
-    } catch (e) { void e }
-  })
-  stationsRendered.value = true
+  // If sockets disabled, try fetching stations from REST endpoint, else render local mocks and connect WS
+  if (props.useSockets === false) {
+    fetchStationsFromRest().then(ok => {
+      if (!ok) {
+        // fallback to provided initialStations prop, otherwise to local mocks
+        const fallback = (props.initialStations && props.initialStations.length) ? props.initialStations : mockStations
+        fallback.forEach(st => {
+          const marker = stationFactory.getStationMarker(st as any)
+          marker.render(map.value as LeafletMap)
+          try {
+            marker.onClick((station) => {
+              const payload = {
+                id: (station as any).idStation ?? (station as any).id,
+                name: (station as any).nameStation ?? (station as any).name,
+                latitude: station.latitude,
+                longitude: station.longitude,
+                free_spots: (station as any).availableSlots ?? (station as any).free_spots,
+                type: (station as any).type ?? 'bike'
+              }
+              if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
+              else clickedStation.value = payload
+            })
+          } catch (e) { void e }
+        })
+        stationsRendered.value = true
+      }
+    })
+  } else {
+    // Cargar datos locales de prueba inmediatamente (fallback)
+    mockStations.forEach(st => {
+      const marker = stationFactory.getStationMarker(st as any)
+      marker.render(map.value as LeafletMap)
+      try {
+        marker.onClick((station) => {
+          const payload = {
+            id: (station as any).idStation ?? (station as any).id,
+            name: (station as any).nameStation ?? (station as any).name,
+            latitude: station.latitude,
+            longitude: station.longitude,
+            free_spots: (station as any).availableSlots ?? (station as any).free_spots,
+            type: (station as any).type ?? 'bike'
+          }
+          if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
+          else clickedStation.value = payload
+        })
+      } catch (e) { void e }
+    })
+    stationsRendered.value = true
+  }
 
   // Intentar conectar al WebSocket de estaciones y solicitar carga inicial.
   try {
