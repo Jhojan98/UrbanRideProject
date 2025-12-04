@@ -1,6 +1,6 @@
 package com.movilidadsostenible.viaje_service.services;
 
-import com.movilidadsostenible.viaje_service.clients.BicycleClientRest;
+import com.movilidadsostenible.viaje_service.clients.BicycleClient;
 import com.movilidadsostenible.viaje_service.clients.UserClientRest;
 import com.movilidadsostenible.viaje_service.models.Bicycle;
 import com.movilidadsostenible.viaje_service.models.User;
@@ -22,7 +22,7 @@ public class TravelServiceImpl implements TravelService {
     private UserClientRest userClientRest;
 
     @Autowired
-    private BicycleClientRest bicycleClientRest;
+    private BicycleClient bicycleClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -39,14 +39,7 @@ public class TravelServiceImpl implements TravelService {
     @Override
     @Transactional
     public Travel save(Travel travel) {
-        Optional<User> usuarioOptional = Optional.ofNullable(userClientRest.userDetail(travel.getUserCc()));
-        Optional<Bicycle> bicicletaOptional = Optional.ofNullable(bicycleClientRest.bicycleDetail(travel.getIdBicycle()));
-
-        if (usuarioOptional.isPresent() && bicicletaOptional.isPresent()) {
-            return repository.save(travel);
-        }
-        return null;
-
+        return repository.save(travel);
     }
 
     @Override
@@ -55,5 +48,10 @@ public class TravelServiceImpl implements TravelService {
         repository.deleteById(id);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Travel> findAllByUid(String uid) {
+        return repository.findAllByUid(uid);
+    }
 
 }

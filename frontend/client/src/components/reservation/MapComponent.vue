@@ -43,6 +43,8 @@ import { useRouter } from 'vue-router'
 import userAuth from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import L, { Map as LeafletMap, Marker, Polyline } from 'leaflet'
+import { onMounted, onUnmounted, ref } from 'vue'
+import L, { type Map as LeafletMap } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore

@@ -116,10 +116,14 @@ CREATE TABLE fine
 CREATE TABLE maintenance
 (
 	k_id_maintenance serial NOT NULL,	-- Identificador único del registro de mantenimiento. Actúa como clave primaria de la tabla y permite distinguir cada intervención realizada sobre una bicicleta, asegurando integridad y trazabilidad en el historial técnico. Su unicidad garantiza que cada mantenimiento pueda auditarse, referenciarse y consultarse de manera independiente en el sistema.
+	t_maintenance_type varchar(50) NOT NULL,	-- Tipo de mantenimiento realizado. Este campo clasifica la naturaleza de la intervención, permitiendo distinguir entre mantenimientos preventivos, correctivos, inspecciones u otros tipos definidos por la operación. Facilita el análisis estadístico y la planificación de futuras acciones de mantenimiento según las necesidades detectadas en la flota.
+	v_total_trips integer NOT NULL,	-- Número total de viajes realizados por la bicicleta hasta el momento del mantenimiento. Este valor proporciona una métrica clave para evaluar el desgaste y la necesidad de intervenciones técnicas, permitiendo correlacionar el uso con la frecuencia y tipo de mantenimiento requerido.
+	t_triggered_by varchar(50) NOT NULL,	-- Indica el origen o motivo que llevó a la programación del mantenimiento. Puede reflejar si fue una acción preventiva basada en un calendario, una alerta generada por el sistema debido a fallos detectados, o una solicitud manual por parte del personal técnico. Este campo es esencial para entender las causas detrás de cada intervención y optimizar los procesos de mantenimiento.
 	d_description varchar(250) NOT NULL,	-- Contiene el detalle del mantenimiento realizado, incluyendo el tipo de actividad ejecutada (correctivo, preventivo, inspección, cambio de partes, etc.). Permite documentar las acciones aplicadas sobre la bicicleta para futuras referencias, auditoría y control interno.
 	t_status varchar(50) NOT NULL,	-- Indica el estado del mantenimiento registrado. Puede reflejar etapas como pendiente, en proceso, completado, según el flujo definido por la operación. Facilita la gestión del ciclo de mantenimiento y permite identificar trabajos abiertos o finalizados.
 	f_date date NOT NULL,	-- Registra la fecha en la que se realizó o programó el mantenimiento. Permite ordenar cronológicamente el historial de intervenciones y evaluar la frecuencia de reparaciones o servicios preventivos aplicados a cada bicicleta.
-	k_id_bicycle varchar(11) NULL	-- Identificador único de la bicicleta a la que se le realizó el mantenimiento. Este valor hace referencia directa a la bicicleta registrada en el sistema y permite asociar cada intervención con un elemento físico específico de la flota. Al ser de tipo VARCHAR, admite codificación que diferencia bicicletas eléctricas y mecánicas, mejorando el control operativo y la trazabilidad del historial técnico.
+	k_id_bicycle varchar(11) NULL,	-- Identificador único de la bicicleta a la que se le realizó el mantenimiento. Este valor hace referencia directa a la bicicleta registrada en el sistema y permite asociar cada intervención con un elemento físico específico de la flota. Al ser de tipo VARCHAR, admite codificación que diferencia bicicletas eléctricas y mecánicas, mejorando el control operativo y la trazabilidad del historial técnico.
+	v_cost_usd numeric(10,2) NULL	-- Costo total del mantenimiento expresado en dólares estadounidenses. Este campo permite registrar el gasto asociado a cada intervención técnica, facilitando el análisis financiero y la gestión presupuestaria del programa de mantenimiento de la flota.
 )
 ;
 
@@ -663,12 +667,17 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO manager_city;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.station TO manager_station;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.fine TO manager_fine;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.fine_k_id_fine_seq TO manager_fine;
+
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.travel TO manager_travel;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO manager_travel;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_fine TO manager_fine;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.user_fine_k_user_fine_seq TO manager_fine;	
+
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.slots TO manager_slots;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.maintenance TO manager_maintenance;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.maintenance_k_id_maintenance_seq TO manager_maintenance;

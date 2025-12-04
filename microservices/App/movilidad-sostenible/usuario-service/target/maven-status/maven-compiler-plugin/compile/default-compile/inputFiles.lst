@@ -1,6 +1,0 @@
-/home/xmara/UD/DIseño de Software/UrbanRideProject/microservices/App/movilidad-sostenible/usuario-service/src/main/java/com/movilidadsostenible/usuario/UsuarioServiceApplication.java
-/home/xmara/UD/DIseño de Software/UrbanRideProject/microservices/App/movilidad-sostenible/usuario-service/src/main/java/com/movilidadsostenible/usuario/controllers/UsuarioController.java
-/home/xmara/UD/DIseño de Software/UrbanRideProject/microservices/App/movilidad-sostenible/usuario-service/src/main/java/com/movilidadsostenible/usuario/models/entity/Usuario.java
-/home/xmara/UD/DIseño de Software/UrbanRideProject/microservices/App/movilidad-sostenible/usuario-service/src/main/java/com/movilidadsostenible/usuario/repositories/UsuarioRepository.java
-/home/xmara/UD/DIseño de Software/UrbanRideProject/microservices/App/movilidad-sostenible/usuario-service/src/main/java/com/movilidadsostenible/usuario/services/UsuarioService.java
-/home/xmara/UD/DIseño de Software/UrbanRideProject/microservices/App/movilidad-sostenible/usuario-service/src/main/java/com/movilidadsostenible/usuario/services/UsuarioServiceImpl.java

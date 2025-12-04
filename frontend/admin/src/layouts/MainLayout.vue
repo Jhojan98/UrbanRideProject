@@ -29,4 +29,10 @@ import FooterComponent from '@/components/FooterComponent.vue'
     padding: 1rem;
     padding-top: 80px; /* ajuste seguro; reduce si tu header es más pequeño */
 }
+
+/* Eliminar padding cuando se usa el dashboard de usuarios */
+.layout-content:has(.user-dashboard-layout) {
+    padding: 0;
+    padding-top: 80px;
+}
 </style>

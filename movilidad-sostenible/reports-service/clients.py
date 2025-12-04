@@ -18,7 +18,7 @@ class ServiceClients:
     def __init__(self, timeout: float = 10.0) -> None:
         self.timeout = timeout
         self.users_base = _normalize_url(os.getenv("USERS_SERVICE_URL", "http://usuario-service:8001"))
-        self.bicycle_base = _normalize_url(os.getenv("BICYCLE_SERVICE_URL", "http://bicycle-service:8002"))
+        self.bicycle_base = _normalize_url(os.getenv("BICYCLE_SERVICE_URL", "http://bicis-service:8002"))
         self.reservations_base = _normalize_url(os.getenv("RESERVATIONS_SERVICE_URL", "http://viaje-service:8003"))
         self.fines_base = _normalize_url(os.getenv("FINES_SERVICE_URL", "http://fine-service:8004"))
 

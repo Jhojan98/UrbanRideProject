@@ -35,3 +35,11 @@ else:
 engine_2 = _sql.create_engine(DATABASE_URL)
 SessionLocal = _orm.sessionmaker(autocommit=False, autoflush=False, bind=engine_2)
 Base = _declarative.declarative_base()
+
+# Dependency to get DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

@@ -12,17 +12,17 @@ class ReportAggregator:
     async def aggregate_overview(self) -> Dict[str, Any]:
         """Admin-level overview across services."""
         users = await self.clients.list_users()
-        #bicycles = await self.clients.list_bicycles()
-        #reservations = await self.clients.list_reservations()
+        bicycles = await self.clients.list_bicycles()
+        # reservations = await self.clients.list_reservations()
         fines = await self.clients.list_fines()
 
         return {
             "users_count": len(users),
-           # "bicycles_count": len(bicycles),
+            "bicycles_count": len(bicycles),
             #"reservations_count": len(reservations),
             "fines_count": len(fines),
             "users": users,
-            # "bicycles": bicycles,
+            "bicycles": bicycles,
             #"reservations": reservations,
             "fines": fines,
         }

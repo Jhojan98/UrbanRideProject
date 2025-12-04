@@ -160,6 +160,28 @@ public class BicicletaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(bicycle));
     }
 
+    // Metodo para actualizar el padlockeStatus de una bicicleta
+    @PutMapping(value = "/{id}/padlock-status", produces = "application/json")
+    @Operation(summary = "Actualizar estado del candado de una bicicleta",
+            description = "Actualiza el campo padlockStatus de la bicicleta indicada por id. Valores típicos: LOCKED, UNLOCKED")
+    @ApiResponse(responseCode = "200", description = "Actualizada",
+            content = @Content(schema = @Schema(implementation = Bicycle.class)))
+    @ApiResponse(responseCode = "404", description = "No encontrada")
+    public ResponseEntity<?> updatePadlockStatus(
+            @Parameter(description = "Identificador de la bicicleta", required = true, example = "ELEC-123456")
+            @PathVariable String id,
+            @Parameter(description = "Nuevo estado del candado", required = true, example = "LOCKED")
+            @RequestParam("status") String status) {
+        Optional<Bicycle> o = service.byId(id);
+        if (o.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Bicycle bici = o.get();
+        bici.setPadlockStatus(status);
+        service.save(bici);
+        return ResponseEntity.ok(bici);
+    }
+
     private String generateId(String prefix) {
         int number = RANDOM.nextInt(1_000_000); // 0..999999
         return String.format("%s-%06d", prefix, number);

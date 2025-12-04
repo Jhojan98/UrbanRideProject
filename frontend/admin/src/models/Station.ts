@@ -18,7 +18,7 @@ export interface Slot {
   lastUpdated: Date;
 }
 
-/** Modelo principal de estación */
+/** Modelo principal de estación (consolidado con slots opcionales) */
 export interface Station {
   idStation: number;
   nameStation: string;
@@ -27,10 +27,10 @@ export interface Station {
   totalSlots: number;
   availableSlots: number;
   timestamp: Date;
-  slots: Slot[];
+  slots?: Slot[]; // Opcional: presente cuando se cargan slots completos
 }
 
-// DTOs recibidos del backend
+// DTO consolidado (acepta con/sin slots)
 export interface SlotDTO {
   idSlot: number;
   idStation: number;
@@ -48,13 +48,10 @@ export interface StationDTO {
   totalSlots: number;
   availableSlots: number;
   timestamp: string;
+  slots?: SlotDTO[]; // Opcional
 }
 
-export interface StationWithSlotsDTO extends StationDTO {
-  slots: SlotDTO[];
-}
-
-// Conversores
+// Conversores unificados
 export function toSlot(dto: SlotDTO): Slot {
   return {
     idSlot: dto.idSlot,
@@ -66,6 +63,9 @@ export function toSlot(dto: SlotDTO): Slot {
   };
 }
 
+/**
+ * Conversor único: maneja StationDTO con o sin slots
+ */
 export function toStation(dto: StationDTO): Station {
   return {
     idStation: dto.idStation,
@@ -75,19 +75,6 @@ export function toStation(dto: StationDTO): Station {
     totalSlots: dto.totalSlots,
     availableSlots: dto.availableSlots,
     timestamp: new Date(dto.timestamp),
-    slots: []
-  };
-}
-
-export function toStationWithSlots(dto: StationWithSlotsDTO): Station {
-  return {
-    idStation: dto.idStation,
-    nameStation: dto.nameStation,
-    latitude: dto.latitude,
-    longitude: dto.longitude,
-    totalSlots: dto.totalSlots,
-    availableSlots: dto.availableSlots,
-    timestamp: new Date(dto.timestamp),
-    slots: dto.slots.map(toSlot)
+    slots: dto.slots?.map(toSlot)
   };
 }
