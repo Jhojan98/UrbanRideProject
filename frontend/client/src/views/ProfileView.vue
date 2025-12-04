@@ -36,6 +36,17 @@
       <section class="profile-section balance-section">
         <h2 class="section-title">{{ $t('profile.balance.title') }}</h2>
         <div class="balance-card centered-card">
+          <div class="currency-selector">
+            <label>{{ $t('profile.balance.currency') }}:</label>
+            <button
+              v-for="curr in currencies"
+              :key="curr"
+              @click="selectedCurrency = curr"
+              :class="['currency-btn', { 'active': selectedCurrency === curr }]"
+            >
+              {{ curr }}
+            </button>
+          </div>
           <div class="balance-display">
             <span class="balance-label">{{ $t('profile.balance.currentBalance') }}</span>
             <span class="balance-value">
@@ -56,7 +67,7 @@
           </div>
           <div class="payment-actions">
             <button class="btn-add-balance" @click="goToPaymentMethods">
-              Añadir saldo
+              {{ $t('profile.balance.addBalance') }}
             </button>
           </div>
         </div>
@@ -69,7 +80,7 @@
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import usePaymentStore from "@/stores/payment";
 
 const router = useRouter();
@@ -81,6 +92,13 @@ const uid = ref<string | null>(null);
 const userName = ref<string | null>(null);
 const balance = ref<number | null>(null);
 const isLoadingBalance = ref(false);
+
+// Selector de moneda
+const currencies = ['USD', 'COP'] as const;
+const selectedCurrency = ref<'USD' | 'COP'>('USD');
+
+// Tasa de conversión estimada (1 USD = 4000 COP)
+const USD_TO_COP_RATE = 4000;
 
 // Historial de viajes (datos de ejemplo)
 interface Trip {
@@ -128,11 +146,20 @@ const welcomeText = computed(() => {
 // Formato de balance
 const formattedBalance = computed(() => {
   if (balance.value === null) return "--";
-  return new Intl.NumberFormat("es-CO", {
+
+  // El saldo en el backend está en USD
+  const amountInUSD = balance.value;
+  const displayAmount = selectedCurrency.value === 'COP'
+    ? amountInUSD * USD_TO_COP_RATE
+    : amountInUSD;
+
+  const locale = selectedCurrency.value === 'COP' ? 'es-CO' : 'en-US';
+
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "COP",
-    minimumFractionDigits: 0
-  }).format(balance.value);
+    currency: selectedCurrency.value,
+    minimumFractionDigits: selectedCurrency.value === 'COP' ? 0 : 2
+  }).format(displayAmount);
 });
 
 // Navegar a PaymentMethods
@@ -264,6 +291,40 @@ onMounted(() => {
     flex-direction: column;
     align-items: center;
 
+    .currency-selector {
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      label {
+        font-weight: 500;
+        color: #333;
+        font-size: 14px;
+      }
+
+      .currency-btn {
+        padding: 0.4rem 1rem;
+        border: 2px solid #e0e0e0;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 14px;
+        transition: all 0.3s;
+
+        &:hover {
+          border-color: #0074d4;
+        }
+
+        &.active {
+          background: #0074d4;
+          color: white;
+          border-color: #0074d4;
+        }
+      }
+    }
+
     .balance-display {
       margin-bottom: 1.5rem;
       position: relative;
@@ -327,6 +388,130 @@ onMounted(() => {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .profile {
+    padding: 1rem;
+  }
+
+  .balance-section .centered-card {
+    max-width: 100%;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .currency-selector {
+    flex-wrap: wrap;
+    gap: 0.25rem !important;
+    margin-bottom: 0.5rem !important;
+
+    label {
+      width: 100%;
+      margin-bottom: 0.25rem;
+      font-size: 12px;
+    }
+
+    .currency-btn {
+      flex: 1;
+      min-width: 50px;
+      padding: 0.3rem 0.6rem !important;
+      font-size: 12px !important;
+    }
+  }
+
+  .balance-display {
+    margin-bottom: 1rem !important;
+  }
+
+  .balance-value {
+    font-size: 1.5rem !important;
+  }
+
+  .card-info {
+    margin-bottom: 1rem !important;
+
+    h4 {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+  }
+
+  .card-details {
+    font-size: 0.85rem;
+    gap: 0.25rem;
+  }
+
+  .payment-actions {
+    width: 100%;
+
+    .btn-add-balance {
+      width: 100%;
+      padding: 0.8rem !important;
+      font-size: 14px;
+    }
+  }
+
+  .btn-view-all {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile {
+    min-height: calc(100vh - 120px);
+    padding: 0.75rem;
+  }
+
+  .profile-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+  }
+
+  .table-container {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .trips-table th,
+  .trips-table td {
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
+
+  .currency-selector {
+    label {
+      font-size: 11px;
+    }
+
+    .currency-btn {
+      padding: 0.25rem 0.4rem !important;
+      font-size: 11px !important;
+    }
+  }
+
+  .balance-value {
+    font-size: 1.25rem !important;
+  }
+
+  .refresh-btn {
+    font-size: 12px;
+    margin-left: 4px;
+    padding: 2px;
+  }
+
+  .card-type {
+    font-size: 0.8rem;
+  }
+
+  .card-number,
+  .card-expiry {
+    font-size: 0.75rem;
+  }
 }
 
 // Responsive

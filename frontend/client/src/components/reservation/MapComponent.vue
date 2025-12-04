@@ -7,10 +7,10 @@
       <div class="modal">
         <div class="modal-content">
           <div class="success-icon">🔒</div>
-          <h3>Acceso restringido</h3>
-          <p>Para acceder a nuestros servicios y ver el mapa, debes iniciar sesión primero.</p>
+          <h3>{{ $t('reservation.map.authRequired') }}</h3>
+          <p>{{ $t('reservation.map.authMessage') }}</p>
           <div style="display:flex;gap:12px;justify-content:center;margin-top:18px;">
-            <button class="butn-primary" @click="goToLogin">Aceptar</button>
+            <button class="butn-primary" @click="goToLogin">{{ $t('reservation.map.accept') }}</button>
           </div>
         </div>
       </div>
@@ -19,18 +19,18 @@
     <!-- Overlay: solo muestra info cuando hay ruta seleccionada (origen + destino) -->
     <div v-if="originPlain && destinationPlain" class="map-overlay">
       <div class="overlay-section">
-        <h4>📍 Estación Origen</h4>
+        <h4>📍 {{ $t('reservation.map.originStation') }}</h4>
         <div>
           <div class="row"><strong>{{ originPlain.name ?? '—' }}</strong></div>
-          <div class="row">🚲 {{ originPlain.free_spots ?? '—' }} bicicletas</div>
+          <div class="row">🚲 {{ originPlain.free_spots ?? '—' }} {{ $t('reservation.map.availableBikes') }}</div>
         </div>
       </div>
 
       <div class="overlay-section">
-        <h4>🅿️ Estación Destino</h4>
+        <h4>🅿️ {{ $t('reservation.map.destinationStation') }}</h4>
         <div>
           <div class="row"><strong>{{ destinationPlain.name ?? '—' }}</strong></div>
-          <div class="row">📍 {{ destinationPlain.free_spots ?? '—' }} puestos libres</div>
+          <div class="row">📍 {{ destinationPlain.free_spots ?? '—' }} {{ $t('reservation.map.availableSlots') }}</div>
         </div>
       </div>
     </div>
@@ -40,9 +40,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, defineProps, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import userAuth from '@/stores/auth'
-import { storeToRefs } from 'pinia'
-import L, { Map as LeafletMap, Marker, Polyline } from 'leaflet'
+import { useI18n } from 'vue-i18n'
+import L from 'leaflet'
+import type { Map as LeafletMap, Marker, Polyline } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -55,7 +55,8 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png'
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 
 // Arreglar íconos por defecto
-delete (L.Icon.Default.prototype as any)._getIconUrl
+// Eliminar método interno de iconos por defecto con cast seguro
+delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
   iconUrl: markerIcon,
@@ -68,12 +69,24 @@ import { StationFactory } from '@/patterns/StationFlyweight'
 import { StationWebSocketService } from '@/services/StationWebSocketService'
 
 // Datos locales de prueba para estaciones (cuando WebSocket no está disponible)
-const mockStations = [
-  { idStation: 10, nameStation: "Estación Centro", latitude: 4.1430, longitude: -73.6290, availableSlots: 5, totalSlots: 10, type: 'bike', mechanical: 3, electric: 2, slots: [] as any[] },
-  { idStation: 11, nameStation: "Parque Sikuani", latitude: 4.1475, longitude: -73.6260, availableSlots: 2, totalSlots: 10, type: 'bike', mechanical: 1, electric: 1, slots: [] as any[] },
-  { idStation: 12, nameStation: "Zona Universitaria", latitude: 4.1505, longitude: -73.6235, availableSlots: 0, totalSlots: 10, type: 'bike', mechanical: 0, electric: 0, slots: [] as any[] },
-  { idStation: 1, nameStation: "Metro Estación Central", latitude: 4.1425, longitude: -73.6312, availableSlots: 5, totalSlots: 10, type: 'metro', mechanical: 0, electric: 0, slots: [] as any[] },
-  { idStation: 2, nameStation: "Metro Sikuani", latitude: 4.1480, longitude: -73.6270, availableSlots: 2, totalSlots: 10, type: 'metro', mechanical: 0, electric: 0, slots: [] as any[] }
+interface StationLike {
+  idStation?: number
+  id?: number
+  nameStation?: string
+  name?: string
+  latitude: number
+  longitude: number
+  availableSlots?: number
+  free_spots?: number
+  type?: string
+}
+
+const mockStations: StationLike[] = [
+  { idStation: 10, nameStation: "Estación Centro", latitude: 4.1430, longitude: -73.6290, availableSlots: 5, totalSlots: 10, type: 'bike', mechanical: 3, electric: 2, slots: [] as unknown[] },
+  { idStation: 11, nameStation: "Parque Sikuani", latitude: 4.1475, longitude: -73.6260, availableSlots: 2, totalSlots: 10, type: 'bike', mechanical: 1, electric: 1, slots: [] as unknown[] },
+  { idStation: 12, nameStation: "Zona Universitaria", latitude: 4.1505, longitude: -73.6235, availableSlots: 0, totalSlots: 10, type: 'bike', mechanical: 0, electric: 0, slots: [] as unknown[] },
+  { idStation: 1, nameStation: "Metro Estación Central", latitude: 4.1425, longitude: -73.6312, availableSlots: 5, totalSlots: 10, type: 'metro', mechanical: 0, electric: 0, slots: [] as unknown[] },
+  { idStation: 2, nameStation: "Metro Sikuani", latitude: 4.1480, longitude: -73.6270, availableSlots: 2, totalSlots: 10, type: 'metro', mechanical: 0, electric: 0, slots: [] as unknown[] }
 ]
 
 const props = defineProps<{
@@ -83,18 +96,28 @@ const props = defineProps<{
 
 // No longer emit station-click from the map; clicks only show info in the overlay
 
+const { t: $t } = useI18n()
 const map = ref<LeafletMap | null>(null)
+const isMounted = ref<boolean>(false)
 const bicycleFactory = new BicycleFactory()
 const wsService = new BicycleWebSocketService(bicycleFactory)
 const stationFactory = new StationFactory()
 const stationWsService = new StationWebSocketService(stationFactory)
-const stationsRendered = ref<boolean>(false) // flag para evitar re-renderizar
-const clickedStation = ref<any | null>(null)
+interface ClickedStation {
+  id: number | string
+  name: string
+  latitude: number
+  longitude: number
+  free_spots: number
+  type: string
+}
+const clickedStation = ref<ClickedStation | null>(null)
+const pendingTimeouts = new Set<number>()
 
 // Auth modal: si no está autenticado, mostrar modal que obliga a iniciar sesión
 const router = useRouter()
-const authStore = userAuth()
-const { token } = storeToRefs(authStore)
+// const authStore = userAuth()
+// const { token } = storeToRefs(authStore)
 // Temporalmente deshabilitamos la restricción de login para facilitar
 // la comprobación de la obtención/renderizado de estaciones.
 // Antes: showAuthModal dependía de `token`; ahora forzamos `false`.
@@ -119,48 +142,29 @@ let routeLine: Polyline | null = null
 const originPlain = computed(() => (props.origin ? JSON.parse(JSON.stringify(props.origin)) : null))
 const destinationPlain = computed(() => (props.destination ? JSON.parse(JSON.stringify(props.destination)) : null))
 
+// Helper: registrar timeout para limpieza en onUnmounted
+function setMountedTimeout(callback: () => void, delay: number): number {
+  const timeoutId = window.setTimeout(() => {
+    if (isMounted.value) {
+      callback()
+    }
+    pendingTimeouts.delete(timeoutId)
+  }, delay)
+  pendingTimeouts.add(timeoutId)
+  return timeoutId
+}
+
 // NOTE: always show all stations; selection will be done via dropdowns
 
-function renderStationMarkers() {
-  if (!map.value || stationsRendered.value) return
-  stationFactory.getAllMarkers().forEach(m => {
-    m.render(map.value as LeafletMap)
-    // show station info in the overlay when marker is clicked (does not select origin/destination)
-    try {
-      m.onClick((st) => {
-        const payload = {
-          id: (st as any).idStation ?? (st as any).id,
-          name: (st as any).nameStation ?? (st as any).name,
-          latitude: st.latitude,
-          longitude: st.longitude,
-          free_spots: (st as any).availableSlots ?? (st as any).free_spots,
-          type: (st as any).type ?? 'bike'
-        }
-        // toggle: click same station again to clear
-        if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-        else clickedStation.value = payload
-      })
-    } catch (e) {
-      void e
-    }
-  })
-  stationsRendered.value = true
-}
-
-function hideStationMarkers() {
-  // Remover todos los marcadores de estaciones del mapa
-  stationFactory.getAllMarkers().forEach(m => m.remove())
-}
-
 function addOriginMarker(o: { latitude: number; longitude: number; name?: string }) {
-  if (!map.value) return
+  if (!map.value || !isMounted.value) return
   if (originMarker) {
     originMarker.remove()
     originMarker = null
   }
   console.log('🔵 Agregando marcador ORIGEN en:', { lat: o.latitude, lng: o.longitude, name: o.name })
   console.log('🔵 Verificar estaciones mock:', mockStations.map(s => ({ name: s.nameStation, lat: s.latitude, lng: s.longitude })))
-  
+
   // Usar icono estándar de Leaflet con color verde para origen
   const greenIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -170,20 +174,23 @@ function addOriginMarker(o: { latitude: number; longitude: number; name?: string
     popupAnchor: [1, -34],
     shadowSize: [41, 41]
   })
-  
-  originMarker = L.marker([o.latitude, o.longitude], { icon: greenIcon }).addTo(map.value as any)
-  if (o.name) originMarker.bindPopup(`<strong>Origen</strong><br/>${o.name}<br/>Lat: ${o.latitude}, Lng: ${o.longitude}`)
-  setTimeout(() => originMarker?.openPopup(), 200)
+
+  originMarker = L.marker([o.latitude, o.longitude], { icon: greenIcon }).addTo(map.value as LeafletMap)
+  if (o.name) {
+    const popupText = `<strong>${$t('reservation.map.markerOrigin')}</strong><br/>${o.name}<br/>${$t('reservation.map.markerCoords', { lat: o.latitude.toFixed(4), lng: o.longitude.toFixed(4) })}`
+    originMarker.bindPopup(popupText)
+  }
+  setMountedTimeout(() => originMarker?.openPopup(), 200)
 }
 
 function addDestMarker(d: { latitude: number; longitude: number; name?: string }) {
-  if (!map.value) return
+  if (!map.value || !isMounted.value) return
   if (destMarker) {
     destMarker.remove()
     destMarker = null
   }
   console.log('🔵 Agregando marcador DESTINO en:', { lat: d.latitude, lng: d.longitude, name: d.name })
-  
+
   // Usar icono estándar de Leaflet con color rojo para destino
   const redIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
@@ -193,10 +200,13 @@ function addDestMarker(d: { latitude: number; longitude: number; name?: string }
     popupAnchor: [1, -34],
     shadowSize: [41, 41]
   })
-  
-  destMarker = L.marker([d.latitude, d.longitude], { icon: redIcon }).addTo(map.value as any)
-  if (d.name) destMarker.bindPopup(`<strong>Destino</strong><br/>${d.name}<br/>Lat: ${d.latitude}, Lng: ${d.longitude}`)
-  setTimeout(() => destMarker?.openPopup(), 200)
+
+  destMarker = L.marker([d.latitude, d.longitude], { icon: redIcon }).addTo(map.value as LeafletMap)
+  if (d.name) {
+    const popupText = `<strong>${$t('reservation.map.markerDestination')}</strong><br/>${d.name}<br/>${$t('reservation.map.markerCoords', { lat: d.latitude.toFixed(4), lng: d.longitude.toFixed(4) })}`
+    destMarker.bindPopup(popupText)
+  }
+  setMountedTimeout(() => destMarker?.openPopup(), 200)
 }
 
 function drawLine() {
@@ -214,32 +224,41 @@ function drawLine() {
     routeLine = null
   }
 
-  routeLine = L.polyline(
-    [[props.origin.latitude, props.origin.longitude], [props.destination.latitude, props.destination.longitude]],
-    { color: 'blue', weight: 4, opacity: 0.85 }
-  ).addTo(map.value as any)
+  try {
+    routeLine = L.polyline(
+      [[props.origin.latitude, props.origin.longitude], [props.destination.latitude, props.destination.longitude]],
+      { color: 'blue', weight: 4, opacity: 0.85 }
+    ).addTo(map.value as LeafletMap)
+  } catch (error) {
+    console.warn('[Map] Error drawing route line:', error)
+    routeLine = null
+  }
 }
 
 function fitMap() {
-  if (!map.value) return
+  if (!map.value || !isMounted.value) return
 
-  if (props.origin && props.destination) {
-    const bounds = L.latLngBounds([
-      [props.origin.latitude, props.origin.longitude],
-      [props.destination.latitude, props.destination.longitude],
-    ])
-    map.value.fitBounds(bounds, { padding: [40, 40] })
-    return
-  }
+  try {
+    if (props.origin && props.destination) {
+      const bounds = L.latLngBounds([
+        [props.origin.latitude, props.origin.longitude],
+        [props.destination.latitude, props.destination.longitude],
+      ])
+      map.value.fitBounds(bounds, { padding: [40, 40], animate: false })
+      return
+    }
 
-  if (props.origin && !props.destination) {
-    map.value.setView([props.origin.latitude, props.origin.longitude], 14)
-    return
-  }
+    if (props.origin && !props.destination) {
+      map.value.setView([props.origin.latitude, props.origin.longitude], 14, { animate: false })
+      return
+    }
 
-  if (!props.origin && props.destination) {
-    map.value.setView([props.destination.latitude, props.destination.longitude], 14)
-    return
+    if (!props.origin && props.destination) {
+      map.value.setView([props.destination.latitude, props.destination.longitude], 14, { animate: false })
+      return
+    }
+  } catch (error) {
+    console.warn('[Map] Error fitting map bounds:', error)
   }
 }
 
@@ -250,70 +269,80 @@ onMounted(() => {
     center: initialCenter,
     zoom: 13,
     zoomControl: true,
+    // Desactivar todas las animaciones de zoom/transición para evitar
+    // errores al desmontar o durante cambios rápidos.
+    zoomAnimation: false,
+    markerZoomAnimation: false,
+    fadeAnimation: false,
+    inertia: false,
   })
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    // Reducir trabajo durante zoom/redibujos
+    updateWhenIdle: true,
+    keepBuffer: 0,
   }).addTo(map.value as LeafletMap)
 
   // Cargar datos locales de prueba inmediatamente (fallback)
-  mockStations.forEach(st => {
-    const marker = stationFactory.getStationMarker(st as any)
+  mockStations.forEach((st: StationLike) => {
+    const marker = stationFactory.getStationMarker(st as unknown as StationLike)
+    marker.setTranslator($t)
     marker.render(map.value as LeafletMap)
     try {
-      marker.onClick((station) => {
+      marker.onClick((station: StationLike) => {
         const payload = {
-          id: (station as any).idStation ?? (station as any).id,
-          name: (station as any).nameStation ?? (station as any).name,
+          id: station.idStation ?? station.id,
+          name: station.nameStation ?? station.name,
           latitude: station.latitude,
           longitude: station.longitude,
-          free_spots: (station as any).availableSlots ?? (station as any).free_spots,
-          type: (station as any).type ?? 'bike'
+          free_spots: station.availableSlots ?? station.free_spots ?? 0,
+          type: station.type ?? 'bike'
         }
         if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
         else clickedStation.value = payload
       })
     } catch (e) { void e }
   })
-  stationsRendered.value = true
 
   // Intentar conectar al WebSocket de estaciones y solicitar carga inicial.
   try {
     stationWsService.connect((stations, factory) => {
       // Bulk inicial recibido: renderizar todas las estaciones en el mapa
       try {
-        stations.forEach(st => {
-          const mk = factory.getStationMarker(st)
+        stations.forEach((st: StationLike) => {
+          const mk = factory.getStationMarker(st as unknown as StationLike)
+          mk.setTranslator($t)
           mk.render(map.value as LeafletMap)
-          mk.onClick((station) => {
+          mk.onClick((station: StationLike) => {
             const payload = {
-              id: (station as any).idStation ?? (station as any).id,
-              name: (station as any).nameStation ?? (station as any).name,
+              id: station.idStation ?? station.id,
+              name: station.nameStation ?? station.name,
               latitude: station.latitude,
               longitude: station.longitude,
-              free_spots: (station as any).availableSlots ?? (station as any).free_spots,
-              type: (station as any).type ?? 'bike'
+              free_spots: station.availableSlots ?? station.free_spots ?? 0,
+              type: station.type ?? 'bike'
             }
             if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
             else clickedStation.value = payload
           })
         })
-        stationsRendered.value = true
       } catch (e) { console.error('[Map] Error rendering bulk stations', e) }
     }, (station, factory) => {
       // Update incremental: render/update single station
       try {
-        const mk = factory.getStationMarker(station)
+        const mk = factory.getStationMarker(station as unknown as StationLike)
+        mk.setTranslator($t)
         mk.render(map.value as LeafletMap)
-        mk.onClick((st) => {
+        mk.onClick((st: StationLike) => {
           const payload = {
-            id: (st as any).idStation ?? (st as any).id,
-            name: (st as any).nameStation ?? (st as any).name,
+            id: st.idStation ?? st.id,
+            name: st.nameStation ?? st.name,
             latitude: st.latitude,
             longitude: st.longitude,
-            free_spots: (st as any).availableSlots ?? (st as any).free_spots,
-            type: (st as any).type ?? 'bike'
+            free_spots: st.availableSlots ?? st.free_spots ?? 0,
+            type: st.type ?? 'bike'
           }
           if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
           else clickedStation.value = payload
@@ -349,13 +378,23 @@ onMounted(() => {
 
   // WebSocket de bicicletas (opcional)
   // wsService.connect(...) - comentado para evitar ruido
+
+  // Marcar el componente como montado
+  isMounted.value = true
 })
 
 onUnmounted(() => {
+  // Marcar componente como desmontado inmediatamente
+  isMounted.value = false
+
+  // Limpiar todos los timeouts pendientes
+  pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId))
+  pendingTimeouts.clear()
+
   // Desconectar WebSocket si se conectó
   try { wsService.disconnect() } catch (e) { void e }
   try { stationWsService.disconnect() } catch (e) { void e }
-  
+
   bicycleFactory.clear()
   stationFactory.clear()
 
@@ -366,7 +405,21 @@ onUnmounted(() => {
   clickedStation.value = null
 
   if (map.value) {
-    map.value.remove()
+    // Detener cualquier animación en progreso antes de eliminar el mapa
+    try {
+      map.value.stop()
+    } catch (e) { void e }
+
+    // Remover todos los event listeners
+    try {
+      map.value.off()
+    } catch (e) { void e }
+
+    // Finalmente remover el mapa
+    try {
+      map.value.remove()
+    } catch (e) { void e }
+
     map.value = null
   }
 })
@@ -377,34 +430,46 @@ onUnmounted(() => {
 
 // Watchers para origen/destino (dibujar línea y ajustar vista)
 watch(() => props.origin, () => {
-  if (!map.value) return
-  if (props.origin) {
-    addOriginMarker(props.origin as any)
-  } else if (originMarker) { 
-    originMarker.remove()
-    originMarker = null
+  if (!map.value || !isMounted.value) return
+  try {
+    if (props.origin) {
+      addOriginMarker(props.origin)
+    } else if (originMarker) {
+      originMarker.remove()
+      originMarker = null
+    }
+    drawLine()
+    fitMap()
+  } catch (error) {
+    console.warn('[Map] Error in origin watcher:', error)
   }
-  drawLine()
-  fitMap()
 })
 
 watch(() => props.destination, () => {
-  if (!map.value) return
-  if (props.destination) {
-    addDestMarker(props.destination as any)
-  } else if (destMarker) { 
-    destMarker.remove()
-    destMarker = null
+  if (!map.value || !isMounted.value) return
+  try {
+    if (props.destination) {
+      addDestMarker(props.destination)
+    } else if (destMarker) {
+      destMarker.remove()
+      destMarker = null
+    }
+    drawLine()
+    fitMap()
+  } catch (error) {
+    console.warn('[Map] Error in destination watcher:', error)
   }
-  drawLine()
-  fitMap()
 })
 
 // Ensure line and view update whenever either endpoint changes together
 watch(() => [props.origin, props.destination], () => {
-  if (!map.value) return
-  drawLine()
-  fitMap()
+  if (!map.value || !isMounted.value) return
+  try {
+    drawLine()
+    fitMap()
+  } catch (error) {
+    console.warn('[Map] Error updating line and bounds:', error)
+  }
 })
 </script>
 

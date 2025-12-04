@@ -1,16 +1,22 @@
 <template>
   <div class="payment-result container">
     <div class="card">
-      <h1>Pago cancelado ❌</h1>
-      <p>El pago fue cancelado o no se completó. Si fue un error intenta nuevamente.</p>
-      <router-link to="/" class="btn">Volver al inicio</router-link>
+      <h1>{{ $t('payments.cancel.title') }}</h1>
+      <p>{{ $t('payments.cancel.subtitle') }}</p>
+      <router-link to="/" class="btn">{{ $t('payments.cancel.backHome') }}</router-link>
     </div>
   </div>
 </template>
 
 <script>
+import { useI18n } from 'vue-i18n'
+
 export default {
   name: "PaymentCancelComponent",
+  setup() {
+    const { t: $t } = useI18n()
+    return { $t }
+  }
 };
 </script>
 

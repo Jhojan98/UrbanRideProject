@@ -1,21 +1,32 @@
 <template>
   <div class="payment-methods">
     <div class="header">
-      <h1>Recargar Saldo</h1>
-      <p>Elige el monto que deseas recargar en tu cuenta</p>
+      <h1>{{ $t('payments.recharge.title') }}</h1>
+      <p>{{ $t('payments.recharge.subtitle') }}</p>
     </div>
 
     <!-- SECCIÓN DE RECARGA SIMPLE -->
     <div class="recharge-section">
+      <div class="currency-selector">
+        <label>{{ $t('payments.recharge.currency') }}:</label>
+        <button
+          v-for="curr in currencies"
+          :key="curr"
+          @click="selectedCurrency = curr"
+          :class="['currency-btn', { 'active': selectedCurrency === curr }]"
+        >
+          {{ curr }}
+        </button>
+      </div>
       <div class="recharge-options">
         <div
-          v-for="amount in rechargeAmounts"
-          :key="amount.value"
+          v-for="amount in displayedAmounts"
+          :key="amount.valueUSD"
           class="recharge-option"
-          :class="{ 'selected': selectedAmount === amount.value }"
-          @click="selectAmount(amount.value)"
+          :class="{ 'selected': selectedAmount === amount.valueUSD }"
+          @click="selectAmount(amount.valueUSD)"
         >
-          <span class="amount">${{ amount.display }}</span>
+          <span class="amount">{{ amount.formatted }}</span>
         </div>
       </div>
 
@@ -24,34 +35,69 @@
         @click="handleRecharge"
         :disabled="loading || !selectedAmount"
       >
-        <span v-if="loading">Procesando...</span>
-        <span v-else>Recargar Saldo</span>
+        <span v-if="loading">{{ $t('payments.recharge.processing') }}</span>
+        <span v-else>{{ $t('payments.recharge.rechargeBtn') }}</span>
       </button>
 
       <div class="recharge-info">
-        <p>🔒 Serás redirigido a Stripe para completar el pago de forma segura</p>
+        <p v-if="selectedCurrency === 'COP'" class="conversion-note">
+          {{ $t('payments.recharge.estimatedNote', { currency: selectedCurrency }) }}
+        </p>
+        <p>{{ $t('payments.recharge.security') }}</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getAuth } from 'firebase/auth'
 import useAuth from '@/stores/auth'
 import usePaymentStore from '@/stores/payment'
 
+const { t: $t } = useI18n()
+
 // Estado
 const loading = ref(false)
-const selectedAmount = ref<number | null>(25000) // Monto por defecto seleccionado
+const selectedAmount = ref<number | null>(25000) // Monto por defecto seleccionado en USD
 
-// Montos de recarga predefinidos (sin bonificación)
+// Selector de moneda
+const currencies = ['USD', 'COP'] as const
+const selectedCurrency = ref<'USD' | 'COP'>('USD')
+
+// Tasa de conversión estimada (1 USD = 4000 COP)
+const USD_TO_COP_RATE = 4000
+
+// Montos de recarga predefinidos en USD (valores reales para Stripe)
 const rechargeAmounts = [
   { value: 10000, display: '10.000' },
   { value: 25000, display: '25.000' },
   { value: 50000, display: '50.000' },
   { value: 100000, display: '100.000' }
 ]
+
+// Montos formateados según la moneda seleccionada
+const displayedAmounts = computed(() => {
+  return rechargeAmounts.map(amount => {
+    const valueUSD = amount.value
+    const displayValue = selectedCurrency.value === 'COP'
+      ? valueUSD * USD_TO_COP_RATE
+      : valueUSD
+
+    const locale = selectedCurrency.value === 'COP' ? 'es-CO' : 'en-US'
+    const formatted = new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: selectedCurrency.value,
+      minimumFractionDigits: selectedCurrency.value === 'COP' ? 0 : 2
+    }).format(displayValue)
+
+    return {
+      valueUSD: valueUSD,
+      formatted: formatted
+    }
+  })
+})
 
 // Mapeo de montos a priceIds de Stripe (usa tus priceIds reales de Stripe)
 const priceMap: { [key: number]: string } = {
@@ -78,7 +124,7 @@ const handleRecharge = async () => {
   const firebaseUser = firebaseAuth.currentUser
 
   if (!firebaseUser) {
-    alert('No se encontró usuario autenticado. Vuelve a iniciar sesión.')
+    alert($t('payments.recharge.notAuthenticated'))
     return
   }
 
@@ -86,7 +132,7 @@ const handleRecharge = async () => {
 
   try {
     const priceId = priceMap[selectedAmount.value]
-    if (!priceId) throw new Error('PriceId no configurado para el monto seleccionado')
+    if (!priceId) throw new Error($t('payments.recharge.priceNotFound'))
 
     // Usar el store para crear la sesión
     const session = await paymentStore.createCheckoutSession(
@@ -100,7 +146,7 @@ const handleRecharge = async () => {
     )
 
     if (!session || !session.url) {
-      const errorMsg = paymentStore.error || 'Error al crear la sesión de pago'
+      const errorMsg = paymentStore.error || $t('payments.recharge.error')
       alert(`Error: ${errorMsg}`)
       return
     }
@@ -113,8 +159,8 @@ const handleRecharge = async () => {
 
   } catch (error: unknown) {
     console.error('Error al recargar:', error)
-    const errorMsg = error instanceof Error ? error.message : 'Por favor intenta nuevamente.'
-    alert(`Error al iniciar el pago: ${errorMsg}`)
+    const errorMsg = error instanceof Error ? error.message : $t('payments.recharge.tryAgain')
+    alert(`${$t('payments.recharge.error')}: ${errorMsg}`)
   } finally {
     loading.value = false
   }
@@ -152,6 +198,41 @@ const handleRecharge = async () => {
   border-radius: 16px;
   padding: 30px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.currency-selector {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+  }
+
+  .currency-btn {
+    padding: 0.5rem 1.2rem;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
+
+    &:hover {
+      border-color: var(--color-primary-light);
+    }
+
+    &.active {
+      background: var(--color-primary-light);
+      color: white;
+      border-color: var(--color-primary-light);
+    }
+  }
 }
 
 .recharge-options {
@@ -213,6 +294,159 @@ const handleRecharge = async () => {
     color: #666;
     font-size: 14px;
     margin: 0;
+  }
+
+  .conversion-note {
+    color: #ff9800;
+    font-weight: 500;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #fff3e0;
+    border-radius: 8px;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .payment-methods {
+    padding: 12px;
+  }
+
+  .header {
+    margin-bottom: 20px;
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+
+  .recharge-section {
+    padding: 20px;
+    border-radius: 12px;
+  }
+
+  .currency-selector {
+    flex-wrap: wrap;
+    gap: 0.25rem !important;
+    margin-bottom: 15px;
+
+    label {
+      width: 100%;
+      margin-bottom: 0.25rem;
+      font-size: 12px;
+    }
+
+    .currency-btn {
+      flex: 1;
+      min-width: 45px;
+      padding: 0.4rem 0.6rem !important;
+      font-size: 12px !important;
+      border-radius: 6px;
+    }
+  }
+
+  .recharge-options {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .recharge-option {
+    padding: 16px;
+    border-radius: 10px;
+
+    .amount {
+      font-size: 16px;
+    }
+  }
+
+  .recharge-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    margin-bottom: 15px;
+  }
+
+  .recharge-info {
+    p {
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .conversion-note {
+      margin-bottom: 8px;
+      padding: 8px;
+      font-size: 12px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .payment-methods {
+    padding: 8px;
+  }
+
+  .header {
+    margin-bottom: 16px;
+
+    h1 {
+      font-size: 18px;
+    }
+
+    p {
+      font-size: 12px;
+    }
+  }
+
+  .recharge-section {
+    padding: 16px;
+    border-radius: 8px;
+  }
+
+  .currency-selector {
+    gap: 0 !important;
+
+    label {
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .currency-btn {
+      min-width: 40px;
+      padding: 0.3rem 0.4rem !important;
+      font-size: 10px !important;
+      flex: 1 1 auto;
+    }
+  }
+
+  .recharge-options {
+    gap: 8px;
+  }
+
+  .recharge-option {
+    padding: 12px 8px;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .amount {
+      font-size: 14px;
+    }
+  }
+
+  .recharge-btn {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .recharge-info p {
+    font-size: 11px;
   }
 }
 

@@ -1,24 +1,24 @@
 <template>
   <div class="payment-result container">
     <div class="card">
-      <h1>Pago realizado ✅</h1>
-      <p>¡Gracias por tu compra! Tu saldo ha sido recargado exitosamente.</p>
+      <h1>{{ $t('payments.success.title') }}</h1>
+      <p>{{ $t('payments.success.subtitle') }}</p>
 
       <div class="details" v-if="sessionId || uid">
-        <p><strong>Session ID:</strong> {{ sessionId }}</p>
-        <p v-if="uid"><strong>Usuario:</strong> {{ uid }}</p>
+        <p><strong>{{ $t('payments.success.sessionId') }}</strong> {{ sessionId }}</p>
+        <p v-if="uid"><strong>{{ $t('payments.success.user') }}</strong> {{ uid }}</p>
       </div>
 
       <div class="balance-info" v-if="newBalance !== null">
-        <p><strong>Saldo actualizado:</strong> {{ formatBalance(newBalance) }}</p>
+        <p><strong>{{ $t('payments.success.updatedBalance') }}</strong> {{ formatBalance(newBalance) }}</p>
       </div>
 
       <div class="actions">
         <router-link to="/my-profile" class="btn btn-primary" @click="markPaymentComplete">
-          Ver mi saldo actualizado
+          {{ $t('payments.success.viewBalance') }}
         </router-link>
         <router-link to="/" class="btn btn-secondary">
-          Volver al inicio
+          {{ $t('payments.success.backHome') }}
         </router-link>
       </div>
     </div>
@@ -31,6 +31,12 @@ import usePaymentStore from '@/stores/payment';
 
 export default {
   name: "PaymentSuccessComponent",
+  inject: {
+    t: {
+      from: '$t',
+      default: (key) => key,
+    },
+  },
   data() {
     return {
       sessionId: null,
