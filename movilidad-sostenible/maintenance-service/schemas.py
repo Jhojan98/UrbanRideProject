@@ -3,24 +3,31 @@ from typing import Optional, Literal
 
 from pydantic import BaseModel, Field
 
-ALLOWED_MAINTENANCE_TYPES = ("PREVENTIVO", "CORRECTIVO", "EMERGENCIA")
+
+ALLOWED_MAINTENANCE_TYPES = ("PREVENTIVE", "CORRECTIVE", "INSPECTION")
+ALLOWED_ENTITY_TYPES = ("BICYCLE", "STATION", "LOCK")
+ALLOWED_TRIGGERED_BY = ("ADMIN", "USER", "IOT_ALERT")
 
 
 class MaintenanceRecordBase(BaseModel):
-    t_maintenance_type: Literal["PREVENTIVO", "CORRECTIVO", "EMERGENCIA"] = Field(
-        default="PREVENTIVO",
+    t_entity_tipe: Literal["BICYCLE", "STATION", "LOCK"] = Field(
+        alias="entityType",
+    )
+    t_maintenace_type: Literal["PREVENTIVE", "CORRECTIVE", "INSPECTION"] = Field(
+        default="PREVENTIVE",
         alias="maintenanceType",
     )
-    v_total_trips: int = Field(alias="totalTrips")
-    t_triggered_by: str = Field(alias="triggeredBy")
+    t_triggered_by: Literal["ADMIN", "USER", "IOT_ALERT"] = Field(alias="triggeredBy")
     d_description: str = Field(alias="description")
     t_status: Literal['PENDING', 'SOLVING', 'RESOLVED'] = Field(
         default='PENDING',
         alias="status",
     )
     f_date: date = Field(alias="date")
+    v_cost: Optional[int] = Field(default=None, alias="cost")
     k_id_bicycle: Optional[str] = Field(default=None, alias="bikeId")
-    v_cost_usd: Optional[float] = Field(default=None, alias="costUSD")
+    k_id_station: Optional[int] = Field(default=None, alias="stationId")
+    k_id_lock: Optional[str] = Field(default=None, alias="lockId")
 
     class Config:
         populate_by_name = True
