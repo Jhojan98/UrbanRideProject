@@ -70,9 +70,11 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import usePaymentStore from "@/stores/payment";
 
 const router = useRouter();
 const { t: $t } = useI18n();
+const paymentStore = usePaymentStore();
 
 // Datos del usuario
 const uid = ref<string | null>(null);
@@ -126,10 +128,10 @@ const welcomeText = computed(() => {
 // Formato de balance
 const formattedBalance = computed(() => {
   if (balance.value === null) return "--";
-  return new Intl.NumberFormat("es-CO", { 
-    style: "currency", 
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
     currency: "COP",
-    minimumFractionDigits: 0 
+    minimumFractionDigits: 0
   }).format(balance.value);
 });
 
@@ -145,12 +147,12 @@ function attachFirebaseAuthListener() {
     if (user) {
       uid.value = user.uid;
       userName.value = user.displayName ?? (user.email ? user.email.split("@")[0] : `user_${user.uid.substring(0,6)}`);
-      
+
       try {
         localStorage.setItem("uid", uid.value);
         localStorage.setItem("userName", userName.value);
       } catch (e) { /* ignore storage errors */ }
-      
+
       fetchBalance();
     } else {
       const storedUid = localStorage.getItem("uid");
@@ -168,37 +170,23 @@ function attachFirebaseAuthListener() {
   });
 }
 
-// Obtener balance del usuario-service
+// Obtener balance del usuario-service a través del store
 async function fetchBalance() {
   if (!uid.value) return;
-  
+
   isLoadingBalance.value = true;
   try {
-    // Llama directamente al usuario-service (puerto 8001)
-    const response = await fetch(`http://localhost:8001/balance/${uid.value}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      balance.value = data.balance || 0;
-      console.log("Balance obtenido desde usuario-service:", balance.value);
-      
-      // Guardar en localStorage como caché
+    const result = await paymentStore.fetchBalance(uid.value);
+    balance.value = result ?? 0;
+
+    if (result !== null) {
+      console.log("Balance obtenido desde el store:", balance.value);
       localStorage.setItem("userBalance", (balance.value ?? 0).toString());
     } else {
-      console.error("Error obteniendo balance:", response.status);
-      // Intentar obtener de localStorage como fallback
+      // Fallback a localStorage
       const storedBalance = localStorage.getItem("userBalance");
       balance.value = storedBalance ? parseInt(storedBalance, 10) : 0;
     }
-  } catch (error) {
-    console.error("Error en fetchBalance:", error);
-    const storedBalance = localStorage.getItem("userBalance");
-    balance.value = storedBalance ? parseInt(storedBalance, 10) : 0;
   } finally {
     isLoadingBalance.value = false;
   }
@@ -216,10 +204,10 @@ function setupBalanceListeners() {
     console.log("Ventana enfocada, actualizando balance...");
     fetchBalance();
   };
-  
+
   // Escuchar evento cuando la ventana se enfoca (por si el usuario vuelve del pago)
   window.addEventListener('focus', handleFocus);
-  
+
   // Verificar si hay un pago reciente
   const lastPaymentTime = localStorage.getItem('last_payment_time');
   if (lastPaymentTime) {
@@ -232,14 +220,14 @@ function setupBalanceListeners() {
       localStorage.removeItem('last_payment_time');
     }
   }
-  
+
   // Actualizar balance periódicamente (cada 30 segundos)
   const intervalId = setInterval(() => {
     if (uid.value && document.visibilityState === 'visible') {
       fetchBalance();
     }
   }, 30000);
-  
+
   // Limpiar intervalo y event listener al desmontar
   onUnmounted(() => {
     clearInterval(intervalId);
@@ -250,7 +238,7 @@ function setupBalanceListeners() {
 onMounted(() => {
   attachFirebaseAuthListener();
   setupBalanceListeners();
-  
+
   // También forzar actualización cuando se monta el componente
   setTimeout(() => {
     fetchBalance();
@@ -267,7 +255,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  
+
   .centered-card {
     width: 100%;
     max-width: 500px;
@@ -275,17 +263,17 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    
+
     .balance-display {
       margin-bottom: 1.5rem;
       position: relative;
     }
-    
+
     .card-info {
       margin-bottom: 1.5rem;
       width: 100%;
     }
-    
+
     .payment-actions {
       display: flex;
       gap: 1rem;

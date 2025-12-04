@@ -38,7 +38,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { getAuth } from 'firebase/auth'
-import useAuth from '@/stores/auth' // Ajusta la ruta si tu store está en otra carpeta
+import useAuth from '@/stores/auth'
+import usePaymentStore from '@/stores/payment'
 
 // Estado
 const loading = ref(false)
@@ -60,8 +61,9 @@ const priceMap: { [key: number]: string } = {
   100000: 'price_1SZJgWH5d2VSDRWEdevIO0e5'
 }
 
-// store de auth (Pinia)
+// Stores
 const authStore = useAuth()
+const paymentStore = usePaymentStore()
 
 const selectAmount = (amount: number) => {
   selectedAmount.value = amount
@@ -71,7 +73,7 @@ const selectAmount = (amount: number) => {
 const handleRecharge = async () => {
   if (loading.value || !selectedAmount.value) return
 
-  // obtener usuario firebase actual
+  // Obtener usuario firebase actual
   const firebaseAuth = getAuth()
   const firebaseUser = firebaseAuth.currentUser
 
@@ -86,52 +88,33 @@ const handleRecharge = async () => {
     const priceId = priceMap[selectedAmount.value]
     if (!priceId) throw new Error('PriceId no configurado para el monto seleccionado')
 
-    const request = {
-      priceId: priceId,
-      quantity: 1,
-      customerEmail: firebaseUser.email ?? authStore.tempEmail ?? undefined,
-      userId: firebaseUser.uid
+    // Usar el store para crear la sesión
+    const session = await paymentStore.createCheckoutSession(
+      {
+        priceId: priceId,
+        quantity: 1,
+        customerEmail: firebaseUser.email ?? authStore.tempEmail ?? undefined,
+        userId: firebaseUser.uid
+      },
+      authStore.token ?? undefined
+    )
+
+    if (!session || !session.url) {
+      const errorMsg = paymentStore.error || 'Error al crear la sesión de pago'
+      alert(`Error: ${errorMsg}`)
+      return
     }
 
-    // Construir headers y añadir Authorization si hay token
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    }
-    if (authStore.token) {
-      headers['Authorization'] = `Bearer ${authStore.token}`
-    }
+    // Marcar pago como iniciado
+    paymentStore.markPaymentComplete()
 
-    // URL al servicio de pagos (mantuve localhost:8007 como en tu componente original).
-    // Si usas gateway o variable de entorno, cámbialo aquí.
-    const response = await fetch('http://localhost:8007/payments/checkout-session', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(request),
-    })
+    // Redirigir a Stripe
+    window.location.href = session.url
 
-    if (!response.ok) {
-      // intentar leer body JSON con detalle del error
-      let errBody: any = null
-      try { errBody = await response.json() } catch(e) { /* no JSON */ }
-      console.error('Error HTTP del backend:', response.status, response.statusText, errBody)
-      const msg = errBody?.error || `Error del servidor: ${response.status}`
-      throw new Error(msg)
-    }
-    
-    const data = await response.json()
-    if (!data || !data.url) {
-      console.error('Respuesta inesperada del backend:', data)
-      throw new Error('Respuesta inválida del servidor al crear la sesión de pago')
-    }
-
-    // Redirigir directamente a Stripe
-    window.location.href = data.url
-
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error al recargar:', error)
-    // Mostrar mensaje más informativo si existe
-    alert(`Error al iniciar el pago: ${error?.message || 'Por favor intenta nuevamente.'}`)
+    const errorMsg = error instanceof Error ? error.message : 'Por favor intenta nuevamente.'
+    alert(`Error al iniciar el pago: ${errorMsg}`)
   } finally {
     loading.value = false
   }

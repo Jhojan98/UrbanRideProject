@@ -3,7 +3,7 @@
     <div class="card">
       <h1>Pago realizado ✅</h1>
       <p>¡Gracias por tu compra! Tu saldo ha sido recargado exitosamente.</p>
-      
+
       <div class="details" v-if="sessionId || uid">
         <p><strong>Session ID:</strong> {{ sessionId }}</p>
         <p v-if="uid"><strong>Usuario:</strong> {{ uid }}</p>
@@ -12,7 +12,7 @@
       <div class="balance-info" v-if="newBalance !== null">
         <p><strong>Saldo actualizado:</strong> {{ formatBalance(newBalance) }}</p>
       </div>
-      
+
       <div class="actions">
         <router-link to="/my-profile" class="btn btn-primary" @click="markPaymentComplete">
           Ver mi saldo actualizado
@@ -26,8 +26,8 @@
 </template>
 
 <script>
-// CORRECCIÓN: Importar getAuth de Firebase
 import { getAuth } from 'firebase/auth';
+import usePaymentStore from '@/stores/payment';
 
 export default {
   name: "PaymentSuccessComponent",
@@ -35,15 +35,16 @@ export default {
     return {
       sessionId: null,
       uid: null,
-      newBalance: null
+      newBalance: null,
+      paymentStore: usePaymentStore()
     };
   },
   created() {
     // Leer query params que Stripe agrega
     this.sessionId = this.$route.query.session_id || null;
-    
+
     // Obtener UID del usuario actual
-    const auth = getAuth(); // Ahora getAuth está definido
+    const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
       this.uid = user.uid;
@@ -54,50 +55,37 @@ export default {
 
     // Marcar que el pago se completó
     this.markPaymentComplete();
-    
+
     // Intentar obtener el nuevo balance
     this.fetchUpdatedBalance();
   },
   methods: {
     markPaymentComplete() {
-      // Establecer marca de tiempo del último pago
-      localStorage.setItem('last_payment_time', Date.now().toString());
-      
-      // Establecer bandera para actualizar balance
-      localStorage.setItem('should_refresh_balance', 'true');
-      
+      this.paymentStore.markPaymentComplete();
       console.log("Pago marcado como completado, balance se actualizará");
     },
-    
+
     async fetchUpdatedBalance() {
       if (!this.uid) return;
-      
+
       try {
-        // Intentar obtener el balance actualizado del usuario-service
-        const response = await fetch(`http://localhost:8001/balance/${this.uid}`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          this.newBalance = data.balance || 0;
-          
-          // Actualizar localStorage con el nuevo balance
+        const result = await this.paymentStore.fetchBalance(this.uid);
+        this.newBalance = result ?? 0;
+
+        if (result !== null) {
           localStorage.setItem("userBalance", this.newBalance.toString());
+          console.log("Balance actualizado desde el store:", this.newBalance);
         }
       } catch (error) {
         console.error("Error obteniendo balance actualizado:", error);
       }
     },
-    
+
     formatBalance(balance) {
-      return new Intl.NumberFormat("es-CO", { 
-        style: "currency", 
+      return new Intl.NumberFormat("es-CO", {
+        style: "currency",
         currency: "COP",
-        minimumFractionDigits: 0 
+        minimumFractionDigits: 0
       }).format(balance);
     }
   }
@@ -105,23 +93,23 @@ export default {
 </script>
 
 <style scoped>
-.payment-result { 
-  padding: 2rem; 
-  display: flex; 
-  justify-content: center; 
+.payment-result {
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
   align-items: center;
   min-height: 70vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 }
 
-.card { 
-  max-width: 600px; 
-  width: 100%; 
-  text-align: center; 
-  padding: 2.5rem; 
-  border-radius: 1rem; 
+.card {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  padding: 2.5rem;
+  border-radius: 1rem;
   box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-  background: #fff; 
+  background: #fff;
 }
 
 h1 {
@@ -137,11 +125,11 @@ p {
   margin-bottom: 1.5rem;
 }
 
-.details { 
-  text-align: left; 
-  margin: 1.5rem 0; 
-  background: #f8f9fa; 
-  padding: 1rem; 
+.details {
+  text-align: left;
+  margin: 1.5rem 0;
+  background: #f8f9fa;
+  padding: 1rem;
   border-radius: 0.5rem;
   border: 1px solid #e9ecef;
 }
@@ -167,11 +155,11 @@ p {
   margin-top: 2rem;
 }
 
-.btn { 
-  display: inline-block; 
-  padding: 0.75rem 1.5rem; 
-  border-radius: 0.5rem; 
-  text-decoration: none; 
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
   font-weight: 600;
   font-size: 1rem;
   transition: all 0.3s ease;
@@ -182,7 +170,7 @@ p {
 
 .btn-primary {
   background: #0074d4;
-  color: white; 
+  color: white;
 }
 
 .btn-primary:hover {
@@ -193,7 +181,7 @@ p {
 
 .btn-secondary {
   background: #6c757d;
-  color: white; 
+  color: white;
 }
 
 .btn-secondary:hover {
@@ -206,15 +194,15 @@ p {
   .payment-result {
     padding: 1rem;
   }
-  
+
   .card {
     padding: 1.5rem;
   }
-  
+
   h1 {
     font-size: 1.5rem;
   }
-  
+
   .actions {
     flex-direction: column;
   }

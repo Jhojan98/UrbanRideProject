@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-@CrossOrigin(origins = "http://localhost:8080", allowCredentials = "true")
+//@CrossOrigin(origins = "http://localhost:8080", allowCredentials = "true")
 @RestController
 @RequestMapping("/payments")
 //@CrossOrigin(origins = "http://localhost:8080", allowCredentials = "true")
@@ -37,7 +37,7 @@ public class PaymentController {
 
     @Value("${stripe.webhook.secret:}")
     private String webhookSecret;
-    
+
     @Value("${usuario.service.url:http://localhost:8001}")
     private String usuarioServiceUrl;
 
@@ -102,41 +102,41 @@ public class PaymentController {
     private void handleSuccessfulPayment(Session session) {
         try {
             log.info("Procesando pago exitoso para sesión: {}", session.getId());
-            
+
             // Verificar que el pago fue exitoso
             if (!"paid".equals(session.getPaymentStatus())) {
                 log.warn("Pago no exitoso para sesión: {}, estado: {}", session.getId(), session.getPaymentStatus());
                 return;
             }
-            
+
             // Obtener metadatos de la sesión
             Map<String, String> metadata = session.getMetadata();
             if (metadata == null) {
                 log.error("Metadata no encontrada en la sesión");
                 return;
             }
-            
+
             String userId = metadata.get("userId");
             if (userId == null || userId.isEmpty()) {
                 log.error("UserId no encontrado en metadata de la sesión");
                 return;
             }
-            
+
             // Obtener el monto total (en centavos de Stripe)
             Long amountTotal = session.getAmountTotal();
             if (amountTotal == null) {
                 log.error("Monto total no encontrado en la sesión");
                 return;
             }
-            
+
             // Convertir de centavos a COP (Stripe usa centavos)
             int amountInCOP = (int) (amountTotal / 100);
-            
+
             log.info("Actualizando saldo para usuario: {} con monto: {} COP", userId, amountInCOP);
-            
+
             // Llamar al usuario-service para actualizar el saldo
             updateUserBalance(userId, amountInCOP);
-            
+
         } catch (Exception e) {
             log.error("Error procesando pago exitoso: {}", e.getMessage(), e);
         }
@@ -145,29 +145,29 @@ public class PaymentController {
     private void updateUserBalance(String userId, int amount) {
         try {
             String url = usuarioServiceUrl + "/balance/" + userId + "/add";
-            
+
             // Crear parámetros de consulta
             String fullUrl = url + "?amount=" + amount;
-            
+
             log.info("Llamando a usuario-service: {}", fullUrl);
-            
+
             // CREAR RestTemplate directamente aquí (sin inyección)
             RestTemplate restTemplate = new RestTemplate();
-            
+
             // Hacer la llamada al usuario-service
             ResponseEntity<Map> response = restTemplate.postForEntity(
-                fullUrl, 
-                null, 
+                fullUrl,
+                null,
                 Map.class
             );
-            
+
             if (response.getStatusCode() == HttpStatus.OK) {
                 Map<String, Object> responseBody = response.getBody();
                 log.info("Saldo actualizado exitosamente: {}", responseBody);
             } else {
                 log.error("Error al actualizar saldo. Código: {}", response.getStatusCode());
             }
-            
+
         } catch (Exception e) {
             log.error("Error al actualizar saldo en usuario-service: {}", e.getMessage(), e);
         }
