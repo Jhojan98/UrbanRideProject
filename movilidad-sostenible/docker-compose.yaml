@@ -10,7 +10,7 @@ services:
       - "5532:5432"
     volumes:
       - data-postgres:/var/lib/postgresql/data
-      - ./docker/postgres/version7.0/initdb:/docker-entrypoint-initdb.d
+      - ./docker/postgres/version7.1/initdb:/docker-entrypoint-initdb.d
     networks:
       - movilidad-sostenible-network
     restart: always
@@ -406,6 +406,8 @@ services:
       SERVICE_PORT: 5006
       SERVICE_HOST: maintenance-service
       EUREKA_HOST: eureka-server
+      LOCK_SERVICE_URL: http://slots-service:8004
+      STATION_SERVICE_URL: http://estaciones-service:8005
       EUREKA_PORT: 8761
       EUREKA_APP_NAME: maintenance-service
       EUREKA_HEARTBEAT_INTERVAL: 30
