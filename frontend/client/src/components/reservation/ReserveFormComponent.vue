@@ -2,7 +2,6 @@
   <div class="reservation-panel">
     <h1>{{ $t('reservation.form.stationDetails') }}</h1>
 
-
     <h3>{{ props.station.name }}</h3>
 
     <p class="availability">
@@ -18,6 +17,7 @@
       <label><input type="radio" v-model="bikeType" value="mechanical" /> {{ $t('reservation.form.mechanical') }}</label>
       <label><input type="radio" v-model="bikeType" value="electric" /> {{ $t('reservation.form.electric') }}</label>
     </div>
+
     <label class="label">{{ $t('reservation.form.rideType') }}</label>
     <div class="ride-options">
       <label class="ride-card">
@@ -39,6 +39,17 @@
       </label>
     </div>
 
+    <div v-if="rideType === 'short_trip' || rideType === 'long_trip'">
+      <!-- Pasar bikeType y rideType a UltimaMilla -->
+      <UltimaMilla
+        :currentStation="props.station"
+        :bikeType="bikeType"
+        :rideType="rideType"
+        @select="onStationSelected"
+        @update:origin="onOriginUpdate"
+        @update:destination="onDestinationUpdate"
+      />
+    </div>
 
     <div class="balance-container">
       {{ $t('reservation.form.balance') }} <strong>${{ props.balance }}</strong>
@@ -48,7 +59,7 @@
     <p class="warning">
       ⚠️ {{ $t('reservation.form.warning') }} <strong>{{ $t('reservation.form.warningMinutes') }}</strong>.
     </p>
-    
+
     <button class="butn-primary" @click="reserve">
       {{ $t('reservation.form.reserveBike') }}
     </button>
@@ -56,16 +67,21 @@
 </template>
 
 <script setup lang="ts">
+import UltimaMilla from "@/components/reservation/UltimaMilla.vue"
 import { ref, defineEmits, withDefaults, defineProps } from 'vue'
 import { useI18n } from 'vue-i18n';
 import { useReservation } from '@/composables/useReservation'
 import { useRouter } from 'vue-router'
-const router = useRouter()
 
 interface Station {
+  id?: number
   name: string
   available: number
   status: string
+  // opcionales que UltimaMilla puede enviar
+  latitude?: number
+  longitude?: number
+  free_spots?: number
 }
 
 interface Props {
@@ -73,28 +89,35 @@ interface Props {
   balance?: number
 }
 
-const recharge = () => {
-  router.push({ name: 'profile' })
+const router = useRouter()
+const { t: $t } = useI18n();
+const { setReservation } = useReservation()
+
+// props con valores por defecto (incluye origin/destination opcionales para sincronizar selección desde el mapa)
+interface PropsWithSelection extends Props {
+  origin?: any | null
+  destination?: any | null
 }
 
-// withDefaults + defineProps con factory function para objetos
-const props = withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<PropsWithSelection>(), {
   station: () => ({ name: 'Selecciona una estación', available: 0, status: 'N/A' }),
-  balance: 0
+  balance: 0,
+  origin: null,
+  destination: null
 })
 
-// defineEmits tipado
+// emits tipados (incluye forwarding)
 const emit = defineEmits<{
   reserve: [payload: { bikeType: string; rideType: string }]
   close: []
+  "update:origin": [any | null]
+  "update:destination": [any | null]
 }>()
-
-const { setReservation } = useReservation()
 
 const bikeType = ref<string>('')
 const rideType = ref<string>('')
 
-const { t: $t } = useI18n();
+// acciones
 function reserve() {
   if (!bikeType.value || !rideType.value) {
     window.alert($t('reservation.form.selectionAlert'))
@@ -115,6 +138,23 @@ function reserve() {
     bikeType: bikeType.value,
     rideType: rideType.value
   })
+}
+
+const recharge = () => {
+  router.push({ name: 'profile' })
+}
+
+// Handlers para reenviar eventos recibidos desde UltimaMilla hacia el padre
+function onStationSelected(station: Station) {
+  emit("update:destination", station ?? null)
+}
+
+function onOriginUpdate(origin: any) {
+  emit("update:origin", origin ?? null)
+}
+
+function onDestinationUpdate(destination: any) {
+  emit("update:destination", destination ?? null)
 }
 </script>
 
