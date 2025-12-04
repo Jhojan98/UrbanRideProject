@@ -2,8 +2,6 @@ package com.movilidadsostenible.viaje_service.services;
 
 import com.movilidadsostenible.viaje_service.clients.BicycleClient;
 import com.movilidadsostenible.viaje_service.clients.UserClientRest;
-import com.movilidadsostenible.viaje_service.models.Bicycle;
-import com.movilidadsostenible.viaje_service.models.User;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
 import com.movilidadsostenible.viaje_service.repositories.TravelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +50,13 @@ public class TravelServiceImpl implements TravelService {
     @Transactional(readOnly = true)
     public List<Travel> findAllByUid(String uid) {
         return repository.findAllByUid(uid);
+    }
+
+    // Metodo para obtener un viaje a partir del bicycleId y que el t_status esté en "IN_PROGRESS"
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Travel> findFirstByIdBicycleAndStatus(String idBicycle, String status) {
+        return repository.findFirstByIdBicycleAndStatus(idBicycle, status);
     }
 
 }

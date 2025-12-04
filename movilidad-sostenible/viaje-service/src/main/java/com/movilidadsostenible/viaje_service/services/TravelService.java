@@ -11,4 +11,7 @@ public interface TravelService {
     Travel save(Travel travel);
     void delete(Integer id);
     List<Travel> findAllByUid(String uid);
+
+    // Metodo para obtener un viaje a partir del bicycleId y que el t_status esté en "IN_PROGRESS"
+    Optional<Travel> findFirstByIdBicycleAndStatus(String idBicycle, String status);
 }
