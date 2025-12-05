@@ -110,6 +110,8 @@ const bicycleFactory = new BicycleFactory()
 const wsService = new BicycleWebSocketService(bicycleFactory)
 const stationFactory = new StationFactory()
 const stationWsService = new StationWebSocketService(stationFactory)
+// Flag para evitar re-renderizado redundante de estaciones
+const stationsRendered = ref<boolean>(false)
 interface ClickedStation {
   id: number | string
   name: string

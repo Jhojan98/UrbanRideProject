@@ -28,9 +28,17 @@ import { useReservation } from '@/composables/useReservation';
 
 const { hasActiveReservation } = useReservation();
 
-// Estado local para coordinar origen/destino entre el formulario y el mapa
-const origin = ref<any | null>(null)
-const destination = ref<any | null>(null)
+// Tipos para coordinar origen/destino entre el formulario y el mapa
+interface Endpoint {
+  latitude: number
+  longitude: number
+  name?: string
+  free_spots?: number
+  status?: string
+}
+
+const origin = ref<Endpoint | null>(null)
+const destination = ref<Endpoint | null>(null)
 
 // Selection by map click disabled; origin/destination are chosen via dropdown in the form.
 </script>
