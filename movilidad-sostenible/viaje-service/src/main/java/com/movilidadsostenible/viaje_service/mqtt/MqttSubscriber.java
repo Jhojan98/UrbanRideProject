@@ -1,9 +1,11 @@
 package com.movilidadsostenible.viaje_service.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.movilidadsostenible.viaje_service.clients.SlotsClient;
 import com.movilidadsostenible.viaje_service.models.dto.EndTravelDTO;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
 import com.movilidadsostenible.viaje_service.services.NotificationService;
+import com.movilidadsostenible.viaje_service.services.ReservationTempService;
 import com.movilidadsostenible.viaje_service.services.TravelService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -44,6 +46,12 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
     @Autowired
     private NotificationService notificationService;
+
+    @Autowired
+    private ReservationTempService reservationTempService;
+
+    @Autowired
+    private SlotsClient slotsClient;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private MqttClient client;
@@ -152,6 +160,8 @@ public class MqttSubscriber implements MqttCallbackExtended {
           Travel travel = opt.get();
           travel.setStatus("COMPLETED");
           repository.save(travel);
+
+          slotsClient.lockSlotById(slotIdIdFromTopic, bicyIdFromTopic);
 
           notificationService.notificar( "El viaje con ID " + travel.getIdTravel() + " ha finalizado en el slot " + telemetry.getSlotId() + ".", 3);
 

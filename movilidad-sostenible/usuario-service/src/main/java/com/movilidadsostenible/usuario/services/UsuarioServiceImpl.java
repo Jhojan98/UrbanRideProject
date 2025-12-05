@@ -1,5 +1,6 @@
 package com.movilidadsostenible.usuario.services;
 
+import com.movilidadsostenible.usuario.clients.FineClient;
 import com.movilidadsostenible.usuario.models.entity.User;
 import com.movilidadsostenible.usuario.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,9 @@ public class UsuarioServiceImpl implements UserService {
 
     @Autowired
     private UserRepository repository;
+
+    @Autowired
+    private FineClient fineClient;
 
     @Override
     @Transactional(readOnly = true)
@@ -75,5 +79,30 @@ public class UsuarioServiceImpl implements UserService {
         user.setBalance(current - amount);
         repository.save(user);
         return user.getBalance();
+    }
+
+    // Devuelve true si el usuario NO puede viajar (bloqueado), false si SÍ puede
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isUserBlockedForTravel(String uidUser) {
+        Optional<User> userOpt = byId(uidUser);
+        if (userOpt.isEmpty()) {
+            // Si no existe el usuario, lo tratamos como bloqueado
+            return true;
+        }
+        User user = userOpt.get();
+        Integer balance = user.getBalance();
+        boolean hasNegativeOrNullBalance = (balance == null || balance < 0);
+
+        boolean hasUnpaidFines = false;
+        try {
+            hasUnpaidFines = fineClient.hasUnpaidFines(uidUser);
+        } catch (Exception ex) {
+            // En caso de error llamando al servicio de multas, por seguridad bloqueamos
+            hasUnpaidFines = true;
+        }
+
+        // Bloqueado si tiene saldo negativo/nulo o multas impagas
+        return hasNegativeOrNullBalance || hasUnpaidFines;
     }
 }

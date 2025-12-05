@@ -125,6 +125,18 @@ public class UserController {
         }
     }
 
+    @GetMapping("/travel/blocked/{uid}")
+    @Operation(summary = "Consultar si el usuario está bloqueado para viajar",
+            description = "Devuelve true si el usuario NO puede viajar (saldo negativo/nulo o multas impagas), false si SÍ puede viajar")
+    public ResponseEntity<?> isBlockedForTravel(
+            @Parameter(description = "UID del usuario", required = true)
+            @PathVariable("uid") String uidUser
+    ) {
+        boolean blocked = service.isUserBlockedForTravel(uidUser);
+        return ResponseEntity.ok(Map.of("uid", uidUser, "blocked", blocked));
+    }
+
+
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {
         Map<String,String> errores = new HashMap<>();
         result.getFieldErrors().forEach(err -> errores.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage()));

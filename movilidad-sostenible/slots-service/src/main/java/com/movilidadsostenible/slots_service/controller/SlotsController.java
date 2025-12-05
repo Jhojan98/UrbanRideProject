@@ -183,27 +183,52 @@ public class SlotsController {
         }
     }
 
-    // Nuevo endpoint: bloquear slot asignando bicicleta (padlockStatus -> LOCKED)
+    // Bloquear slot asignando bicicleta (padlockStatus -> LOCKED)
     @PostMapping("/{slotId}/lock")
     @Operation(summary = "Bloquear un slot asignando una bicicleta",
-            description = "Cambia el estado del candado a LOCKED y asigna el ID de la bicicleta al slot indicado.")
+      description = "Cambia el estado del candado a LOCKED y asigna el ID de la bicicleta al slot indicado.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Slot bloqueado",
-                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string", example = "S-001"))),
-            @ApiResponse(responseCode = "404", description = "Slot no encontrado", content = @Content)
+      @ApiResponse(responseCode = "200", description = "Slot bloqueado",
+        content = @Content(mediaType = "text/plain", schema = @Schema(type = "string", example = "S-001"))),
+      @ApiResponse(responseCode = "404", description = "Slot no encontrado", content = @Content)
     })
     public ResponseEntity<String> lockSlotWithBicycle(
-            @Parameter(description = "Identificador del slot", example = "S-001")
-            @PathVariable String slotId,
-            @Parameter(description = "Identificador de la bicicleta", example = "123")
-            @RequestParam String bicycleId
+      @Parameter(description = "Identificador del slot", example = "S-001")
+      @PathVariable String slotId,
+      @Parameter(description = "Identificador de la bicicleta", example = "123")
+      @RequestParam String bicycleId
     ) {
-        try {
-            Slot locked = service.lockSlotWithBicycle(slotId, bicycleId);
-            return ResponseEntity.ok(locked.getIdSlot());
-        } catch (IllegalArgumentException ex) {
-            return ResponseEntity.notFound().build();
-        }
+      try {
+        Slot locked = service.lockSlotWithBicycle(slotId, bicycleId);
+        bicycleClient.updatePadlockStatus(bicycleId, "LOCKED");
+        return ResponseEntity.ok(locked.getIdSlot());
+      } catch (IllegalArgumentException ex) {
+        return ResponseEntity.notFound().build();
+      }
+    }
+
+    // Debloquear slot asignando bicicleta (padlockStatus -> UNLOCKED)
+    @PostMapping("/{slotId}/unlock")
+    @Operation(summary = "Bloquear un slot asignando una bicicleta",
+      description = "Cambia el estado del candado a LOCKED y asigna el ID de la bicicleta al slot indicado.")
+    @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Slot bloqueado",
+        content = @Content(mediaType = "text/plain", schema = @Schema(type = "string", example = "S-001"))),
+      @ApiResponse(responseCode = "404", description = "Slot no encontrado", content = @Content)
+    })
+    public ResponseEntity<String> unlockSlotWithBicycle(
+      @Parameter(description = "Identificador del slot", example = "S-001")
+      @PathVariable String slotId,
+      @Parameter(description = "Identificador de la bicicleta", example = "123")
+      @RequestParam String bicycleId
+    ) {
+      try {
+        Slot locked = service.unlockSlotWithBicycle(slotId, bicycleId);
+        bicycleClient.updatePadlockStatus(bicycleId, "UNLOCKED");
+        return ResponseEntity.ok(locked.getIdSlot());
+      } catch (IllegalArgumentException ex) {
+        return ResponseEntity.notFound().build();
+      }
     }
 
     // PUT: Bloquear un slot por ID (LOCKED) y actualizar la bicicleta asociada

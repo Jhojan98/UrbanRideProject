@@ -19,19 +19,19 @@ public class ReservationTempServiceImpl implements ReservationTempService {
     private static final String TEMP_PREFIX = "reservation_temp:";
     private static final String DATA_SUFFIX = ":data";
     private static final String TTL_SUFFIX  = ":ttl";
-    private static final String UID_PREF = ":user_id:";
+    private static final String UID_PREFIX = ":user_id:";
 
     @Override
     public void save(ReservationTempDTO dto) {
 
         String baseKey = TEMP_PREFIX + dto.getReservationId();
-        redisTemplate.opsForHash().putAll(baseKey+ UID_PREF + dto.getUserId() + DATA_SUFFIX, dto.toMap());
-        redisTemplate.opsForValue().set(baseKey + UID_PREF + dto.getUserId() + TTL_SUFFIX, "",
+        redisTemplate.opsForHash().putAll(baseKey+ UID_PREFIX + dto.getUserId() + DATA_SUFFIX, dto.toMap());
+        redisTemplate.opsForValue().set(baseKey + UID_PREFIX + dto.getUserId() + TTL_SUFFIX, "",
                 10, TimeUnit.MINUTES);
     }
 
 
-    @Override
+  @Override
     public ReservationTempDTO getExpired(String reservationId) {
         Map<Object, Object> raw = redisTemplate.opsForHash().entries(reservationId);
         if (raw == null || raw.isEmpty()) {
@@ -50,10 +50,11 @@ public class ReservationTempServiceImpl implements ReservationTempService {
       return null;
   }
 
+
   @Override
   public ReservationTempDTO getByUID(String userId) {
       // Buscar claves de datos para el usuario: reservation_temp:*:user_id:{userId}:data
-      String pattern = TEMP_PREFIX + "*" + UID_PREF + userId + DATA_SUFFIX;
+      String pattern = TEMP_PREFIX + "*" + UID_PREFIX + userId + DATA_SUFFIX;
       java.util.Set<String> keys = redisTemplate.keys(pattern);
       if (keys == null || keys.isEmpty()) {
           return null;
@@ -84,10 +85,10 @@ public class ReservationTempServiceImpl implements ReservationTempService {
 
   @Override
   public void remove(String reservationId) {
-      String keyTTL = TEMP_PREFIX + reservationId + TTL_SUFFIX;
-      String keyData = TEMP_PREFIX + reservationId + DATA_SUFFIX;
-      redisTemplate.delete(keyTTL);
-      redisTemplate.delete(keyData);
+    System.out.println(reservationId);
+    System.out.println(reservationId.replace(":data", ":ttl"));
+      redisTemplate.delete(reservationId);
+      redisTemplate.delete(reservationId.replace(":data", ":ttl"));
   }
 
   @Override
