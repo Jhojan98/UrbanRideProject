@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import type { Ref } from 'vue'
-import usersStore from '@/stores/usersStore'
+import usersStore from '@/stores/userStore'
 import type User from '@/models/User'
 import type Travel from '@/models/Travel'
 import type Fine from '@/models/Fine'

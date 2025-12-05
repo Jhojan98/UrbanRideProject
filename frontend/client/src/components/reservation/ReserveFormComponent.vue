@@ -2,14 +2,15 @@
   <div class="reservation-panel">
     <h1>{{ $t('reservation.form.stationDetails') }}</h1>
 
-    <h3>{{ props.station.name }}</h3>
+    <h3 v-if="props.station">{{ props.station.nameStation }}</h3>
+    <h3 v-else>{{ $t('reservation.form.selectStation') || 'Selecciona una estación' }}</h3>
 
-    <p class="availability">
-      🚲 {{ $t('reservation.form.bikesAvailable') }}: <strong>{{ props.station.available }}</strong>
+    <p v-if="props.station" class="availability">
+      🚲 {{ $t('reservation.form.bikesAvailable') }}: <strong>{{ props.station.availableSlots }}</strong>
     </p>
 
-    <p class="status" :class="props.station.status.toLowerCase()">
-      {{ props.station.status }}
+    <p v-if="props.station?.totalSlots" class="availability">
+      🅿️ {{ $t('reservation.form.totalSlots') }}: <strong>{{ props.station.totalSlots }}</strong>
     </p>
 
     <label class="label">{{ $t('reservation.form.bikeType') }}</label>
@@ -51,6 +52,10 @@
       />
     </div>
 
+    <div class="status-message" v-if="statusMessage">
+      {{ statusMessage }}
+    </div>
+
     <div class="balance-container">
       {{ $t('reservation.form.balance') }} <strong>${{ props.balance }}</strong>
       <button class="btn-secondary" @click="recharge">{{ $t('reservation.form.recharge') }}</button>
@@ -60,9 +65,7 @@
       ⚠️ {{ $t('reservation.form.warning') }} <strong>{{ $t('reservation.form.warningMinutes') }}</strong>.
     </p>
 
-    <button class="butn-primary" @click="reserve">
-      {{ $t('reservation.form.reserveBike') }}
-    </button>
+    <!-- Botón de reservar bicicleta removido para evitar duplicidad con Confirmar Ruta -->
   </div>
 </template>
 
@@ -70,21 +73,23 @@
 import UltimaMilla from "@/components/reservation/UltimaMilla.vue"
 import { ref, defineEmits, withDefaults, defineProps } from 'vue'
 import { getAuth } from 'firebase/auth'
-import userAuth from '@/stores/auth'
 import { useTravelStore } from '@/stores/travel'
 import { useI18n } from 'vue-i18n';
 import { useReservation } from '@/composables/useReservation'
 import { useRouter } from 'vue-router'
 
 interface Station {
-  id?: number
-  name: string
-  available: number
-  status: string
+  idStation?: number
+  nameStation: string
+  availableSlots: number
+  totalSlots?: number
   // opcionales que UltimaMilla puede enviar
   latitude?: number
   longitude?: number
-  free_spots?: number
+  type?: string
+  mechanical?: number
+  electric?: number
+  timestamp?: Date
 }
 
 interface Props {
@@ -98,12 +103,12 @@ const { setReservation } = useReservation()
 
 // props con valores por defecto (incluye origin/destination opcionales para sincronizar selección desde el mapa)
 interface PropsWithSelection extends Props {
-  origin?: any | null
-  destination?: any | null
+  origin?: Station | null
+  destination?: Station | null
 }
 
 const props = withDefaults(defineProps<PropsWithSelection>(), {
-  station: () => ({ name: 'Selecciona una estación', available: 0, status: 'N/A' }),
+  station: () => ({ nameStation: 'Selecciona una estación', availableSlots: 0, totalSlots: 0 }),
   balance: 0,
   origin: null,
   destination: null
@@ -113,83 +118,87 @@ const props = withDefaults(defineProps<PropsWithSelection>(), {
 const emit = defineEmits<{
   reserve: [payload: { bikeType: string; rideType: string }]
   close: []
-  "update:origin": [any | null]
-  "update:destination": [any | null]
+  "update:origin": [Station | null]
+  "update:destination": [Station | null]
 }>()
 
 const bikeType = ref<string>('')
 const rideType = ref<string>('')
 
 const travelStore = useTravelStore()
+const statusMessage = ref<string>('')
 
 // acciones
-function reserve() {
+async function reserve() {
   if (!bikeType.value || !rideType.value) {
     window.alert($t('reservation.form.selectionAlert'))
     return
   }
 
   // Preparar payload para viaje-service via gateway
-  const auth = userAuth()
   const firebaseAuth = getAuth()
   const currentUser = firebaseAuth.currentUser
 
   const userUid = currentUser?.uid ?? null
 
-  // Determinar station ids (intentar varias propiedades posibles)
-  const stationStartId = (props.origin && (props.origin.id ?? props.origin.idStation)) || (props.station && (props.station.id ?? props.station.idStation)) || null
-  const stationEndId = (props.destination && (props.destination.id ?? props.destination.idStation)) || null
+  // Determinar station ids usando el origin seleccionado (que viene del dropdown de UltimaMilla)
+  const stationStartId = props.origin?.idStation ?? null
+  const stationEndId = props.destination?.idStation ?? null
 
   const bikeTypeMapped = bikeType.value === 'electric' ? 'ELECTRIC' : 'MECHANIC'
 
   // Si no tenemos suficientes datos para iniciar el viaje, guardar localmente y emitir como antes
   if (!userUid || !stationStartId || !stationEndId) {
+    console.log('[ReserveFormComponent] Faltan datos para enviar al backend:', {
+      userUid: !!userUid,
+      stationStartId,
+      stationEndId,
+      bikeType: bikeType.value,
+      rideType: rideType.value
+    });
+
     const reservationPayload = {
       bikeType: bikeType.value,
       rideType: rideType.value,
-      station: props.station
+      station: props.origin,
+      destination: props.destination
     }
     setReservation(reservationPayload)
     emit('reserve', { bikeType: bikeType.value, rideType: rideType.value })
     return
   }
 
-  // Llamada al gateway -> viaje-service
-  const uri = `${auth.baseURL.replace(/\/$/, '')}/travel/start`
-  const body = {
-    userUid: userUid,
-    stationStartId: Number(stationStartId),
-    stationEndId: Number(stationEndId),
-    bikeType: bikeTypeMapped
-  }
+  // Delegar la llamada al backend al store (sin hacer fetch directo en el componente)
+  try {
+    console.log('[ReserveFormComponent] Iniciando viaje con datos:', {
+      userUid,
+      stationStartId,
+      stationEndId,
+      bikeTypeMapped
+    });
 
-  // Ejecutar petición y manejar resultado
-  fetch(uri, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify(body)
-  }).then(async (res) => {
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '')
-      window.alert($t('reservation.form.reserveError') + '\n' + (txt || res.statusText))
-      return
-    }
-    const data = await res.json().catch(() => null)
-    console.log('Start travel response:', data)
+    const data = await travelStore.initiateTravel(
+      userUid,
+      Number(stationStartId),
+      Number(stationEndId),
+      bikeTypeMapped
+    )
+    console.log('[ReserveFormComponent] Respuesta del backend:', data)
 
     // Guardar la reserva localmente y notificar al padre
     const reservationPayload = {
       bikeType: bikeType.value,
       rideType: rideType.value,
-      station: props.station,
+      station: props.origin,
+      destination: props.destination,
       startResponse: data
     }
     setReservation(reservationPayload)
     emit('reserve', { bikeType: bikeType.value, rideType: rideType.value })
-  }).catch(err => {
-    console.error('Error calling start travel:', err)
+  } catch (err) {
+    console.error('[ReserveFormComponent] Error iniciando viaje:', err)
     window.alert($t('reservation.form.reserveError'))
-  })
+  }
 }
 
 const recharge = () => {
@@ -197,27 +206,23 @@ const recharge = () => {
 }
 
 // Handlers para reenviar eventos recibidos desde UltimaMilla hacia el padre
-function onStationSelected(station: Station) {
-  emit("update:destination", station ?? null)
-}
-
-function onOriginUpdate(origin: any) {
+function onOriginUpdate(origin: Station | null) {
   emit("update:origin", origin ?? null)
 }
 
-function onDestinationUpdate(destination: any) {
+function onDestinationUpdate(destination: Station | null) {
   emit("update:destination", destination ?? null)
 }
 
 // Handler cuando UltimaMilla emite confirm (botón Confirmar Ruta)
-async function onConfirmRoute(payload: { origin: any; destination: any; bikeType: string; rideType: string }) {
+async function onConfirmRoute(payload: { origin: Station; destination: Station; bikeType: string; rideType: string }) {
   // Solo ejecutar SHORT_TRIP (última milla) según requisito
   if (!payload || payload.rideType !== 'short_trip') {
     // fallback: si no es short_trip guardar local y emitir reserve
     const reservationPayload = {
       bikeType: bikeType.value,
       rideType: rideType.value,
-      station: props.station
+      station: props.origin
     }
     setReservation(reservationPayload)
     emit('reserve', { bikeType: bikeType.value, rideType: rideType.value })
@@ -234,9 +239,9 @@ async function onConfirmRoute(payload: { origin: any; destination: any; bikeType
     return
   }
 
-  // Determinar station ids desde los objetos emitidos
-  const stationStartId = Number(payload.origin?.id ?? payload.origin?.idStation ?? props.station?.id ?? props.station?.idStation ?? 0)
-  const stationEndId = Number(payload.destination?.id ?? payload.destination?.idStation ?? 0)
+  // Determinar station ids usando el payload del evento (origin/destination del componente UltimaMilla)
+  const stationStartId = Number(payload.origin?.idStation ?? 0)
+  const stationEndId = Number(payload.destination?.idStation ?? 0)
 
   if (!stationStartId || !stationEndId) {
     window.alert('No se pudo determinar estaciones origen/destino')
@@ -246,24 +251,39 @@ async function onConfirmRoute(payload: { origin: any; destination: any; bikeType
   const bikeTypeMapped = payload.bikeType === 'electric' ? 'ELECTRIC' : 'MECHANIC'
 
   try {
-    const resp = await travelStore.startTravel({ userUid, stationStartId, stationEndId, bikeType: bikeTypeMapped })
-    console.log('Viaje iniciado:', resp)
+    console.log('[ReserveFormComponent] onConfirmRoute - Iniciando viaje:', {
+      userUid,
+      stationStartId,
+      stationEndId,
+      bikeTypeMapped,
+      originData: payload.origin
+    });
+
+    // Publica la reserva temporal en Redis a través de viaje-service
+    const resp = await travelStore.startTravel(userUid, stationStartId, stationEndId, bikeTypeMapped)
+    console.log('[ReserveFormComponent] onConfirmRoute - Viaje iniciado (Redis):', resp)
+    const slotMsg = resp?.slotId ? `Tu slot asignado es ${resp.slotId}` : ''
+    const reservationMsg = resp?.reservationId ? `ID de reserva: ${resp.reservationId}` : ''
+    statusMessage.value = [slotMsg, reservationMsg].filter(Boolean).join(' · ')
+
     // Guardar reserva local y emitir evento reserve para que el padre muestre ConfirmationComponent
     const reservationPayload = {
-      bikeType: bikeType.value,
-      rideType: rideType.value,
-      station: props.station,
-      startResponse: resp
+      bikeType: payload.bikeType,
+      rideType: payload.rideType,
+      station: payload.origin,
+      destination: payload.destination ?? props.destination,
+      startResponse: resp // incluye reservationId y slotId para mostrar al usuario
     }
     setReservation(reservationPayload)
-    emit('reserve', { bikeType: bikeType.value, rideType: rideType.value })
-  } catch (err: any) {
-    console.error('Error iniciando viaje:', err)
-    window.alert('Error iniciando viaje: ' + (err?.message ?? String(err)))
+    emit('reserve', { bikeType: payload.bikeType, rideType: payload.rideType })
+  } catch (err: unknown) {
+    console.error('[ReserveFormComponent] onConfirmRoute - Error iniciando viaje:', err)
+    window.alert('Error iniciando viaje: ' + (err instanceof Error ? err.message : String(err)))
   }
 }
 </script>
 
 <style lang="scss" scoped>
 @import "@/styles/maps.scss";
+.status-message { margin: .75rem 0; padding: .6rem .8rem; background: #F1F8E9; color: #2E7D32; border: 1px solid #C5E1A5; border-radius: 8px; }
 </style>

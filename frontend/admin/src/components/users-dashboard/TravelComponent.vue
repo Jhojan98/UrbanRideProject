@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import usersStore from '@/stores/usersStore'
+import usersStore from '@/stores/userStore'
 import type Travel from '@/models/Travel'
 
 const store = usersStore()

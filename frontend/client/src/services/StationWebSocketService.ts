@@ -85,6 +85,7 @@ export class StationWebSocketService {
       stations.forEach(st => {
         this.stationsCache.set(st.idStation, st);
         this.factory.getStationMarker(st); // actualiza/crea en pool
+        console.log(`[Stations WS] Bulk - Estación ${st.idStation} (${st.nameStation}): ⚡ ${st.electric}, ⚙️ ${st.mechanical}`);
       });
       this.hasBulk = true;
       if(this.onInitialLoad){ this.onInitialLoad(stations, this.factory); }
@@ -101,7 +102,7 @@ export class StationWebSocketService {
       this.stationsCache.set(station.idStation, station);
       this.factory.getStationMarker(station);
       if(this.onUpdate){ this.onUpdate(station, this.factory); }
-      console.log(`[Stations WS] Update estación ${station.idStation}`);
+      console.log(`[Stations WS] Update estación ${station.idStation} (${station.nameStation}): ⚡ ${station.electric}, ⚙️ ${station.mechanical}`);
     } catch(e){
       console.error('[Stations WS] Error parse update:', e, 'payload:', message.body);
     }

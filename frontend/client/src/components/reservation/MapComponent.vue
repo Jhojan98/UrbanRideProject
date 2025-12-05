@@ -21,16 +21,16 @@
       <div class="overlay-section">
         <h4>📍 {{ $t('reservation.map.originStation') }}</h4>
         <div>
-          <div class="row"><strong>{{ originPlain.name ?? '—' }}</strong></div>
-          <div class="row">🚲 {{ originPlain.free_spots ?? '—' }} {{ $t('reservation.map.availableBikes') }}</div>
+          <div class="row"><strong>{{ originPlain.nameStation ?? '—' }}</strong></div>
+          <div class="row">🚲 {{ originPlain.availableSlots ?? '—' }} {{ $t('reservation.map.availableBikes') }}</div>
         </div>
       </div>
 
       <div class="overlay-section">
         <h4>🅿️ {{ $t('reservation.map.destinationStation') }}</h4>
         <div>
-          <div class="row"><strong>{{ destinationPlain.name ?? '—' }}</strong></div>
-          <div class="row">📍 {{ destinationPlain.free_spots ?? '—' }} {{ $t('reservation.map.availableSlots') }}</div>
+          <div class="row"><strong>{{ destinationPlain.nameStation ?? '—' }}</strong></div>
+          <div class="row">📍 {{ destinationPlain.availableSlots ?? '—' }} {{ $t('reservation.map.availableSlots') }}</div>
         </div>
       </div>
     </div>
@@ -67,43 +67,47 @@ import { BicycleFactory } from '@/patterns/BicycleFlyweight'
 import { BicycleWebSocketService } from '@/services/BicycleWebSocketService'
 import { StationFactory } from '@/patterns/StationFlyweight'
 import { StationWebSocketService } from '@/services/StationWebSocketService'
+import { useStationStore } from '@/stores/station'
+import type { Station } from '@/models/Station'
 
-// Datos locales de prueba para estaciones (cuando WebSocket no está disponible)
-interface StationLike {
-  idStation?: number
+// Type used by WS and factories when payload shape may vary
+type StationLike = Station | {
   id?: number
-  nameStation?: string
+  idStation?: number
   name?: string
+  nameStation?: string
   latitude: number
   longitude: number
   availableSlots?: number
   free_spots?: number
   type?: string
+  cctvStatus?: boolean
+  mechanical?: number
+  electric?: number
+  totalSlots?: number
 }
 
-const mockStations: StationLike[] = [
-  { idStation: 10, nameStation: "Estación Centro", latitude: 4.1430, longitude: -73.6290, availableSlots: 5, totalSlots: 10, type: 'bike', mechanical: 3, electric: 2, slots: [] as unknown[] },
-  { idStation: 11, nameStation: "Parque Sikuani", latitude: 4.1475, longitude: -73.6260, availableSlots: 2, totalSlots: 10, type: 'bike', mechanical: 1, electric: 1, slots: [] as unknown[] },
-  { idStation: 12, nameStation: "Zona Universitaria", latitude: 4.1505, longitude: -73.6235, availableSlots: 0, totalSlots: 10, type: 'bike', mechanical: 0, electric: 0, slots: [] as unknown[] },
-  { idStation: 1, nameStation: "Metro Estación Central", latitude: 4.1425, longitude: -73.6312, availableSlots: 5, totalSlots: 10, type: 'metro', mechanical: 0, electric: 0, slots: [] as unknown[] },
-  { idStation: 2, nameStation: "Metro Sikuani", latitude: 4.1480, longitude: -73.6270, availableSlots: 2, totalSlots: 10, type: 'metro', mechanical: 0, electric: 0, slots: [] as unknown[] }
-]
+// Interfaz para props de origen/destino
+interface StationPoint {
+  idStation?: number
+  nameStation?: string
+  latitude: number
+  longitude: number
+  availableSlots?: number
+  type?: string
+}
 
 const props = defineProps<{
-  origin?: { latitude: number; longitude: number; name?: string; free_spots?: number; status?: string } | null
-  destination?: { latitude: number; longitude: number; name?: string; free_spots?: number; status?: string } | null
+  origin?: StationPoint | null
+  destination?: StationPoint | null
   useSockets?: boolean
-  restStationsUrl?: string
-  initialStations?: Array<{ idStation?: number; stationName?: string; latitude: number; length?: number; availableSlots?: number; type?: string }>
+  initialStations?: Station[]
 }>()
-
-// REST base URL (Swagger UI mostró puerto 8005). Can be overridden via prop `restStationsUrl`.
-// El endpoint en `estaciones-service` expone `GET /stations` (controller), así que apuntamos ahí.
-const restUrl = props.restStationsUrl ?? 'http://localhost:8005/stations'
 
 // No longer emit station-click from the map; clicks only show info in the overlay
 
 const { t: $t } = useI18n()
+const stationStore = useStationStore()
 const map = ref<LeafletMap | null>(null)
 const isMounted = ref<boolean>(false)
 const bicycleFactory = new BicycleFactory()
@@ -148,8 +152,15 @@ let originMarker: Marker | null = null
 let destMarker: Marker | null = null
 let routeLine: Polyline | null = null
 
-const originPlain = computed(() => (props.origin ? JSON.parse(JSON.stringify(props.origin)) : null))
-const destinationPlain = computed(() => (props.destination ? JSON.parse(JSON.stringify(props.destination)) : null))
+const originPlain = computed(() => props.origin ? {
+  nameStation: props.origin.nameStation ?? 'Origen',
+  availableSlots: props.origin.availableSlots ?? 0
+} : null)
+
+const destinationPlain = computed(() => props.destination ? {
+  nameStation: props.destination.nameStation ?? 'Destino',
+  availableSlots: props.destination.availableSlots ?? 0
+} : null)
 
 // Helper: registrar timeout para limpieza en onUnmounted
 function setMountedTimeout(callback: () => void, delay: number): number {
@@ -165,14 +176,13 @@ function setMountedTimeout(callback: () => void, delay: number): number {
 
 // NOTE: always show all stations; selection will be done via dropdowns
 
-function addOriginMarker(o: { latitude: number; longitude: number; name?: string }) {
+function addOriginMarker(o: StationPoint) {
   if (!map.value || !isMounted.value) return
   if (originMarker) {
     originMarker.remove()
     originMarker = null
   }
-  console.log('🔵 Agregando marcador ORIGEN en:', { lat: o.latitude, lng: o.longitude, name: o.name })
-  console.log('🔵 Verificar estaciones mock:', mockStations.map(s => ({ name: s.nameStation, lat: s.latitude, lng: s.longitude })))
+  console.log('🔵 Agregando marcador ORIGEN en:', { lat: o.latitude, lng: o.longitude, nameStation: o.nameStation })
 
   // Usar icono estándar de Leaflet con color verde para origen
   const greenIcon = new L.Icon({
@@ -185,20 +195,20 @@ function addOriginMarker(o: { latitude: number; longitude: number; name?: string
   })
 
   originMarker = L.marker([o.latitude, o.longitude], { icon: greenIcon }).addTo(map.value as LeafletMap)
-  if (o.name) {
-    const popupText = `<strong>${$t('reservation.map.markerOrigin')}</strong><br/>${o.name}<br/>${$t('reservation.map.markerCoords', { lat: o.latitude.toFixed(4), lng: o.longitude.toFixed(4) })}`
+  if (o.nameStation) {
+    const popupText = `<strong>${$t('reservation.map.markerOrigin')}</strong><br/>${o.nameStation}<br/>${$t('reservation.map.markerCoords', { lat: o.latitude.toFixed(4), lng: o.longitude.toFixed(4) })}`
     originMarker.bindPopup(popupText)
   }
   setMountedTimeout(() => originMarker?.openPopup(), 200)
 }
 
-function addDestMarker(d: { latitude: number; longitude: number; name?: string }) {
+function addDestMarker(d: StationPoint) {
   if (!map.value || !isMounted.value) return
   if (destMarker) {
     destMarker.remove()
     destMarker = null
   }
-  console.log('🔵 Agregando marcador DESTINO en:', { lat: d.latitude, lng: d.longitude, name: d.name })
+  console.log('🔵 Agregando marcador DESTINO en:', { lat: d.latitude, lng: d.longitude, nameStation: d.nameStation })
 
   // Usar icono estándar de Leaflet con color rojo para destino
   const redIcon = new L.Icon({
@@ -211,8 +221,8 @@ function addDestMarker(d: { latitude: number; longitude: number; name?: string }
   })
 
   destMarker = L.marker([d.latitude, d.longitude], { icon: redIcon }).addTo(map.value as LeafletMap)
-  if (d.name) {
-    const popupText = `<strong>${$t('reservation.map.markerDestination')}</strong><br/>${d.name}<br/>${$t('reservation.map.markerCoords', { lat: d.latitude.toFixed(4), lng: d.longitude.toFixed(4) })}`
+  if (d.nameStation) {
+    const popupText = `<strong>${$t('reservation.map.markerDestination')}</strong><br/>${d.nameStation}<br/>${$t('reservation.map.markerCoords', { lat: d.latitude.toFixed(4), lng: d.longitude.toFixed(4) })}`
     destMarker.bindPopup(popupText)
   }
   setMountedTimeout(() => destMarker?.openPopup(), 200)
@@ -271,64 +281,65 @@ function fitMap() {
   }
 }
 
-// Fetch stations from REST endpoint and render them. Returns true if successful.
-async function fetchStationsFromRest(): Promise<boolean> {
-  const candidates = [restUrl]
-  // try common suffix
-  if (!restUrl.endsWith('/list')) candidates.push(restUrl.replace(/\/$/, '') + '/list')
-  if (!restUrl.endsWith('/all')) candidates.push(restUrl.replace(/\/$/, '') + '/all')
+// Render stations from store on the map
+function renderStationsFromStore() {
+  const stations = stationStore.allStations
 
-  for (const url of candidates) {
-    try {
-      console.log('[Map] trying REST stations URL:', url)
-      const res = await fetch(url)
-      if (!res.ok) {
-        console.warn('[Map] REST stations fetch failed, status', res.status, 'for', url)
-        continue
-      }
-      const data = await res.json()
-
-      // try common shapes (array or wrapped)
-      let list: any[] = []
-      if (Array.isArray(data)) list = data
-      else if (Array.isArray(data.content)) list = data.content
-      else if (Array.isArray(data._embedded?.estaciones)) list = data._embedded.estaciones
-      else {
-        for (const v of Object.values(data)) if (Array.isArray(v)) { list = v as any[]; break }
-      }
-
-      if (!list.length) {
-        console.warn('[Map] REST returned no station list for', url)
-        continue
-      }
-
-      // render markers for each station
-      list.forEach(s => {
-        const lat = s.latitude ?? s.lat
-        const lng = s.length ?? s.longitude ?? s.lng
-        const name = s.stationName ?? s.nameStation ?? s.name
-        const id = s.idStation ?? s.id
-        if (typeof lat === 'number' && typeof lng === 'number') {
-          const mk = L.marker([lat, lng]).addTo(map.value as LeafletMap)
-          const popup = `<strong>${name ?? 'Estación'}</strong><br/>Tipo: ${s.type ?? '-'}<br/>CCTV: ${s.cctvStatus ?? '-'}<br/>ID: ${id}`
-          mk.bindPopup(popup)
-          // on hover show popup
-          mk.on('mouseover', () => mk.openPopup())
-          mk.on('mouseout', () => mk.closePopup())
-        }
-      })
-
-      stationsRendered.value = true
-      console.log('[Map] stations loaded from', url, 'count:', list.length)
-      return true
-    } catch (err) {
-      console.warn('[Map] Error trying URL', url, err)
-      continue
-    }
+  if (!stations || stations.length === 0) {
+    console.warn('[Map] No stations available in store')
+    return false
   }
 
-  console.warn('[Map] All REST station URL candidates failed')
-  return false
+  console.log('[Map] Renderizando estaciones del store:', stations.length)
+
+  stations.forEach(s => {
+    const lat = s.latitude
+    const lng = s.longitude
+    const name = s.nameStation
+    const mechanical = s.mechanical ?? 0
+    const electric = s.electric ?? 0
+    const cctvDisplay = typeof s.cctvStatus === 'boolean' ? (s.cctvStatus ? '✅ Activo' : '❌ Inactivo') : '-'
+
+    // Log para cada estación
+    console.log(`[Map] ${name}: ⚡ ${electric}, ⚙️ ${mechanical}`);
+
+    // Determinar disponibilidad para viaje
+    const canTravelMech = mechanical > 0 ? '✅' : '❌'
+    const canTravelElec = electric > 0 ? '✅' : '❌'
+
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      const mk = L.marker([lat, lng]).addTo(map.value as LeafletMap)
+      const popup = `
+        <div style="font-family: Arial, sans-serif; min-width: 200px;">
+          <strong style="font-size: 14px; color: #2c3e50;">${name ?? 'Estación'}</strong>
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0;">
+            <div style="margin: 4px 0;"><strong>Tipo:</strong> ${s.type ?? '-'}</div>
+            <div style="margin: 4px 0;"><strong>CCTV:</strong> ${cctvDisplay}</div>
+            <div style="margin: 4px 0;"><strong>Slots:</strong> ${s.availableSlots}/${s.totalSlots}</div>
+          </div>
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0;">
+            <div style="font-weight: bold; margin-bottom: 6px; color: #34495e;">🚲 Bicicletas Disponibles:</div>
+            <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+              <span>⚙️ Mecánicas:</span>
+              <span style="font-weight: bold; color: ${mechanical > 0 ? '#27ae60' : '#e74c3c'};">${mechanical} ${canTravelMech}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+              <span>⚡ Eléctricas:</span>
+              <span style="font-weight: bold; color: ${electric > 0 ? '#27ae60' : '#e74c3c'};">${electric} ${canTravelElec}</span>
+            </div>
+          </div>
+        </div>
+      `
+      mk.bindPopup(popup)
+      // on hover show popup
+      mk.on('mouseover', () => mk.openPopup())
+      mk.on('mouseout', () => mk.closePopup())
+    }
+  })
+
+  stationsRendered.value = true
+  console.log('[Map] stations rendered from store, count:', stations.length)
+  return true
 }
 
 onMounted(() => {
@@ -354,74 +365,37 @@ onMounted(() => {
     keepBuffer: 0,
   }).addTo(map.value as LeafletMap)
 
-  // Cargar datos locales de prueba inmediatamente (fallback)
-  mockStations.forEach((st: StationLike) => {
-    const marker = stationFactory.getStationMarker(st as unknown as StationLike)
-    marker.setTranslator($t)
-    marker.render(map.value as LeafletMap)
-    try {
-      marker.onClick((station: StationLike) => {
-        const payload = {
-          id: station.idStation ?? station.id,
-          name: station.nameStation ?? station.name,
-          latitude: station.latitude,
-          longitude: station.longitude,
-          free_spots: station.availableSlots ?? station.free_spots ?? 0,
-          type: station.type ?? 'bike'
-        }
-        if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-        else clickedStation.value = payload
-      })
-    } catch (e) { void e }
-  })
-  // If sockets disabled, try fetching stations from REST endpoint, else render local mocks and connect WS
+  // Fetch and render stations from store
   if (props.useSockets === false) {
-    fetchStationsFromRest().then(ok => {
-      if (!ok) {
-        // fallback to provided initialStations prop, otherwise to local mocks
-        const fallback = (props.initialStations && props.initialStations.length) ? props.initialStations : mockStations
-        fallback.forEach(st => {
+    // Fetch stations from backend via store
+    stationStore.fetchStations().then((stations) => {
+      if (stations && stations.length > 0) {
+        renderStationsFromStore()
+      } else {
+        console.warn('[Map] No stations loaded from store')
+        if (props.initialStations && props.initialStations.length) {
+          console.log('[Map] Using initialStations prop as fallback')
+          props.initialStations.forEach(st => {
+            const marker = stationFactory.getStationMarker(st as any)
+            marker.render(map.value as LeafletMap)
+          })
+          stationsRendered.value = true
+        }
+      }
+    }).catch((err) => {
+      console.error('[Map] Error fetching stations from store:', err)
+      if (props.initialStations && props.initialStations.length) {
+        console.log('[Map] Using initialStations prop as fallback after error')
+        props.initialStations.forEach(st => {
           const marker = stationFactory.getStationMarker(st as any)
           marker.render(map.value as LeafletMap)
-          try {
-            marker.onClick((station) => {
-              const payload = {
-                id: (station as any).idStation ?? (station as any).id,
-                name: (station as any).nameStation ?? (station as any).name,
-                latitude: station.latitude,
-                longitude: station.longitude,
-                free_spots: (station as any).availableSlots ?? (station as any).free_spots,
-                type: (station as any).type ?? 'bike'
-              }
-              if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-              else clickedStation.value = payload
-            })
-          } catch (e) { void e }
         })
         stationsRendered.value = true
       }
     })
   } else {
-    // Cargar datos locales de prueba inmediatamente (fallback)
-    mockStations.forEach(st => {
-      const marker = stationFactory.getStationMarker(st as any)
-      marker.render(map.value as LeafletMap)
-      try {
-        marker.onClick((station) => {
-          const payload = {
-            id: (station as any).idStation ?? (station as any).id,
-            name: (station as any).nameStation ?? (station as any).name,
-            latitude: station.latitude,
-            longitude: station.longitude,
-            free_spots: (station as any).availableSlots ?? (station as any).free_spots,
-            type: (station as any).type ?? 'bike'
-          }
-          if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-          else clickedStation.value = payload
-        })
-      } catch (e) { void e }
-    })
-    stationsRendered.value = true
+    console.log('[Map] WebSocket mode enabled, waiting for WS data')
+    stationsRendered.value = false
   }
 
   // Intentar conectar al WebSocket de estaciones y solicitar carga inicial.

@@ -80,7 +80,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import usersStore from '@/stores/usersStore'
+import usersStore from '@/stores/userStore'
 
 const userStore = usersStore()
 const filterStatus = ref('')

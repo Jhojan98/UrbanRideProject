@@ -114,7 +114,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { Ref } from 'vue'
-import usersStore from '@/stores/usersStore'
+import usersStore from '@/stores/userStore'
 import type CaC from '@/models/CaC'
 
 const userStore = usersStore()
