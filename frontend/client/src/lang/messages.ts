@@ -5,7 +5,9 @@ export const messages = {
             minutes: 'minutos',
             accept: 'Aceptar',
             cancel: 'Cancelar',
-            loading: 'Cargando...'
+            loading: 'Cargando...',
+            menu: 'Abrir menú',
+            close: 'Cerrar'
         },
         nav: {
             home: 'Inicio',
@@ -131,7 +133,8 @@ export const messages = {
                 registeredCard: 'Tarjeta Registrada',
                 expires: 'Expira:',
                 managePayments: 'Gestionar métodos de pago',
-                addBalance: 'Añadir saldo'
+                addBalance: 'Añadir saldo',
+                currency: 'Moneda'
             }
         },
         reservation: {
@@ -161,6 +164,47 @@ export const messages = {
                 tripType: 'Tipo de viaje:',
                 estimatedCost: 'Costo estimado:',
                 confirm: 'Confirmar Reserva'
+            },
+            map: {
+                authRequired: 'Acceso restringido',
+                authMessage: 'Para acceder a nuestros servicios y ver el mapa, debes iniciar sesión primero.',
+                accept: 'Aceptar',
+                originStation: 'Estación Origen',
+                destinationStation: 'Estación Destino',
+                availableBikes: 'bicicletas',
+                availableSlots: 'puestos libres',
+                markerOrigin: 'Origen',
+                markerDestination: 'Destino',
+                markerCoords: 'Lat: {lat}, Lng: {lng}',
+                popup: {
+                    availableTypes: 'Tipos disponibles',
+                    mechanical: 'Mecánicas',
+                    electric: 'Eléctricas',
+                    available: 'Disponibles',
+                    slots: 'Slots',
+                    noSlots: 'Sin slots',
+                    slotFree: 'Slot {num}: Libre',
+                    slotOccupied: 'Slot {num}: Ocupado',
+                    slotMaintenance: 'Slot {num}: Mantto.',
+                    slotOutOfService: 'Slot {num}: Fuera',
+                    slotUnknown: 'Desconocido'
+                },
+                bicycle: {
+                    title: 'Bicicleta {id}',
+                    battery: 'Batería',
+                    location: 'Ubicación',
+                    lastUpdate: 'Última actualización'
+                }
+            },
+            notifications: {
+                expiredTravel: 'Viaje Cancelado',
+                expiredTravelMsg: 'El tiempo de espera ha expirado y tu viaje ha sido cancelado automáticamente.',
+                startTravel: 'Viaje Iniciado',
+                startTravelMsg: '¡Tu reserva ha sido confirmada! El viaje ha iniciado exitosamente.',
+                endTravel: 'Viaje Finalizado',
+                endTravelMsg: 'Tu viaje ha finalizado. Los detalles y el monto total serán enviados a tu correo electrónico.',
+                defaultNotification: 'Notificación',
+                closeLabel: 'Cerrar notificación'
             }
         },
         destination: {
@@ -199,7 +243,35 @@ export const messages = {
             confirmDelete: '¿Estás seguro de que quieres eliminar este método de pago?',
             visa: 'Visa',
             mastercard: 'Mastercard',
-            amex: 'American Express'
+            amex: 'American Express',
+            recharge: {
+                title: 'Recargar Saldo',
+                subtitle: 'Elige el monto que deseas recargar en tu cuenta',
+                selectAmount: 'Por favor selecciona un monto',
+                processing: 'Procesando...',
+                rechargeBtn: 'Recargar Saldo',
+                security: '🔒 Serás redirigido a Stripe para completar el pago de forma segura',
+                notAuthenticated: 'No se encontró usuario autenticado. Vuelve a iniciar sesión.',
+                priceNotFound: 'PriceId no configurado para el monto seleccionado',
+                error: 'Error al iniciar el pago',
+                tryAgain: 'Por favor intenta nuevamente.',
+                currency: 'Moneda',
+                estimatedNote: 'Nota: Los montos se muestran en {currency} para tu referencia. El pago se procesa en USD.'
+            },
+            success: {
+                title: 'Pago realizado ✅',
+                subtitle: '¡Gracias por tu compra! Tu saldo ha sido recargado exitosamente.',
+                sessionId: 'Session ID:',
+                user: 'Usuario:',
+                updatedBalance: 'Saldo actualizado:',
+                viewBalance: 'Ver mi saldo actualizado',
+                backHome: 'Volver al inicio'
+            },
+            cancel: {
+                title: 'Pago cancelado ❌',
+                subtitle: 'El pago fue cancelado o no se completó. Si fue un error intenta nuevamente.',
+                backHome: 'Volver al inicio'
+            }
         },
         report: {
             title: 'Reportar Problema',
@@ -250,7 +322,9 @@ export const messages = {
             minutes: 'minutes',
             accept: 'Accept',
             cancel: 'Cancel',
-            loading: 'Loading...'
+            loading: 'Loading...',
+            menu: 'Open menu',
+            close: 'Close'
         },
         nav: {
             home: 'Home',
@@ -374,7 +448,8 @@ export const messages = {
                 registeredCard: 'Registered Card',
                 expires: 'Expires:',
                 managePayments: 'Manage payment methods',
-                addBalance: 'Add balance'
+                addBalance: 'Add balance',
+                currency: 'Currency'
             }
         },
         reservation: {
@@ -404,6 +479,47 @@ export const messages = {
                 tripType: 'Trip type:',
                 estimatedCost: 'Estimated cost:',
                 confirm: 'Confirm Reservation'
+            },
+            map: {
+                authRequired: 'Restricted access',
+                authMessage: 'To access our services and view the map, you must login first.',
+                accept: 'Accept',
+                originStation: 'Origin Station',
+                destinationStation: 'Destination Station',
+                availableBikes: 'bikes',
+                availableSlots: 'available slots',
+                markerOrigin: 'Origin',
+                markerDestination: 'Destination',
+                markerCoords: 'Lat: {lat}, Lng: {lng}',
+                popup: {
+                    availableTypes: 'Available types',
+                    mechanical: 'Mechanical',
+                    electric: 'Electric',
+                    available: 'Available',
+                    slots: 'Slots',
+                    noSlots: 'No slots',
+                    slotFree: 'Slot {num}: Free',
+                    slotOccupied: 'Slot {num}: Occupied',
+                    slotMaintenance: 'Slot {num}: Maint.',
+                    slotOutOfService: 'Slot {num}: Out',
+                    slotUnknown: 'Unknown'
+                },
+                bicycle: {
+                    title: 'Bicycle {id}',
+                    battery: 'Battery',
+                    location: 'Location',
+                    lastUpdate: 'Last update'
+                }
+            },
+            notifications: {
+                expiredTravel: 'Travel Cancelled',
+                expiredTravelMsg: 'The wait time has expired and your trip has been automatically cancelled.',
+                startTravel: 'Travel Started',
+                startTravelMsg: 'Your reservation has been confirmed! The trip has started successfully.',
+                endTravel: 'Travel Completed',
+                endTravelMsg: 'Your trip has ended. Details and total amount will be sent to your email.',
+                defaultNotification: 'Notification',
+                closeLabel: 'Close notification'
             }
         },
         destination: {
@@ -442,7 +558,35 @@ export const messages = {
             confirmDelete: 'Are you sure you want to delete this payment method?',
             visa: 'Visa',
             mastercard: 'Mastercard',
-            amex: 'American Express'
+            amex: 'American Express',
+            recharge: {
+                title: 'Reload Balance',
+                subtitle: 'Choose the amount you want to reload to your account',
+                selectAmount: 'Please select an amount',
+                processing: 'Processing...',
+                rechargeBtn: 'Reload Balance',
+                security: '🔒 You will be redirected to Stripe to complete the payment securely',
+                notAuthenticated: 'No authenticated user found. Please login again.',
+                priceNotFound: 'PriceId not configured for the selected amount',
+                error: 'Error starting payment',
+                tryAgain: 'Please try again.',
+                currency: 'Currency',
+                estimatedNote: 'Note: Amounts are shown in {currency} for your reference. Payment is processed in USD.'
+            },
+            success: {
+                title: 'Payment completed ✅',
+                subtitle: 'Thank you for your purchase! Your balance has been reloaded successfully.',
+                sessionId: 'Session ID:',
+                user: 'User:',
+                updatedBalance: 'Updated balance:',
+                viewBalance: 'View my updated balance',
+                backHome: 'Back to home'
+            },
+            cancel: {
+                title: 'Payment cancelled ❌',
+                subtitle: 'The payment was cancelled or not completed. If it was a mistake, try again.',
+                backHome: 'Back to home'
+            }
         },
         report: {
             title: 'Report Problem',

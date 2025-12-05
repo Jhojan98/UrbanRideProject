@@ -9,13 +9,13 @@ class BicycleFlyweight {
     private static readonly icon: L.DivIcon = L.divIcon({
         html: `
             <div style="
-                width: 32px; 
-                height: 32px; 
-                background: #4CAF50; 
-                border: 3px solid white; 
-                border-radius: 50%; 
-                display: flex; 
-                align-items: center; 
+                width: 32px;
+                height: 32px;
+                background: #4CAF50;
+                border: 3px solid white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
                 justify-content: center;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.3);
                 font-size: 18px;
@@ -31,13 +31,13 @@ class BicycleFlyweight {
     private static readonly lowBatteryIcon: L.DivIcon = L.divIcon({
         html: `
             <div style="
-                width: 32px; 
-                height: 32px; 
-                background: #f44336; 
-                border: 3px solid white; 
-                border-radius: 50%; 
-                display: flex; 
-                align-items: center; 
+                width: 32px;
+                height: 32px;
+                background: #f44336;
+                border: 3px solid white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
                 justify-content: center;
                 box-shadow: 0 2px 5px rgba(0,0,0,0.3);
                 font-size: 18px;
@@ -72,9 +72,14 @@ class BicycleFlyweight {
 export class BicycleMarker {
     private bicycle: Bicycle;
     private marker: L.Marker | null = null;
+    private t: ((key: string, params?: any) => string) | null = null;
 
     constructor(bicycle: Bicycle) {
         this.bicycle = bicycle;
+    }
+
+    setTranslator(t: (key: string, params?: any) => string) {
+        this.t = t;
     }
 
     /**
@@ -82,7 +87,7 @@ export class BicycleMarker {
      */
     public render(map: L.Map): L.Marker {
         const position: L.LatLngExpression = [this.bicycle.lat, this.bicycle.lon];
-        
+
         if (!this.marker) {
             // Crear nuevo marcador usando el Flyweight (ícono compartido)
             this.marker = L.marker(position, { icon: BicycleFlyweight.getIcon(this.bicycle.battery) });
@@ -136,6 +141,7 @@ export class BicycleMarker {
      * Crea el contenido HTML del popup
      */
     private createPopupContent(): string {
+        const t = this.t || ((key: string) => key);
         const date = this.bicycle.timestamp;
         const formattedDate = date.toLocaleDateString('es-CO', {
             year: 'numeric',
@@ -154,22 +160,22 @@ export class BicycleMarker {
         return `
             <div style="font-family: Arial, sans-serif; min-width: 180px;">
                 <h3 style="margin: 0 0 10px 0; color: #2c3e50; font-size: 16px;">
-                    🚲 Bicicleta ${this.bicycle.id}
+                    🚲 ${t('reservation.map.bicycle.title', { id: this.bicycle.id })}
                 </h3>
                 <div style="font-size: 13px; color: #555;">
                     <p style="margin: 5px 0;">
-                        <strong>Batería:</strong> 
+                        <strong>${t('reservation.map.bicycle.battery')}:</strong>
                         <span style="color: ${batteryColor}; font-weight: bold;">
                             ${this.bicycle.battery}%
                         </span>
                     </p>
                     <p style="margin: 5px 0;">
-                        <strong>Ubicación:</strong><br/>
+                        <strong>${t('reservation.map.bicycle.location')}:</strong><br/>
                         Lat: ${this.bicycle.lat.toFixed(6)}<br/>
                         Lon: ${this.bicycle.lon.toFixed(6)}
                     </p>
                     <p style="margin: 5px 0; font-size: 11px; color: #888;">
-                        <strong>Última actualización:</strong><br/>
+                        <strong>${t('reservation.map.bicycle.lastUpdate')}:</strong><br/>
                         ${formattedDate} ${formattedTime}
                     </p>
                 </div>

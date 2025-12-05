@@ -208,7 +208,7 @@ html[data-theme="dark"] .table-container{
   .profile-content {
     grid-template-columns: 2fr 1fr; /* Dos columnas: 2/3 y 1/3 */
   }
-  
+
   /* La primera sección (historial) ocupa ambas columnas */
   .profile-section:first-child {
     grid-column: 1 / -1;
@@ -218,9 +218,128 @@ html[data-theme="dark"] .table-container{
 /* Ajustes para móviles */
 @media (max-width: 767px) {
   .profile {
+    padding: 1rem;
+    min-height: calc(100vh - 120px);
+  }
+
+  .profile-header {
+    margin-bottom: 1.5rem;
+
+    h1 {
+      font-size: 1.5rem;
+    }
+  }
+
+  .profile-content {
+    gap: 1.5rem;
+  }
+
+  .profile-section {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  .section-title {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .table-container {
+    border-radius: 8px;
+  }
+
+  .trips-table th,
+  .trips-table td {
+    padding: 8px 6px;
+    font-size: 0.8rem;
+  }
+
+  .btn-view-all {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile {
+    padding: 0.5rem;
+  }
+
+  .profile-header h1 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .profile-section {
+    padding: 0.75rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
+
+  .table-container {
+    margin-bottom: 0.5rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .trips-table {
+    font-size: 0.7rem;
+  }
+
+  .trips-table th,
+  .trips-table td {
+    padding: 6px 4px;
+  }
+
+  .trips-table th {
+    background-color: #f0f0f0;
+  }
+
+  .btn-view-all {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .balance-card,
+  .loyalty-card {
+    padding: 1rem;
+  }
+
+  .points-value,
+  .balance-value {
+    font-size: 1.5rem;
+  }
+
+  .card-details {
+    gap: 0.25rem;
+  }
+
+  .card-type,
+  .card-number,
+  .card-expiry {
+    font-size: 0.8rem;
+  }
+
+  .btn-redeem,
+  .btn-payment,
+  .btn-add-balance {
+    padding: 10px;
+    font-size: 13px;
+  }
+}
+
+/* Ajustes para móviles */
+@media (max-width: 767px) {
+  .profile {
     padding: 1rem; /* Menos padding en móviles */
   }
-  
+
   .profile-section {
     padding: 1rem;
   }

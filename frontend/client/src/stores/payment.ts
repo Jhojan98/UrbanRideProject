@@ -15,7 +15,7 @@ interface CheckoutSessionResponse {
 const usePaymentStore = defineStore('payment', {
   state() {
     return {
-      baseURL: 'http://localhost:8090',
+      baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8090',
       loading: false,
       error: null as string | null,
     }
@@ -109,6 +109,66 @@ const usePaymentStore = defineStore('payment', {
         return null
       } finally {
         this.loading = false
+      }
+    },
+
+    /**
+     * Agregar saldo al usuario
+     */
+    async addBalance(userId: string, amount: number): Promise<number | null> {
+      if (!userId || amount <= 0) return null
+
+      try {
+        const response = await fetch(`${this.baseURL}/user/balance/${userId}/add?amount=${amount}`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+          },
+        })
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}))
+          this.error = errData.error || `Error al agregar saldo: ${response.status}`
+          console.error('Error en addBalance:', this.error)
+          return null
+        }
+
+        const data = await response.json()
+        return data.balance || data.saldo || null
+      } catch (error: any) {
+        this.error = `Error al agregar saldo: ${error?.message || 'Error desconocido'}`
+        console.error('Error en addBalance:', error)
+        return null
+      }
+    },
+
+    /**
+     * Restar saldo del usuario
+     */
+    async subtractBalance(userId: string, amount: number): Promise<number | null> {
+      if (!userId || amount <= 0) return null
+
+      try {
+        const response = await fetch(`${this.baseURL}/user/balance/${userId}/subtract?amount=${amount}`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+          },
+        })
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}))
+          this.error = errData.error || `Error al restar saldo: ${response.status}`
+          console.error('Error en subtractBalance:', this.error)
+          return null
+        }
+
+        const data = await response.json()
+        return data.balance || data.saldo || null
+      } catch (error: any) {
+        this.error = `Error al restar saldo: ${error?.message || 'Error desconocido'}`
+        console.error('Error en subtractBalance:', error)
+        return null
       }
     },
 
