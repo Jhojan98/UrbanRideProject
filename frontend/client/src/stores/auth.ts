@@ -13,7 +13,7 @@ const userAuth = defineStore("auth", {
   state() {
     return {
       token: null as string | null,
-      baseURL: "http://localhost:8090",
+      baseURL: process.env.VUE_APP_API_URL || "http://localhost:8090",
       message: "",
       isVerified: false,
       pendingVerification: false,

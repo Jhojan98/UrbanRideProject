@@ -4,7 +4,7 @@ export function createWebSocket() {
     // Fallback para asegurar tipo string
     const wsUrl = process.env.VUE_APP_WEBSOCKET_BICYCLES_URL || 'http://localhost:8002';
     socket = new WebSocket(wsUrl)
-    
+
     socket.onopen = () => {
         console.log('WebSocket connection established')
     }
@@ -18,7 +18,7 @@ export function createWebSocket() {
     return socket
 }
 
-export function sendWS(message: string) { 
+export function sendWS(message: string) {
     if (socket && socket.readyState === WebSocket.OPEN) {
         socket.send(message)
     } else {

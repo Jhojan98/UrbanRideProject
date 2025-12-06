@@ -1,9 +1,12 @@
 export default interface Travel{
   idTravel: number;
-  idBicycle: number;
-  startStation: string;
-  endStation: string;
-  startTimestamp: Date;
-  endTimestamp: Date | null;
+  requiredAt: Date;
+  startedAt: Date;
+  endedAt: Date | null;
   status: string;
+  uid: string;
+  fromIdStation: number;
+  toIdStation: number | null;
+  travelType: string;
+
 }

@@ -5,9 +5,9 @@
       <div class="filters">
         <select v-model="filterStatus" class="filter-select">
           <option value="">Todos los estados</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="PAGADA">Pagada</option>
-          <option value="CANCELADA">Cancelada</option>
+          <option value="PENDING">Pendiente</option>
+          <option value="PAID">Pagada</option>
+          <option value="CANCELLED">Cancelada</option>
         </select>
       </div>
     </div>
@@ -45,6 +45,7 @@
           <tr>
             <th>ID</th>
             <th>Razón</th>
+            <th>Descripción</th>
             <th>Estado</th>
             <th>Monto</th>
             <th>Fecha</th>
@@ -53,18 +54,19 @@
         <tbody>
           <tr
             v-for="fine in filteredFines"
-            :key="fine.idFine"
+            :key="fine.k_user_fine"
             class="fine-row"
           >
-            <td>{{ fine.idFine }}</td>
-            <td>{{ fine.reason }}</td>
+            <td>{{ fine.k_user_fine }}</td>
+             <td>{{ fine.fine?.d_description }}</td>
+            <td>{{ fine.n_reason  }}</td>
             <td>
-              <span :class="['status-badge', `status-${fine.state.toLowerCase()}`]">
-                {{ fine.state }}
+              <span :class="['status-badge', `status-${(fine.t_state ?? '').toLowerCase()}`]">
+                {{ fine.t_state }}
               </span>
             </td>
-            <td class="amount">${{ fine.amount.toFixed(2) }}</td>
-            <td>{{ formatDate(fine.timestamp) }}</td>
+            <td class="amount">${{ formatAmount(fine.v_amount_snapshot) }}</td>
+            <td>{{ fine.f_assigned_at ? formatDate(fine.f_assigned_at) : '' }}</td>
           </tr>
         </tbody>
       </table>
@@ -77,38 +79,57 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import usersStore from '@/stores/usersStore'
+import { ref, computed, onMounted } from 'vue'
+import usersStore from '@/stores/userStore'
 
 const userStore = usersStore()
 const filterStatus = ref('')
+
+onMounted(async () => {
+  await userStore.fetchAllFines()
+})
 
 const filteredFines = computed(() => {
   if (!filterStatus.value) {
     return userStore.fines
   }
-  return userStore.fines.filter(fine => fine.state === filterStatus.value)
+  return userStore.fines.filter(fine => fine.t_state === filterStatus.value)
 })
 
 const pendingFines = computed(() => {
-  return userStore.fines.filter(fine => fine.state === 'PENDIENTE').length
+  return userStore.fines.filter(fine => fine.t_state === 'PENDING').length
 })
 
 const paidFines = computed(() => {
-  return userStore.fines.filter(fine => fine.state === 'PAGADA').length
+  return userStore.fines.filter(fine => fine.t_state === 'PAID').length
 })
 
 const totalAmount = computed(() => {
-  return userStore.fines.reduce((sum, fine) => sum + fine.amount, 0)
+  return userStore.fines.reduce((sum, fine) => sum + (fine.v_amount_snapshot || 0), 0)
 })
 
-const formatDate = (date: Date) => {
+// Debug: log cuando cambien las multas
+const _debugFines = computed(() => {
+  console.log('Multas en FinesComponent:', userStore.fines)
+  console.log('Multas filtradas:', filteredFines.value)
+  return userStore.fines.length
+})
+
+const formatDate = (date: Date | string) => {
   return new Date(date).toLocaleString('es-ES', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
+  })
+}
+
+const formatAmount = (amount: number | undefined) => {
+  if (!amount) return '0.00'
+  return amount.toLocaleString('es-ES', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   })
 }
 </script>
@@ -251,17 +272,17 @@ const formatDate = (date: Date) => {
   text-transform: uppercase;
 }
 
-.status-pendiente {
+.status-pending {
   background-color: var(--color-battery-medium);
   color: var(--color-white);
 }
 
-.status-pagada {
+.status-paid {
   background-color: var(--color-battery-high);
   color: var(--color-white);
 }
 
-.status-cancelada {
+.status-cancelled {
   background-color: var(--color-battery-low);
   color: var(--color-white);
 }

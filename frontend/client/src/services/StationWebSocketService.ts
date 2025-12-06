@@ -31,7 +31,8 @@ export class StationWebSocketService {
     this.onUpdate = onUpdate;
 
     // Conexión directa al servicio de estaciones (no vía gateway)
-    const baseUrl = process.env.VUE_APP_WEBSOCKET_STATIONS_URL || 'http://localhost:8091';
+    // Por defecto apuntar al `estaciones-service` en el puerto 8005 (docker-compose lo expone así)
+    const baseUrl = process.env.VUE_APP_WEBSOCKET_STATIONS_URL || 'http://localhost:8005';
     // Conexión directa al microservicio de estaciones: endpoint SockJS `/ws`
     const wsUrl = `${baseUrl}/ws`;
     console.log('[Stations WS] Conectando a', wsUrl);
@@ -84,6 +85,7 @@ export class StationWebSocketService {
       stations.forEach(st => {
         this.stationsCache.set(st.idStation, st);
         this.factory.getStationMarker(st); // actualiza/crea en pool
+        console.log(`[Stations WS] Bulk - Estación ${st.idStation} (${st.nameStation}): ⚡ ${st.electric}, ⚙️ ${st.mechanical}`);
       });
       this.hasBulk = true;
       if(this.onInitialLoad){ this.onInitialLoad(stations, this.factory); }
@@ -100,7 +102,7 @@ export class StationWebSocketService {
       this.stationsCache.set(station.idStation, station);
       this.factory.getStationMarker(station);
       if(this.onUpdate){ this.onUpdate(station, this.factory); }
-      console.log(`[Stations WS] Update estación ${station.idStation}`);
+      console.log(`[Stations WS] Update estación ${station.idStation} (${station.nameStation}): ⚡ ${station.electric}, ⚙️ ${station.mechanical}`);
     } catch(e){
       console.error('[Stations WS] Error parse update:', e, 'payload:', message.body);
     }

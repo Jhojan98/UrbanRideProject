@@ -3,5 +3,5 @@ export default interface CaC {
   description: string;
   status: string;
   idTravel: number;
-  date
+  date: Date | string;
 }

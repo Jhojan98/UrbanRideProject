@@ -66,8 +66,8 @@
   background-color: #266629;
 }
 .butn-primary {
-  background-color: var(--color-primary-light); 
-  color: var(--color-button-text-light); 
+  background-color: var(--color-primary-light);
+  color: var(--color-button-text-light);
   border: none;
   padding: 12px 24px;
   border-radius: 6px;
@@ -78,7 +78,7 @@
 }
 
 .butn-primary:hover {
-  background-color: var(--color-surface-light); 
+  background-color: var(--color-surface-light);
 }
 
 /* Estilos para botones secundarios */
@@ -95,8 +95,8 @@
 }
 
 html[data-theme="dark"] .butn-primary{
-  background-color: var(--color-primary-light); 
-  color: var(--color-button-text-light); 
+  background-color: var(--color-primary-light);
+  color: var(--color-button-text-light);
 }
 .btn-secondary:hover {
   background-color: #FFFFFF;
@@ -152,3 +152,7 @@ html[data-theme="dark"] .reservation-card {
   width: 100%;
   margin-top: 10px;
 }
+
+.unlock-section { margin-top: 1rem; display: grid; gap: .6rem; }
+.unlock-section .input { padding: .6rem; border: 1px solid #ddd; border-radius: 8px; }
+.slot-hint { color: #004E61; }

@@ -1,0 +1,28 @@
+services:
+  admin-frontend:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: admin-frontend
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./admin/src:/app/src
+      - ./admin/public:/app/public
+    restart: unless-stopped
+
+  client-frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: client-frontend
+    ports:
+      - "8081:80"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./client/src:/app/src
+      - ./client/public:/app/public
+    restart: unless-stopped

@@ -27,6 +27,8 @@ export interface Station {
   totalSlots: number;
   availableSlots: number;
   timestamp: Date;
+  mechanical?: number; // Bicicletas mecánicas disponibles
+  electric?: number;   // Bicicletas eléctricas disponibles
   slots?: Slot[]; // Opcional: presente cuando se cargan slots completos
 }
 
@@ -48,6 +50,8 @@ export interface StationDTO {
   totalSlots: number;
   availableSlots: number;
   timestamp: string;
+  mechanical?: number;
+  electric?: number;
   slots?: SlotDTO[]; // Opcional
 }
 
@@ -75,6 +79,8 @@ export function toStation(dto: StationDTO): Station {
     totalSlots: dto.totalSlots,
     availableSlots: dto.availableSlots,
     timestamp: new Date(dto.timestamp),
+    mechanical: dto.mechanical ?? 0,
+    electric: dto.electric ?? 0,
     slots: dto.slots?.map(toSlot)
   };
 }

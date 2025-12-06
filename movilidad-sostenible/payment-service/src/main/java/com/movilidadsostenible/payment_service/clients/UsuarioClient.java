@@ -16,8 +16,8 @@ public interface UsuarioClient {
     ResponseEntity<?> addBalance(@PathVariable("uid") String uid,
                                  @RequestParam("amount") Integer amount);
 
-    // Versión con JSON body (preferida)
-    @PostMapping(value = "/balance/{uid}/add", consumes = "application/json")
-    ResponseEntity<?> addBalanceDto(@PathVariable("uid") String uid,
-                                    @RequestBody UserDTO body);
+    // // Versión con JSON body (preferida)
+    // @PostMapping(value = "/balance/{uid}/add", consumes = "application/json")
+    // ResponseEntity<?> addBalanceDto(@PathVariable("uid") String uid,
+    //                                 @RequestBody UserDTO body);
 }

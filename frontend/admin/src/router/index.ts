@@ -19,13 +19,13 @@ const routes: Array<RouteRecordRaw> = [
     path: '/register',
     name: 'register',
     component: RegisterView,
-    meta: { layout: 'main', requiresAuth: true }
+    meta: { layout: 'main' }
   },
   {
   path: '/users-dashboard',
   name: 'usersDashboard',
   component: UserLayout,
-  meta: { layout: 'main', requiresAuth: true }
+  meta: { layout: 'main' }
 }
 ]
 
