@@ -136,6 +136,31 @@ public class UserController {
         return ResponseEntity.ok(Map.of("uid", uidUser, "blocked", blocked));
     }
 
+    // --- Cobro de viaje ---
+    @PostMapping("/travel/charge/{uid}")
+    @Operation(summary = "Cobrar viaje al usuario",
+            description = "Cobra el viaje aplicando reglas de suscripción: si es MONTLY descuenta viajes, si es NONE descuenta balance y puede quedar negativo")
+    public ResponseEntity<?> chargeTravel(
+            @Parameter(description = "UID del usuario", required = true)
+            @PathVariable("uid") String uidUser,
+            @Parameter(description = "Valor total del viaje", required = true)
+            @RequestParam("total") Integer totalTripValue,
+            @Parameter(description = "Minutos excedentes", required = true)
+            @RequestParam("excessMinutes") Integer excessMinutes
+    ) {
+        try {
+            service.chargeTravel(totalTripValue, excessMinutes, uidUser);
+            return ResponseEntity.ok(Map.of(
+                    "uid", uidUser,
+                    "charged", true
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+
+
 
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {
         Map<String,String> errores = new HashMap<>();

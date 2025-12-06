@@ -50,4 +50,7 @@ public class Travel {
     @Column(name = "t_travel_type")
     @NotBlank
     private String travelType;
+
+    @Column(name = "v_travel_cost")
+    private Double travelCost;
 }

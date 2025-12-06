@@ -26,6 +26,7 @@
         <module>ciudad-service</module>
         <module>payment-service</module>
         <module>slots-service</module>
+      <module>notification-email-service</module>
     </modules>
 
     <properties>

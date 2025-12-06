@@ -1,7 +1,6 @@
 package com.movilidadsostenible.usuario.services;
 
 import com.movilidadsostenible.usuario.models.entity.User;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,4 +17,7 @@ public interface UserService {
 
     // Devuelve true si el usuario NO puede viajar (bloqueado), false si SÍ puede
     boolean isUserBlockedForTravel(String uidUser);
+
+    // Cobra el viaje aplicando reglas de suscripción.
+    void chargeTravel(Integer totalTripValue, Integer excessMinutes, String uidUser);
 }

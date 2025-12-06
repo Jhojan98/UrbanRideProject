@@ -1,4 +1,4 @@
-package com.movilidadsostenible.usuario.models.dto;
+package com.movilidadsostenible.notification_email_service.model.dto;
 
 import lombok.Data;
 

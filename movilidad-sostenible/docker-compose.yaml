@@ -10,7 +10,7 @@ services:
       - "5532:5432"
     volumes:
       - data-postgres:/var/lib/postgresql/data
-      - ./docker/postgres/version7.1/initdb:/docker-entrypoint-initdb.d
+      - ./docker/postgres/version8.0/initdb:/docker-entrypoint-initdb.d
     networks:
       - movilidad-sostenible-network
     restart: always
@@ -142,6 +142,10 @@ services:
       eureka-server:
         condition: service_healthy
       rabbitmq:
+        condition: service_started
+      notification-email-service:
+        condition: service_started
+      fine-service:
         condition: service_started
     restart: always
 
@@ -427,6 +431,32 @@ services:
         condition: service_started
       eureka-server:
         condition: service_healthy
+    restart: always
+
+  notification-email-service:
+    container_name: notification-email-service
+    build:
+      context: ./
+      dockerfile: ./notification-email-service/Dockerfile
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_QUEUE_USER_TO_EMAIL: emailQueue
+      RABBITMQ_EXCHANGE_NAME: emailUserExchange
+      RABBITMQ_ROUTING_USER_TO_EMAIL: emailRoutingKey
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      rabbitmq:
+        condition: service_started
     restart: always
 
 volumes:

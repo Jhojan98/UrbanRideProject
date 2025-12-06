@@ -7,6 +7,7 @@ import com.movilidadsostenible.viaje_service.models.entity.Travel;
 import com.movilidadsostenible.viaje_service.services.NotificationService;
 import com.movilidadsostenible.viaje_service.services.ReservationTempService;
 import com.movilidadsostenible.viaje_service.services.TravelService;
+import com.movilidadsostenible.viaje_service.services.ExchangeRateService;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.eclipse.paho.client.mqttv3.*;
@@ -22,6 +23,8 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.time.Instant;
+import java.time.ZoneOffset;
 
 @Component
 public class MqttSubscriber implements MqttCallbackExtended {
@@ -52,6 +55,9 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
     @Autowired
     private SlotsClient slotsClient;
+
+    @Autowired
+    private ExchangeRateService exchangeRateService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private MqttClient client;
@@ -159,6 +165,40 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
           Travel travel = opt.get();
           travel.setStatus("COMPLETED");
+
+          // Establecer la fecha de finalización desde telemetría (UTC)
+          long endMillis = telemetry.getEndTravelTimestamp();
+          travel.setEndedAt(Instant.ofEpochMilli(endMillis).atZone(ZoneOffset.UTC).toLocalDateTime());
+
+          // Convertir el LocalDateTime de inicio a epoch millis (UTC)
+          long startMillis = travel.getStartedAt().atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
+          long diffMillis = endMillis - startMillis;
+          long durationMinutes = diffMillis > 0 ? (diffMillis / 60000) : 0;
+
+          // Tasa de cambio dinámica desde API: 1 UDT = COP_PER_USD COP
+          final double COP_PER_UDT = exchangeRateService.getCopPerUsd();
+
+          double costUdT = 0.0;
+
+          if (("LAST MILE").equalsIgnoreCase(travel.getTravelType())) {
+              // Última milla: 45 min máximo a 17,500 COP; minuto adicional 250 COP
+              int includedMinutes = 45;
+              int extraMinutes = (int) Math.max(0, durationMinutes - includedMinutes);
+              double baseCop = 17500.0;
+              double extraCop = extraMinutes * 250.0;
+              costUdT = (baseCop + extraCop) / COP_PER_UDT;
+          } else if (("LONG TRAVEL").equalsIgnoreCase(travel.getTravelType())) {
+              // Recorrido largo: 75 min máximo a 25,000 COP; minuto adicional 1,000 COP
+              int includedMinutes = 75;
+              int extraMinutes = (int) Math.max(0, durationMinutes - includedMinutes);
+              double baseCop = 25000.0;
+              double extraCop = extraMinutes * 1000.0;
+              costUdT = (baseCop + extraCop) / COP_PER_UDT;
+          }
+
+          // Usar el setter correcto del costo en la entidad Travel
+          travel.setTravelCost(costUdT);
+
           repository.save(travel);
 
           slotsClient.lockSlotById(slotIdIdFromTopic, bicyIdFromTopic);
