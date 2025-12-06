@@ -214,20 +214,10 @@ function onDestinationUpdate(destination: Station | null) {
   emit("update:destination", destination ?? null)
 }
 
-// Handler cuando UltimaMilla emite confirm (botón Confirmar Ruta)
+// Handler cuando UltimaMilla emite confirm (botón Reservar Bicicleta)
 async function onConfirmRoute(payload: { origin: Station; destination: Station; bikeType: string; rideType: string }) {
-  // Solo ejecutar SHORT_TRIP (última milla) según requisito
-  if (!payload || payload.rideType !== 'short_trip') {
-    // fallback: si no es short_trip guardar local y emitir reserve
-    const reservationPayload = {
-      bikeType: bikeType.value,
-      rideType: rideType.value,
-      station: props.origin
-    }
-    setReservation(reservationPayload)
-    emit('reserve', { bikeType: bikeType.value, rideType: rideType.value })
-    return
-  }
+  // Ejecutar reserva para ambos tipos de viaje (short_trip y long_trip)
+  if (!payload) return
 
   // Obtener uid del usuario (Firebase)
   const firebaseAuth = getAuth()
