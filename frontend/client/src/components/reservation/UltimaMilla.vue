@@ -41,7 +41,7 @@
       :disabled="!selectedOrigin || !selectedDest || !bikeType"
       @click="confirm"
     >
-      Confirmar Ruta
+      {{ $t('reservation.form.reserveBike') }}
     </button>
   </div>
 </template>

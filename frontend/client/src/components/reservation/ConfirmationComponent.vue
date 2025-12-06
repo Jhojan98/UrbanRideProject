@@ -25,6 +25,10 @@
         <p class="slot-hint" v-if="slotId">
           Tu slot asignado es <strong>{{ slotId }}</strong>.
         </p>
+        <div class="lock-status" v-if="isUnlocked">
+          <i class="fa fa-lock-open" style="color:#2E7D32;margin-right:6px"></i>
+          <span>🔓 Bicicleta desbloqueada — viaje iniciado</span>
+        </div>
         <label class="detail-label" for="bicycle-code">
           {{ $t('reservation.confirmation.enterBikeCode') || 'Digita el número de matrícula que se encuentra en la bicicleta' }}
         </label>
@@ -37,8 +41,9 @@
           placeholder="Código de 6 dígitos"
           class="input"
         />
-        <button class="butn-primary" :disabled="isLoading" @click="unlockBike">
-          {{ isLoading ? $t('common.loading') : ($t('reservation.confirmation.unlock') || 'Desbloquear') }}
+        <button class="butn-primary" :disabled="isLoading || isUnlocked" @click="unlockBike">
+          <i :class="isUnlocked ? 'fa fa-lock-open' : 'fa fa-lock'" style="margin-right:6px"></i>
+          {{ isLoading ? $t('common.loading') : (isUnlocked ? 'Desbloqueado' : ($t('reservation.confirmation.unlock') || 'Desbloquear')) }}
         </button>
       </div>
     </div>
@@ -65,6 +70,7 @@ const { hasActiveReservation, getTripType, getEstimatedCost, getBikeType, clearR
 const travelStore = useTravelStore();
 
 const isLoading = ref(false);
+const isUnlocked = ref(false);
 const timeLeft = ref<string>('10:00');
 const tripDetails = ref<TripDetails>({
   type: 'Última Milla',
@@ -136,10 +142,13 @@ const unlockBike = async () => {
     console.log('[ConfirmationComponent] verify-bicycle OK:', resp);
 
     // Fin del flujo: limpiar y regresar
+    isUnlocked.value = true;
     if (timerInterval) clearInterval(timerInterval);
-    clearReservation();
-    window.alert('Bicicleta verificada y viaje iniciado');
-    router.push('/');
+    // Mostrar estado desbloqueado y dar unos segundos antes de salir
+    setTimeout(() => {
+      clearReservation();
+      router.push('/');
+    }, 1200);
   } catch (err: any) {
     console.error('[ConfirmationComponent] Error verificando bicicleta:', err);
     window.alert('No se pudo verificar/desbloquear la bicicleta: ' + (err?.message ?? String(err)));

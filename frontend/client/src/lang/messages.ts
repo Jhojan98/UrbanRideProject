@@ -141,7 +141,9 @@ export const messages = {
             form: {
                 stationDetails: 'Detalles de la Estación',
                 defaultStation: 'Selecciona una estación',
+                selectStation: 'Selecciona una estación',
                 bikesAvailable: 'Bicicletas Disponibles',
+                totalSlots: 'Total de puestos',
                 bikeType: 'Tipo de Bicicleta:',
                 mechanical: 'Mecánica',
                 electric: 'Eléctrica',
@@ -163,7 +165,9 @@ export const messages = {
                 bikeType: 'Tipo de bicicleta:',
                 tripType: 'Tipo de viaje:',
                 estimatedCost: 'Costo estimado:',
-                confirm: 'Confirmar Reserva'
+                confirm: 'Confirmar Reserva',
+                enterBikeCode: 'Ingresa el código de la bicicleta',
+                unlock: 'Desbloquear'
             },
             map: {
                 authRequired: 'Acceso restringido',
@@ -322,7 +326,7 @@ export const messages = {
             minutes: 'minutes',
             accept: 'Accept',
             cancel: 'Cancel',
-            loading: 'Loading...',
+            loading: 'Loading',
             menu: 'Open menu',
             close: 'Close'
         },
@@ -373,7 +377,7 @@ export const messages = {
                 noAccount: "Don't have an account?",
                 registerHere: 'Register here',
                 verifyRequired: 'Verification required. Redirecting...',
-                success: 'Login successful. Redirecting...',
+                success: 'Login successful. Redirecting',
                 error: 'Login error'
             },
             signup: {
@@ -396,8 +400,8 @@ export const messages = {
                 password: 'Password',
                 submit: 'Register',
                 google: 'Sign up with Google',
-                idRequired: 'Please enter your identification.',
-                success: 'Registration successful. We will send a verification code.',
+                idRequired: 'Please enter your identification',
+                success: 'Registration successful. We will send a verification code',
                 error: 'Registration error'
             },
             otp: {
@@ -408,17 +412,17 @@ export const messages = {
                 verify: 'Verify Email',
                 resend: 'Resend Email',
                 backToLogin: 'Back to Login',
-                noEmailFound: 'No email found to verify. Redirecting to login...',
+                noEmailFound: 'No email found to verify. Redirecting to login',
                 noEmail: 'No email available to verify',
                 invalidOtp: 'OTP must be a valid 6-digit number',
-                success: 'Verification successful! Redirecting...',
+                success: 'Verification successful! Redirecting',
                 verifyError: 'Email verification error',
                 noEmailResend: 'No email available to resend',
                 resendSuccess: 'Verification email resent',
                 resendError: 'Error resending email',
-                emailSent: 'We have sent a verification email to your address.',
-                checkInbox: 'Please check your inbox and click on the verification link.',
-                afterVerify: 'Once verified, click the button below to continue.'
+                emailSent: 'We have sent a verification email to your address',
+                checkInbox: 'Please check your inbox and click on the verification link',
+                afterVerify: 'Once verified, click the button below to continue'
             }
         },
         profile: {
@@ -456,7 +460,9 @@ export const messages = {
             form: {
                 stationDetails: 'Station Details',
                 defaultStation: 'Select a station',
+                selectStation: 'Select a station',
                 bikesAvailable: 'Available Bikes',
+                totalSlots: 'Total slots',
                 bikeType: 'Bike Type:',
                 mechanical: 'Mechanical',
                 electric: 'Electric',
@@ -478,11 +484,13 @@ export const messages = {
                 bikeType: 'Bike type:',
                 tripType: 'Trip type:',
                 estimatedCost: 'Estimated cost:',
-                confirm: 'Confirm Reservation'
+                confirm: 'Confirm Reservation',
+                enterBikeCode: 'Enter the bike code',
+                unlock: 'Unlock'
             },
             map: {
                 authRequired: 'Restricted access',
-                authMessage: 'To access our services and view the map, you must login first.',
+                authMessage: 'To access our services and view the map, you must login first',
                 accept: 'Accept',
                 originStation: 'Origin Station',
                 destinationStation: 'Destination Station',
@@ -513,11 +521,11 @@ export const messages = {
             },
             notifications: {
                 expiredTravel: 'Travel Cancelled',
-                expiredTravelMsg: 'The wait time has expired and your trip has been automatically cancelled.',
+                expiredTravelMsg: 'The wait time has expired and your trip has been automatically cancelled',
                 startTravel: 'Travel Started',
-                startTravelMsg: 'Your reservation has been confirmed! The trip has started successfully.',
+                startTravelMsg: 'Your reservation has been confirmed! The trip has started successfully',
                 endTravel: 'Travel Completed',
-                endTravelMsg: 'Your trip has ended. Details and total amount will be sent to your email.',
+                endTravelMsg: 'Your trip has ended. Details and total amount will be sent to your email',
                 defaultNotification: 'Notification',
                 closeLabel: 'Close notification'
             }
@@ -553,7 +561,7 @@ export const messages = {
             expiry: 'Expiration date',
             cvv: 'CVV',
             setAsPrimary: 'Set as primary payment method',
-            adding: 'Adding...',
+            adding: 'Adding',
             addCard: 'Add Card',
             confirmDelete: 'Are you sure you want to delete this payment method?',
             visa: 'Visa',
@@ -563,19 +571,19 @@ export const messages = {
                 title: 'Reload Balance',
                 subtitle: 'Choose the amount you want to reload to your account',
                 selectAmount: 'Please select an amount',
-                processing: 'Processing...',
+                processing: 'Processing',
                 rechargeBtn: 'Reload Balance',
                 security: '🔒 You will be redirected to Stripe to complete the payment securely',
-                notAuthenticated: 'No authenticated user found. Please login again.',
+                notAuthenticated: 'No authenticated user found. Please login again',
                 priceNotFound: 'PriceId not configured for the selected amount',
                 error: 'Error starting payment',
-                tryAgain: 'Please try again.',
+                tryAgain: 'Please try again',
                 currency: 'Currency',
-                estimatedNote: 'Note: Amounts are shown in {currency} for your reference. Payment is processed in USD.'
+                estimatedNote: 'Note: Amounts are shown in {currency} for your reference. Payment is processed in USD'
             },
             success: {
                 title: 'Payment completed ✅',
-                subtitle: 'Thank you for your purchase! Your balance has been reloaded successfully.',
+                subtitle: 'Thank you for your purchase! Your balance has been reloaded successfully',
                 sessionId: 'Session ID:',
                 user: 'User:',
                 updatedBalance: 'Updated balance:',
@@ -584,7 +592,7 @@ export const messages = {
             },
             cancel: {
                 title: 'Payment cancelled ❌',
-                subtitle: 'The payment was cancelled or not completed. If it was a mistake, try again.',
+                subtitle: 'The payment was cancelled or not completed. If it was a mistake, try again',
                 backHome: 'Back to home'
             }
         },
@@ -599,14 +607,14 @@ export const messages = {
             problemType: 'Problem type',
             severity: 'Problem severity',
             description: 'Detailed description',
-            descriptionPlaceholder: 'Describe the problem with as much detail as possible...',
+            descriptionPlaceholder: 'Describe the problem with as much detail as possible',
             allowsUse: 'Does it allow bike usage?',
             noUse: 'No, unsafe to use',
             yesUse: 'Yes, but with caution',
-            sending: 'Sending report...',
+            sending: 'Sending report',
             sendReport: 'Send Report',
             successTitle: 'Report Sent',
-            successMsg: 'We received your report and are reviewing it. We will contact you if more info is needed.',
+            successMsg: 'We received your report and are reviewing it. We will contact you if more info is needed',
             reportId: 'Report ID:',
             problems: {
                 mechanical: 'Mechanical Problem',
@@ -621,8 +629,8 @@ export const messages = {
                 medium: { name: 'Medium', desc: 'Affects use but manageable' },
                 high: { name: 'High', desc: 'Serious issue, do not use bike' }
             },
-            cancelConfirm: 'Are you sure you want to cancel? Form data will be lost.',
-            sendError: 'Error sending report. Please try again.'
+            cancelConfirm: 'Are you sure you want to cancel? Form data will be lost',
+            sendError: 'Error sending report. Please try again'
         },
         footer: {
             about: 'About',

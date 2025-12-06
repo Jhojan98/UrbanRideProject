@@ -290,50 +290,15 @@ function renderStationsFromStore() {
     return false
   }
 
-  console.log('[Map] Renderizando estaciones del store:', stations.length)
+  console.log('[Map] Renderizando estaciones del store (StationFactory):', stations.length)
 
   stations.forEach(s => {
-    const lat = s.latitude
-    const lng = s.longitude
-    const name = s.nameStation
-    const mechanical = s.mechanical ?? 0
-    const electric = s.electric ?? 0
-    const cctvDisplay = typeof s.cctvStatus === 'boolean' ? (s.cctvStatus ? '✅ Activo' : '❌ Inactivo') : '-'
-
-    // Log para cada estación
-    console.log(`[Map] ${name}: ⚡ ${electric}, ⚙️ ${mechanical}`);
-
-    // Determinar disponibilidad para viaje
-    const canTravelMech = mechanical > 0 ? '✅' : '❌'
-    const canTravelElec = electric > 0 ? '✅' : '❌'
-
-    if (typeof lat === 'number' && typeof lng === 'number') {
-      const mk = L.marker([lat, lng]).addTo(map.value as LeafletMap)
-      const popup = `
-        <div style="font-family: Arial, sans-serif; min-width: 200px;">
-          <strong style="font-size: 14px; color: #2c3e50;">${name ?? 'Estación'}</strong>
-          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0;">
-            <div style="margin: 4px 0;"><strong>Tipo:</strong> ${s.type ?? '-'}</div>
-            <div style="margin: 4px 0;"><strong>CCTV:</strong> ${cctvDisplay}</div>
-            <div style="margin: 4px 0;"><strong>Slots:</strong> ${s.availableSlots}/${s.totalSlots}</div>
-          </div>
-          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0;">
-            <div style="font-weight: bold; margin-bottom: 6px; color: #34495e;">🚲 Bicicletas Disponibles:</div>
-            <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-              <span>⚙️ Mecánicas:</span>
-              <span style="font-weight: bold; color: ${mechanical > 0 ? '#27ae60' : '#e74c3c'};">${mechanical} ${canTravelMech}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-              <span>⚡ Eléctricas:</span>
-              <span style="font-weight: bold; color: ${electric > 0 ? '#27ae60' : '#e74c3c'};">${electric} ${canTravelElec}</span>
-            </div>
-          </div>
-        </div>
-      `
-      mk.bindPopup(popup)
-      // on hover show popup
-      mk.on('mouseover', () => mk.openPopup())
-      mk.on('mouseout', () => mk.closePopup())
+    try {
+      const marker = stationFactory.getStationMarker(s as any)
+      marker.setTranslator($t)
+      marker.render(map.value as LeafletMap)
+    } catch (e) {
+      console.warn('[Map] Error rendering station via factory:', e)
     }
   })
 
