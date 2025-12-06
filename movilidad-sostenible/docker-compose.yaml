@@ -10,7 +10,7 @@ services:
       - "5532:5432"
     volumes:
       - data-postgres:/var/lib/postgresql/data
-      - ./docker/postgres/version7.1/initdb:/docker-entrypoint-initdb.d
+      - "./docker/postgres/Version8.0/initdb:/docker-entrypoint-initdb.d"
     networks:
       - movilidad-sostenible-network
     restart: always
@@ -391,6 +391,37 @@ services:
       viaje-service:
         condition: service_started
       fine-service:
+        condition: service_started
+    restart: always
+
+  complaints-service:
+    container_name: complaints-service
+    build:
+      context: ./complaints-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5007"]
+    ports:
+      - "5007:5007"
+    environment:
+      SERVICE_PORT: 5007
+      SERVICE_HOST: complaints-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: complaints-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${COMPLAINTS_DB_USER}
+      POSTGRES_PASSWORD: ${COMPLAINTS_DB_PASSWORD}
+      TRAVEL_SERVICE_URL: http://viaje-service:8003
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+      viaje-service:
         condition: service_started
     restart: always
 
