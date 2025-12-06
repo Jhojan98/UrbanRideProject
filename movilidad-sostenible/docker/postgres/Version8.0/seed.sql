@@ -117,7 +117,7 @@ INSERT INTO user_fine (n_reason, t_state, k_id_fine, k_uid_user, v_amount_snapsh
 INSERT INTO maintenance (
 	t_entity_type,
 	t_maintance_type,
-	t_triggererd_by,
+	t_triggered_by,
 	d_description,
 	t_status,
 	f_date,

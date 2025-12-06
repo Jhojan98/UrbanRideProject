@@ -1,6 +1,145 @@
-from typing import Any, Dict, List
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from clients import ServiceClients
+
+
+def _count_by_key(items: List[Dict[str, Any]], key: str) -> Dict[str, int]:
+    counts: Dict[str, int] = {}
+    for item in items:
+        value = item.get(key)
+        if value is None:
+            continue
+        counts[str(value)] = counts.get(str(value), 0) + 1
+    return counts
+
+
+def _simplify_user_fines(fines: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Keep only fine description/type plus user_fine reference if present."""
+    simplified: List[Dict[str, Any]] = []
+    for fine in fines:
+        fine_field = fine.get("fine")
+        if isinstance(fine_field, dict):
+            fine_type = fine_field.get("d_description") or fine_field.get("description") or str(fine_field)
+        else:
+            fine_type = fine_field
+        n_reason = fine.get("n_reason")
+        v_amount_snapshot = fine.get("v_amount_snapshot")
+        f_assigned_at = fine.get("f_assigned_at")
+        simplified.append({
+            "description": fine_type,
+            "reason": n_reason,
+            "amount_snapshot": v_amount_snapshot,
+            "assigned_at": _fmt_date(f_assigned_at),
+            "user_id": fine.get("k_uid_user"),
+            "status": fine.get("t_state"),
+        })
+    return simplified
+
+
+def _fmt_date(dt_str: Optional[str]) -> Optional[str]:
+    if not dt_str:
+        return None
+    try:
+        return datetime.fromisoformat(dt_str).date().isoformat()
+    except Exception:
+        return dt_str
+
+
+def _fmt_time(dt_str: Optional[str]) -> Optional[str]:
+    if not dt_str:
+        return None
+    try:
+        return datetime.fromisoformat(dt_str).time().strftime("%H:%M")
+    except Exception:
+        return dt_str
+
+def _shorten_date(dt_str: Optional[str]) -> Optional[str]:
+    """Format date as YYYY-MM-DD HH:MM or YYYY-MM-DD if no time."""
+    if not dt_str:
+        return None
+    try:
+        dt = datetime.fromisoformat(dt_str)
+        return dt.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        return dt_str
+
+def _simplify_list_dates(items: List[Dict[str, Any]], date_fields: List[str]) -> List[Dict[str, Any]]:
+    """In-place update of date fields in a list of dicts."""
+    for item in items:
+        for field in date_fields:
+            if field in item:
+                item[field] = _shorten_date(item[field])
+    return items
+
+
+def _simplify_user_travels(
+    travels: List[Dict[str, Any]],
+    station_names: Dict[Any, str],
+    lang: str = "en",
+) -> List[Dict[str, Any]]:
+    """User-facing travel summary without internal IDs, localized."""
+    cleaned: List[Dict[str, Any]] = []
+    for travel in travels:
+        started_at = travel.get("startedAt") or travel.get("f_started_at")
+        ended_at = travel.get("endedAt") or travel.get("f_ended_at")
+        required_at = travel.get("requiredAt") or travel.get("f_required_at")
+
+        origin_id = travel.get("fromIdStation") or travel.get("k_from_id_station")
+        dest_id = travel.get("toIdStation") or travel.get("k_to_id_station")
+        origin_name = station_names.get(origin_id) or origin_id
+        dest_name = station_names.get(dest_id) or dest_id
+
+        base = {
+            "date": _fmt_date(started_at) or _fmt_date(required_at),
+            "start_time": _fmt_time(started_at),
+            "end_time": _fmt_time(ended_at),
+            "status": travel.get("status") or travel.get("t_status"),
+            "bicycle": travel.get("idBicycle") or travel.get("k_id_bicycle"),
+            "origin_station": origin_name,
+            "destination_station": dest_name,
+            "travel_type": travel.get("travelType") or travel.get("t_travel_type"),
+        }
+
+        if lang == "es":
+            cleaned.append(
+                {
+                    "fecha": base["date"],
+                    "hora_salida": base["start_time"],
+                    "hora_llegada": base["end_time"],
+                    "estado": base["status"],
+                    "bicicleta": base["bicycle"],
+                    "estacion_origen": base["origin_station"],
+                    "estacion_destino": base["destination_station"],
+                    "tipo_viaje": base["travel_type"],
+                }
+            )
+        else:
+            cleaned.append(base)
+    return cleaned
+
+
+async def _build_station_name_map(clients: ServiceClients, travels: List[Dict[str, Any]]) -> Dict[Any, str]:
+    """Fetch station names once for all travels."""
+    station_ids = set()
+    for t in travels:
+        sid = t.get("fromIdStation") or t.get("k_from_id_station")
+        if sid is not None:
+            station_ids.add(sid)
+        sid = t.get("toIdStation") or t.get("k_to_id_station")
+        if sid is not None:
+            station_ids.add(sid)
+
+    names: Dict[Any, str] = {}
+    for sid in station_ids:
+        try:
+            station = await clients.get_station(sid)
+            name = station.get("stationName") or station.get("n_station_name")
+            if name:
+                names[sid] = name
+        except Exception:
+            continue
+    return names
 
 
 class ReportAggregator:
@@ -9,38 +148,78 @@ class ReportAggregator:
     def __init__(self, clients: ServiceClients | None = None) -> None:
         self.clients = clients or ServiceClients()
 
-    async def aggregate_overview(self) -> Dict[str, Any]:
+    async def aggregate_overview(self, lang: str = "es") -> Dict[str, Any]:
         """Admin-level overview across services."""
         users = await self.clients.list_users()
         bicycles = await self.clients.list_bicycles()
-        # reservations = await self.clients.list_reservations()
-        fines = await self.clients.list_fines()
+        travels = await self.clients.list_travels()
+        fine_types = await self.clients.list_fines()
+        user_fines = _simplify_user_fines(await self.clients.list_all_user_fines())
+        complaints = await self.clients.list_complaints()
+        maintenances = await self.clients.list_maintenances()
 
+        # Format dates for admin overview
+        _simplify_list_dates(bicycles, ["f_last_update"])
+        _simplify_list_dates(travels, ["f_started_at", "f_ended_at", "f_required_at", "startedAt", "endedAt", "requiredAt"])
+        _simplify_list_dates(maintenances, ["f_date", "date"])
+        
         return {
+            "lang": lang,
             "users_count": len(users),
             "bicycles_count": len(bicycles),
-            #"reservations_count": len(reservations),
-            "fines_count": len(fines),
+            "travels_count": len(travels),
+            "fines_count": len(user_fines),
+            "complaints_count": len(complaints),
+            "maintenance_count": len(maintenances),
+            "complaints_by_status": _count_by_key(complaints, "t_status"),
+            "complaints_by_type": _count_by_key(complaints, "t_type"),
+            "maintenance_by_entity": _count_by_key(maintenances, "t_entity_tipe"),
             "users": users,
             "bicycles": bicycles,
-            #"reservations": reservations,
-            "fines": fines,
+            "travels": travels,
+            "fine_types": fine_types,
+            "user_fines": user_fines,
+            "complaints": complaints,
+            "maintenances": maintenances,
         }
 
-    async def aggregate_user_dashboard(self, user_id: str) -> Dict[str, Any]:
+    async def aggregate_user_dashboard(self, user_id: str, lang: str = "es") -> Dict[str, Any]:
         """User-level dashboard aggregating personal info."""
         user = await self.clients.get_user(user_id)
+        # Remove sensitive/internal ID fields for the report
+        for k in ["k_uid_user", "id", "user_id", "password"]:
+            user.pop(k, None)
+
         balance = await self.clients.get_user_balance(user_id)
-        #reservations = await self.clients.list_reservations_by_user(user_id)
-        fines = await self.clients.list_user_fines(user_id)
+        travels_raw = await self.clients.list_travels_by_user(user_id)
+        station_names = await _build_station_name_map(self.clients, travels_raw)
+        
+        # Use the requested language
+        travels = _simplify_user_travels(travels_raw, station_names, lang=lang)
+        
+        travel_ids = [
+            t.get("idTravel")
+            or t.get("k_id_travel")
+            or t.get("id")
+            for t in travels_raw
+        ]
+        fines = _simplify_user_fines(await self.clients.list_user_fines(user_id))
+        # Remove user_id from fines for dashboard as it is redundant and internal
+        for f in fines:
+            f.pop("user_id", None)
+
+        complaints = await self.clients.list_complaints_by_travel_ids(travel_ids)
 
         return {
+            "lang": lang,
             "user": user,
             "balance": balance,
-            #"reservations": reservations,
+            "travels": travels,
+            "travels_count": len(travels),
             "fines": fines,
-            #"reservations_count": len(reservations),
             "fines_count": len(fines),
+            "complaints": complaints,
+            "complaints_count": len(complaints),
         }
 
     async def aggregate_bicycle_usage(self) -> List[Dict[str, Any]]:
@@ -157,3 +336,31 @@ class ReportAggregator:
     async def aggregate_maintenances(self) -> List[Dict[str, Any]]:
         """Mantenimientos."""
         return await self.clients.list_maintenances()
+
+    async def aggregate_complaints_summary(self) -> Dict[str, Any]:
+        """Resumen de quejas para administradores."""
+        complaints = await self.clients.list_complaints()
+        return {
+            "complaints": complaints,
+            "count": len(complaints),
+            "by_status": _count_by_key(complaints, "t_status"),
+            "by_type": _count_by_key(complaints, "t_type"),
+        }
+
+    async def aggregate_user_complaints(self, user_id: str) -> Dict[str, Any]:
+        """Quejas asociadas a los viajes de un usuario."""
+        travels = await self.clients.list_travels_by_user(user_id)
+        travel_ids = [
+            t.get("idTravel")
+            or t.get("k_id_travel")
+            or t.get("id")
+            for t in travels
+        ]
+        complaints = await self.clients.list_complaints_by_travel_ids(travel_ids)
+        return {
+            "travels_count": len(travels),
+            "complaints": complaints,
+            "complaints_count": len(complaints),
+            "by_status": _count_by_key(complaints, "t_status"),
+            "by_type": _count_by_key(complaints, "t_type"),
+        }

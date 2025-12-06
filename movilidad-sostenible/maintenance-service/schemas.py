@@ -5,15 +5,15 @@ from pydantic import BaseModel, Field
 
 
 ALLOWED_MAINTENANCE_TYPES = ("PREVENTIVE", "CORRECTIVE", "INSPECTION")
-ALLOWED_ENTITY_TYPES = ("BICYCLE", "STATION", "LOCK")
+ALLOWED_ENTITY_TYPES = ('BiCYCLE', 'STATION', 'SLOT')
 ALLOWED_TRIGGERED_BY = ("ADMIN", "USER", "IOT_ALERT")
 
 
 class MaintenanceRecordBase(BaseModel):
-    t_entity_tipe: Literal["BICYCLE", "STATION", "LOCK"] = Field(
+    t_entity_type: Literal['BiCYCLE', 'STATION', 'SLOT'] = Field(
         alias="entityType",
     )
-    t_maintenace_type: Literal["PREVENTIVE", "CORRECTIVE", "INSPECTION"] = Field(
+    t_maintance_type: Literal["PREVENTIVE", "CORRECTIVE", "INSPECTION"] = Field(
         default="PREVENTIVE",
         alias="maintenanceType",
     )
@@ -27,7 +27,7 @@ class MaintenanceRecordBase(BaseModel):
     v_cost: Optional[int] = Field(default=None, alias="cost")
     k_id_bicycle: Optional[str] = Field(default=None, alias="bikeId")
     k_id_station: Optional[int] = Field(default=None, alias="stationId")
-    k_id_lock: Optional[str] = Field(default=None, alias="lockId")
+    k_id_slot: Optional[str] = Field(default=None, alias="lockId")
 
     class Config:
         populate_by_name = True

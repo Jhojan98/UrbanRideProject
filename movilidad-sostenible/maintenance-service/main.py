@@ -126,11 +126,11 @@ async def _ensure_lock_exists(lock_id: str) -> dict:
 
 
 def _validate_entity_reference(record: schemas.MaintenanceRecordBase) -> None:
-    entity = record.t_entity_tipe
+    entity = record.t_entity_type
     target_field = {
         "BICYCLE": record.k_id_bicycle,
         "STATION": record.k_id_station,
-        "LOCK": record.k_id_lock,
+        "LOCK": record.k_id_slot,
     }
     required_value = target_field.get(entity)
     if not required_value:
@@ -146,20 +146,20 @@ def _normalize_entity_payload(payload: dict, entity: str) -> dict:
     if entity != "STATION":
         payload["k_id_station"] = None
     if entity != "LOCK":
-        payload["k_id_lock"] = None
+        payload["k_id_slot"] = None
     return payload
 
 @app.post("/maintenance/", response_model=schemas.MaintenanceRecord)
 async def create_maintenance_record(record: schemas.MaintenanceRecordCreate, db: Session = Depends(database.get_db)):
     _validate_entity_reference(record)
-    if record.t_entity_tipe == "BICYCLE":
+    if record.t_entity_type == "BICYCLE":
         await _ensure_bicycle_exists(record.k_id_bicycle)
-    elif record.t_entity_tipe == "STATION":
+    elif record.t_entity_type == "STATION":
         await _ensure_station_exists(record.k_id_station)
-    elif record.t_entity_tipe == "LOCK":
-        await _ensure_lock_exists(record.k_id_lock)
+    elif record.t_entity_type == "LOCK":
+        await _ensure_lock_exists(record.k_id_slot)
     payload = record.dict(by_alias=False)
-    payload = _normalize_entity_payload(payload, record.t_entity_tipe)
+    payload = _normalize_entity_payload(payload, record.t_entity_type)
     db_record = models.MaintenanceRecord(**payload)
     db.add(db_record)
     db.commit()
@@ -185,14 +185,14 @@ async def update_maintenance_record(maintenance_id: int, record: schemas.Mainten
         raise HTTPException(status_code=404, detail="Maintenance record not found")
     
     _validate_entity_reference(record)
-    if record.t_entity_tipe == "BICYCLE":
+    if record.t_entity_type == "BICYCLE":
         await _ensure_bicycle_exists(record.k_id_bicycle)
-    elif record.t_entity_tipe == "STATION":
+    elif record.t_entity_type == "STATION":
         await _ensure_station_exists(record.k_id_station)
-    elif record.t_entity_tipe == "LOCK":
-        await _ensure_lock_exists(record.k_id_lock)
+    elif record.t_entity_type == "LOCK":
+        await _ensure_lock_exists(record.k_id_slot)
     payload = record.dict(by_alias=False)
-    payload = _normalize_entity_payload(payload, record.t_entity_tipe)
+    payload = _normalize_entity_payload(payload, record.t_entity_type)
     for key, value in payload.items():
         setattr(db_record, key, value)
     

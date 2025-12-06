@@ -11,7 +11,12 @@ import httpx
 from fastapi.responses import StreamingResponse
 
 from aggregator import ReportAggregator
-from excel import build_admin_overview_excel, build_user_dashboard_excel
+from report_exports import (
+    build_admin_overview_excel_pandas,
+    build_admin_overview_pdf,
+    build_user_dashboard_excel_pandas,
+    build_user_dashboard_pdf,
+)
 
 app = FastAPI()
 logging.basicConfig(level=logging.INFO)
@@ -111,24 +116,7 @@ async def health_check():
     """Health check endpoint"""
     return {"status": "healthy"}
 
-@app.get("/api/reports", response_model=dict, tags=["Reports"])
-async def get_reports():
-    """Get basic report data"""
-    try:
-        # Aquí se podrían agregar consultas a la base de datos para obtener datos reales
-        report_data = {
-            "total_fines": 150,
-            "total_user_fines": 75,
-            "total_paid_fines": 50,
-            "total_pending_fines": 25,
-        }
-        return report_data
-    except Exception as e:
-        logging.error(f"Error fetching report data: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-    
-
-    
+ 
 
 
 async def _fetch_user_from_users_service(user_id: str) -> dict:
@@ -221,10 +209,10 @@ async def _subtract_balance_from_users_service(user_id: str, amount: int) -> dic
 
 # Aggregator Pattern endpoints
 @app.get("/api/admin/overview", tags=["Reports", "Admin"])
-async def admin_overview():
+async def admin_overview(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
-        overview = await aggregator.aggregate_overview()
+        overview = await aggregator.aggregate_overview(lang=lang)
         return overview
     except httpx.HTTPError as e:
         logging.error("Error aggregating admin overview: %s", e)
@@ -235,11 +223,11 @@ async def admin_overview():
 
 
 @app.get("/api/admin/overview.xlsx", tags=["Reports", "Admin"])
-async def admin_overview_excel():
+async def admin_overview_excel(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
-        overview = await aggregator.aggregate_overview()
-        content = build_admin_overview_excel(overview)
+        overview = await aggregator.aggregate_overview(lang=lang)
+        content = build_admin_overview_excel_pandas(overview)
         return StreamingResponse(
             iter([content]),
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -255,11 +243,44 @@ async def admin_overview_excel():
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/api/users/{user_id}/dashboard", tags=["Reports", "Users"])
-async def user_dashboard(user_id: str):
+@app.get("/api/admin/overview.pdf", tags=["Reports", "Admin"])
+async def admin_overview_pdf(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
-        data = await aggregator.aggregate_user_dashboard(user_id)
+        overview = await aggregator.aggregate_overview(lang=lang)
+        content = build_admin_overview_pdf(overview)
+        return StreamingResponse(
+            iter([content]),
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=admin-overview.pdf"},
+        )
+    except httpx.HTTPError as e:
+        logging.error("Error aggregating admin overview pdf: %s", e)
+        raise HTTPException(status_code=502, detail="Dependency error")
+    except Exception as e:
+        logging.error("Unexpected error generating pdf: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/admin/complaints", tags=["Reports", "Admin"])
+async def admin_complaints():
+    """Resumen de quejas para administradores."""
+    aggregator = ReportAggregator()
+    try:
+        return await aggregator.aggregate_complaints_summary()
+    except httpx.HTTPError as e:
+        logging.error("Error aggregating complaints summary: %s", e)
+        raise HTTPException(status_code=502, detail="Dependency error")
+    except Exception as e:
+        logging.error("Unexpected error in complaints summary: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/users/{user_id}/dashboard", tags=["Reports", "Users"])
+async def user_dashboard(user_id: str, lang: str = "es"):
+    aggregator = ReportAggregator()
+    try:
+        data = await aggregator.aggregate_user_dashboard(user_id, lang=lang)
         return data
     except httpx.HTTPError as e:
         logging.error("Error aggregating user dashboard: %s", e)
@@ -271,12 +292,28 @@ async def user_dashboard(user_id: str):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/api/users/{user_id}/dashboard.xlsx", tags=["Reports", "Users"])
-async def user_dashboard_excel(user_id: str):
+@app.get("/api/users/{user_id}/complaints", tags=["Reports", "Users"])
+async def user_complaints(user_id: str):
+    """Quejas asociadas a los viajes del usuario."""
     aggregator = ReportAggregator()
     try:
-        data = await aggregator.aggregate_user_dashboard(user_id)
-        content = build_user_dashboard_excel(data)
+        return await aggregator.aggregate_user_complaints(user_id)
+    except httpx.HTTPError as e:
+        logging.error("Error aggregating user complaints: %s", e)
+        raise HTTPException(status_code=502, detail="Dependency error")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error("Unexpected error in user complaints: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/users/{user_id}/dashboard.xlsx", tags=["Reports", "Users"])
+async def user_dashboard_excel(user_id: str, lang: str = "es"):
+    aggregator = ReportAggregator()
+    try:
+        data = await aggregator.aggregate_user_dashboard(user_id, lang=lang)
+        content = build_user_dashboard_excel_pandas(data)
         return StreamingResponse(
             iter([content]),
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -291,6 +328,27 @@ async def user_dashboard_excel(user_id: str):
         raise
     except Exception as e:
         logging.error("Unexpected error generating excel: %s", e)
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@app.get("/api/users/{user_id}/dashboard.pdf", tags=["Reports", "Users"])
+async def user_dashboard_pdf(user_id: str, lang: str = "es"):
+    aggregator = ReportAggregator()
+    try:
+        data = await aggregator.aggregate_user_dashboard(user_id, lang=lang)
+        content = build_user_dashboard_pdf(data)
+        return StreamingResponse(
+            iter([content]),
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=user-{user_id}-dashboard.pdf"},
+        )
+    except httpx.HTTPError as e:
+        logging.error("Error aggregating user dashboard pdf: %s", e)
+        raise HTTPException(status_code=502, detail="Dependency error")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error("Unexpected error generating pdf: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

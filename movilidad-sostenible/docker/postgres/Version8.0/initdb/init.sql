@@ -120,7 +120,7 @@ CREATE TABLE maintenance
 	k_id_bicycle varchar(11) NULL,	-- Identificador único de la bicicleta a la que se le realizó el mantenimiento. Este valor hace referencia directa a la bicicleta registrada en el sistema y permite asociar cada intervención con un elemento físico específico de la flota. Al ser de tipo VARCHAR, admite codificación que diferencia bicicletas eléctricas y mecánicas, mejorando el control operativo y la trazabilidad del historial técnico.
 	t_entity_type varchar(50) NOT NULL,
 	t_maintance_type varchar(50) NOT NULL,
-	t_triggererd_by varchar(50) NOT NULL,
+	t_triggered_by varchar(50) NOT NULL,
 	v_cost integer NULL,
 	k_id_slot varchar(50) NULL,
 	k_id_station integer NULL
@@ -253,7 +253,7 @@ ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_entity_type" CHECK (t_entity_type 
 ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_maintance_type" CHECK (t_maintance_type IN ('PREVENTIVE', 'CORRECTIVE', 'INSPECTION'))
 ;
 
-ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_triggererd_by" CHECK (t_triggererd_by IN ('ADMIN', 'USER', 'IOT_ALERT'))
+ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_triggered_by" CHECK (t_triggered_by IN ('ADMIN', 'USER', 'IOT_ALERT'))
 ;
 
 ALTER TABLE panic_button ADD CONSTRAINT "PK_panic_button"
