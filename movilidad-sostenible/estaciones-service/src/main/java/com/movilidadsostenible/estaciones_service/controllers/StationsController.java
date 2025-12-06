@@ -240,6 +240,22 @@ public class StationsController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/cities/{idCity}/stations")
+    @Operation(
+            summary = "Listar estaciones por ciudad",
+            description = "Devuelve todas las estaciones que pertenecen a la ciudad indicada por su id.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Lista de estaciones",
+                            content = @Content(array = @ArraySchema(schema = @Schema(implementation = Station.class))))
+            }
+    )
+    public ResponseEntity<List<Station>> getByCity(@PathVariable Integer idCity) {
+        List<Station> stations = service.findByIdCity(idCity);
+        return ResponseEntity.ok(stations);
+    }
+
+
+
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {
         Map<String, String> errors = new HashMap<>();
         result.getFieldErrors().forEach(err -> errors.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage()));

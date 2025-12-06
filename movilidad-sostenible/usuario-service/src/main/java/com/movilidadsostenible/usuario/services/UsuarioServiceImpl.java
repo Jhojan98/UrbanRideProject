@@ -3,6 +3,8 @@ package com.movilidadsostenible.usuario.services;
 import com.movilidadsostenible.usuario.clients.FineClient;
 import com.movilidadsostenible.usuario.models.entity.User;
 import com.movilidadsostenible.usuario.repositories.UserRepository;
+import com.movilidadsostenible.usuario.rabbit.publisher.UserPublisher;
+import com.movilidadsostenible.usuario.models.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,9 @@ public class UsuarioServiceImpl implements UserService {
 
     @Autowired
     private FineClient fineClient;
+
+    @Autowired
+    private UserPublisher userPublisher;
 
     @Override
     @Transactional(readOnly = true)
@@ -91,10 +96,29 @@ public class UsuarioServiceImpl implements UserService {
             return true;
         }
         User user = userOpt.get();
+
+        // Si tiene suscripción MONTLY y al menos 1 viaje disponible en subcripcionTravels,
+        // el usuario NO está bloqueado independientemente del balance.
+        String subscriptionType = user.getSubscriptionType();
+        if ("MONTLY".equalsIgnoreCase(subscriptionType)) {
+            Integer travelsAvailable = user.getSubcripcionTravels();
+            if (travelsAvailable != null && travelsAvailable >= 1) {
+                // Tiene por lo menos un viaje mensual disponible, está habilitado para viajar
+                // (ignorando balance). Aún así, si tiene multas impagas, se bloquea.
+                try {
+                    boolean hasUnpaidFines = fineClient.hasUnpaidFines(uidUser);
+                    return hasUnpaidFines; // true si bloqueado por multas, false si puede viajar
+                } catch (Exception ex) {
+                    // En caso de error consultando multas, por seguridad bloqueamos
+                    return true;
+                }
+            }
+        }
+
         Integer balance = user.getBalance();
         boolean hasNegativeOrNullBalance = (balance == null || balance < 0);
 
-        boolean hasUnpaidFines = false;
+        boolean hasUnpaidFines;
         try {
             hasUnpaidFines = fineClient.hasUnpaidFines(uidUser);
         } catch (Exception ex) {
@@ -104,5 +128,57 @@ public class UsuarioServiceImpl implements UserService {
 
         // Bloqueado si tiene saldo negativo/nulo o multas impagas
         return hasNegativeOrNullBalance || hasUnpaidFines;
+    }
+
+    @Override
+    @Transactional
+    public void chargeTravel(Integer totalTripValue, Integer excessMinutes, String uidUser) {
+        if (totalTripValue == null || totalTripValue < 0) {
+            throw new IllegalArgumentException("El valor total del viaje debe ser no negativo");
+        }
+        if (excessMinutes == null || excessMinutes < 0) {
+            throw new IllegalArgumentException("Los minutos excedentes deben ser no negativos");
+        }
+        User user = byId(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+        String subscriptionType = user.getSubscriptionType();
+
+        String subject;
+        String message;
+
+        if ("MONTLY".equalsIgnoreCase(subscriptionType)) {
+            Integer travels = user.getSubcripcionTravels();
+            if (travels == null) travels = 0;
+            // Resta 1 por el viaje incluido
+            travels -= 1;
+            // Si hay minutos excedentes, resta 1 adicional
+            if (excessMinutes > 0) {
+                travels -= 1;
+            }
+            user.setSubcripcionTravels(travels);
+
+            subject = "Cobro de viaje por suscripción MONTLY";
+            message = String.format("Se cobró un viaje usando la suscripción mensual. Viajes restantes: %d. Minutos excedentes: %d. Valor base del viaje: %d.", travels, excessMinutes, totalTripValue);
+        } else {
+            // subscriptionType NONE u otro -> cobrar del balance sin importar si queda negativo
+            Integer balance = user.getBalance() == null ? 0 : user.getBalance();
+            Integer newBalance = balance - totalTripValue;
+            user.setBalance(newBalance);
+
+            subject = "Cobro de viaje por balance";
+            message = String.format("Se cobró el viaje del balance. Valor cobrado: %d. Minutos excedentes: %d. Balance anterior: %d. Balance nuevo: %d.", totalTripValue, excessMinutes, balance, newBalance);
+        }
+
+        repository.save(user);
+
+        // Publicar notificación del cobro
+        try {
+            UserDTO dto = new UserDTO();
+            dto.setUserEmail(user.getUserEmail());
+            dto.setSubject(subject);
+            dto.setMessage(message);
+            userPublisher.sendJsonMessage(dto);
+        } catch (Exception e) {
+            // No interrumpir la transacción por fallo de publicación; solo registrar
+        }
     }
 }

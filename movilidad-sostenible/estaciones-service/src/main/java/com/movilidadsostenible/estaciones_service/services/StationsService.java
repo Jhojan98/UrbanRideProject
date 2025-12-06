@@ -10,5 +10,5 @@ public interface StationsService {
     Optional<Station> findById(Integer id);
     Station save(Station station);
     void deleteById(Integer id);
+    List<Station> findByIdCity(Integer idCity);
 }
-
