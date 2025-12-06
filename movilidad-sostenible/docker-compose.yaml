@@ -207,6 +207,7 @@ services:
       POSTGRES_DB: movilidad_sostenible
       POSTGRES_USER: ${VIAJE_DB_USER}
       POSTGRES_PASSWORD: ${VIAJE_DB_PASSWORD}
+      USUARIO_URL: usuario-service:8100
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
@@ -348,6 +349,7 @@ services:
       EUREKA_APP_NAME: fine-service
       EUREKA_HEARTBEAT_INTERVAL: 30
       POSTGRES_HOST: postgres17:5432
+      USERS_SERVICE_URL: http://usuario-service:8100
       POSTGRES_DB: movilidad_sostenible
       POSTGRES_USER: ${FINES_DB_USER}
       POSTGRES_PASSWORD: ${FINES_DB_PASSWORD}
@@ -375,7 +377,7 @@ services:
       EUREKA_PORT: 8761
       EUREKA_APP_NAME: reports-service
       EUREKA_HEARTBEAT_INTERVAL: 30
-      USERS_SERVICE_URL: http://usuario-service:8001
+      USERS_SERVICE_URL: http://usuario-service:8100
       BICYCLE_SERVICE_URL: http://bicis-service:8002
       RESERVATIONS_SERVICE_URL: http://viaje-service:8003
       FINES_SERVICE_URL: http://fine-service:5003
