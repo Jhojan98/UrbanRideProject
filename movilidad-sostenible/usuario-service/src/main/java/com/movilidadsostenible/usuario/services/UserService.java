@@ -15,4 +15,7 @@ public interface UserService {
     Integer getBalance(String uidUser);
     Integer addBalance(String uidUser, Integer amount);
     Integer subtractBalance(String uidUser, Integer amount);
+
+    // Devuelve true si el usuario NO puede viajar (bloqueado), false si SÍ puede
+    boolean isUserBlockedForTravel(String uidUser);
 }

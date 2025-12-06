@@ -214,6 +214,9 @@ services:
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
       SPRING_REDIS_HOST: redis-stack
       SPRING_REDIS_PORT: 6379
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_QOS: 1
+      MQTT_CLIENT_ID: "travel-service-${HOSTNAME:-local-dev}"
     networks:
       - movilidad-sostenible-network
     depends_on:
@@ -227,6 +230,8 @@ services:
         condition: service_started
       eureka-server:
         condition: service_healthy
+      mosquitto:
+        condition: service_started
     restart: always
 
   slots-service:

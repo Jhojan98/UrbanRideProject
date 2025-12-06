@@ -25,7 +25,6 @@ import java.util.Optional;
 
 @RestController
 @Tag(name = "Estaciones", description = "CRUD de estaciones y creación automática de slots")
-@RequestMapping("/stations")
 public class StationsController {
 
     private final StationsService service;
@@ -64,6 +63,22 @@ public class StationsController {
     public ResponseEntity<?> getById(@PathVariable Integer id) {
         Optional<Station> opt = service.findById(id);
         return opt.<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    // Nuevo endpoint: obtener solo el campo `type` de la estación por id
+    @GetMapping("/{id}/type")
+    @Operation(summary = "Obtener tipo de estación por id", description = "Devuelve el campo `type` de la estación indicada por id",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Tipo de estación obtenido",
+                            content = @Content(schema = @Schema(implementation = String.class))),
+                    @ApiResponse(responseCode = "404", description = "Estación no encontrada")
+            }
+    )
+    public ResponseEntity<String> getTypeById(@PathVariable Integer id) {
+        Optional<Station> opt = service.findById(id);
+        // Devolver únicamente la cadena del tipo (por ejemplo "METRO") en el cuerpo como texto plano
+        return opt.map(st -> ResponseEntity.ok().contentType(org.springframework.http.MediaType.TEXT_PLAIN).body(st.getType()))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
