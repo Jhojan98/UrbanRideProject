@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import Station from '@/models/Station';
+import {Station} from '@/models/Station';
 
 const stationStore = defineStore('station', {
   state: () => ({
