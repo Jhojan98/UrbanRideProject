@@ -10,7 +10,7 @@ ALLOWED_TRIGGERED_BY = ("ADMIN", "USER", "IOT_ALERT")
 
 
 class MaintenanceRecordBase(BaseModel):
-    t_entity_tipe: Literal["BICYCLE", "STATION", "LOCK"] = Field(
+    t_entity_type: Literal["BICYCLE", "STATION", "LOCK"] = Field(
         alias="entityType",
     )
     t_maintenace_type: Literal["PREVENTIVE", "CORRECTIVE", "INSPECTION"] = Field(
@@ -27,7 +27,7 @@ class MaintenanceRecordBase(BaseModel):
     v_cost: Optional[int] = Field(default=None, alias="cost")
     k_id_bicycle: Optional[str] = Field(default=None, alias="bikeId")
     k_id_station: Optional[int] = Field(default=None, alias="stationId")
-    k_id_lock: Optional[str] = Field(default=None, alias="lockId")
+    k_id_slot: Optional[str] = Field(default=None, alias="lockId")
 
     class Config:
         populate_by_name = True
@@ -39,4 +39,4 @@ class MaintenanceRecordCreate(MaintenanceRecordBase):
 
 
 class MaintenanceRecord(MaintenanceRecordBase):
-    k_id_maintenance: int = Field(alias="id")
+    k_id_maintenance: str = Field(alias="id")
