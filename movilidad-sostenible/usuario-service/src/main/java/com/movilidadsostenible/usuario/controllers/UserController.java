@@ -60,22 +60,37 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{uid}")
     @Operation(summary = "Actualizar usuario")
     public ResponseEntity<?> updateUser(@Valid @RequestBody User user,
                                         BindingResult result,
-                                        @PathVariable String uid) {
+                                        @PathVariable("uid") String uid) {
         if (result.hasErrors()) {
             return validate(result);
         }
         Optional<User> usuarioOptional = service.byId(uid);
-        if(usuarioOptional.isEmpty()) {
+        if (usuarioOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         User usuarioDB = usuarioOptional.get();
-        usuarioDB.setUserName(user.getUserName());
-        usuarioDB.setSubscriptionType(user.getSubscriptionType());
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(usuarioDB));
+        // Actualización parcial segura
+        if (user.getUserName() != null) {
+            usuarioDB.setUserName(user.getUserName());
+        }
+        if (user.getSubscriptionType() != null) {
+            usuarioDB.setSubscriptionType(user.getSubscriptionType());
+        }
+        // Si el modelo incluye subcripcionTravels y viene presente, actualizarlo
+        try {
+            Integer travels = user.getSubcripcionTravels();
+            if (travels != null) {
+                usuarioDB.setSubcripcionTravels(travels);
+            }
+        } catch (Exception ignored) {
+            // Campo opcional, omitir si no existe
+        }
+        User saved = service.save(usuarioDB);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")

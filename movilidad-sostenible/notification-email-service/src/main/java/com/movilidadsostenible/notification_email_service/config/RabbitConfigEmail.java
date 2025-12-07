@@ -12,20 +12,29 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfigEmail {
 
-  // Permitir override por variables de entorno en Docker Compose
-  @Value("${rabbitmq.queue.user.to.email:${RABBITMQ_QUEUE_USER_TO_EMAIL:user.to.email.queue}}")
-  private String jsonQueueNameConsumer;
+  @Value("${rabbitmq.queue.user.to.email.charge.travel.balance}")
+  private String jsonQueueNameChargeTravelBalanceConsumer;
 
-  @Value("${rabbitmq.exchange.name:${RABBITMQ_EXCHANGE_NAME:app.topic.exchange}}")
-  private String jsonExchangeName;
+  @Value("${rabbitmq.queue.user.to.email.charge.travel.subscription}")
+  private String jsonQueueNameChargeTravelSubscriptionConsumer;
 
-  @Value("${rabbitmq.routing.user.to.email.key:${RABBITMQ_ROUTING_USER_TO_EMAIL:user.to.email.key}}")
-  private String routingJsonKeyConsumer;
+  @Value("${rabbitmq.exchange.name}")
+  public String jsonExchangeName;
+
+  @Value("${rabbitmq.routing.user.to.email.travel.balance.key}")
+  public String routingJsonKeyChargeTravelBalanceConsumer;
+
+  @Value("${rabbitmq.routing.user.to.email.travel.subscription.key}")
+  public String routingJsonKeyChargeTravelSubscriptionConsumer;
 
   // Cola durable
   @Bean
-  public Queue jsonQueueConsumer() {
-    return QueueBuilder.durable(jsonQueueNameConsumer).build();
+  public Queue jsonQueueChargeTravelBalanceConsumer() {
+    return QueueBuilder.durable(jsonQueueNameChargeTravelBalanceConsumer).build();
+  }
+  @Bean
+  public Queue jsonQueueChargeTravelSubscriptionConsumer() {
+    return QueueBuilder.durable(jsonQueueNameChargeTravelSubscriptionConsumer).build();
   }
 
   // Exchange durable
@@ -36,11 +45,18 @@ public class RabbitConfigEmail {
 
   // Binding entre cola y exchange usando routing key
   @Bean
-  public Binding jsonBindingConsumer() {
+  public Binding jsonBindingChargeTravelBalanceConsumer() {
     return BindingBuilder
-      .bind(jsonQueueConsumer())
+      .bind(jsonQueueChargeTravelBalanceConsumer())
       .to(jsonExchange())
-      .with(routingJsonKeyConsumer);
+      .with(routingJsonKeyChargeTravelBalanceConsumer);
+  }
+  @Bean
+  public Binding jsonBindingChargeTravelSubscriptionConsumer() {
+    return BindingBuilder
+      .bind(jsonQueueChargeTravelSubscriptionConsumer())
+      .to(jsonExchange())
+      .with(jsonQueueNameChargeTravelSubscriptionConsumer);
   }
 
   @Bean

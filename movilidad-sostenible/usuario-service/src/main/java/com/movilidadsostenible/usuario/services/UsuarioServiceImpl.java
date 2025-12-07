@@ -145,40 +145,48 @@ public class UsuarioServiceImpl implements UserService {
         String subject;
         String message;
 
-        if ("MONTLY".equalsIgnoreCase(subscriptionType)) {
-            Integer travels = user.getSubcripcionTravels();
-            if (travels == null) travels = 0;
-            // Resta 1 por el viaje incluido
-            travels -= 1;
-            // Si hay minutos excedentes, resta 1 adicional
-            if (excessMinutes > 0) {
-                travels -= 1;
-            }
-            user.setSubcripcionTravels(travels);
-
-            subject = "Cobro de viaje por suscripción MONTLY";
-            message = String.format("Se cobró un viaje usando la suscripción mensual. Viajes restantes: %d. Minutos excedentes: %d. Valor base del viaje: %d.", travels, excessMinutes, totalTripValue);
-        } else {
-            // subscriptionType NONE u otro -> cobrar del balance sin importar si queda negativo
-            Integer balance = user.getBalance() == null ? 0 : user.getBalance();
-            Integer newBalance = balance - totalTripValue;
-            user.setBalance(newBalance);
-
-            subject = "Cobro de viaje por balance";
-            message = String.format("Se cobró el viaje del balance. Valor cobrado: %d. Minutos excedentes: %d. Balance anterior: %d. Balance nuevo: %d.", totalTripValue, excessMinutes, balance, newBalance);
-        }
-
-        repository.save(user);
-
-        // Publicar notificación del cobro
         try {
             UserDTO dto = new UserDTO();
             dto.setUserEmail(user.getUserEmail());
-            dto.setSubject(subject);
-            dto.setMessage(message);
-            userPublisher.sendJsonMessage(dto);
+
+            if ("MONTHLY".equalsIgnoreCase(subscriptionType) && user.getSubcripcionTravels() != null && user.getSubcripcionTravels() > 0) {
+                Integer travels = user.getSubcripcionTravels();
+                if (travels == null) travels = 0;
+                // Resta 1 por el viaje incluido
+                travels -= 1;
+                // Si hay minutos excedentes, resta 1 adicional
+                if (excessMinutes > 0) {
+                    travels -= 1;
+                }
+                user.setSubcripcionTravels(travels);
+
+                subject = "Cobro de viaje por suscripción MONTHLY";
+                message = String.format("Se cobró un viaje usando la suscripción mensual. Viajes restantes: %d. Minutos excedentes: %d. Valor base del viaje: %d.", travels, excessMinutes, totalTripValue);
+
+                dto.setSubject(subject);
+                dto.setMessage(message);
+
+                userPublisher.sendJsonhChargeTravelSubscriptionMessage(dto);
+
+            } else {
+                // subscriptionType NONE u otro -> cobrar del balance sin importar si queda negativo
+                Integer balance = user.getBalance() == null ? 0 : user.getBalance();
+                Integer newBalance = balance - totalTripValue;
+                user.setBalance(newBalance);
+
+                subject = "Cobro de viaje por balance";
+                message = String.format("Se cobró el viaje del balance. Valor cobrado: %d. Minutos excedentes: %d. Balance anterior: %d. Balance nuevo: %d.", totalTripValue, excessMinutes, balance, newBalance);
+
+                dto.setSubject(subject);
+                dto.setMessage(message);
+
+                userPublisher.sendJsonhChargeTravelSubscriptionMessage(dto);
+
+            }
         } catch (Exception e) {
-            // No interrumpir la transacción por fallo de publicación; solo registrar
+          // No interrumpir la transacción por fallo de publicación; solo registrar
         }
+
+        repository.save(user);
     }
 }
