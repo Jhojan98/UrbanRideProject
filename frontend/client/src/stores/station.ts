@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import type { Station } from "@/models/Station";
 
-// Interfaz extendida para datos adicionales del backend que no están en el modelo
+// Extended interface for additional backend data not in the model
 interface StationExtended extends Station {
   type?: string;
   cctvStatus?: boolean;
@@ -75,7 +75,7 @@ export const useStationStore = defineStore("station", {
           availableSlots: s.availableSlots ?? 0,
           timestamp: s.timestamp ? new Date(s.timestamp) : new Date(),
           slots: s.slots,
-          // Campos extendidos
+          // Extended fields
           type: s.type,
           cctvStatus: typeof s.cctvStatus === 'boolean' ? s.cctvStatus : s.cctvStatus === 'true',
           mechanical: s.mechanical ?? 0,
@@ -83,8 +83,8 @@ export const useStationStore = defineStore("station", {
           idCity: s.idCity
         }));
 
-        // Logging para verificación
-        console.log('[StationStore] Estaciones normalizadas:');
+        // Logging for verification
+        console.log('[StationStore] Normalized stations:');
         this.stations.slice(0, 3).forEach(st => {
           console.log(`  - ${st.nameStation}: ⚡ ${st.electric}, ⚙️ ${st.mechanical}`);
         });
@@ -121,7 +121,7 @@ export const useStationStore = defineStore("station", {
           availableSlots: data.availableSlots ?? 0,
           timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
           slots: data.slots,
-          // Campos extendidos
+          // Extended fields
           type: data.type,
           cctvStatus: typeof data.cctvStatus === 'boolean' ? data.cctvStatus : data.cctvStatus === 'true',
           mechanical: data.mechanical ?? 0,

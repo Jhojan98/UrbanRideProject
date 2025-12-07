@@ -65,7 +65,7 @@
       ⚠️ {{ $t('reservation.form.warning') }} <strong>{{ $t('reservation.form.warningMinutes') }}</strong>.
     </p>
 
-    <!-- Botón de reservar bicicleta removido para evitar duplicidad con Confirmar Ruta -->
+    <!-- Bike reservation button removed to avoid duplication with Confirm Route -->
   </div>
 </template>
 
@@ -101,14 +101,14 @@ const router = useRouter()
 const { t: $t } = useI18n();
 const { setReservation } = useReservation()
 
-// props con valores por defecto (incluye origin/destination opcionales para sincronizar selección desde el mapa)
+// Props with default values (includes optional origin/destination to sync selection from map)
 interface PropsWithSelection extends Props {
   origin?: Station | null
   destination?: Station | null
 }
 
 const props = withDefaults(defineProps<PropsWithSelection>(), {
-  station: () => ({ nameStation: 'Selecciona una estación', availableSlots: 0, totalSlots: 0 }),
+  station: () => ({ nameStation: '', availableSlots: 0, totalSlots: 0 }),
   balance: 0,
   origin: null,
   destination: null
@@ -214,7 +214,7 @@ function onDestinationUpdate(destination: Station | null) {
   emit("update:destination", destination ?? null)
 }
 
-// Handler cuando UltimaMilla emite confirm (botón Reservar Bicicleta)
+// Handler when UltimaMilla emits confirm (Reserve Bike button)
 async function onConfirmRoute(payload: { origin: Station; destination: Station; bikeType: string; rideType: string }) {
   // Ejecutar reserva para ambos tipos de viaje (short_trip y long_trip)
   if (!payload) return
@@ -225,7 +225,7 @@ async function onConfirmRoute(payload: { origin: Station; destination: Station; 
   const userUid = currentUser?.uid ?? null
 
   if (!userUid) {
-    window.alert('Debe iniciar sesión para iniciar el viaje')
+    window.alert($t('reservation.form.mustLogin'))
     return
   }
 
@@ -234,7 +234,7 @@ async function onConfirmRoute(payload: { origin: Station; destination: Station; 
   const stationEndId = Number(payload.destination?.idStation ?? 0)
 
   if (!stationStartId || !stationEndId) {
-    window.alert('No se pudo determinar estaciones origen/destino')
+    window.alert($t('reservation.form.selectionAlert'))
     return
   }
 
@@ -249,7 +249,7 @@ async function onConfirmRoute(payload: { origin: Station; destination: Station; 
       originData: payload.origin
     });
 
-    // Publica la reserva temporal en Redis a través de viaje-service
+    // Publishes temporary reservation to Redis via travel-service
     const resp = await travelStore.startTravel(userUid, stationStartId, stationEndId, bikeTypeMapped)
     console.log('[ReserveFormComponent] onConfirmRoute - Viaje iniciado (Redis):', resp)
     const slotMsg = resp?.slotId ? `Tu slot asignado es ${resp.slotId}` : ''
@@ -267,8 +267,8 @@ async function onConfirmRoute(payload: { origin: Station; destination: Station; 
     setReservation(reservationPayload)
     emit('reserve', { bikeType: payload.bikeType, rideType: payload.rideType })
   } catch (err: unknown) {
-    console.error('[ReserveFormComponent] onConfirmRoute - Error iniciando viaje:', err)
-    window.alert('Error iniciando viaje: ' + (err instanceof Error ? err.message : String(err)))
+    console.error('[ReserveFormComponent] onConfirmRoute - Error starting trip:', err)
+    window.alert($t('reservation.form.reserveError'))
   }
 }
 </script>

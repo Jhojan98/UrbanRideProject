@@ -28,28 +28,28 @@ const layoutComponent = computed(() => {
 })
 
 onMounted(() => {
-  // Inicializar conexión SSE globalmente cuando la app se monta
+  // Initialize SSE connection globally when app mounts
   tripStore.connectToSSE()
-  // Adjuntar listeners de ciclo de vida para reconectar cuando sea oportuno
+  // Attach lifecycle listeners to reconnect when needed
   tripStore.attachLifecycleListeners()
-  console.log('[App] SSE conectado globalmente')
+  console.log('[App] SSE connected globally')
 })
 
 onUnmounted(() => {
-  // Desconectar SSE cuando la app se desmonta
+  // Disconnect SSE when app unmounts
   tripStore.disconnect()
-  console.log('[App] SSE desconectado')
+  console.log('[App] SSE disconnected')
 })
 </script>
 
 <style lang="scss">
 @import "@/styles/global.scss";
 
-/* Reset: elimina márgenes y padding */
+/* Reset: removes margins and padding */
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box; /* padding y border se incluyen en el width/height */
+  box-sizing: border-box; /* padding and border are included in width/height */
 }
 
 body {

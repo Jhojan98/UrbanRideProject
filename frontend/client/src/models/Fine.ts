@@ -10,7 +10,7 @@ export default interface Fine{
     d_description: string;
     v_amount: number;
   };
-  // Campos legacy para compatibilidad
+  // Legacy fields for compatibility
   idFine?: number;
   reason?: string;
   state?: string;

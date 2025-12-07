@@ -72,7 +72,7 @@ const notificationMessage = computed(() => {
   }
 });
 
-// Auto-cerrar después de 8 segundos
+// Auto-close after 8 seconds
 let autoCloseTimer: number | null = null;
 
 const startAutoCloseTimer = () => {

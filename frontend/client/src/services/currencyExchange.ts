@@ -1,4 +1,4 @@
-// Asegurar que la URL base esté disponible, con fallback
+// Ensure base URL is available, with fallback
 const provider = process.env.VUE_APP_EXCHANGE_RATE_API_URL || 'https://api.exchangerate-api.com/v4/latest';
 
 async function fetchExchangeRate(fromCurrency: string, toCurrency: string, mount: number): Promise<number> {

@@ -16,7 +16,7 @@
 
     <!-- Sidebar/Desktop Header -->
     <div class="header-content" :class="{ 'sidebar-visible': isSidebarOpen || !isMobile }">
-      <!-- Close button para móviles -->
+      <!-- Close button for mobiles -->
       <button v-if="isMobile" class="close-btn" @click="isSidebarOpen = false" :aria-label="$t('common.close')">
         ✕
       </button>
@@ -27,7 +27,7 @@
       </div>
 
       <nav class="nav">
-        <!-- Solo mostrar navegación cuando esté autenticado -->
+        <!-- Only show navigation when authenticated -->
         <template v-if="isAuthenticated">
           <router-link :to="{name: 'home'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.home') }}</router-link>
           <router-link :to="{name: 'maps'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.maps') }}</router-link>
@@ -36,13 +36,13 @@
       </nav>
 
       <div class="auth-buttons">
-        <!-- Mostrar botones de Login/Signup solo cuando no esté autenticado -->
+        <!-- Show Login/Signup buttons only when not authenticated -->
         <template v-if="showAuthButtons">
           <router-link :to="{ name: 'login' }" class="btn-primary" @click="closeSidebarOnMobile">{{ $t('nav.login') }}</router-link>
           <router-link :to="{ name: 'signup' }" class="btn-primary" @click="closeSidebarOnMobile">{{ $t('nav.signup') }}</router-link>
         </template>
 
-        <!-- Mostrar botón de Logout solo cuando esté autenticado -->
+        <!-- Show Logout button only when authenticated -->
         <button v-if="showLogoutButton" @click="logout" class="btn-primary btn-logout">
           {{ $t('nav.logout') }}
         </button>
@@ -58,11 +58,11 @@
       </div>
     </div>
 
-    <!-- Backdrop para cerrar sidebar al hacer click -->
+    <!-- Backdrop to close sidebar on click -->
     <div v-if="isMobile && isSidebarOpen" class="sidebar-backdrop" @click="isSidebarOpen = false"></div>
   </header>
 </template>
-//TODO: Convertir el logo a webp para optimizar carga
+//TODO: Convert logo to webp to optimize load
 
 <script setup lang="ts">
 import { computed, watch, ref, onMounted, onUnmounted } from 'vue';
@@ -76,36 +76,36 @@ const route = useRoute();
 const router = useRouter();
 const authStore = userAuth();
 
-// Usar storeToRefs para mantener la reactividad del store
+// Use storeToRefs to maintain store reactivity
 const { token } = storeToRefs(authStore);
 
-// Estado del sidebar
+// Sidebar state
 const isSidebarOpen = ref(false);
 const isMobile = ref(window.innerWidth <= 768);
 
-// Verificar si el usuario está autenticado
+// Check if user is authenticated
 const isAuthenticated = computed(() => !!token.value);
 
-// Verificar si estamos en una ruta de autenticación (login, signup, verify-email)
+// Check if we are on an authentication route (login, signup, verify-email)
 const isAuthRoute = computed(() => {
   const authRoutes = ['login', 'signup', 'verify-email'];
   return authRoutes.includes(route.name as string);
 });
 
-// Mostrar botones de login/signup solo cuando NO esté autenticado y NO esté en ruta de auth
+// Show login/signup buttons only when NOT authenticated and NOT on auth route
 const showAuthButtons = computed(() => !isAuthenticated.value && !isAuthRoute.value);
 
-// Mostrar botón de logout solo cuando esté autenticado
+// Show logout button only when authenticated
 const showLogoutButton = computed(() => isAuthenticated.value);
 
-// Cerrar sidebar automáticamente en móviles al cambiar de ruta
+// Close sidebar automatically on mobile when route changes
 watch(() => route.path, () => {
   if (isMobile.value) {
     isSidebarOpen.value = false;
   }
 });
 
-// Manejar el cierre de sesión
+// Handle logout
 const logout = async () => {
   await authStore.logout();
   router.push({ name: 'home' });
@@ -114,17 +114,17 @@ const logout = async () => {
   }
 };
 
-// Cerrar sidebar al hacer click en un link en móviles
+// Close sidebar on link click on mobile
 const closeSidebarOnMobile = () => {
   if (isMobile.value) {
     isSidebarOpen.value = false;
   }
 };
 
-// Detectar cambios en el tamaño de la ventana
+// Detect window size changes
 const handleResize = () => {
   isMobile.value = window.innerWidth <= 768;
-  // Cerrar sidebar si se cambia a desktop
+  // Close sidebar if switching to desktop
   if (!isMobile.value && isSidebarOpen.value) {
     isSidebarOpen.value = false;
   }

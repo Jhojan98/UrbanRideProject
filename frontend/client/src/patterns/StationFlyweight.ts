@@ -1,7 +1,7 @@
 import * as L from 'leaflet';
 import { type Station, SlotStatus } from '@/models/Station';
 
-// Íconos compartidos (estado intrínseco)
+// Shared icons (intrinsic state)
 class StationFlyweight {
   private static readonly high: L.DivIcon = new L.DivIcon({
     html: `<div style="width:36px;height:36px;background:#4caf50;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35)"><i class="fa fa-bicycle"></i></div>`,
@@ -20,9 +20,9 @@ class StationFlyweight {
     className: 'station-none', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
 
-  // ahora acepta un tipo opcional ('metro'|'bike') para cambiar el icono
+  // Now accepts optional type ('metro'|'bike') to change the icon
   static icon(available: number, total: number, type?: string): L.DivIcon {
-    // elegir el set base según porcentaje
+    // Choose base set by percentage
     let base: L.DivIcon
     if (available === 0) base = this.none;
     else {
@@ -31,9 +31,9 @@ class StationFlyweight {
       else if (pct > 20) base = this.medium;
       else base = this.low;
     }
-    // Si es estación de metro, reemplazar el innerHTML por un icono de metro
+    // If it's a metro station, replace innerHTML with metro icon
     if (type === 'metro') {
-      // clonar pero con icono de metro — solo si el html es string
+      // Clone but with metro icon — only if html is string
       if (typeof base.options.html === 'string') {
         const replaced = base.options.html.replace('fa-bicycle', 'fa-subway')
         return new L.DivIcon({
@@ -44,7 +44,7 @@ class StationFlyweight {
           popupAnchor: base.options.popupAnchor
         })
       }
-      // si no es string, devolver el base original
+      // If not string, return original base
       return base
     }
     return base;
@@ -60,6 +60,13 @@ export class StationMarker {
 
   setTranslator(t: (key: string, params?: any) => string) {
     this.t = t;
+  }
+
+  // Update popup content when language changes
+  updatePopupContent(): void {
+    if (this.marker) {
+      this.marker.setPopupContent(this.popupHtml());
+    }
   }
 
   render(map: L.Map): L.Marker {
@@ -98,10 +105,10 @@ export class StationMarker {
     const pct = ((s.availableSlots/s.totalSlots)*100).toFixed(0);
     const color = s.availableSlots===0? '#757575': parseInt(pct)>50? '#4caf50': parseInt(pct)>20? '#ff9800': '#f44336';
 
-    // Usar i18n si está disponible, sino fallback a strings hardcoded
+    // Use i18n if available, otherwise fallback to hardcoded strings
     const t = this.t || ((key: string) => key);
 
-    // Mostrar bicis mecánicas y eléctricas para cualquier tipo de estación (metro o bici)
+    // Show mechanical and electric bikes for any station type (metro or bike)
     const mechanical = (s as any).mechanical ?? 0;
     const electric = (s as any).electric ?? 0;
     const bikeTypesHtml = `
@@ -173,4 +180,8 @@ export class StationFactory {
   clear(){ this.pool.forEach(m=>m.remove()); this.pool.clear(); }
   size(): number { return this.pool.size; }
   getMarkerById(id:number){ return this.pool.get(id); }
+  // Update all popup contents when language changes
+  updateAllPopups(): void {
+    this.pool.forEach(marker => marker.updatePopupContent());
+  }
 }

@@ -2,7 +2,7 @@
   <div class="map-wrapper">
     <div id="map" :class="['map-container', { 'map-disabled': showAuthModal }]"></div>
 
-    <!-- Modal: requiere iniciar sesión para acceder al mapa -->
+    <!-- Modal: requires login to access the map -->
     <div v-if="showAuthModal" class="modal-overlay">
       <div class="modal">
         <div class="modal-content">
@@ -54,8 +54,8 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png'
 // @ts-ignore
 import markerShadow from 'leaflet/dist/images/marker-shadow.png'
 
-// Arreglar íconos por defecto
-// Eliminar método interno de iconos por defecto con cast seguro
+// Fix default icons
+// Remove internal icon method with safe cast
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -63,28 +63,17 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow
 })
 
-import { BicycleFactory } from '@/patterns/BicycleFlyweight'
-import { BicycleWebSocketService } from '@/services/BicycleWebSocketService'
 import { StationFactory } from '@/patterns/StationFlyweight'
 import { StationWebSocketService } from '@/services/StationWebSocketService'
 import { useStationStore } from '@/stores/station'
 import type { Station } from '@/models/Station'
 
 // Type used by WS and factories when payload shape may vary
-type StationLike = Station | {
+type StationLike = Station & {
   id?: number
-  idStation?: number
   name?: string
-  nameStation?: string
-  latitude: number
-  longitude: number
-  availableSlots?: number
   free_spots?: number
   type?: string
-  cctvStatus?: boolean
-  mechanical?: number
-  electric?: number
-  totalSlots?: number
 }
 
 // Interfaz para props de origen/destino
@@ -104,17 +93,15 @@ const props = defineProps<{
   initialStations?: Station[]
 }>()
 
-// No longer emit station-click from the map; clicks only show info in the overlay
+// Do not emit station-click from map; clicks only show info in overlay
 
-const { t: $t } = useI18n()
+const { t: $t, locale } = useI18n()
 const stationStore = useStationStore()
 const map = ref<LeafletMap | null>(null)
 const isMounted = ref<boolean>(false)
-const bicycleFactory = new BicycleFactory()
-const wsService = new BicycleWebSocketService(bicycleFactory)
 const stationFactory = new StationFactory()
 const stationWsService = new StationWebSocketService(stationFactory)
-// Flag para evitar re-renderizado redundante de estaciones
+// Flag to avoid redundant station re-rendering
 const stationsRendered = ref<boolean>(false)
 interface ClickedStation {
   id: number | string
@@ -127,16 +114,16 @@ interface ClickedStation {
 const clickedStation = ref<ClickedStation | null>(null)
 const pendingTimeouts = new Set<number>()
 
-// Auth modal: si no está autenticado, mostrar modal que obliga a iniciar sesión
+// Auth modal: if not authenticated, show modal that requires login
 const router = useRouter()
 // const authStore = userAuth()
 // const { token } = storeToRefs(authStore)
-// Temporalmente deshabilitamos la restricción de login para facilitar
-// la comprobación de la obtención/renderizado de estaciones.
-// Antes: showAuthModal dependía de `token`; ahora forzamos `false`.
+// Temporarily disable login restriction to facilitate
+// checking station retrieval/rendering.
+// Before: showAuthModal depended on `token`; now we force `false`.
 const showAuthModal = ref<boolean>(false)
 
-// Comentado temporalmente: evitar que cambios en el token cierren/abran el modal
+// Temporarily commented: prevent token changes from opening/closing modal
 // watch(token, (val) => {
 //   showAuthModal.value = !val
 // })
@@ -145,24 +132,24 @@ function goToLogin() {
   router.push({ name: 'login' }).catch(() => void 0)
 }
 
-// Nota: no existe función de "cancelar" para evitar que el usuario interactúe sin iniciar sesión.
+// Note: no "cancel" function exists to prevent user interaction without logging in.
 
-// Para marcadores de ruta (origen/destino)
+// For route markers (origin/destination)
 let originMarker: Marker | null = null
 let destMarker: Marker | null = null
 let routeLine: Polyline | null = null
 
 const originPlain = computed(() => props.origin ? {
-  nameStation: props.origin.nameStation ?? 'Origen',
+  nameStation: props.origin.nameStation ?? 'Origin',
   availableSlots: props.origin.availableSlots ?? 0
 } : null)
 
 const destinationPlain = computed(() => props.destination ? {
-  nameStation: props.destination.nameStation ?? 'Destino',
+  nameStation: props.destination.nameStation ?? 'Destination',
   availableSlots: props.destination.availableSlots ?? 0
 } : null)
 
-// Helper: registrar timeout para limpieza en onUnmounted
+// Helper: register timeout for cleanup in onUnmounted
 function setMountedTimeout(callback: () => void, delay: number): number {
   const timeoutId = window.setTimeout(() => {
     if (isMounted.value) {
@@ -182,9 +169,9 @@ function addOriginMarker(o: StationPoint) {
     originMarker.remove()
     originMarker = null
   }
-  console.log('🔵 Agregando marcador ORIGEN en:', { lat: o.latitude, lng: o.longitude, nameStation: o.nameStation })
+  console.log('🔵 Adding ORIGIN marker at:', { lat: o.latitude, lng: o.longitude, nameStation: o.nameStation })
 
-  // Usar icono estándar de Leaflet con color verde para origen
+  // Use standard Leaflet icon with green color for origin
   const greenIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
     shadowUrl: markerShadow,
@@ -208,9 +195,9 @@ function addDestMarker(d: StationPoint) {
     destMarker.remove()
     destMarker = null
   }
-  console.log('🔵 Agregando marcador DESTINO en:', { lat: d.latitude, lng: d.longitude, nameStation: d.nameStation })
+  console.log('🔵 Adding DESTINATION marker at:', { lat: d.latitude, lng: d.longitude, nameStation: d.nameStation })
 
-  // Usar icono estándar de Leaflet con color rojo para destino
+  // Use standard Leaflet icon with red color for destination
   const redIcon = new L.Icon({
     iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
     shadowUrl: markerShadow,
@@ -290,7 +277,7 @@ function renderStationsFromStore() {
     return false
   }
 
-  console.log('[Map] Renderizando estaciones del store (StationFactory):', stations.length)
+  console.log('[Map] Rendering stations from store (StationFactory):', stations.length)
 
   stations.forEach(s => {
     try {
@@ -314,8 +301,8 @@ onMounted(() => {
     center: initialCenter,
     zoom: 13,
     zoomControl: true,
-    // Desactivar todas las animaciones de zoom/transición para evitar
-    // errores al desmontar o durante cambios rápidos.
+    // Disable all zoom/transition animations to avoid
+    // errors when unmounting or during rapid changes.
     zoomAnimation: false,
     markerZoomAnimation: false,
     fadeAnimation: false,
@@ -325,7 +312,7 @@ onMounted(() => {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    // Reducir trabajo durante zoom/redibujos
+    // Reduce work during zoom/redraws
     updateWhenIdle: true,
     keepBuffer: 0,
   }).addTo(map.value as LeafletMap)
@@ -363,10 +350,10 @@ onMounted(() => {
     stationsRendered.value = false
   }
 
-  // Intentar conectar al WebSocket de estaciones y solicitar carga inicial.
+  // Attempt to connect to station WebSocket and request initial load.
   try {
     stationWsService.connect((stations, factory) => {
-      // Bulk inicial recibido: renderizar todas las estaciones en el mapa
+      // Initial bulk received: render all stations on the map
       try {
         stations.forEach((st: StationLike) => {
           const mk = factory.getStationMarker(st as unknown as StationLike)
@@ -406,9 +393,9 @@ onMounted(() => {
         })
       } catch (e) { console.error('[Map] Error updating station', e) }
     })
-  } catch (e) { console.warn('[Map] No se pudo conectar al Stations WS', e) }
+  } catch (e) { console.warn('[Map] Could not connect to Stations WS', e) }
 
-  // Debug temporal: comprobar estado del WS y cantidad de estaciones almacenadas
+  // Temporary debug: check WS state and number of stored stations
   setTimeout(() => {
     try {
       console.log('[Map DEBUG] Stations WS connected?', stationWsService.getIsConnected());
@@ -417,11 +404,11 @@ onMounted(() => {
       console.log('[Map DEBUG] Stations cache count:', stationWsService.getStationCount());
       console.log('[Map DEBUG] Stations from service:', stationWsService.getStations());
     } catch (err) {
-      console.warn('[Map DEBUG] Error leyendo estado Stations WS', err);
+      console.warn('[Map DEBUG] Error reading Stations WS state', err);
     }
   }, 2000);
 
-  // Re-check más tarde por si la conexión tarda en establecerse
+  // Re-check later in case connection takes time to establish
   setTimeout(() => {
     try {
       console.log('[Map DEBUG] (later) Stations WS connected?', stationWsService.getIsConnected());
@@ -430,29 +417,24 @@ onMounted(() => {
       console.log('[Map DEBUG] (later) Stations cache count:', stationWsService.getStationCount());
     } catch (err) { void err }
   }, 6000);
-  // WebSocket de estaciones (fallback, no esencial)
-  // stationWsService.connect(...) - comentado para evitar ruido
+  // Station WebSocket (fallback, not essential)
+  // stationWsService.connect(...) - commented out to avoid noise
 
-  // WebSocket de bicicletas (opcional)
-  // wsService.connect(...) - comentado para evitar ruido
-
-  // Marcar el componente como montado
+  // Mark component as mounted
   isMounted.value = true
 })
 
 onUnmounted(() => {
-  // Marcar componente como desmontado inmediatamente
+  // Mark component as unmounted immediately
   isMounted.value = false
 
-  // Limpiar todos los timeouts pendientes
+  // Clean up all pending timeouts
   pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId))
   pendingTimeouts.clear()
 
-  // Desconectar WebSocket si se conectó
-  try { wsService.disconnect() } catch (e) { void e }
+  // Disconnect WebSocket if connected
   try { stationWsService.disconnect() } catch (e) { void e }
 
-  bicycleFactory.clear()
   stationFactory.clear()
 
   if (originMarker) { originMarker.remove(); originMarker = null }
@@ -462,17 +444,17 @@ onUnmounted(() => {
   clickedStation.value = null
 
   if (map.value) {
-    // Detener cualquier animación en progreso antes de eliminar el mapa
+    // Stop any animation in progress before removing the map
     try {
       map.value.stop()
     } catch (e) { void e }
 
-    // Remover todos los event listeners
+    // Remove all event listeners
     try {
       map.value.off()
     } catch (e) { void e }
 
-    // Finalmente remover el mapa
+    // Finally remove the map
     try {
       map.value.remove()
     } catch (e) { void e }
@@ -481,11 +463,11 @@ onUnmounted(() => {
   }
 })
 
-// Watcher para cambios en hasRouteSelected (mostrar/ocultar estaciones)
+// Watcher for changes in hasRouteSelected (show/hide stations)
 // No automatic hiding of stations when a route is selected. Selection
 // of origin/destination is handled via dropdowns per product requirement.
 
-// Watchers para origen/destino (dibujar línea y ajustar vista)
+// Watchers for origin/destination (draw line and adjust view)
 watch(() => props.origin, () => {
   if (!map.value || !isMounted.value) return
   try {
@@ -528,6 +510,28 @@ watch(() => [props.origin, props.destination], () => {
     console.warn('[Map] Error updating line and bounds:', error)
   }
 })
+
+// Watcher for locale changes: update all popup contents when language changes
+watch(() => locale.value, () => {
+  if (!isMounted.value) return
+  try {
+    // Update origin marker popup
+    if (props.origin) {
+      const popupText = `<strong>${$t('reservation.map.markerOrigin')}</strong><br/>${props.origin.nameStation}<br/>${$t('reservation.map.markerCoords', { lat: props.origin.latitude.toFixed(4), lng: props.origin.longitude.toFixed(4) })}`
+      originMarker?.setPopupContent(popupText)
+    }
+    // Update destination marker popup
+    if (props.destination) {
+      const popupText = `<strong>${$t('reservation.map.markerDestination')}</strong><br/>${props.destination.nameStation}<br/>${$t('reservation.map.markerCoords', { lat: props.destination.latitude.toFixed(4), lng: props.destination.longitude.toFixed(4) })}`
+      destMarker?.setPopupContent(popupText)
+    }
+    // Update all station popups
+    stationFactory.updateAllPopups()
+  } catch (error) {
+    console.warn('[Map] Error updating popups on locale change:', error)
+  }
+})
+
 </script>
 
 <style scoped>
@@ -574,7 +578,7 @@ watch(() => [props.origin, props.destination], () => {
   }
 }
 
-/* Modal local: aseguramos que quede por encima del overlay de estación */
+/* Local modal: ensure it stays above the station overlay */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -585,7 +589,7 @@ watch(() => [props.origin, props.destination], () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2000; /* superior al z-index del overlay de estación */
+  z-index: 2000; /* higher than the station overlay z-index */
 }
 
 .modal {

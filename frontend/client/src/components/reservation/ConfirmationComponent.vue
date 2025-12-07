@@ -116,17 +116,17 @@ const startTimer = () => {
   }, 1000);
 };
 
-// Desbloqueo/verificación de bicicleta: si es correcto, damos por iniciado y cerramos
+// Bike unlock/verification: if correct, mark as started and close
 const unlockBike = async () => {
   if (isLoading.value) return;
   const code = (bicycleCode.value || '').trim();
   if (!code || code.length !== 6) {
-    window.alert('Por favor, digita el código de 6 dígitos de la bicicleta');
+    window.alert($t('reservation.confirmation.bikeCodeInvalid'));
     return;
   }
 
   if (!reservationData.value) {
-    window.alert('No hay datos de reserva disponibles');
+    window.alert($t('reservation.confirmation.noReservationData'));
     return;
   }
 
@@ -150,8 +150,8 @@ const unlockBike = async () => {
       router.push('/');
     }, 1200);
   } catch (err: any) {
-    console.error('[ConfirmationComponent] Error verificando bicicleta:', err);
-    window.alert('No se pudo verificar/desbloquear la bicicleta: ' + (err?.message ?? String(err)));
+    console.error('[ConfirmationComponent] Error verifying bike:', err);
+    window.alert($t('reservation.confirmation.unlockError') + ': ' + (err?.message ?? String(err)));
   } finally {
     isLoading.value = false;
   }

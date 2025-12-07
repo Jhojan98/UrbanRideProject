@@ -1,8 +1,8 @@
 <template>
-  <!-- Pie de página -->
+  <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
-      <!-- Enlaces del footer -->
+      <!-- Footer links -->
       <div class="footer-links">
         <a href="#" class="footer-link">{{ $t('footer.about') }}</a>
         <a href="#" class="footer-link">{{ $t('footer.resources') }}</a>

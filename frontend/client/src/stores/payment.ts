@@ -24,7 +24,7 @@ const usePaymentStore = defineStore('payment', {
 
   actions: {
     /**
-     * Obtener balance del usuario a través del gateway
+     * Get user balance through the gateway
      */
     async fetchBalance(userId: string): Promise<number | null> {
       if (!userId) return null
@@ -38,27 +38,27 @@ const usePaymentStore = defineStore('payment', {
         })
 
         if (!response.ok) {
-          console.error('Error obteniendo balance:', response.status, response.statusText)
+          console.error('Error getting balance:', response.status, response.statusText)
           return null
         }
 
         const data = await response.json()
         return data.balance || data.saldo || 0
       } catch (error) {
-        console.error('Error en fetchBalance:', error)
+        console.error('Error in fetchBalance:', error)
         return null
       }
     },
 
     /**
-     * Crear sesión de checkout en Stripe
+     * Create checkout session in Stripe
      */
     async createCheckoutSession(
       request: CheckoutSessionRequest,
       token?: string
     ): Promise<CheckoutSessionResponse | null> {
       if (!request.priceId || !request.userId) {
-        this.error = 'Datos requeridos incompletos'
+        this.error = 'Incomplete required data'
         return null
       }
 
@@ -89,9 +89,9 @@ const usePaymentStore = defineStore('payment', {
             /* no JSON */
           }
 
-          const errMsg = errBody?.error || `Error del servidor: ${response.status}`
+          const errMsg = errBody?.error || `Server error: ${response.status}`
           this.error = errMsg
-          console.error('Error HTTP del backend:', response.status, response.statusText, errBody)
+          console.error('HTTP error from backend:', response.status, response.statusText, errBody)
           return null
         }
 
@@ -114,7 +114,7 @@ const usePaymentStore = defineStore('payment', {
     },
 
     /**
-     * Agregar saldo al usuario
+     * Add balance to user
      */
     async addBalance(userId: string, amount: number): Promise<number | null> {
       if (!userId || amount <= 0) return null
@@ -129,22 +129,22 @@ const usePaymentStore = defineStore('payment', {
 
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}))
-          this.error = errData.error || `Error al agregar saldo: ${response.status}`
-          console.error('Error en addBalance:', this.error)
+          this.error = errData.error || `Error adding balance: ${response.status}`
+          console.error('Error in addBalance:', this.error)
           return null
         }
 
         const data = await response.json()
         return data.balance || data.saldo || null
       } catch (error: any) {
-        this.error = `Error al agregar saldo: ${error?.message || 'Error desconocido'}`
-        console.error('Error en addBalance:', error)
+        this.error = `Error adding balance: ${error?.message || 'Unknown error'}`
+        console.error('Error in addBalance:', error)
         return null
       }
     },
 
     /**
-     * Restar saldo del usuario
+     * Subtract balance from user
      */
     async subtractBalance(userId: string, amount: number): Promise<number | null> {
       if (!userId || amount <= 0) return null
@@ -216,24 +216,24 @@ const usePaymentStore = defineStore('payment', {
         })
         if (!response.ok) {
           const errData = await response.json().catch(() => ({}))
-          this.error = errData.error || `Error al pagar la multa: ${response.status}`
+          this.error = errData.error || `Error paying fine: ${response.status}`
           console.error('Error paying fine:', this.error)
           return false
         }
 
-        // Actualizar el balance del usuario restando el monto de la multa
+        // Update user balance by subtracting the fine amount
         const newBalance = await this.fetchBalance(userId);
         if (newBalance === null) {
-          this.error = 'Error al actualizar el balance después de pagar la multa';
+          this.error = 'Error updating balance after paying the fine';
           return false;
         }
 
-        // Refrescar la lista de multas
+        // Refresh the list of fines
         await this.fetchFines(userId);
         return true;
       } catch (error) {
         console.error('Error paying fine:', error);
-        this.error = 'Error al conectar con el servidor para pagar la multa';
+        this.error = 'Error connecting to server to pay the fine';
         return false;
       }
     }

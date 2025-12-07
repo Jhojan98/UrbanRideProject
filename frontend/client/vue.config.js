@@ -1,7 +1,7 @@
 const { defineConfig } = require('@vue/cli-service')
 
-// Vue CLI carga automáticamente .env de la raíz del proyecto
-// No necesitamos dotenv manual, Vue lo maneja por defecto
+// Vue CLI automatically loads .env from project root
+// We don't need manual dotenv, Vue handles it by default
 
 module.exports = defineConfig({
   transpileDependencies: true,

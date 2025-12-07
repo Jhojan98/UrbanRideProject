@@ -9,9 +9,9 @@ export const useTravelStore = defineStore("history", {
   }),
   actions: {
     /**
-     * Inicia un viaje hacia el backend
-     * @param payload - Datos del viaje (userUid, estaciones, tipo de bici)
-     * @returns Respuesta del backend
+     * Starts a trip to the backend
+     * @param payload - Trip data (userUid, stations, bike type)
+     * @returns Backend response
      */
     async startTravel(userUid: string, stationStartId: number, stationEndId: number, bikeType: string) {
       const payload = { userUid, stationStartId, stationEndId, bikeType };
@@ -32,30 +32,30 @@ export const useTravelStore = defineStore("history", {
     },
 
     /**
-     * Método alternativo: directamente prepara y envía el viaje
-     * Se usa cuando el componente pasa todos los parámetros necesarios
-     * Encapsula la lógica HTTP para que el componente no haga llamadas directas
-     * @param userUid - ID del usuario en Firebase
-     * @param stationStartId - ID de la estación de origen
-     * @param stationEndId - ID de la estación de destino
-     * @param bikeType - Tipo de bicicleta (ELECTRIC o MECHANIC)
-     * @returns Respuesta del backend o null si hay error
+     * Alternative method: directly prepares and sends the trip
+     * Used when the component passes all required parameters
+     * Encapsulates HTTP logic so the component doesn't make direct calls
+     * @param userUid - User ID in Firebase
+     * @param stationStartId - ID of origin station
+     * @param stationEndId - ID of destination station
+     * @param bikeType - Bicycle type (ELECTRIC or MECHANIC)
+     * @returns Backend response or null if there is an error
      */
     async initiateTravel(userUid: string, stationStartId: number, stationEndId: number, bikeType: string) {
       return this.startTravel(userUid, stationStartId, stationEndId, bikeType);
     },
 
     /**
-     * Verifica/desbloquea una bicicleta mediante código de 6 dígitos
-     * Endpoint gateway: POST `${baseURL}/verify-bicycle?uid={uid}&code={code}`
-     * @param userUid - UID del usuario (Firebase)
-     * @param bicycleCode - Código de la bicicleta (6 dígitos)
+     * Verifies/unlocks a bicycle via 6-digit code
+     * Gateway endpoint: POST `${baseURL}/verify-bicycle?uid={uid}&code={code}`
+     * @param userUid - User UID (Firebase)
+     * @param bicycleCode - Bicycle code (6 digits)
      */
     async verifyBicycle(userUid: string, bicycleCode: string) {
       const uid = (userUid || '').trim();
       const code = (bicycleCode || '').trim();
-      if (!uid) throw new Error('UID de usuario vacío');
-      if (!code) throw new Error('Código de bicicleta vacío');
+      if (!uid) throw new Error('Empty user UID');
+      if (!code) throw new Error('Empty bicycle code');
 
       const url = `${this.baseURL}/verify-bicycle?uid=${encodeURIComponent(uid)}&code=${encodeURIComponent(code)}`;
       const res = await fetch(url, {
@@ -81,10 +81,10 @@ export const useTravelStore = defineStore("history", {
           return
         }
 
-        // Verificar si la respuesta tiene contenido antes de parsear JSON
+        // Check if response has content before parsing JSON
         const text = await response.text()
         if (!text || text.trim() === '') {
-          console.log('Respuesta vacía del servidor, no hay viajes')
+          console.log('Empty response from server, no travels')
           this.travels = []
           return
         }
@@ -93,8 +93,8 @@ export const useTravelStore = defineStore("history", {
           const data = JSON.parse(text)
           this.travels = Array.isArray(data) ? data as Travel[] : []
         } catch (parseError) {
-          console.error('Error parseando JSON de viajes:', parseError)
-          console.log('Respuesta recibida:', text)
+          console.error('Error parsing JSON travels:', parseError)
+          console.log('Response received:', text)
           this.travels = []
         }
       } catch (error) {

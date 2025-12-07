@@ -275,7 +275,7 @@ body[data-theme="dark"] textarea {
   color: var(--color-primary-light);
 }
 
-/* contenido de la página debajo del header */
+/* Page content below header */
 .page-content {
   padding: 2rem;
 }
@@ -316,7 +316,7 @@ i {
   }
 }
 
-/* Mobile pequeño (max 480px) */
+/* Mobile small (max 480px) */
 @media (max-width: 480px) {
   .container {
     padding: 0.75rem;
@@ -345,20 +345,20 @@ i {
     line-height: 1.4;
   }
 
-  /* Mejora scroll touch en iOS */
+  /* Improve touch scroll on iOS */
   body {
     -webkit-user-select: text;
     -webkit-touch-callout: inherit;
   }
 
-  /* Prevenir zoom en inputs en iOS */
+  /* Prevent zoom on inputs on iOS */
   input,
   select,
   textarea {
     font-size: 16px !important;
   }
 
-  /* Mejorar visibilidad de focus en móviles */
+  /* Improve focus visibility on mobiles */
   button:focus,
   input:focus,
   select:focus,
@@ -384,7 +384,7 @@ i {
   }
 }
 
-/* Pantalla muy pequeña (max 320px) */
+/* Very small screen (max 320px) */
 @media (max-width: 320px) {
   .container {
     padding: 0.5rem;

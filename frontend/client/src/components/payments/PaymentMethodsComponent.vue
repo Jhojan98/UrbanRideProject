@@ -5,7 +5,7 @@
       <p>{{ $t('payments.recharge.subtitle') }}</p>
     </div>
 
-    <!-- SECCIÓN DE RECARGA SIMPLE -->
+    <!-- SIMPLE RECHARGE SECTION -->
     <div class="recharge-section">
       <div class="currency-selector">
         <label for="currency-select">{{ $t('payments.recharge.currency') }}:</label>
@@ -60,48 +60,48 @@ import { fetchExchangeRate } from '@/services/currencyExchange'
 
 const { t: $t } = useI18n()
 
-// Estado
+// State
 const loading = ref(false)
-const selectedAmount = ref<number | null>(null) // Se calculará automáticamente al montar
+const selectedAmount = ref<number | null>(null) // Will be calculated automatically on mount
 
-// Selector de moneda
+// Currency selector
 const currencies = ['USD', 'COP', 'EUR'] as const
 const selectedCurrency = ref<'USD' | 'COP' | 'EUR'>('COP')
 
-// Tasas de conversión dinámicas
+// Dynamic exchange rates
 const exchangeRates = ref<{ COP: number; EUR: number }>({
-  COP: 4000, // Valor por defecto USD a COP
-  EUR: 0.92  // Valor por defecto USD a EUR
+  COP: 4000, // Default value USD to COP
+  EUR: 0.92  // Default value USD to EUR
 })
 
-// Montos de recarga predefinidos en COP
+// Predefined recharge amounts in COP
 const rechargeAmountsCOP = [
-  10000,   // $10.000 COP
-  25000,   // $25.000 COP
-  50000,   // $50.000 COP
-  100000   // $100.000 COP
+  10000,   // $10,000 COP
+  25000,   // $25,000 COP
+  50000,   // $50,000 COP
+  100000   // $100,000 COP
 ]
 
-// Montos formateados según la moneda seleccionada con conversión dinámica
+// Formatted amounts according to selected currency with dynamic conversion
 const displayedAmounts = computed(() => {
   return rechargeAmountsCOP.map(amountCOP => {
     let displayValue: number
     let valueUSD: number
 
     if (selectedCurrency.value === 'COP') {
-      // Mostrar el valor en COP directamente
+      // Show the value in COP directly
       displayValue = amountCOP
-      // Calcular el equivalente en centavos de USD para Stripe
+      // Calculate the equivalent in cents of USD for Stripe
       valueUSD = Math.round((amountCOP / exchangeRates.value.COP) * 100)
     } else if (selectedCurrency.value === 'EUR') {
-      // Convertir de COP a EUR para mostrar
+      // Convert from COP to EUR to display
       const amountUSD = amountCOP / exchangeRates.value.COP
       displayValue = amountUSD * exchangeRates.value.EUR
       valueUSD = Math.round(amountUSD * 100)
     } else {
-      // USD: Convertir de COP a USD para mostrar
+      // USD: Convert from COP to USD to display
       valueUSD = Math.round((amountCOP / exchangeRates.value.COP) * 100)
-      displayValue = valueUSD / 100 // Convertir de centavos a dólares
+      displayValue = valueUSD / 100 // Convert from cents to dollars
     }
 
     const locale = selectedCurrency.value === 'COP' ? 'es-CO' :
@@ -113,51 +113,51 @@ const displayedAmounts = computed(() => {
     }).format(displayValue)
 
     return {
-      valueUSD: valueUSD, // Valor en centavos de USD para Stripe
-      valueCOP: amountCOP, // Valor original en COP
-      formatted: formatted // Texto formateado para mostrar
+      valueUSD: valueUSD, // Value in USD cents for Stripe
+      valueCOP: amountCOP, // Original value in COP
+      formatted: formatted // Formatted text to display
     }
   })
 })
 
-// Actualizar las tasas de cambio cuando se cambia de moneda
+// Update exchange rates when currency changes
 const updateExchangeRate = async () => {
   try {
     if (selectedCurrency.value === 'COP') {
-      // Obtener la tasa de cambio real: 1 USD a COP
+      // Get the real exchange rate: 1 USD to COP
       const rateCOP = await fetchExchangeRate('USD', 'COP', 1)
       exchangeRates.value.COP = rateCOP
-      console.log(`Tasa de cambio actualizada: 1 USD = ${rateCOP} COP`)
+      console.log(`Exchange rate updated: 1 USD = ${rateCOP} COP`)
     } else if (selectedCurrency.value === 'EUR') {
-      // Obtener la tasa de cambio real: 1 USD a EUR
+      // Get the real exchange rate: 1 USD to EUR
       const rateEUR = await fetchExchangeRate('USD', 'EUR', 1)
       exchangeRates.value.EUR = rateEUR
-      console.log(`Tasa de cambio actualizada: 1 USD = ${rateEUR} EUR`)
+      console.log(`Exchange rate updated: 1 USD = ${rateEUR} EUR`)
     }
   } catch (error) {
-    console.error('Error obteniendo tasa de cambio, usando valor por defecto:', error)
-    // Mantener valores por defecto en caso de error
+    console.error('Error getting exchange rate, using default value:', error)
+    // Keep default values in case of error
   }
 }
 
-// Observar cambios en la moneda seleccionada
+// Watch changes in selected currency
 watch(selectedCurrency, () => {
   updateExchangeRate()
 })
 
-// Función helper para obtener el nombre de la moneda
+// Helper function to get currency name
 const getCurrencyName = (currency: string): string => {
   const names: { [key: string]: string } = {
-    USD: 'Dólar estadounidense',
-    COP: 'Peso colombiano',
+    USD: 'US Dollar',
+    COP: 'Colombian Peso',
     EUR: 'Euro'
   }
   return names[currency] || currency
 }
 
-// Cargar tasas iniciales al montar el componente
+// Load initial rates on component mount
 onMounted(async () => {
-  // Cargar ambas tasas al inicio
+  // Load both rates at startup
   try {
     const [rateCOP, rateEUR] = await Promise.all([
       fetchExchangeRate('USD', 'COP', 1).catch(() => 4000),
@@ -165,19 +165,19 @@ onMounted(async () => {
     ])
     exchangeRates.value.COP = rateCOP
     exchangeRates.value.EUR = rateEUR
-    console.log('Tasas de cambio cargadas:', exchangeRates.value)
+    console.log('Exchange rates loaded:', exchangeRates.value)
   } catch (error) {
-    console.error('Error cargando tasas iniciales:', error)
+    console.error('Error loading initial rates:', error)
   }
 
-  // Seleccionar el segundo monto por defecto (25.000 COP)
+  // Select second amount by default (25,000 COP)
   if (displayedAmounts.value.length > 1) {
     selectedAmount.value = displayedAmounts.value[1].valueUSD
   }
 })
 
-// Mapeo de montos COP a priceIds de Stripe
-// Estos priceIds deben corresponder a los valores aproximados en USD
+// Mapping of COP amounts to Stripe priceIds
+// These priceIds must correspond to approximate USD values
 const priceMapCOP: { [key: number]: string } = {
   10000: 'price_1SZJg7H5d2VSDRWESK3K2s4c',   // ~$2.50 USD
   25000: 'price_1SXRt6H5d2VSDRWEyeJzMcCz',   // ~$6.25 USD
@@ -185,7 +185,7 @@ const priceMapCOP: { [key: number]: string } = {
   100000: 'price_1SZJgWH5d2VSDRWEdevIO0e5'   // ~$25 USD
 }
 
-// Función helper para obtener el priceId basado en el monto en COP
+// Helper function to get priceId based on amount in COP
 const getPriceId = (amountCOP: number): string | undefined => {
   return priceMapCOP[amountCOP]
 }
@@ -198,11 +198,11 @@ const selectAmount = (amount: number) => {
   selectedAmount.value = amount
 }
 
-// Función principal de recarga
+// Main recharge function
 const handleRecharge = async () => {
   if (loading.value || !selectedAmount.value) return
 
-  // Obtener usuario firebase actual
+  // Get current Firebase user
   const firebaseAuth = getAuth()
   const firebaseUser = firebaseAuth.currentUser
 
@@ -214,16 +214,16 @@ const handleRecharge = async () => {
   loading.value = true
 
   try {
-    // Obtener el objeto completo del monto seleccionado
+    // Get the full object of the selected amount
     const selectedAmountObj = displayedAmounts.value.find(a => a.valueUSD === selectedAmount.value)
     if (!selectedAmountObj) throw new Error($t('payments.recharge.priceNotFound'))
 
     const priceId = getPriceId(selectedAmountObj.valueCOP)
     if (!priceId) throw new Error($t('payments.recharge.priceNotFound'))
 
-    console.log(`Recargando: ${selectedAmountObj.formatted} (${selectedAmountObj.valueUSD} centavos USD, ${selectedAmountObj.valueCOP} COP)`)
+    console.log(`Recharging: ${selectedAmountObj.formatted} (${selectedAmountObj.valueUSD} USD cents, ${selectedAmountObj.valueCOP} COP)`)
 
-    // Usar el store para crear la sesión
+    // Use store to create session
     const session = await paymentStore.createCheckoutSession(
       {
         priceId: priceId,
@@ -240,14 +240,14 @@ const handleRecharge = async () => {
       return
     }
 
-    // Marcar pago como iniciado
+    // Mark payment as initiated
     paymentStore.markPaymentComplete()
 
-    // Redirigir a Stripe
+    // Redirect to Stripe
     window.location.href = session.url
 
   } catch (error: unknown) {
-    console.error('Error al recargar:', error)
+    console.error('Error recharging:', error)
     const errorMsg = error instanceof Error ? error.message : $t('payments.recharge.tryAgain')
     alert(`${$t('payments.recharge.error')}: ${errorMsg}`)
   } finally {
@@ -281,7 +281,7 @@ const handleRecharge = async () => {
   }
 }
 
-/* Sección de Recarga */
+/* Recharge Section */
 .recharge-section {
   background: white;
   border-radius: 16px;

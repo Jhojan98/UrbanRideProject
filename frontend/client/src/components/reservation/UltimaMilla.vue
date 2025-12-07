@@ -1,14 +1,14 @@
-// filepath: /home/xmara/UD/DIseño de Software/UrbanRideProject/frontend/client/src/components/reservation/UltimaMilla.vue
+// filepath: /home/xmara/UD/Design of Software/UrbanRideProject/frontend/client/src/components/reservation/UltimaMilla.vue
 <template>
   <div class="ultima-milla">
-    <h2>{{ rideType === 'short_trip' ? 'Viaje de Última Milla' : 'Recorrido Largo' }}</h2>
-    <p class="sub">{{ rideType === 'short_trip' ? 'Selecciona tu punto de partida (metro) y la estación de bicicletas destino' : 'Selecciona estación de origen y destino (bici a bici)' }}</p>
+    <h2>{{ rideType === 'short_trip' ? $t('reservation.ultimaMilla.title') : $t('reservation.ultimaMilla.longTripTitle') }}</h2>
+    <p class="sub">{{ rideType === 'short_trip' ? $t('reservation.ultimaMilla.subtitle') : $t('reservation.ultimaMilla.longTripSubtitle') }}</p>
 
     <!-- ORIGEN -->
     <div class="select-box">
-      <label>📍 {{ rideType === 'short_trip' ? 'Punto de Partida (Metro)' : 'Estación de Origen' }}</label>
+      <label>📍 {{ rideType === 'short_trip' ? $t('reservation.ultimaMilla.originLabel') : $t('reservation.ultimaMilla.originLongTripLabel') }}</label>
       <select v-model="selectedOrigin">
-        <option :value="null" disabled>Seleccione un punto</option>
+        <option :value="null" disabled>{{ $t('reservation.ultimaMilla.selectPoint') }}</option>
         <option
           v-for="m in originOptions"
           :key="m.idStation"
@@ -22,9 +22,9 @@
 
     <!-- DESTINO -->
     <div class="select-box">
-      <label>🚲 Estación de Destino</label>
+      <label>🚲 {{ $t('reservation.ultimaMilla.destinationLabel') }}</label>
       <select v-model="selectedDest">
-        <option :value="null" disabled>Seleccione estación</option>
+        <option :value="null" disabled>{{ $t('reservation.ultimaMilla.selectStation') }}</option>
         <option
           v-for="s in destinationOptions"
           :key="s.idStation"
@@ -91,7 +91,7 @@ const allStationsNormalized = computed(() => {
   }))
 })
 
-// Solo estaciones de bici (para compatibilidad con código anterior)
+// Only bike stations (for compatibility with previous code)
 const stations = computed(() => {
   return allStationsNormalized.value.filter(s =>
     s.type === 'BIKE' || s.type === 'BICYCLE'
@@ -105,18 +105,18 @@ const selectedDest = ref<any | null>(null)
 const bikeType = computed(() => props.bikeType ?? '')
 const rideType = computed(() => props.rideType ?? 'short_trip')
 
-// Opciones de origen según tipo de viaje
+// Origin options based on trip type
 const originOptions = computed(() => {
   if (rideType.value === 'short_trip') {
-    // Última milla: solo estaciones METRO
+    // Last mile: only METRO stations
     return metros.value
   } else {
-    // Viaje largo: cualquier tipo de estación
+    // Long trip: any type of station
     return allStationsNormalized.value
   }
 })
 
-// Opciones de destino: siempre cualquier tipo de estación
+// Destination options: always any type of station
 const destinationOptions = computed(() => {
   return allStationsNormalized.value
 })
@@ -127,15 +127,15 @@ const emit = defineEmits<{
   "update:destination": [any | null]
 }>()
 
-// Deshabilitar estaciones de origen según disponibilidad del tipo de bici seleccionado
+// Disable origin stations based on bike type availability
 function isOriginDisabled(station: { idStation?: number; nameStation?: string; type?: string; mechanical?: number; electric?: number }) {
   // Si no hay tipo de bici seleccionado, no deshabilitar ninguna por disponibilidad
   if (!bikeType.value) return false
 
-  // Las estaciones METRO nunca se deshabilitan (no requieren bicis disponibles)
+  // METRO stations are never disabled (don't require available bikes)
   if (station.type?.toUpperCase() === 'METRO') return false
 
-  // Estaciones residenciales pueden ser origen (no necesitan bicis para partir)
+  // Residential stations can be origin (don't need bikes to start)
   if (station.type?.toUpperCase() === 'RESIDENCIAL' || station.type?.toUpperCase() === 'RESIDENTIAL') return false
 
   // Para estaciones de bici, verificar disponibilidad del tipo seleccionado
@@ -146,27 +146,27 @@ function isOriginDisabled(station: { idStation?: number; nameStation?: string; t
   return available === 0
 }
 
-// Deshabilitar estaciones de destino según disponibilidad y si es la misma que el origen
+// Disable destination stations based on availability and if it's the same as origin
 function isDestinationDisabled(station: { idStation?: number; nameStation?: string; type?: string; mechanical?: number; electric?: number }) {
-  // Obtener el ID de la estación de partida actual (ya seleccionada desde ReserveFormComponent)
+  // Get ID of current start station (already selected from ReserveFormComponent)
   const currentStationId = props.currentStation?.idStation ?? null
 
-  // ===== RESTRICCIÓN PRINCIPAL: No permitir seleccionar como destino la misma estación que el origen =====
+  // ===== MAIN RESTRICTION: Do not allow selecting the same station as origin as destination =====
   if (currentStationId !== null && station.idStation === currentStationId) {
-    console.log(`[UltimaMilla] Destino deshabilitado: ${station.nameStation} es la misma que el origen`)
+    console.log(`[UltimaMilla] Destination disabled: ${station.nameStation} is the same as origin`)
     return true
   }
 
-  // Si no hay tipo de bici seleccionado, no deshabilitar ninguna por disponibilidad
+  // If no bike type selected, don't disable any by availability
   if (!bikeType.value) return false
 
-  // Las estaciones METRO nunca se deshabilitan como destino (pueden ser punto final)
+  // METRO stations are never disabled as destination (can be endpoint)
   if (station.type?.toUpperCase() === 'METRO') {
-    console.log(`[UltimaMilla] Destino permitido: ${station.nameStation} es METRO`)
+    console.log(`[UltimaMilla] Destination allowed: ${station.nameStation} is METRO`)
     return false
   }
 
-  // Las estaciones RESIDENCIALES pueden ser destino incluso sin bicis (punto final válido)
+  // RESIDENTIAL stations can be destination even without bikes (valid endpoint)
   if (station.type?.toUpperCase() === 'RESIDENCIAL' || station.type?.toUpperCase() === 'RESIDENTIAL') {
     console.log(`[UltimaMilla] Destino permitido: ${station.nameStation} es RESIDENCIAL`)
     return false

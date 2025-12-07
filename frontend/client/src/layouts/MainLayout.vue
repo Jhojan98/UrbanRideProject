@@ -26,7 +26,7 @@ import FooterComponent from '@/components/FooterComponent.vue'
 
 .layout-content {
     flex: 1;
-    /* Dejar espacio superior equivalente al header fijo (60px) */
+    /* Leave top space equivalent to fixed header (60px) */
     padding: 1rem;
     padding-top: 60px;
 }

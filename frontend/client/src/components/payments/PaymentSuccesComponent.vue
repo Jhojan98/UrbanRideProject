@@ -72,26 +72,26 @@ export default {
     // Leer query params que Stripe agrega
     this.sessionId = this.$route.query.session_id || null;
 
-    // Obtener UID del usuario actual
+    // Get current user UID
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
       this.uid = user.uid;
     } else {
-      // Intentar obtener de localStorage como fallback
+      // Try to get from localStorage as fallback
       this.uid = localStorage.getItem("uid");
     }
 
-    // Marcar que el pago se completó
+    // Mark payment as completed
     this.markPaymentComplete();
 
-    // Intentar obtener el nuevo balance
+    // Try to get new balance
     this.fetchUpdatedBalance();
   },
   methods: {
     markPaymentComplete() {
       this.paymentStore.markPaymentComplete();
-      console.log("Pago marcado como completado, balance se actualizará");
+      console.log("Payment marked as completed, balance will be updated");
     },
 
     async fetchUpdatedBalance() {
@@ -103,14 +103,14 @@ export default {
 
         if (result !== null) {
           localStorage.setItem("userBalance", this.newBalance.toString());
-          console.log("Balance actualizado desde el store:", this.newBalance);
-          // Cargar tasa de cambio después de obtener el balance
+          console.log("Balance updated from store:", this.newBalance);
+          // Load exchange rate after getting balance
           if (this.selectedCurrency === 'COP') {
             await this.updateExchangeRate();
           }
         }
       } catch (error) {
-        console.error("Error obteniendo balance actualizado:", error);
+        console.error("Error getting updated balance:", error);
       }
     },
 
@@ -119,16 +119,16 @@ export default {
         try {
           const rate = await fetchExchangeRate('USD', 'COP', 1);
           this.exchangeRate = rate;
-          console.log(`Tasa de cambio actualizada: 1 USD = ${rate} COP`);
+          console.log(`Exchange rate updated: 1 USD = ${rate} COP`);
         } catch (error) {
-          console.error('Error obteniendo tasa de cambio:', error);
+          console.error('Error getting exchange rate:', error);
           this.exchangeRate = 4000; // Fallback
         }
       }
     },
 
     formatBalance(balance) {
-      // El balance en DB está en dólares (no centavos), usar directamente
+      // Balance in DB is in dollars (not cents), use directly
       const balanceInUSD = typeof balance === 'number' ? balance : 0;
 
       if (this.selectedCurrency === 'COP') {

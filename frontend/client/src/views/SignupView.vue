@@ -52,7 +52,7 @@ const onSubmit = async () => {
 
     if (res) {
         feedback.value = store.message || $t('auth.signup.success');
-        // Redirigir a la página de verificación OTP
+        // Redirect to OTP verification page
         router.push({ name: 'verify-email' });
     } else {
         feedback.value = store.message || $t('auth.signup.error');
@@ -82,7 +82,7 @@ const googleSignup = async () => {
 <style lang="scss" scoped>
 @import "@/styles/login.scss";
 
-/* Ocultar botones de aumentar/disminuir en inputs numéricos */
+/* Hide increment/decrement buttons in numeric inputs */
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;

@@ -105,19 +105,19 @@ const router = createRouter({
   routes
 })
 
-// Guard global para proteger rutas autenticadas
+// Global guard to protect authenticated routes
 router.beforeEach((to, from, next) => {
   const authStore = userAuth()
   const isAuthenticated = !!authStore.token
 
-  // Si la ruta requiere autenticación y no está autenticado
+  // If the route requires authentication and user is not authenticated
   if (to.meta.requireAuth && !isAuthenticated) {
-    // Redirigir a login
+    // Redirect to login
     next({ name: 'login' })
   }
-  // Si ya está autenticado e intenta acceder a rutas de auth
+  // If user is authenticated and tries to access auth routes
   else if (isAuthenticated && (to.name === 'login' || to.name === 'signup')) {
-    // Redirigir a home
+    // Redirect to home
     next({ name: 'home' })
   }
   else {

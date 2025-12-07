@@ -48,12 +48,12 @@ interface Endpoint {
 
 const origin = ref<Endpoint | null>(null)
 const destination = ref<Endpoint | null>(null)
-const userBalance = ref<number>(50000) // Saldo inicial de ejemplo
+const userBalance = ref<number>(50000) // Example initial balance
 
-// TODO: Obtener el balance real del usuario desde el perfil o store
+// TODO: Get real user balance from profile or store
 onMounted(() => {
-  // Aquí se debería cargar el balance del usuario desde un store (por ejemplo, userStore)
-  // Por ahora usamos un valor por defecto
+  // Here the user balance should be loaded from a store (e.g., userStore)
+  // For now we use a default value
 })
 
 // Selection by map click disabled; origin/destination are chosen via dropdown in the form.

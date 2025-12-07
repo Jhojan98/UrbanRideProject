@@ -47,30 +47,30 @@ const { t: $t } = useI18n();
 const logUser = async () => {
     feedback.value = '';
 
-    // Log de depuración para verificar valores antes de enviar
-    console.log('=== DATOS DEL FORMULARIO DE LOGIN ===');
+    // Debug log to verify values before sending
+    console.log('=== LOGIN FORM DATA ===');
     console.log('Email:', email.value);
-    console.log('Password:', password.value ? '****** (length: ' + password.value.length + ')' : 'vacío');
-    console.log('======================================');
+    console.log('Password:', password.value ? '****** (length: ' + password.value.length + ')' : 'empty');
+    console.log('=======================');
 
     const result = await store.login(email.value, password.value);
 
-    console.log('Resultado del login:', result);
+    console.log('Login result:', result);
 
     if (result && 'needsVerification' in result && result.needsVerification) {
-        //  verificación OTP, redirigir
+        // OTP verification required, redirect
         feedback.value = $t('auth.login.verifyRequired');
         setTimeout(() => {
             router.push('/verify-email');
         }, 1500);
     } else if (result && 'success' in result && result.success) {
-        // Login exitoso
+        // Successful login
         feedback.value = $t('auth.login.success');
         setTimeout(() => {
             router.push({name: "reservation"});
         }, 1500);
     } else {
-        // Error en login
+        // Login error
         feedback.value = store.message || $t('auth.login.error');
     }
 }

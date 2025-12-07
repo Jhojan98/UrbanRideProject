@@ -20,7 +20,7 @@
   color: var(--color-primary-light);
 }
 
-/* Subtítulos de sección (Tipo de Bicicleta / Tipo de Viaje) */
+/* Section subtitles (Bike Type / Trip Type) */
 .section-title {
   font-weight: 700;
   color: var(--color-primary-light);
@@ -164,7 +164,7 @@ button.secondary:hover {
 }
 
 
-/* Responsive adjustments para tablet y móviles */
+/* Responsive adjustments for tablets and mobiles */
 @media (max-width: 992px) {
   .reservation-grid {
     grid-template-columns: 1fr;
@@ -532,23 +532,23 @@ html[data-theme="dark"] .butn-primary{
 
 .balance-container {
   display: flex;
-  justify-content: space-between; /* texto a la izquierda, botón a la derecha */
+  justify-content: space-between; /* text on left, button on right */
   align-items: center;
   width: 100%;
   padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(255,255,255,0.2); /* si usas tema claro/oscuro, puede cambiarse */
+  background: rgba(255,255,255,0.2); /* if using light/dark theme, can be changed */
   backdrop-filter: blur(6px);
   font-size: 15px;
-  margin-bottom: 15px; /* espacio respecto a lo que sigue */
+  margin-bottom: 15px; /* space from what follows */
 }
 
 .balance-container strong {
   font-weight: 600;
-  color: var(--color-primary); /* usa tu color bonito */
+  color: var(--color-primary); /* use your nice color */
 }
 
-/* Si ya tienes .btn-secondary global, solo mejora tamaño */
+/* If you already have .btn-secondary global, just improve size */
 .balance-container .btn-secondary {
   padding: 6px 12px;
   font-size: 14px;
@@ -610,7 +610,7 @@ html[data-theme="dark"] .select-group label{
   color: var(--color-text-primary-dark);
 }
 
-/* Saldo y botón */
+/* Balance and button */
 .balance-container {
   display: flex;
   justify-content: space-between;
@@ -620,7 +620,7 @@ html[data-theme="dark"] .select-group label{
   border-radius: 10px;
 }
 
-/* Modo oscuro saldo */
+/* Dark mode balance */
 html[data-theme="dark"] .balance-container {
   background: var(--color-surface-dark);
 }

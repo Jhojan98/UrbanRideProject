@@ -32,7 +32,7 @@
           <h1>{{ welcomeText }}</h1>
         </div>
         <div class="profile-content">
-          <!-- Sección de Saldo y Tarjeta (Centrada) -->
+          <!-- Balance and Card Section (Centered) -->
           <section class="profile-section balance-section">
             <h2 class="section-title">{{ $t('profile.balance.title') }}</h2>
             <div class="balance-card centered-card">
@@ -43,8 +43,8 @@
                   v-model="selectedCurrency"
                   class="currency-select"
                 >
-                  <option value="USD">USD - Dólar</option>
-                  <option value="COP">COP - Peso Colombiano</option>
+                  <option value="USD">USD - {{ $t('balance.currencies.USD') }}</option>
+                  <option value="COP">COP - {{ $t('balance.currencies.COP') }}</option>
                 </select>
               </div>
               <div class="balance-display">
@@ -180,9 +180,9 @@ const isLoadingFines = ref(false);
 // Selector de moneda
 const selectedCurrency = ref<'USD' | 'COP'>('USD');
 
-// Tasas de conversión dinámicas
+// Dynamic exchange rates
 const exchangeRates = ref<{ COP: number }>({
-  COP: 4000 // Valor por defecto USD a COP
+  COP: 4000 // Default value USD to COP
 });
 
 // Tab activo
@@ -192,17 +192,17 @@ const activeTab = ref<'overview' | 'trips' | 'fines'>('overview');
 const travels = ref<Travel[]>([]);
 const fines = ref<Fine[]>([]);
 
-// Texto de bienvenida
+// Welcome text format
 const welcomeText = computed(() => {
-  const name = userName.value ?? "CLIENTE";
-  return `Bienvenido de nuevo, ${name}`;
+  const name = userName.value ?? "CLIENT";
+  return `Welcome back, ${name}`;
 });
 
-// Formato de balance
+// Format balance
 const formattedBalance = computed(() => {
   if (balance.value === null) return "--";
 
-  // El balance viene en dólares (no en centavos), usar directamente
+  // Balance comes in dollars (not in cents), use directly
   const amountInUSD = balance.value;
   const displayAmount = selectedCurrency.value === 'COP'
     ? amountInUSD * exchangeRates.value.COP
@@ -226,7 +226,7 @@ const formatDate = (date: string | number | Date | undefined): string => {
 
 const formatCost = (cost: number | undefined): string => {
   if (cost === null || cost === undefined) return 'N/A';
-  // El costo viene en dólares (no en centavos), usar directamente
+  // Cost comes in dollars (not in cents), use directly
   const costInUSD = typeof cost === 'number' ? cost : 0;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -240,13 +240,13 @@ function goToPaymentMethods() {
   router.push({ name: "payment-methods" });
 }
 
-// Actualizar tasa de cambio dinámicamente
+// Update exchange rate dynamically
 const updateExchangeRate = async () => {
   if (selectedCurrency.value === 'COP') {
     try {
       const rateCOP = await fetchExchangeRate('USD', 'COP', 1);
       exchangeRates.value.COP = rateCOP;
-      console.log(`Tasa de cambio actualizada: 1 USD = ${rateCOP} COP`);
+      console.log(`Exchange rate updated: 1 USD = ${rateCOP} COP`);
     } catch (error) {
       console.error('Error obteniendo tasa de cambio, usando valor por defecto:', error);
       // Mantener valor por defecto en caso de error
@@ -262,49 +262,54 @@ watch(selectedCurrency, () => {
 // Pagar multa
 async function payFine(fineId: number, amount: number | undefined) {
   if (amount === undefined) {
-    console.warn('No se puede procesar pago sin cantidad');
-    alert('Error: No se puede procesar el pago sin cantidad');
+    console.warn($t('profile.fines.noAmount'));
+    alert($t('profile.fines.noAmountError'));
     return;
   }
 
   if (!uid.value) {
-    console.warn('No se puede procesar pago sin UID de usuario');
-    alert('Error: Usuario no identificado');
+    console.warn('Cannot process payment without user UID');
+    alert($t('profile.fines.notIdentified'));
     return;
   }
 
   // Verificar saldo suficiente
   if (balance.value !== null && balance.value < amount) {
-    alert(`Saldo insuficiente. Tu saldo actual es ${formattedBalance.value} y la multa es de ${formatCost(amount)}`);
+    alert($t('profile.fines.insufficientBalance', { balance: formattedBalance.value, fine: formatCost(amount) }));
     return;
   }
 
-  // Confirmar pago con el usuario
-  const confirmed = confirm(`¿Desea pagar la multa #${fineId} por ${formatCost(amount)}?\n\nSaldo actual: ${formattedBalance.value}\nSaldo después del pago: ${formatCost((balance.value || 0) - amount)}`);
+  // Confirm payment with user
+  const confirmed = confirm($t('profile.fines.confirmPayment', {
+    id: fineId,
+    amount: formatCost(amount),
+    balance: formattedBalance.value,
+    remaining: formatCost((balance.value || 0) - amount)
+  }));
   if (!confirmed) return;
 
   try {
-    console.log(`Pagando multa ${fineId} de ${amount} USD`);
+    console.log(`Paying fine ${fineId} of ${amount} USD`);
 
-    // Llamar al método del store para pagar la multa
+    // Call store method to pay the fine
     const success = await paymentStore.payFine(fineId, uid.value, amount);
 
     if (!success) {
-      alert(paymentStore.error || 'Error al procesar el pago de la multa');
+      alert(paymentStore.error || $t('profile.fines.paymentError'));
       return;
     }
 
-    // Recargar las multas después del pago
+    // Reload fines after payment
     await paymentStore.fetchFines(uid.value);
     fines.value = paymentStore.fines;
 
-    // Actualizar el balance
+    // Update balance
     await fetchBalance();
 
-    alert('¡Multa pagada exitosamente! Tu saldo ha sido actualizado.');
+    alert($t('profile.fines.paymentSuccess'));
   } catch (error) {
-    console.error('Error al pagar multa:', error);
-    alert('Error al procesar el pago de la multa');
+    console.error('Error paying fine:', error);
+    alert($t('profile.fines.paymentError'));
   }
 }
 
@@ -395,7 +400,7 @@ async function loadTripsAndFines() {
   }
 }
 
-// Configurar listeners para actualizar balance
+// Configure listeners to update balance
 function setupBalanceListeners() {
   const handleFocus = () => {
     console.log("Ventana enfocada, actualizando balance...");

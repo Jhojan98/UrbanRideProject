@@ -38,7 +38,7 @@ app.use(router)
 app.use(pinia)
 app.use(i18n)
 
-// Inicializar el estado de autenticación antes de montar la app
+// Initialize authentication state before mounting the app
 const authStore = userAuth()
 authStore.initializeAuthState().then(() => {
   app.mount('#app')

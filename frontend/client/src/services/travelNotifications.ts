@@ -26,17 +26,17 @@ export const useTripStore = defineStore('trip', {
   actions: {
     attachLifecycleListeners() {
       if (this.lifecycleListenersAttached) return;
-      // Reintentar al volver a estar online
+      // Retry when coming back online
       window.addEventListener('online', () => {
         if (!this.isConnected && !this.eventSource) {
-          console.log('[SSE] Online: intentando reconectar ahora');
+          console.log('[SSE] Online: attempting to reconnect now');
           this.connectToSSE();
         }
       });
-      // Reintentar al volver a la pestaña
+      // Retry when returning to tab
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && !this.isConnected && !this.eventSource) {
-          console.log('[SSE] Pestaña visible: intentando reconectar ahora');
+          console.log('[SSE] Tab visible: attempting to reconnect now');
           this.connectToSSE();
         }
       });
@@ -66,19 +66,19 @@ export const useTripStore = defineStore('trip', {
     },
 
     async connectToSSE() {
-      // Evitar múltiples conexiones simultáneas
+      // Avoid multiple simultaneous connections
       if (this.eventSource) {
-        console.log('[SSE] Ya hay una conexión activa');
+        console.log('[SSE] Already has an active connection');
         return;
       }
 
       try {
-        console.log(`[SSE] Intentando conexión (intento ${this.connectionAttempts + 1}/${this.maxReconnectAttempts})...`);
+        console.log(`[SSE] Attempting connection (attempt ${this.connectionAttempts + 1}/${this.maxReconnectAttempts})...`);
 
         this.eventSource = new EventSource(`${this.baseURL}/travel/sse/connect`, { withCredentials: true });
 
         this.eventSource.onopen = () => {
-          console.log('[SSE] Conexión abierta exitosamente');
+          console.log('[SSE] Connection opened successfully');
           this.isConnected = true;
           this.connectionAttempts = 0;
           this.clearReconnectTimer();
@@ -90,9 +90,9 @@ export const useTripStore = defineStore('trip', {
             const data = JSON.parse(event.data);
             this.message = data.message;
 
-            console.log('[SSE] Mensaje recibido:', data.message);
+            console.log('[SSE] Message received:', data.message);
 
-            // Reiniciar heartbeat al recibir cualquier mensaje
+            // Restart heartbeat on receiving any message
             this.resetHeartbeat();
 
             // Parsear el mensaje para determinar el tipo
@@ -167,14 +167,14 @@ export const useTripStore = defineStore('trip', {
 
     closeNotification() {
       this.isVisible = false;
-      // Limpiar la notificación después de la animación
+      // Clear notification after animation
       setTimeout(() => {
         this.notification = null;
       }, 300);
     },
 
     disconnect() {
-      console.log('[SSE] Desconectando SSE');
+      console.log('[SSE] Disconnecting SSE');
       this.isConnected = false;
       this.clearReconnectTimer();
       this.clearHeartbeatTimer();
@@ -189,7 +189,7 @@ export const useTripStore = defineStore('trip', {
         isConnected: this.isConnected,
         connectionAttempts: this.connectionAttempts,
         maxReconnectAttempts: this.maxReconnectAttempts,
-        status: this.isConnected ? 'Conectado' : 'Desconectado',
+        status: this.isConnected ? 'Connected' : 'Disconnected',
       };
     },
   },

@@ -141,7 +141,7 @@
       </div>
     </form>
 
-    <!--confirmación -->
+    <!-- Confirmation -->
     <div v-if="showSuccess" class="modal-overlay">
       <div class="modal">
         <div class="modal-content">
@@ -221,7 +221,7 @@ const submitReport = async () => {
     reportId.value = 'RP-' + Date.now().toString().slice(-6)
     showSuccess.value = true
 
-    // se enviaría a la API
+    // Would be sent to the API
     console.log('Reporte enviado:', formData)
 
   } catch (error) {
@@ -411,7 +411,7 @@ const closeModal = () => {
   border-top: 1px solid #f0f0f0;
 }
 
-// Modal de éxito
+// Success modal
 .modal-overlay {
   position: fixed;
   top: 0;

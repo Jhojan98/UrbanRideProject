@@ -4,11 +4,11 @@
       <h2>{{ $t('destination.title') }}</h2>
       <p>{{ $t('destination.subtitle') }}</p>
     </div>
-    
+
     <div class="map-wrapper">
       <div id="destination-map" class="map-container"></div>
     </div>
-    
+
     <div class="destination-info">
       <div class="info-card">
         <h3>{{ destinationStation.name }}</h3>
@@ -29,7 +29,7 @@
           <span class="value">{{ destinationStation.estimatedTime }}</span>
         </div>
       </div>
-      
+
       <button class="butn-primary" @click="confirmDestination">
         {{ $t('destination.confirm') }}
       </button>
@@ -47,9 +47,9 @@ import 'leaflet/dist/leaflet.css'
 const router = useRouter()
 useI18n();
 
-// Datos de la estación destino (en un caso real vendrían de props o store)
+// Destination station data (in a real case would come from props or store)
 const destinationStation = ref({
-  name: 'Estación Centro Comercial',
+  name: 'Centro Commercial Station',
   address: 'Carrera 40 #12-45, Villavicencio',
   availableSlots: 8,
   distance: '1.2 km',
@@ -60,9 +60,9 @@ const destinationStation = ref({
 const map = ref<LeafletMap | null>(null)
 
 onMounted(() => {
-  // Usar nextTick para asegurar que el DOM esté listo
+  // Use nextTick to ensure DOM is ready
   nextTick(() => {
-    // Inicializar mapa centrado en la estación destino
+    // Initialize map centered at destination station
     map.value = L.map('destination-map', {
       center: destinationStation.value.coords,
       zoom: 16,
@@ -74,7 +74,7 @@ onMounted(() => {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map.value)
 
-    // Marcador de la estación destino con ícono especial
+    // Destination station marker with special icon
     const destinationIcon = L.divIcon({
       html: '<div class="destination-marker">🏁</div>',
       className: 'destination-icon',
@@ -87,21 +87,21 @@ onMounted(() => {
       .bindPopup(`
         <div class="destination-popup">
           <h4>${destinationStation.value.name}</h4>
-          <p>🏁 Estación Destino</p>
-          <p>🚲 ${destinationStation.value.availableSlots} espacios libres</p>
+          <p>🏁 Destination Station</p>
+          <p>🚲 ${destinationStation.value.availableSlots} free spaces</p>
         </div>
       `)
       .openPopup()
 
-    // Agregar círculo de área de cobertura
+    // Add coverage area circle
     L.circle(destinationStation.value.coords, {
       color: '#007bff',
       fillColor: '#007bff',
       fillOpacity: 0.1,
-      radius: 200 // 200 metros
+      radius: 200 // 200 meters
     }).addTo(map.value as LeafletMap)
 
-    // Fuerza redimensionamiento del mapa
+    // Force map resize
     setTimeout(() => {
       map.value?.invalidateSize()
     }, 100)
@@ -116,7 +116,7 @@ onUnmounted(() => {
 })
 
 const confirmDestination = () => {
-  // confirmar la estación destino
+  // Confirm destination station
   router.push('/ride/active')
 }
 </script>
@@ -132,12 +132,12 @@ const confirmDestination = () => {
 
 .map-header {
   margin-bottom: 10px;
-  
+
   h2 {
     margin: 0 0 8px 0;
     color: #333;
   }
-  
+
   p {
     margin: 0;
     color: #666;
@@ -146,14 +146,14 @@ const confirmDestination = () => {
 
 .map-wrapper {
   flex: 1;
-  position: relative; 
-  min-height: 400px; /* Altura mínima */
+  position: relative;
+  min-height: 400px; /* Minimum height */
 }
 
 .map-container {
   width: 100%;
   height: 100%;
-  position: absolute; /* posición absoluta */
+  position: absolute; /* absolute position */
   top: 0;
   left: 0;
   border-radius: 12px;
@@ -170,7 +170,7 @@ const confirmDestination = () => {
 
 .info-card {
   margin-bottom: 20px;
-  
+
   h3 {
     margin: 0 0 15px 0;
     color: #333;
@@ -183,12 +183,12 @@ const confirmDestination = () => {
   margin-bottom: 10px;
   padding: 8px 0;
   border-bottom: 1px solid #f0f0f0;
-  
+
   .label {
     color: #666;
     font-weight: 500;
   }
-  
+
   .value {
     color: #333;
     font-weight: 600;
@@ -200,7 +200,7 @@ const confirmDestination = () => {
   margin-top: 10px;
 }
 
-// Estilos para el marcador 
+// Estilos para el marcador
 :deep(.destination-marker) {
   font-size: 20px;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
@@ -211,7 +211,7 @@ const confirmDestination = () => {
     margin: 0 0 8px 0;
     color: #007bff;
   }
-  
+
   p {
     margin: 4px 0;
   }
@@ -245,7 +245,7 @@ const confirmDestination = () => {
     h2 {
       color: var(--color-text-primary-dark);
     }
-    
+
     p {
       color: var(--color-text-secondary-dark);
     }
@@ -262,11 +262,11 @@ const confirmDestination = () => {
 
   .detail-item {
     border-bottom-color: var(--color-border-dark);
-    
+
     .label {
       color: var(--color-text-secondary-dark);
     }
-    
+
     .value {
       color: var(--color-text-primary-dark);
     }

@@ -1,4 +1,4 @@
-/* Contenedor Principal del Perfil */
+/* Main Profile Container */
 .profile-container {
   display: flex;
   min-height: calc(100vh - 140px);
@@ -56,7 +56,7 @@
   }
 }
 
-/* Contenido Principal */
+/* Main Content */
 .profile-main {
   flex: 1;
 }
@@ -90,7 +90,7 @@
 }
 
 .table-container {
-  overflow-x: auto; /* Scroll horizontal en móviles si la tabla es ancha */
+  overflow-x: auto; /* Horizontal scroll on mobiles if table is wide */
   margin-bottom: 1rem;
 }
 
@@ -101,18 +101,18 @@ html[data-theme="dark"] .table-container{
 
 .trips-table {
   width: 100%;
-  border-collapse: collapse; /* Elimina espacio entre bordes */
+  border-collapse: collapse; /* Removes space between borders */
 }
 
 .trips-table th,
 .trips-table td {
   padding: 12px;
   text-align: left;
-  border-bottom: 1px solid #e0e0e0; /* Líneas separadoras */
+  border-bottom: 1px solid #e0e0e0; /* Separator lines */
 }
 
 .trips-table th {
-  background-color: #f8f9fa; /* Fondo gris claro para encabezados */
+  background-color: #f8f9fa; /* Light gray background for headers */
   color: #004E61;
   font-weight: bold;
 }
@@ -177,7 +177,7 @@ html[data-theme="dark"] .table-container{
 }
 
 .rewards-list {
-  list-style: none; /* Elimina viñetas por defecto */
+  list-style: none; /* Removes default bullets */
   padding: 0;
   margin-bottom: 1.5rem;
 }
@@ -186,7 +186,7 @@ html[data-theme="dark"] .table-container{
   padding: 0.5rem 0;
   color: #666;
   position: relative;
-  padding-left: 1.5rem; /* Espacio para el check */
+  padding-left: 1.5rem; /* Space for checkmark */
 }
 
 /* Crea checkmarks personalizados */
@@ -362,19 +362,19 @@ html[data-theme="dark"] .table-container{
   font-size: 1rem;
 }
 
-/* Diseño responsive: en pantallas grandes usar grid de 2 columnas */
+/* Responsive design: use 2-column grid on large screens */
 @media (min-width: 768px) {
   .profile-content {
-    grid-template-columns: 2fr 1fr; /* Dos columnas: 2/3 y 1/3 */
+    grid-template-columns: 2fr 1fr; /* Two columns: 2/3 and 1/3 */
   }
 
-  /* La primera sección (historial) ocupa ambas columnas */
+  /* First section (history) spans both columns */
   .profile-section:first-child {
     grid-column: 1 / -1;
   }
 }
 
-/* Ajustes para móviles */
+/* Mobile adjustments */
 @media (max-width: 767px) {
   .profile {
     flex-direction: column;
@@ -523,10 +523,10 @@ html[data-theme="dark"] .table-container{
   }
 }
 
-/* Ajustes para móviles */
+/* Mobile adjustments */
 @media (max-width: 767px) {
   .profile {
-    padding: 1rem; /* Menos padding en móviles */
+    padding: 1rem; /* Less padding on mobiles */
   }
 
   .profile-section {
