@@ -10,7 +10,7 @@ services:
       - "5532:5432"
     volumes:
       - data-postgres:/var/lib/postgresql/data
-      - ./docker/postgres/version8.0/initdb:/docker-entrypoint-initdb.d
+      - ./docker/postgres/version8.1/initdb:/docker-entrypoint-initdb.d
     networks:
       - movilidad-sostenible-network
     restart: always

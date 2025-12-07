@@ -172,14 +172,14 @@ def read_maintenance_records(skip: int = 0, limit: int = 100, db: Session = Depe
     return records
 
 @app.get("/maintenance/{maintenance_id}", response_model=schemas.MaintenanceRecord)
-def read_maintenance_record(maintenance_id: int, db: Session = Depends(database.get_db)):
+def read_maintenance_record(maintenance_id: str, db: Session = Depends(database.get_db)):
     record = db.query(models.MaintenanceRecord).filter(models.MaintenanceRecord.k_id_maintenance == maintenance_id).first()
     if record is None:
         raise HTTPException(status_code=404, detail="Maintenance record not found")
     return record
 
 @app.put("/maintenance/{maintenance_id}", response_model=schemas.MaintenanceRecord)
-async def update_maintenance_record(maintenance_id: int, record: schemas.MaintenanceRecordCreate, db: Session = Depends(database.get_db)):
+async def update_maintenance_record(maintenance_id: str, record: schemas.MaintenanceRecordCreate, db: Session = Depends(database.get_db)):
     db_record = db.query(models.MaintenanceRecord).filter(models.MaintenanceRecord.k_id_maintenance == maintenance_id).first()
     if db_record is None:
         raise HTTPException(status_code=404, detail="Maintenance record not found")
@@ -201,7 +201,7 @@ async def update_maintenance_record(maintenance_id: int, record: schemas.Mainten
     return db_record
 
 @app.delete("/maintenance/{maintenance_id}")
-def delete_maintenance_record(maintenance_id: int, db: Session = Depends(database.get_db)):
+def delete_maintenance_record(maintenance_id: str, db: Session = Depends(database.get_db)):
     db_record = db.query(models.MaintenanceRecord).filter(models.MaintenanceRecord.k_id_maintenance == maintenance_id).first()
     if db_record is None:
         raise HTTPException(status_code=404, detail="Maintenance record not found")

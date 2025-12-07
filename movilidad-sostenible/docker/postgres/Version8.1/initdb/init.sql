@@ -113,13 +113,13 @@ CREATE TABLE fine
 
 CREATE TABLE maintenance
 (
-	k_id_maintenance serial NOT NULL,	-- Identificador único del registro de mantenimiento. Actúa como clave primaria de la tabla y permite distinguir cada intervención realizada sobre una bicicleta, asegurando integridad y trazabilidad en el historial técnico. Su unicidad garantiza que cada mantenimiento pueda auditarse, referenciarse y consultarse de manera independiente en el sistema.
+	k_id_maintenance varchar(50) NOT NULL,	-- Identificador único del registro de mantenimiento. Actúa como clave primaria de la tabla y permite distinguir cada intervención realizada sobre una bicicleta, asegurando integridad y trazabilidad en el historial técnico. Su unicidad garantiza que cada mantenimiento pueda auditarse, referenciarse y consultarse de manera independiente en el sistema.
 	d_description varchar(250) NOT NULL,	-- Contiene el detalle del mantenimiento realizado, incluyendo el tipo de actividad ejecutada (correctivo, preventivo, inspección, cambio de partes, etc.). Permite documentar las acciones aplicadas sobre la bicicleta para futuras referencias, auditoría y control interno.
 	t_status varchar(50) NOT NULL,	-- Indica el estado del mantenimiento registrado. Puede reflejar etapas como pendiente, en proceso, completado, según el flujo definido por la operación. Facilita la gestión del ciclo de mantenimiento y permite identificar trabajos abiertos o finalizados.
 	f_date date NOT NULL,	-- Registra la fecha en la que se realizó o programó el mantenimiento. Permite ordenar cronológicamente el historial de intervenciones y evaluar la frecuencia de reparaciones o servicios preventivos aplicados a cada bicicleta.
 	k_id_bicycle varchar(11) NULL,	-- Identificador único de la bicicleta a la que se le realizó el mantenimiento. Este valor hace referencia directa a la bicicleta registrada en el sistema y permite asociar cada intervención con un elemento físico específico de la flota. Al ser de tipo VARCHAR, admite codificación que diferencia bicicletas eléctricas y mecánicas, mejorando el control operativo y la trazabilidad del historial técnico.
 	t_entity_type varchar(50) NOT NULL,
-	t_maintance_type varchar(50) NOT NULL,
+	t_maintenance_type varchar(50) NOT NULL,
 	t_triggered_by varchar(50) NOT NULL,
 	v_cost integer NULL,
 	k_id_slot varchar(50) NULL,
@@ -189,6 +189,7 @@ CREATE TABLE users
 (
 	k_uid_user varchar(100) NOT NULL,	-- Llave primaria de user(Usuarios) que entrega el servidor de autenticacion.
 	n_user_name varchar(50) NOT NULL,	-- Primer nombre del usuario.
+	n_user_email varchar(50) NOT NULL,
 	t_subscription_type varchar(50) NOT NULL   DEFAULT 'NONE',	-- Tipo de suscripcion del usuario.
 	v_balance numeric(5,2) NULL,	-- Saldo de los usuario
 	t_subcripcion_travels integer NULL
@@ -247,10 +248,10 @@ ALTER TABLE maintenance ADD CONSTRAINT "PK_maintenance"
 ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_status" CHECK (t_status IN ('PENDING', 'SOLVING', 'RESOLVED'))
 ;
 
-ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_entity_type" CHECK (t_entity_type IN ('BiCYCLE', 'STATION', 'SLOT'))
+ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_entity_type" CHECK (t_entity_type IN ('BICYCLE', 'STATION', 'LOCK'))
 ;
 
-ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_maintance_type" CHECK (t_maintance_type IN ('PREVENTIVE', 'CORRECTIVE', 'INSPECTION'))
+ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_maintenance_type" CHECK (t_maintenance_type IN ('PREVENTIVE', 'CORRECTIVE', 'INSPECTION'))
 ;
 
 ALTER TABLE maintenance ADD CONSTRAINT "CHK_t_triggered_by" CHECK (t_triggered_by IN ('ADMIN', 'USER', 'IOT_ALERT'))
@@ -711,4 +712,3 @@ GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.complaints_and_claims_k_id_compla
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.slots TO manager_slots;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.maintenance TO manager_maintenance;
-GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.maintenance_k_id_maintenance_seq TO manager_maintenance;

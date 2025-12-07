@@ -17,13 +17,12 @@ INSERT INTO city (n_city_name) VALUES
 ('Medellín'),
 ('Cali');
 
--- 2. Users (k_uid_user is a string from auth server, using placeholders)
-INSERT INTO users (k_uid_user, n_user_name, t_subscription_type, v_balance) VALUES
-('user-001', 'Juan Perez', 'MONTHLY', 500.00),
-('user-002', 'Maria Rodriguez', 'NONE', 150.00),
-('user-003', 'Carlos Gomez', 'NONE', 0.00),
-('user-004', 'Ana Martinez', 'MONTHLY', 750.00),
-('user-005', 'Luisa Herrera', 'NONE', 250.00);
+INSERT INTO users (k_uid_user, n_user_name, n_user_email, t_subscription_type, v_balance) VALUES
+('user-001', 'Juan Perez', 'juan.perez@example.com', 'MONTHLY', 500.00),
+('user-002', 'Maria Rodriguez', 'maria.rodriguez@example.com', 'NONE', 150.00),
+('user-003', 'Carlos Gomez', 'carlos.gomez@example.com', 'NONE', 0.00),
+('user-004', 'Ana Martinez', 'ana.martinez@example.com', 'MONTHLY', 750.00),
+('user-005', 'Luisa Herrera', 'luisa.herrera@example.com', 'NONE', 250.00);
 
 -- 3. Admins
 INSERT INTO admins (k_uid_admin, n_admin_name) VALUES
@@ -113,24 +112,24 @@ INSERT INTO user_fine (n_reason, t_state, k_id_fine, k_uid_user, v_amount_snapsh
 ('Devolución tardía de bicicleta', 'PENDING', 2, 'user-002', 20000, NOW() - INTERVAL '8 days', NULL),
 ('Daño en el manubrio', 'PAID', 1, 'user-003', 50000, NOW() - INTERVAL '15 days', NOW() - INTERVAL '14 days');
 
--- 12. Maintenance Records
 INSERT INTO maintenance (
-	t_entity_type,
-	t_maintance_type,
-	t_triggered_by,
+	k_id_maintenance,
 	d_description,
 	t_status,
 	f_date,
-	v_cost,
 	k_id_bicycle,
-	k_id_station,
-	k_id_slot
+	t_entity_type,
+	t_maintenance_type,
+	t_triggered_by,
+	v_cost,
+	k_id_slot,
+	k_id_station
 ) VALUES
-	('BiCYCLE', 'PREVENTIVE', 'ADMIN', 'Revisión general y ajuste de frenos', 'PENDING', CURRENT_DATE, 45, 'MECH-000001', NULL, NULL),
-	('BiCYCLE', 'CORRECTIVE', 'IOT_ALERT', 'Cambio de pastillas de freno y limpieza de transmisión', 'RESOLVED', CURRENT_DATE, 79, 'MECH-000003', NULL, NULL),
-	('BiCYCLE', 'INSPECTION', 'USER', 'Reporte de ruido en la suspensión, pendiente revisión final', 'PENDING', CURRENT_DATE, NULL, 'ELEC-000006', NULL, NULL),
-	('BiCYCLE', 'PREVENTIVE', 'ADMIN', 'Lubricación y chequeo de batería', 'SOLVING', CURRENT_DATE, 55, 'ELEC-000009', NULL, NULL),
-	('STATION', 'CORRECTIVE', 'ADMIN', 'Reemplazo de señalización y revisión de CCTV', 'PENDING', CURRENT_DATE, 120, NULL, 3, NULL),
-	('SLOT', 'INSPECTION', 'USER', 'Verificación manual del candado por reporte de usuario', 'PENDING', CURRENT_DATE, 15, NULL, NULL, 'EST-FIN-5');
+	('MNT-0001', 'Revisión general y ajuste de frenos', 'PENDING', CURRENT_DATE, 'MECH-000001', 'BICYCLE', 'PREVENTIVE', 'ADMIN', 45, NULL, NULL),
+	('MNT-0002', 'Cambio de pastillas de freno y limpieza de transmisión', 'RESOLVED', CURRENT_DATE, 'MECH-000003', 'BICYCLE', 'CORRECTIVE', 'IOT_ALERT', 79, NULL, NULL),
+	('MNT-0003', 'Reporte de ruido en la suspensión, pendiente revisión final', 'PENDING', CURRENT_DATE, 'ELEC-000006', 'BICYCLE', 'INSPECTION', 'USER', NULL, NULL, NULL),
+	('MNT-0004', 'Lubricación y chequeo de batería', 'SOLVING', CURRENT_DATE, 'ELEC-000009', 'BICYCLE', 'PREVENTIVE', 'ADMIN', 55, NULL, NULL),
+	('MNT-0005', 'Reemplazo de señalización y revisión de CCTV', 'PENDING', CURRENT_DATE, NULL, 'STATION', 'CORRECTIVE', 'ADMIN', 120, NULL, 3),
+	('MNT-0006', 'Verificación manual del candado por reporte de usuario', 'PENDING', CURRENT_DATE, NULL, 'LOCK', 'INSPECTION', 'USER', 15, 'EST-FIN-5', NULL);
 
 
