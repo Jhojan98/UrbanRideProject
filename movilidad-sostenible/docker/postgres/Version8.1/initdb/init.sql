@@ -687,11 +687,12 @@ CREATE ROLE manager_city LOGIN PASSWORD 'g_city';
 CREATE ROLE manager_slots LOGIN PASSWORD 'g_slots';
 CREATE ROLE manager_maintenance LOGIN PASSWORD 'g_maintenance';
 CREATE ROLE manager_complaints LOGIN PASSWORD 'g_complaints';
+CREATE ROLE manager_btnPanic LOGIN PASSWORD 'g_btnPanic';
+
 -- Privilegios sobre tablas
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.users TO manager_users;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.bicycle TO manager_bicycle;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.admins TO manager_admins;
-
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.city  TO manager_city;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO manager_city;
 
@@ -709,6 +710,8 @@ GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.user_fine_k_user_fine_seq TO mana
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.complaints_and_claims TO manager_complaints;
 GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.complaints_and_claims_k_id_complaints_and_claims_seq TO manager_complaints;
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.panic_button TO manager_btnPanic;
+GRANT USAGE, SELECT, UPDATE ON SEQUENCE public.panic_button_k_id_panic_button_seq TO manager_btnPanic;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.slots TO manager_slots;
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.maintenance TO manager_maintenance;

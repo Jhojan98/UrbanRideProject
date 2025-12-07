@@ -99,4 +99,4 @@ class ServiceClients:
 
     # Stations
     async def get_station(self, station_id: Any) -> Dict[str, Any]:
-        return await self._get(f"{self.stations_base}/stations/{station_id}")
+        return await self._get(f"{self.stations_base}/{station_id}")

@@ -4,13 +4,15 @@ from typing import Any, Dict, List
 import pandas as pd
 from openpyxl.styles import PatternFill, Font, Alignment
 from openpyxl.utils import get_column_letter
+from openpyxl.drawing.image import Image as XLImage
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, Image as PDFImage
+
+import graphs
 
 
-# --- Constants & Translations ---
 
 URBAN_GREEN_HEX = "2E7D32"  # Dark Green
 URBAN_LIGHT_GREEN_HEX = "E8F5E9"  # Light Green
@@ -41,8 +43,19 @@ TRANSLATIONS = {
         "maintenance_by_entity": "Mantenimiento por entidad",
         "User": "Usuario",
         "Summary": "Resumen",
-        # Columns
+
+        "bicycle_usage": "Uso de Bicicletas",
+        "station_demand": "Demanda Estaciones",
+        "service_demand": "Demanda Servicio",
+        "bicycle_demand": "Demanda Bicicletas",
+        "daily_trips": "Viajes Diarios",
+
+        "email": "Correo",
+        "username": "Usuario",
+        "subscription": "Suscripción",
+
         "n_user_name": "Nombre",
+        "n_user_email": "Correo",
         "k_uid_user": "ID Usuario",
         "t_subscription_type": "Suscripción",
         "v_balance": "Saldo",
@@ -83,7 +96,7 @@ TRANSLATIONS = {
         "f_update_at": "Actualizada",
         "user_id": "ID Usuario",
         "status": "Estado",
-        # User Dashboard
+
         "date": "Fecha",
         "start_time": "Hora Inicio",
         "end_time": "Hora Fin",
@@ -118,7 +131,14 @@ TRANSLATIONS = {
         "complaints_by_type": "Complaints by Type",
         "maintenance_by_entity": "Maintenance by Entity",
         "User": "User",
+        "n_user_email": "Email",
         "Summary": "Summary",
+
+        "bicycle_usage": "Bicycle Usage",
+        "station_demand": "Station Demand",
+        "service_demand": "Service Demand",
+        "bicycle_demand": "Bicycle Demand",
+        "daily_trips": "Daily Trips",
     }
 }
 
@@ -131,7 +151,7 @@ def _translate(key: str, lang: str) -> str:
 def _to_df(rows: List[Dict[str, Any]], lang: str = "en") -> pd.DataFrame:
     """Normalize list of dicts into a DataFrame, handling empty cases and translation."""
     if not rows:
-        return pd.DataFrame()
+        return pd.DataFrame({_translate("metric", lang): ["(No Data)"]})
     df = pd.DataFrame.from_records(rows)
     # Rename columns based on translation
     df.rename(columns=lambda x: _translate(x, lang), inplace=True)
@@ -198,7 +218,7 @@ def _summary_df_user(dashboard: Dict[str, Any], lang: str = "en") -> pd.DataFram
     return df
 
 
-# --- Excel Styling ---
+
 
 def _style_excel_sheet(ws):
     """Apply UrbanRide green styling to an Excel worksheet."""
@@ -226,6 +246,17 @@ def _style_excel_sheet(ws):
         ws.column_dimensions[get_column_letter(column[0].column)].width = min(adjusted_width, 60)
 
 
+def _add_graph_to_excel(writer, sheet_name, img_buffer):
+    """Helper to add a graph to a specific Excel sheet."""
+    if sheet_name in writer.sheets:
+        ws = writer.sheets[sheet_name]
+    else:
+        ws = writer.book.create_sheet(sheet_name)
+    
+    img = XLImage(img_buffer)
+    ws.add_image(img, 'E2')
+
+
 def build_admin_overview_excel_pandas(overview: Dict[str, Any]) -> bytes:
     """Create an Excel report using pandas with multiple sheets and styling."""
     lang = overview.get("lang", "en")
@@ -236,12 +267,43 @@ def build_admin_overview_excel_pandas(overview: Dict[str, Any]) -> bytes:
         _to_df(overview.get("bicycles", []), lang).to_excel(writer, sheet_name=_translate("bicycles", lang), index=False)
         _to_df(overview.get("travels", []), lang).to_excel(writer, sheet_name=_translate("travels", lang), index=False)
         
-        # Fines split into two sheets
+
         _to_df(overview.get("fine_types", []), lang).to_excel(writer, sheet_name=_translate("fine_types", lang), index=False)
         _to_df(overview.get("user_fines", []), lang).to_excel(writer, sheet_name=_translate("user_fines", lang), index=False)
         
         _to_df(overview.get("complaints", []), lang).to_excel(writer, sheet_name=_translate("complaints", lang), index=False)
         _to_df(overview.get("maintenances", []), lang).to_excel(writer, sheet_name=_translate("maintenances", lang), index=False)
+
+
+        
+
+        sheet_name = _translate("bicycle_usage", lang)
+        _to_df(overview.get("bicycle_usage", []), lang).to_excel(writer, sheet_name=sheet_name, index=False)
+        _add_graph_to_excel(writer, sheet_name, graphs.generate_bicycle_usage_chart(overview.get("bicycle_usage", []), lang))
+
+
+        sheet_name = _translate("station_demand", lang)
+        _to_df(overview.get("station_demand", {}).get("most_popular_origins", []), lang).to_excel(writer, sheet_name=sheet_name, index=False)
+        _add_graph_to_excel(writer, sheet_name, graphs.generate_station_demand_chart(overview.get("station_demand", {}), lang))
+
+
+        sheet_name = _translate("service_demand", lang)
+        # Create a small DF for the stats
+        service_data = overview.get("service_demand", {})
+        pd.DataFrame([service_data]).to_excel(writer, sheet_name=sheet_name, index=False)
+        _add_graph_to_excel(writer, sheet_name, graphs.generate_service_demand_chart(service_data, lang))
+
+
+        sheet_name = _translate("bicycle_demand", lang)
+        bike_demand_data = overview.get("bicycle_demand", {})
+        pd.DataFrame([bike_demand_data]).to_excel(writer, sheet_name=sheet_name, index=False)
+        _add_graph_to_excel(writer, sheet_name, graphs.generate_bicycle_type_demand_chart(bike_demand_data, lang))
+
+
+        sheet_name = _translate("daily_trips", lang)
+        _to_df(overview.get("daily_trips", []), lang).to_excel(writer, sheet_name=sheet_name, index=False)
+        _add_graph_to_excel(writer, sheet_name, graphs.generate_daily_trips_chart(overview.get("daily_trips", []), lang))
+
 
         # Apply styles to all sheets
         for sheet_name in writer.sheets:
@@ -268,7 +330,65 @@ def build_user_dashboard_excel_pandas(dashboard: Dict[str, Any]) -> bytes:
     return output.getvalue()
 
 
-# --- PDF helpers ---
+
+
+def build_single_report_excel(data: List[Dict[str, Any]] | Dict[str, Any], title_key: str, lang: str = "es", graph_func=None) -> bytes:
+    """Generic builder for a single report Excel file."""
+    output = io.BytesIO()
+    sheet_name = _translate(title_key, lang)
+    
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df = pd.DataFrame()
+        if isinstance(data, list):
+            df = _to_df(data, lang)
+        elif isinstance(data, dict):
+            if "most_popular_origins" in data:
+                 df = _to_df(data.get("most_popular_origins", []), lang)
+            else:
+                 df = pd.DataFrame([data])
+        
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
+        
+        if graph_func:
+            _add_graph_to_excel(writer, sheet_name, graph_func(data, lang))
+            
+        _style_excel_sheet(writer.sheets[sheet_name])
+        
+    return output.getvalue()
+
+
+def build_single_report_pdf(data: List[Dict[str, Any]] | Dict[str, Any], title_key: str, lang: str = "es", graph_func=None) -> bytes:
+    """Generic builder for a single report PDF file."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    styles = getSampleStyleSheet()
+    
+    title_text = _translate(title_key, lang)
+    title_style = styles["Title"]
+    title_style.textColor = URBAN_GREEN_COLOR
+    
+    flow = [Paragraph(title_text, title_style), Spacer(1, 20)]
+    
+    if graph_func:
+        _add_graph_to_pdf(flow, graph_func(data, lang), title_text)
+        
+    # Table
+    df = pd.DataFrame()
+    if isinstance(data, list):
+        df = _to_df(data, lang)
+    elif isinstance(data, dict):
+        if "most_popular_origins" in data:
+             df = _to_df(data.get("most_popular_origins", []), lang)
+        else:
+             df = pd.DataFrame([data])
+             
+    flow += _table_from_df(df, title_text)
+    
+    doc.build(flow)
+    return buffer.getvalue()
+
+
+
 
 def _table_from_df(df: pd.DataFrame, title: str, max_rows: int = 50) -> List[Any]:
     if df.empty:
@@ -313,17 +433,11 @@ def _table_from_df(df: pd.DataFrame, title: str, max_rows: int = 50) -> List[Any
             
         data = [headers] + wrapped_rows
     
-    # Calculate column widths based on available space?
-    # For now, we let ReportLab attempt to auto-size. 
-    # With Paragraphs, it should handle wrapping better than raw strings.
-    
     table = Table(data, repeatRows=1)
     
-    # Define Table Style
     style_cmds = [
         ("BACKGROUND", (0, 0), (-1, 0), URBAN_GREEN_COLOR),
-        # Text color is handled by Paragraph style now, but background is here
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), # Vertically center
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
         ("TOPPADDING", (0, 0), (-1, 0), 8),
         ("GRID", (0, 0), (-1, -1), 0.5, URBAN_GREEN_COLOR),
@@ -340,11 +454,24 @@ def _table_from_df(df: pd.DataFrame, title: str, max_rows: int = 50) -> List[Any
 
     table.setStyle(TableStyle(style_cmds))
     
-    title_style = styles["Heading3"]
+    title_style = getSampleStyleSheet()["Heading3"]
     title_style.textColor = URBAN_GREEN_COLOR
     title_paragraph = Paragraph(f"<b>{title}</b>", title_style)
     
     return [title_paragraph, Spacer(1, 6), table, Spacer(1, 12)]
+
+
+def _add_graph_to_pdf(flow, img_buffer, title, width=400, height=240):
+    """Helper to add graph to PDF flow."""
+    styles = getSampleStyleSheet()
+    title_style = styles["Heading3"]
+    title_style.textColor = URBAN_GREEN_COLOR
+    flow.append(Paragraph(f"<b>{title}</b>", title_style))
+    flow.append(Spacer(1, 6))
+    
+    img = PDFImage(img_buffer, width=width, height=height)
+    flow.append(img)
+    flow.append(Spacer(1, 12))
 
 
 def build_admin_overview_pdf(overview: Dict[str, Any]) -> bytes:
@@ -360,11 +487,20 @@ def build_admin_overview_pdf(overview: Dict[str, Any]) -> bytes:
     flow = [Paragraph(title_text, title_style), Spacer(1, 20)]
 
     flow += _table_from_df(_summary_df_admin(overview, lang), _translate("Summary", lang))
+    
+
+    _add_graph_to_pdf(flow, graphs.generate_bicycle_usage_chart(overview.get("bicycle_usage", []), lang), _translate("bicycle_usage", lang))
+    _add_graph_to_pdf(flow, graphs.generate_station_demand_chart(overview.get("station_demand", {}), lang), _translate("station_demand", lang))
+    _add_graph_to_pdf(flow, graphs.generate_service_demand_chart(overview.get("service_demand", {}), lang), _translate("service_demand", lang))
+    _add_graph_to_pdf(flow, graphs.generate_bicycle_type_demand_chart(overview.get("bicycle_demand", {}), lang), _translate("bicycle_demand", lang))
+    _add_graph_to_pdf(flow, graphs.generate_daily_trips_chart(overview.get("daily_trips", []), lang), _translate("daily_trips", lang))
+    
+    # Tables
     flow += _table_from_df(_to_df(overview.get("users", []), lang), _translate("users", lang))
     flow += _table_from_df(_to_df(overview.get("bicycles", []), lang), _translate("bicycles", lang))
     flow += _table_from_df(_to_df(overview.get("travels", []), lang), _translate("travels", lang))
     
-    # Fines split
+
     flow += _table_from_df(_to_df(overview.get("fine_types", []), lang), _translate("fine_types", lang))
     flow += _table_from_df(_to_df(overview.get("user_fines", []), lang), _translate("user_fines", lang))
     
