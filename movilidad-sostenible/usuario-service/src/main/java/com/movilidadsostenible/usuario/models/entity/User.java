@@ -20,6 +20,10 @@ public class User {
     private String uidUser;
 
     @NotBlank
+    @Column(unique = true, name = "n_user_email")
+    private String userEmail;
+
+    @NotBlank
     @Column(name = "n_user_name")
     private String userName;
 
@@ -28,4 +32,7 @@ public class User {
 
     @Column(name = "v_balance")
     private Integer balance;
+
+    @Column(name = "t_subcripcion_travels")
+    private Integer subcripcionTravels;
 }

@@ -80,4 +80,13 @@ public class SlotsServiceImpl implements SlotsService {
         slot.setPadlockStatus("LOCKED");
         return repository.save(slot);
     }
+
+    @Override
+    public Slot unlockSlotWithBicycle(String slotId, String bicycleId) {
+      Slot slot = repository.findById(slotId)
+        .orElseThrow(() -> new IllegalArgumentException("Slot no encontrado: " + slotId));
+      slot.setBicycleId(null);
+      slot.setPadlockStatus("UNLOCKED");
+      return repository.save(slot);
+    }
 }

@@ -1,5 +1,6 @@
 package com.movilidadsostenible.viaje_service.controllers;
 
+import com.movilidadsostenible.viaje_service.clients.StationClientRest;
 import com.movilidadsostenible.viaje_service.models.dto.StartTravelRequestDTO;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
 import com.movilidadsostenible.viaje_service.models.dto.ReservationTempDTO;
@@ -33,6 +34,9 @@ public class TravelController {
 
     @Autowired
     private SlotsClient slotsClient;
+
+    @Autowired
+    private StationClientRest stationClient;
 
     @Autowired
     private ReservationTempService reservationTempService;
@@ -146,6 +150,18 @@ public class TravelController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("mensaje", "Error al solicitar slot: " + ex.getMessage()));
         }
+        String travelType;
+        try {
+            ResponseEntity<String> stationType = stationClient.getTypeById(req.getStationEndId());
+            if (("METRO").equals(stationType.getBody())){
+              travelType = "LAST MILE";
+            }else {
+              travelType = "LONG TRAVEL";
+            }
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("mensaje", "Error al obtener tipo de estación: " + ex.getMessage()));
+        }
         try {
             slotEndId = slotsClient.reserveFirstUnlocked(req.getStationEndId());
 
@@ -183,29 +199,11 @@ public class TravelController {
         dto.setSlotStartId(slotId);
         dto.setStationEndId(req.getStationEndId());
         dto.setSlotEndId(slotEndIdBody);
-        dto.setTravelType(bikeType);
+        dto.setTravelType(travelType);
         dto.setCreatedAt(System.currentTimeMillis());
 
-        reservationTempService.save(dto);
 
-        // Publicar mensaje TTL en Rabbit para manejar expiración (incluye bicycleId si está disponible)
-        try {
-            Map<String, Object> message = new HashMap<>();
-            message.put("reservationId", reservationId);
-            message.put("slotId", slotId);
-            message.put("userUid", req.getUserUid());
-            message.put("stationStartId", req.getStationStartId());
-            message.put("stationEndId", req.getStationEndId());
-            message.put("bikeType", bikeType);
-            if (bicycleIdParsed != null) {
-                message.put("bicycleId", bicycleIdParsed);
-            }
-        } catch (Exception ex) {
-            // limpiar temporal si falla la publicación
-            reservationTempService.removeExpired(reservationId);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("mensaje", "Error al publicar mensaje de expiración: " + ex.getMessage()));
-        }
+        reservationTempService.save(dto);
 
         Map<String, String> resp = new HashMap<>();
         resp.put("reservationId", reservationId);
@@ -252,7 +250,14 @@ public class TravelController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("mensaje", "No se pudo determinar el identificador de la reserva para limpieza"));
         }
-        reservationTempService.remove(reservationUuid);
+        try {
+            reservationTempService.remove(storedKey);
+            dto.setReservationId(extractReservationUuidFromKey(dto.getReservationId()));
+            slotsClient.unlockSlotById(dto.getSlotStartId(), bicycleId);
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("mensaje", "Error al remover la reserva temporal: " + ex.getMessage()));
+        }
 
         // Crear y persistir el Travel en la base de datos
         try {

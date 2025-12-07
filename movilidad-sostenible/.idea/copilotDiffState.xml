@@ -52,6 +52,15 @@
             </PendingDiffInfo>
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/usuario-service/src/main/java/com/movilidadsostenible/usuario/services/UserService.java">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/usuario-service/src/main/java/com/movilidadsostenible/usuario/services/UserService.java" />
+              <option name="originalContent" value="package com.movilidadsostenible.usuario.services;&#10;&#10;import com.movilidadsostenible.usuario.models.entity.User;&#10;import org.springframework.transaction.annotation.Transactional;&#10;&#10;import java.util.List;&#10;import java.util.Optional;&#10;&#10;public interface UserService {&#10;    List&lt;User&gt; listUsers();&#10;    User save(User user);&#10;    void delete(String uid);&#10;    Optional&lt;User&gt; byId(String uidUser);&#10;&#10;    Integer getBalance(String uidUser);&#10;    Integer addBalance(String uidUser, Integer amount);&#10;    Integer subtractBalance(String uidUser, Integer amount);&#10;&#10;    // Devuelve true si el usuario NO puede viajar (bloqueado), false si SÍ puede&#10;    boolean isUserBlockedForTravel(String uidUser);&#10;&#10;    // Cobra el viaje aplicando reglas de suscripción.&#10;    // totalTripValue: valor total del viaje (en la moneda manejada por balance)&#10;    // excessMinutes: minutos excedentes del viaje&#10;    // uidUser: identificador del usuario&#10;    void chargeTrip(Integer totalTripValue, Integer excessMinutes, String uidUser);&#10;}" />
+              <option name="updatedContent" value="package com.movilidadsostenible.usuario.services;&#10;&#10;import com.movilidadsostenible.usuario.models.entity.User;&#10;import org.springframework.transaction.annotation.Transactional;&#10;&#10;import java.util.List;&#10;import java.util.Optional;&#10;&#10;public interface UserService {&#10;    List&lt;User&gt; listUsers();&#10;    User save(User user);&#10;    void delete(String uid);&#10;    Optional&lt;User&gt; byId(String uidUser);&#10;&#10;    Integer getBalance(String uidUser);&#10;    Integer addBalance(String uidUser, Integer amount);&#10;    Integer subtractBalance(String uidUser, Integer amount);&#10;&#10;    // Devuelve true si el usuario NO puede viajar (bloqueado), false si SÍ puede&#10;    boolean isUserBlockedForTravel(String uidUser);&#10;&#10;    // Cobra el viaje aplicando reglas de suscripción.&#10;    // totalTripValue: valor total del viaje (en la moneda manejada por balance)&#10;    // excessMinutes: minutos excedentes del viaje&#10;    // uidUser: identificador del usuario&#10;    void chargeTrip(Integer totalTripValue, Integer excessMinutes, String uidUser);&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
         <entry key="$PROJECT_DIR$/verify-system.sh">
           <value>
             <PendingDiffInfo>

@@ -26,10 +26,22 @@ public interface SlotsClient {
     @PutMapping("/{slotId}/lock")
     ResponseEntity<String> lockSlotById(@PathVariable("slotId") String slotId);
 
-    // Consumir endpoint que actualiza el padlockStatus de un slot por ID
+    // Consumir endpoint que bloquea un slot por ID (LOCKED) y asigna bicycleId
+    @PostMapping("/{slotId}/lock")
+    ResponseEntity<String> lockSlotById(@PathVariable("slotId") String slotId, @RequestParam("bicycleId") String bicycleId);
+
+  // Consumir endpoint que bloquea un slot por ID (LOCKED) y asigna bicycleId
+  @PostMapping("/{slotId}/unlock")
+  ResponseEntity<String> unlockSlotById(@PathVariable("slotId") String slotId, @RequestParam("bicycleId") String bicycleId);
+
+
+  // Consumir endpoint que actualiza el padlockStatus de un slot por ID
     @PutMapping("/{id}/padlock-status")
     ResponseEntity<String> updatePadlockStatus(
             @PathVariable("id") String id,
             @RequestParam("padlockStatus") String padlockStatus
     );
+
+
+
 }

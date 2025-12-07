@@ -4,8 +4,7 @@ import lombok.Data;
 
 @Data
 public class UserDTO {
-    private Integer userCc;
-    private String userEmail;
-    private boolean verified;
-
+  private String userEmail;
+  private String subject;
+  private String Message;
 }

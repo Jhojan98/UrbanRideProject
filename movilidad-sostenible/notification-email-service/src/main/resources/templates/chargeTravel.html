@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title th:text="${subject}">Cobro de viaje</title>
+  <style>
+    /* Reset básico */
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f6f9fc;
+      color: #203040;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 640px;
+      margin: 24px auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(16, 33, 52, 0.08);
+      overflow: hidden;
+      border: 1px solid #e3efe7; /* borde con tinte verde suave */
+    }
+    .header {
+      background: #ffffff;
+      color: #2f7b33;
+      padding: 0; /* la tabla controlará el padding */
+      border-bottom: 1px solid #e3efe7;
+    }
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .header-cell-logo,
+    .header-cell-text {
+      vertical-align: middle; /* centrar verticalmente */
+      padding: 24px; /* espacio interno uniforme */
+    }
+    .brand-logo {
+      height: 150px;
+      width: auto;
+      display: block;
+      margin: 0 auto; /* centrar dentro de su celda */
+    }
+    .brand-text {
+      text-align: left; /* texto a la izquierda de su celda */
+    }
+    .app-name {
+      margin: 0;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      color: #2f7b33;
+      line-height: 1.2;
+    }
+    .app-subtitle {
+      margin: 6px 0 0 0;
+      font-size: 14px;
+      color: #3a4b3f;
+      line-height: 1.2;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      background: #e9f7ec; /* fondo verde muy claro */
+      color: #2f7b33;
+      border: 1px solid #cbe9d2;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-left: 8px;
+    }
+    .subject {
+      margin: 6px 0 0 0;
+      font-size: 14px;
+      opacity: 0.9;
+      text-align: center; /* centrar subtítulo */
+      color: #3a4b3f; /* gris verdoso para contraste */
+    }
+    .content {
+      padding: 24px;
+      background: #ffffff;
+    }
+    .title {
+      margin: 0 0 12px 0;
+      font-size: 22px;
+      color: #2f7b33; /* título en verde */
+      text-align: center;
+    }
+    .summary {
+      background: #f1fbf4; /* tarjeta con verde muy suave */
+      border: 1px solid #cbe9d2;
+      border-radius: 12px;
+      padding: 16px;
+      margin: 0 0 18px 0;
+      font-size: 15px;
+      color: #1f3a25;
+    }
+    .details {
+      border-top: 1px dashed #d7e6dc;
+      padding-top: 16px;
+      font-size: 14px;
+      color: #3c4a5d;
+    }
+    .details-item { margin: 6px 0; }
+    .details-item strong { color: #2f7b33; }
+    .footer {
+      padding: 18px 24px;
+      font-size: 12px;
+      color: #4f6454;
+      background: #f6faf7; /* fondo con tinte verde */
+      border-top: 1px solid #e3efe7;
+      text-align: center;
+    }
+    @media (max-width: 420px) {
+      .brand-logo { height: 80px; max-width: 70%; }
+      .app-name { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <table class="header-table" role="presentation">
+        <tr>
+          <td class="header-cell-logo" width="200">
+            <img th:src="@{'cid:ecoride-logo'}" alt="ECORIDE" class="brand-logo" />
+          </td>
+          <td class="header-cell-text">
+            <div class="brand-text">
+              <h1 class="app-name">Movilidad Sostenible</h1>
+              <p class="app-subtitle badge">Aviso de cobro</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <p class="subject" th:text="${subject}">Cobro de viaje por balance</p>
+    <div class="content">
+      <h2 class="title">Resumen del cobro</h2>
+      <p class="summary" th:text="${message}">
+        Se cobró el viaje del balance. Valor cobrado: 4. Minutos excedentes: 0. Balance anterior: 0. Balance nuevo: -4.
+      </p>
+      <div class="details">
+        <p class="details-item"><strong>Usuario:</strong> <span th:text="${userEmail}">usuario@correo.com</span></p>
+        <p class="details-item"><strong>Fecha:</strong> <span th:text="${timestamp}">2025-12-06T22:16:24.306Z</span></p>
+        <p class="details-item"><strong>Tipo de cobro:</strong> <span th:text="${chargeType}">Balance</span></p>
+        <p class="details-item"><strong>Valor cobrado:</strong> <span th:text="${amount}">$4</span></p>
+        <p class="details-item"><strong>Minutos excedentes:</strong> <span th:text="${excessMinutes}">0</span></p>
+        <p class="details-item"><strong>Balance anterior:</strong> <span th:text="${prevBalance}">0</span></p>
+        <p class="details-item"><strong>Balance nuevo:</strong> <span th:text="${newBalance}">-4</span></p>
+      </div>
+    </div>
+    <div class="footer">
+      <p>Este es un mensaje automático. Si tienes dudas responde a este correo o consulta el soporte de Movilidad Sostenible.</p>
+      <p>&copy; <span th:text="${year}">2025</span> Movilidad Sostenible. Todos los derechos reservados.</p>
+    </div>
+  </div>
+</body>
+</html>

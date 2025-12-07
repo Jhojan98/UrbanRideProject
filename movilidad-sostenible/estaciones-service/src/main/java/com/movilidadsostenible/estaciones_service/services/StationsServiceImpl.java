@@ -35,5 +35,9 @@ public class StationsServiceImpl implements StationsService {
     public void deleteById(Integer id) {
         repository.deleteById(id);
     }
-}
 
+    @Override
+    public List<Station> findByIdCity(Integer idCity) {
+        return repository.findByIdCity(idCity);
+    }
+}
