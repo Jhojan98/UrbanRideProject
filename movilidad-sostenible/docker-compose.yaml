@@ -436,6 +436,34 @@ services:
         condition: service_started
     restart: always
 
+  btnpanic-service:
+    container_name: btnpanic-service
+    build:
+      context: ./btnPanic-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5008"]
+    ports:
+      - "5008:5008"
+    environment:
+      SERVICE_PORT: 5008
+      SERVICE_HOST: btnpanic-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: btnpanic-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${BTN_PANIC_DB_USER}
+      POSTGRES_PASSWORD: ${BTN_PANIC_DB_PASSWORD}
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
   maintenance-service:
     container_name: maintenance-service
     build:
