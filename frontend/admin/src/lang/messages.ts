@@ -36,6 +36,92 @@ export const messages = {
             logout: 'Cerrar sesión'
         }
     },
+    management: {
+      title: 'Gestión Administrativa',
+      tabs: {
+        cities: 'Ciudades',
+        stations: 'Estaciones',
+        bicycles: 'Bicicletas',
+        slots: 'Slots'
+      },
+      cities: {
+        title: 'Gestión de Ciudades',
+        create: 'Crear Ciudad',
+        newCity: 'Nueva Ciudad',
+        idCity: 'ID Ciudad',
+        cityName: 'Nombre de Ciudad',
+        empty: 'No hay ciudades registradas',
+        confirmDelete: '¿Está seguro de eliminar esta ciudad?',
+        createSuccess: 'Ciudad creada exitosamente. Los cambios pueden tardar unos segundos.',
+        createError: 'Error al crear la ciudad',
+        deleteSuccess: 'Ciudad eliminada exitosamente',
+        deleteError: 'Error al eliminar la ciudad'
+      },
+      stations: {
+        title: 'Gestión de Estaciones',
+        create: 'Crear Estación',
+        newStation: 'Nueva Estación',
+        idStation: 'ID Estación',
+        stationName: 'Nombre de Estación',
+        latitude: 'Latitud',
+        longitude: 'Longitud',
+        city: 'Ciudad',
+        selectCity: 'Seleccione una ciudad',
+        type: 'Tipo',
+        location: 'Ubicación',
+        cctvStatus: 'CCTV Activo',
+        empty: 'No hay estaciones registradas',
+        confirmDelete: '¿Está seguro de eliminar esta estación? Esto también eliminará sus slots.',
+        createSuccess: 'Estación creada exitosamente con 15 slots generados automáticamente',
+        createError: 'Error al crear la estación',
+        deleteSuccess: 'Estación eliminada exitosamente',
+        deleteError: 'Error al eliminar la estación'
+      },
+      bicycles: {
+        title: 'Gestión de Bicicletas',
+        create: 'Crear Bicicleta',
+        newBicycle: 'Nueva Bicicleta',
+        type: 'Tipo de Bicicleta',
+        electric: 'Eléctrica',
+        mechanic: 'Mecánica',
+        series: 'Serie',
+        model: 'Modelo',
+        padlockStatus: 'Estado del Candado',
+        battery: 'Batería (%)',
+        empty: 'No hay bicicletas registradas',
+        confirmDelete: '¿Está seguro de eliminar esta bicicleta?',
+        createSuccess: 'Bicicleta creada exitosamente',
+        createError: 'Error al crear la bicicleta',
+        deleteSuccess: 'Bicicleta eliminada exitosamente',
+        deleteError: 'Error al eliminar la bicicleta'
+      },
+      slots: {
+        title: 'Gestión de Slots',
+        filterByStation: 'Filtrar por Estación:',
+        allStations: 'Todas las estaciones',
+        station: 'Estación',
+        bicycle: 'Bicicleta',
+        noBicycle: 'Sin bicicleta',
+        assignBicycle: 'Asignar Bicicleta',
+        assignBicycleTitle: 'Asignar Bicicleta a Slot',
+        assigningToSlot: 'Asignando a slot',
+        selectBicycle: 'Seleccionar Bicicleta',
+        chooseBicycle: 'Elija una bicicleta disponible',
+        empty: 'No hay slots disponibles',
+        assignSuccess: 'Bicicleta asignada exitosamente al slot',
+        assignError: 'Error al asignar la bicicleta'
+      }
+    },
+    common: {
+      save: 'Guardar',
+      saving: 'Guardando...',
+      cancel: 'Cancelar',
+      actions: 'Acciones',
+      loading: 'Cargando...',
+      assign: 'Asignar',
+      assigning: 'Asignando...'
+    },
+  
     en: {
         login: {
             title: 'Sign In',

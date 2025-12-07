@@ -1,13 +1,18 @@
 import { defineStore } from "pinia";
 import City from "@/models/City";
 
-const cityStore = defineStore("city", {
+export const useCityStore = defineStore("city", {
   state: () => ({
     baseURL: process.env.VUE_APP_API_URL,
     cities: [] as City[],
+    loading: false,
+    error: null as string | null,
   }),
+
   actions: {
     async fetchCities() {
+      this.loading = true;
+      this.error = null;
       try {
         const response = await fetch(`${this.baseURL}/city/`, {
           method: "GET",
@@ -26,11 +31,16 @@ const cityStore = defineStore("city", {
         this.cities = data;
       } catch (error) {
         console.error("Error fetching cities:", error);
+        this.error = error instanceof Error ? error.message : "Error desconocido";
         this.cities = [];
+      } finally {
+        this.loading = false;
       }
     },
 
     async createCity(idCity: number, cityName: string) {
+      this.loading = true;
+      this.error = null;
       try {
         const response = await fetch(`${this.baseURL}/city/`, {
           method: "POST",
@@ -51,13 +61,19 @@ const cityStore = defineStore("city", {
           );
           return;
         }
-        // Optionally, you can fetch the updated list of cities after creation
         await this.fetchCities();
       } catch (error) {
         console.error("Error creating city:", error);
+        this.error = error instanceof Error ? error.message : "Error desconocido";
+        throw error;
+      } finally {
+        this.loading = false;
       }
     },
+
     async deleteCity(idCity: number) {
+      this.loading = true;
+      this.error = null;
       try {
         const response = await fetch(`${this.baseURL}/city/${idCity}`, {
           method: "DELETE",
@@ -73,13 +89,17 @@ const cityStore = defineStore("city", {
           );
           return;
         }
-        // Optionally, you can fetch the updated list of cities after deletion
         await this.fetchCities();
       } catch (error) {
         console.error("Error deleting city:", error);
+        this.error = error instanceof Error ? error.message : "Error desconocido";
+        throw error;
+      } finally {
+        this.loading = false;
       }
     }
   },
 });
 
-export default cityStore;
+// Para compatibilidad con imports antiguos
+export default useCityStore;

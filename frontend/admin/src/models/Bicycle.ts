@@ -9,6 +9,9 @@ export interface Bicycle {
     timestamp: Date;
 }
 
+
+
+
 /**
  * BicycleDTO - DTO recibido del WebSocket
  */
@@ -32,3 +35,4 @@ export function toBicycle(dto: BicycleDTO): Bicycle {
         timestamp: new Date(dto.timestamp)
     };
 }
+
