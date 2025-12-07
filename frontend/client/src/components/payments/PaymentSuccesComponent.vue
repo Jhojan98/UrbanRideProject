@@ -128,8 +128,8 @@ export default {
     },
 
     formatBalance(balance) {
-      // El balance en DB está en centavos de USD, convertir a USD primero
-      const balanceInUSD = balance / 100;
+      // El balance en DB está en dólares (no centavos), usar directamente
+      const balanceInUSD = typeof balance === 'number' ? balance : 0;
 
       if (this.selectedCurrency === 'COP') {
         const balanceInCOP = balanceInUSD * this.exchangeRate;

@@ -7,6 +7,7 @@ import {
   sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
+  onAuthStateChanged,
 } from "firebase/auth";
 
 const userAuth = defineStore("auth", {
@@ -19,9 +20,53 @@ const userAuth = defineStore("auth", {
       isVerified: false,
       pendingVerification: false,
       tempEmail: null as string | null,
+      authStateInitialized: false,
     };
   },
   actions: {
+    /**
+     * Inicializar el estado de autenticación desde Firebase
+     * Restaura la sesión si existe una previa
+     */
+    async initializeAuthState() {
+      return new Promise<void>((resolve) => {
+        const auth = getAuth();
+
+        // Restaurar token desde localStorage si existe
+        const savedToken = localStorage.getItem('authToken');
+        if (savedToken) {
+          this.token = savedToken;
+          console.log('Token restaurado desde localStorage');
+        }
+
+        // Escuchar cambios de estado de autenticación en Firebase
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            // Usuario autenticado
+            try {
+              const token = await user.getIdToken();
+              this.token = token;
+              this.isVerified = user.emailVerified;
+
+              // Guardar token en localStorage
+              localStorage.setItem('authToken', token);
+              console.log('Token guardado en localStorage');
+            } catch (error) {
+              console.error('Error obteniendo token:', error);
+              this.token = null;
+            }
+          } else {
+            // Usuario no autenticado
+            this.token = null;
+            this.isVerified = false;
+            localStorage.removeItem('authToken');
+          }
+
+          this.authStateInitialized = true;
+          resolve();
+        });
+      });
+    },
     async register(username: string, email: string, password: string) {
       try {
         const auth = getAuth();
@@ -167,6 +212,10 @@ const userAuth = defineStore("auth", {
         this.pendingVerification = false;
         this.message = "Login exitoso";
 
+        // Guardar token en localStorage para persistencia
+        localStorage.setItem('authToken', token);
+        console.log('Token guardado en localStorage después de login');
+
         return { success: true, userData: response };
       } catch (error: unknown) {
         console.error("Error en login:", error);
@@ -289,6 +338,11 @@ const userAuth = defineStore("auth", {
         this.pendingVerification = false;
         this.tempEmail = userEmail;
         this.message = "Login con Google exitoso";
+
+        // Guardar token en localStorage para persistencia
+        localStorage.setItem('authToken', token);
+        console.log('Token guardado en localStorage después de Google login');
+
         return { success: true, userData };
       } catch (error: unknown) {
         console.error("Error en login Google:", error);
@@ -369,6 +423,11 @@ const userAuth = defineStore("auth", {
           this.pendingVerification = false;
           this.tempEmail = null;
           this.message = "Cuenta verificada";
+
+          // Guardar token en localStorage para persistencia
+          localStorage.setItem('authToken', token);
+          console.log('Token guardado en localStorage después de verificación');
+
           return true;
         } else {
           this.message =

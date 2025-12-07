@@ -27,20 +27,23 @@
       </div>
 
       <nav class="nav">
-        <router-link :to="{name: 'home'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.home') }}</router-link>
-        <router-link :to="{name: 'maps'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.maps') }}</router-link>
-        <router-link :to="{name: 'profile'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.profile') }}</router-link>
+        <!-- Solo mostrar navegación cuando esté autenticado -->
+        <template v-if="isAuthenticated">
+          <router-link :to="{name: 'home'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.home') }}</router-link>
+          <router-link :to="{name: 'maps'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.maps') }}</router-link>
+          <router-link :to="{name: 'profile'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.profile') }}</router-link>
+        </template>
       </nav>
 
       <div class="auth-buttons">
-        <!-- Mostrar botones de Login/Signup solo en home y cuando no esté autenticado -->
-        <template v-if="!isAuthenticated && !isAuthRoute">
+        <!-- Mostrar botones de Login/Signup solo cuando no esté autenticado -->
+        <template v-if="showAuthButtons">
           <router-link :to="{ name: 'login' }" class="btn-primary" @click="closeSidebarOnMobile">{{ $t('nav.login') }}</router-link>
           <router-link :to="{ name: 'signup' }" class="btn-primary" @click="closeSidebarOnMobile">{{ $t('nav.signup') }}</router-link>
         </template>
 
-        <!-- Mostrar botón de Logout cuando esté autenticado -->
-        <button v-if="isAuthenticated" @click="logout" class="btn-primary btn-logout">
+        <!-- Mostrar botón de Logout solo cuando esté autenticado -->
+        <button v-if="showLogoutButton" @click="logout" class="btn-primary btn-logout">
           {{ $t('nav.logout') }}
         </button>
 
@@ -88,6 +91,12 @@ const isAuthRoute = computed(() => {
   const authRoutes = ['login', 'signup', 'verify-email'];
   return authRoutes.includes(route.name as string);
 });
+
+// Mostrar botones de login/signup solo cuando NO esté autenticado y NO esté en ruta de auth
+const showAuthButtons = computed(() => !isAuthenticated.value && !isAuthRoute.value);
+
+// Mostrar botón de logout solo cuando esté autenticado
+const showLogoutButton = computed(() => isAuthenticated.value);
 
 // Cerrar sidebar automáticamente en móviles al cambiar de ruta
 watch(() => route.path, () => {

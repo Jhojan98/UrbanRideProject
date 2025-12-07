@@ -1,8 +1,11 @@
 import { defineStore } from "pinia";
+import type Travel from "@/models/Travel";
 
-export const useTravelStore = defineStore("travel", {
+export const useTravelStore = defineStore("history", {
   state: () => ({
     baseURL: process.env.VUE_APP_API_URL + "/travel",
+    travels: [] as Travel[],
+
   }),
   actions: {
     /**
@@ -66,6 +69,40 @@ export const useTravelStore = defineStore("travel", {
         throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
       }
       return await res.json().catch(() => null);
-    }
+    },
+    async fetchTravels(id: string) {
+      try {
+        const response = await fetch(`${this.baseURL}/usuario/${id}`, {
+          headers: { Accept: 'application/json' }
+        })
+        if (!response.ok) {
+          console.error('HTTP error fetching travels:', response.status, response.statusText)
+          this.travels = []
+          return
+        }
+
+        // Verificar si la respuesta tiene contenido antes de parsear JSON
+        const text = await response.text()
+        if (!text || text.trim() === '') {
+          console.log('Respuesta vacía del servidor, no hay viajes')
+          this.travels = []
+          return
+        }
+
+        try {
+          const data = JSON.parse(text)
+          this.travels = Array.isArray(data) ? data as Travel[] : []
+        } catch (parseError) {
+          console.error('Error parseando JSON de viajes:', parseError)
+          console.log('Respuesta recibida:', text)
+          this.travels = []
+        }
+      } catch (error) {
+        console.error('Error fetching travels:', error)
+        this.travels = []
+      }
+
+    },
+
   },
 });

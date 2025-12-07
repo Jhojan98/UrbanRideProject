@@ -105,17 +105,39 @@ export const messages = {
             }
         },
         profile: {
+            loading: 'Cargando...',
             header: {
                 welcome_user: 'Bienvenido de nuevo, {name}'
             },
+            tabs: {
+                overview: 'Resumen',
+                trips: 'Viajes',
+                fines: 'Multas'
+            },
             trips: {
                 title: 'Historial de Viajes',
+                startStation: 'Estación de Inicio',
+                endStation: 'Estación de Destino',
                 route: 'Ruta',
                 date: 'Fecha',
                 duration: 'Duración',
                 cost: 'Costo',
-                status: 'Est',
-                viewAll: 'Ver todos los viajes'
+                status: 'Estado',
+                viewAll: 'Ver todos los viajes',
+                noTrips: 'No hay viajes registrados'
+            },
+            fines: {
+                title: 'Mis Multas',
+                fineId: 'Multa ID',
+                reason: 'Razón',
+                amount: 'Monto',
+                date: 'Fecha',
+                description: 'Descripción',
+                status: 'Estado',
+                paid: 'Pagado',
+                pending: 'Pendiente',
+                payNow: 'Pagar Ahora',
+                noFines: 'No hay multas pendientes'
             },
             loyalty: {
                 title: 'Puntos de Fidelización',
@@ -426,15 +448,37 @@ export const messages = {
             }
         },
         profile: {
+            loading: 'Loading...',
             header: { welcome_user: 'Welcome back, {name}' },
+            tabs: {
+                overview: 'Overview',
+                trips: 'Trips',
+                fines: 'Fines'
+            },
             trips: {
                 title: 'Trip History',
+                startStation: 'Start Station',
+                endStation: 'End Station',
                 route: 'Route',
                 date: 'Date',
                 duration: 'Duration',
                 cost: 'Cost',
-                status: 'St',
-                viewAll: 'View all trips'
+                status: 'Status',
+                viewAll: 'View all trips',
+                noTrips: 'No trips recorded'
+            },
+            fines: {
+                title: 'My Fines',
+                fineId: 'Fine ID',
+                reason: 'Reason',
+                amount: 'Amount',
+                date: 'Date',
+                description: 'Description',
+                status: 'Status',
+                paid: 'Paid',
+                pending: 'Pending',
+                payNow: 'Pay Now',
+                noFines: 'No pending fines'
             },
             loyalty: {
                 title: 'Loyalty Points',

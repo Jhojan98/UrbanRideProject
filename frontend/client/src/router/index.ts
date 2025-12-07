@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import userAuth from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import SignupView from '@/views/SignupView.vue'
@@ -10,7 +11,6 @@ import DestinationMapComponent from '@/components/DestinationMapComponent.vue'
 import ReportProblemComponent from '@/components/ReportProblemComponent.vue'
 import PaymentSuccesComponent from '@/components/payments/PaymentSuccesComponent.vue'
 import PaymentCancelComponent from '@/components/payments/PaymentCancelComponent.vue'
-import PaymentCheckoutComponent from '@/components/payments/PaymentCheckoutComponent.vue'
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -61,7 +61,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/plan-your-trip',
     name: 'plan-your-trip',
     component: ReservationView,
-    meta:{ requireAuth: true, layout: 'main' }
+    meta:{ requireAuth: false, layout: 'main' }
   },
 
   {
@@ -74,28 +74,28 @@ const routes: Array<RouteRecordRaw> = [
     path: '/report-problem',
     name: 'report-problem',
     component: ReportProblemComponent,
-    meta: {requireAuth: false, layout: 'main'}
+    meta: {requireAuth: true, layout: 'main'}
 
   },
   {
     path: '/pago/success',
     name: 'payment-success',
     component: PaymentSuccesComponent,
-    meta: { requireAuth: false, layout: 'main' }
+    meta: { requireAuth: true, layout: 'main' }
   },
   {
     path: '/pago/cancel',
-    name: 'payment-cancel', 
+    name: 'payment-cancel',
     component: PaymentCancelComponent,
-    meta: { requireAuth: false, layout: 'main' }
+    meta: { requireAuth: true, layout: 'main' }
   },
   {
     path: '/pago/methods',
-    name: 'payment-methods', 
+    name: 'payment-methods',
     component: PaymentMethodsComponent,
-    meta: { requireAuth: false, layout: 'main' }
+    meta: { requireAuth: true, layout: 'main' }
   }
-  
+
 
 
 ]
@@ -103,6 +103,26 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
+})
+
+// Guard global para proteger rutas autenticadas
+router.beforeEach((to, from, next) => {
+  const authStore = userAuth()
+  const isAuthenticated = !!authStore.token
+
+  // Si la ruta requiere autenticación y no está autenticado
+  if (to.meta.requireAuth && !isAuthenticated) {
+    // Redirigir a login
+    next({ name: 'login' })
+  }
+  // Si ya está autenticado e intenta acceder a rutas de auth
+  else if (isAuthenticated && (to.name === 'login' || to.name === 'signup')) {
+    // Redirigir a home
+    next({ name: 'home' })
+  }
+  else {
+    next()
+  }
 })
 
 export default router

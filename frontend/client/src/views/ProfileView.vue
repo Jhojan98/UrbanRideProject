@@ -1,141 +1,196 @@
 <template>
-  <div class="profile">
-    <div class="profile-header">
-      <h1>{{ welcomeText }}</h1>
-    </div>
-    <div class="profile-content">
-      <!-- Sección de Historial de Viajes -->
-      <section class="profile-section">
-        <h2 class="section-title">{{ $t('profile.trips.title') }}</h2>
-        <div class="table-container">
-          <table class="trips-table">
-            <thead>
-              <tr>
-                <th>{{ $t('profile.trips.route') }}</th>
-                <th>{{ $t('profile.trips.date') }}</th>
-                <th>{{ $t('profile.trips.duration') }}</th>
-                <th>{{ $t('profile.trips.cost') }}</th>
-                <th>{{ $t('profile.trips.status') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="trip in trips" :key="trip.id">
-                <td>{{ trip.route }}</td>
-                <td>{{ trip.date }}</td>
-                <td>{{ trip.duration }}</td>
-                <td>{{ trip.cost }}</td>
-                <td>{{ trip.status }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <button class="btn-view-all">{{ $t('profile.trips.viewAll') }}</button>
-      </section>
+  <div class="profile-container">
+    <!-- Sidebar -->
+    <aside class="profile-sidebar">
+      <nav class="sidebar-nav">
+        <button
+          @click="activeTab = 'overview'"
+          :class="['sidebar-btn', { active: activeTab === 'overview' }]"
+        >
+          {{ $t('profile.tabs.overview') }}
+        </button>
+        <button
+          @click="activeTab = 'trips'"
+          :class="['sidebar-btn', { active: activeTab === 'trips' }]"
+        >
+          {{ $t('profile.tabs.trips') }}
+        </button>
+        <button
+          @click="activeTab = 'fines'"
+          :class="['sidebar-btn', { active: activeTab === 'fines' }]"
+        >
+          {{ $t('profile.tabs.fines') }}
+        </button>
+      </nav>
+    </aside>
 
-      <!-- Sección de Saldo y Tarjeta (Centrada) -->
-      <section class="profile-section balance-section">
-        <h2 class="section-title">{{ $t('profile.balance.title') }}</h2>
-        <div class="balance-card centered-card">
-          <div class="currency-selector">
-            <label>{{ $t('profile.balance.currency') }}:</label>
-            <button
-              v-for="curr in currencies"
-              :key="curr"
-              @click="selectedCurrency = curr"
-              :class="['currency-btn', { 'active': selectedCurrency === curr }]"
-            >
-              {{ curr }}
-            </button>
-          </div>
-          <div class="balance-display">
-            <span class="balance-label">{{ $t('profile.balance.currentBalance') }}</span>
-            <span class="balance-value">
-              {{ formattedBalance }}
-              <button @click="refreshBalance" class="refresh-btn" title="Actualizar saldo">
-                ⟳
-              </button>
-              <span v-if="isLoadingBalance" class="loading-spinner">↻</span>
-            </span>
-          </div>
-          <div class="card-info">
-            <h4>{{ $t('profile.balance.registeredCard') }}</h4>
-            <div class="card-details">
-              <span class="card-type">Visa</span>
-              <span class="card-number">**** **** **** 1234</span>
-              <span class="card-expiry">{{ $t('profile.balance.expires') }} 12/28</span>
-            </div>
-          </div>
-          <div class="payment-actions">
-            <button class="btn-add-balance" @click="goToPaymentMethods">
-              {{ $t('profile.balance.addBalance') }}
-            </button>
-          </div>
+    <!-- Main Content -->
+    <main class="profile-main">
+      <!-- Overview Tab -->
+      <div v-if="activeTab === 'overview'" class="profile">
+        <div class="profile-header">
+          <h1>{{ welcomeText }}</h1>
         </div>
-      </section>
-    </div>
+        <div class="profile-content">
+          <!-- Sección de Saldo y Tarjeta (Centrada) -->
+          <section class="profile-section balance-section">
+            <h2 class="section-title">{{ $t('profile.balance.title') }}</h2>
+            <div class="balance-card centered-card">
+              <div class="currency-selector">
+                <label for="currency-select">{{ $t('profile.balance.currency') }}:</label>
+                <select
+                  id="currency-select"
+                  v-model="selectedCurrency"
+                  class="currency-select"
+                >
+                  <option value="USD">USD - Dólar</option>
+                  <option value="COP">COP - Peso Colombiano</option>
+                </select>
+              </div>
+              <div class="balance-display">
+                <span class="balance-label">{{ $t('profile.balance.currentBalance') }}</span>
+                <span class="balance-value">
+                  {{ formattedBalance }}
+                  <button @click="refreshBalance" class="refresh-btn" title="Actualizar saldo">
+                    ⟳
+                  </button>
+                  <span v-if="isLoadingBalance" class="loading-spinner">↻</span>
+                </span>
+              </div>
+              <div class="card-info">
+                <h4>{{ $t('profile.balance.registeredCard') }}</h4>
+                <div class="card-details">
+                  <span class="card-type">Visa</span>
+                  <span class="card-number">**** **** **** 1234</span>
+                  <span class="card-expiry">{{ $t('profile.balance.expires') }} 12/28</span>
+                </div>
+              </div>
+              <div class="payment-actions">
+                <button class="btn-add-balance" @click="goToPaymentMethods">
+                  {{ $t('profile.balance.addBalance') }}
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Trips Tab -->
+      <div v-if="activeTab === 'trips'" class="profile">
+        <div class="profile-header">
+          <h1>{{ $t('profile.trips.title') }}</h1>
+        </div>
+        <div class="profile-content">
+          <section class="profile-section">
+            <div v-if="isLoadingTrips" class="loading-message">
+              {{ $t('profile.loading') }}
+            </div>
+            <div v-else-if="travels.length === 0" class="empty-message">
+              {{ $t('profile.trips.noTrips') }}
+            </div>
+            <div v-else class="table-container">
+              <table class="trips-table">
+                <thead>
+                  <tr>
+                    <th>{{ $t('profile.trips.startStation') }}</th>
+                    <th>{{ $t('profile.trips.endStation') }}</th>
+                    <th>{{ $t('profile.trips.date') }}</th>
+                    <th>{{ $t('profile.trips.status') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="trip in travels" :key="trip.idTravel">
+                    <td>{{ trip.fromIdStation }}</td>
+                    <td>{{ trip.toIdStation || 'N/A' }}</td>
+                    <td>{{ formatDate(trip.startedAt) }}</td>
+                    <td>{{ trip.status }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Fines Tab -->
+      <div v-if="activeTab === 'fines'" class="profile">
+        <div class="profile-header">
+          <h1>{{ $t('profile.fines.title') }}</h1>
+        </div>
+        <div class="profile-content">
+          <section class="profile-section">
+            <div v-if="isLoadingFines" class="loading-message">
+              {{ $t('profile.loading') }}
+            </div>
+            <div v-else-if="fines.length === 0" class="empty-message">
+              {{ $t('profile.fines.noFines') }}
+            </div>
+            <div v-else class="fines-list">
+              <div v-for="fine in fines" :key="fine.k_user_fine" class="fine-card" :class="{ 'fine-paid': fine.t_state === 'PAID' }">
+                <div class="fine-header">
+                  <h3>{{ $t('profile.fines.fineId') }}: {{ fine.k_user_fine }}</h3>
+                  <span class="fine-status" :class="{ paid: fine.t_state === 'PAID', pending: fine.t_state !== 'PAID' }">
+                    {{ fine.t_state === 'PAID' ? $t('profile.fines.paid') : $t('profile.fines.pending') }}
+                  </span>
+                </div>
+                <div class="fine-details">
+                  <p><strong>{{ $t('profile.fines.reason') }}:</strong> {{ fine.n_reason }}</p>
+                  <p><strong>{{ $t('profile.fines.amount') }}:</strong> {{ formatCost(fine.v_amount_snapshot) }}</p>
+                  <p><strong>{{ $t('profile.fines.date') }}:</strong> {{ formatDate(fine.f_assigned_at) }}</p>
+                  <p v-if="fine.fine?.d_description"><strong>{{ $t('profile.fines.description') }}:</strong> {{ fine.fine.d_description }}</p>
+                </div>
+                <div v-if="fine.t_state !== 'PAID'" class="fine-actions">
+                  <button class="btn-pay-fine" @click="payFine(fine.k_user_fine, fine.v_amount_snapshot)">
+                    {{ $t('profile.fines.payNow') }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { getAuth, onAuthStateChanged, type User } from "firebase/auth";
 import usePaymentStore from "@/stores/payment";
+import { useTravelStore } from "@/stores/travel";
+import { fetchExchangeRate } from "@/services/currencyExchange";
+import type Travel from "@/models/Travel";
+import type Fine from "@/models/Fine";
 
 const router = useRouter();
 const { t: $t } = useI18n();
 const paymentStore = usePaymentStore();
+const travelStore = useTravelStore();
 
 // Datos del usuario
 const uid = ref<string | null>(null);
 const userName = ref<string | null>(null);
 const balance = ref<number | null>(null);
 const isLoadingBalance = ref(false);
+const isLoadingTrips = ref(false);
+const isLoadingFines = ref(false);
 
 // Selector de moneda
-const currencies = ['USD', 'COP'] as const;
 const selectedCurrency = ref<'USD' | 'COP'>('USD');
 
-// Tasa de conversión estimada (1 USD = 4000 COP)
-const USD_TO_COP_RATE = 4000;
+// Tasas de conversión dinámicas
+const exchangeRates = ref<{ COP: number }>({
+  COP: 4000 // Valor por defecto USD a COP
+});
 
-// Historial de viajes (datos de ejemplo)
-interface Trip {
-  id: number;
-  route: string;
-  date: string;
-  duration: string;
-  cost: string;
-  status: string;
-}
+// Tab activo
+const activeTab = ref<'overview' | 'trips' | 'fines'>('overview');
 
-const trips = ref<Trip[]>([
-  {
-    id: 1,
-    route: 'Parque Central a Calle Mayor',
-    date: '2024-05-20',
-    duration: '25 min',
-    cost: '$15.000',
-    status: 'C'
-  },
-  {
-    id: 2,
-    route: 'Plaza Nueva a Estación Tren',
-    date: '2024-05-18',
-    duration: '15 min',
-    cost: '$14.000',
-    status: 'C'
-  },
-  {
-    id: 3,
-    route: 'Avenida Sol a Mercado',
-    date: '2024-05-15',
-    duration: '30 min',
-    cost: '$18.000',
-    status: 'C'
-  }
-]);
+// Datos de viajes y multas
+const travels = ref<Travel[]>([]);
+const fines = ref<Fine[]>([]);
 
 // Texto de bienvenida
 const welcomeText = computed(() => {
@@ -147,10 +202,10 @@ const welcomeText = computed(() => {
 const formattedBalance = computed(() => {
   if (balance.value === null) return "--";
 
-  // El saldo en el backend está en USD
+  // El balance viene en dólares (no en centavos), usar directamente
   const amountInUSD = balance.value;
   const displayAmount = selectedCurrency.value === 'COP'
-    ? amountInUSD * USD_TO_COP_RATE
+    ? amountInUSD * exchangeRates.value.COP
     : amountInUSD;
 
   const locale = selectedCurrency.value === 'COP' ? 'es-CO' : 'en-US';
@@ -162,9 +217,95 @@ const formattedBalance = computed(() => {
   }).format(displayAmount);
 });
 
+// Funciones helper para formateo
+const formatDate = (date: string | number | Date | undefined): string => {
+  if (!date) return 'N/A';
+  const dateObj = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const formatCost = (cost: number | undefined): string => {
+  if (cost === null || cost === undefined) return 'N/A';
+  // El costo viene en dólares (no en centavos), usar directamente
+  const costInUSD = typeof cost === 'number' ? cost : 0;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(costInUSD);
+};
+
 // Navegar a PaymentMethods
 function goToPaymentMethods() {
   router.push({ name: "payment-methods" });
+}
+
+// Actualizar tasa de cambio dinámicamente
+const updateExchangeRate = async () => {
+  if (selectedCurrency.value === 'COP') {
+    try {
+      const rateCOP = await fetchExchangeRate('USD', 'COP', 1);
+      exchangeRates.value.COP = rateCOP;
+      console.log(`Tasa de cambio actualizada: 1 USD = ${rateCOP} COP`);
+    } catch (error) {
+      console.error('Error obteniendo tasa de cambio, usando valor por defecto:', error);
+      // Mantener valor por defecto en caso de error
+    }
+  }
+};
+
+// Observar cambios en la moneda seleccionada
+watch(selectedCurrency, () => {
+  updateExchangeRate();
+});
+
+// Pagar multa
+async function payFine(fineId: number, amount: number | undefined) {
+  if (amount === undefined) {
+    console.warn('No se puede procesar pago sin cantidad');
+    alert('Error: No se puede procesar el pago sin cantidad');
+    return;
+  }
+
+  if (!uid.value) {
+    console.warn('No se puede procesar pago sin UID de usuario');
+    alert('Error: Usuario no identificado');
+    return;
+  }
+
+  // Verificar saldo suficiente
+  if (balance.value !== null && balance.value < amount) {
+    alert(`Saldo insuficiente. Tu saldo actual es ${formattedBalance.value} y la multa es de ${formatCost(amount)}`);
+    return;
+  }
+
+  // Confirmar pago con el usuario
+  const confirmed = confirm(`¿Desea pagar la multa #${fineId} por ${formatCost(amount)}?\n\nSaldo actual: ${formattedBalance.value}\nSaldo después del pago: ${formatCost((balance.value || 0) - amount)}`);
+  if (!confirmed) return;
+
+  try {
+    console.log(`Pagando multa ${fineId} de ${amount} USD`);
+
+    // Llamar al método del store para pagar la multa
+    const success = await paymentStore.payFine(fineId, uid.value, amount);
+
+    if (!success) {
+      alert(paymentStore.error || 'Error al procesar el pago de la multa');
+      return;
+    }
+
+    // Recargar las multas después del pago
+    await paymentStore.fetchFines(uid.value);
+    fines.value = paymentStore.fines;
+
+    // Actualizar el balance
+    await fetchBalance();
+
+    alert('¡Multa pagada exitosamente! Tu saldo ha sido actualizado.');
+  } catch (error) {
+    console.error('Error al pagar multa:', error);
+    alert('Error al procesar el pago de la multa');
+  }
 }
 
 // Obtener uid y nombre desde Firebase
@@ -173,7 +314,7 @@ function attachFirebaseAuthListener() {
   onAuthStateChanged(auth, (user: User | null) => {
     if (user) {
       uid.value = user.uid;
-      userName.value = user.displayName ?? (user.email ? user.email.split("@")[0] : `user_${user.uid.substring(0,6)}`);
+      userName.value = user.displayName ?? (user.email ? user.email.split("@")[0] : `user_${user.uid.substring(0, 6)}`);
 
       try {
         localStorage.setItem("uid", uid.value);
@@ -181,6 +322,7 @@ function attachFirebaseAuthListener() {
       } catch (e) { /* ignore storage errors */ }
 
       fetchBalance();
+      loadTripsAndFines();
     } else {
       const storedUid = localStorage.getItem("uid");
       const storedName = localStorage.getItem("userName");
@@ -188,6 +330,7 @@ function attachFirebaseAuthListener() {
         uid.value = storedUid;
         userName.value = storedName ?? "CLIENTE";
         fetchBalance();
+        loadTripsAndFines();
       } else {
         uid.value = null;
         userName.value = "CLIENTE";
@@ -197,7 +340,7 @@ function attachFirebaseAuthListener() {
   });
 }
 
-// Obtener balance del usuario-service a través del store
+// Obtener balance del usuario
 async function fetchBalance() {
   if (!uid.value) return;
 
@@ -207,10 +350,9 @@ async function fetchBalance() {
     balance.value = result ?? 0;
 
     if (result !== null) {
-      console.log("Balance obtenido desde el store:", balance.value);
+      console.log("Balance obtenido:", balance.value);
       localStorage.setItem("userBalance", (balance.value ?? 0).toString());
     } else {
-      // Fallback a localStorage
       const storedBalance = localStorage.getItem("userBalance");
       balance.value = storedBalance ? parseInt(storedBalance, 10) : 0;
     }
@@ -224,41 +366,64 @@ async function refreshBalance() {
   await fetchBalance();
 }
 
-// Configurar listeners para actualizar el balance
+// Cargar viajes y multas
+async function loadTripsAndFines() {
+  if (!uid.value) return;
+
+  // Cargar viajes
+  isLoadingTrips.value = true;
+  try {
+    await travelStore.fetchTravels(uid.value);
+    travels.value = travelStore.travels;
+  } catch (error) {
+    console.error('Error cargando viajes:', error);
+    travels.value = [];
+  } finally {
+    isLoadingTrips.value = false;
+  }
+
+  // Cargar multas
+  isLoadingFines.value = true;
+  try {
+    await paymentStore.fetchFines(uid.value);
+    fines.value = paymentStore.fines;
+  } catch (error) {
+    console.error('Error cargando multas:', error);
+    fines.value = [];
+  } finally {
+    isLoadingFines.value = false;
+  }
+}
+
+// Configurar listeners para actualizar balance
 function setupBalanceListeners() {
-  // Definir la función para el event listener
   const handleFocus = () => {
     console.log("Ventana enfocada, actualizando balance...");
     fetchBalance();
   };
 
-  // Escuchar evento cuando la ventana se enfoca (por si el usuario vuelve del pago)
   window.addEventListener('focus', handleFocus);
 
-  // Verificar si hay un pago reciente
   const lastPaymentTime = localStorage.getItem('last_payment_time');
   if (lastPaymentTime) {
     const now = Date.now();
     const paymentTime = parseInt(lastPaymentTime, 10);
-    // Si el pago fue hace menos de 5 minutos, forzar actualización
     if (now - paymentTime < 5 * 60 * 1000) {
-      console.log("Pago reciente detectado, forzando actualización de saldo");
+      console.log("Pago reciente detectado, forzando actualización");
       fetchBalance();
       localStorage.removeItem('last_payment_time');
     }
   }
 
-  // Actualizar balance periódicamente (cada 30 segundos)
   const intervalId = setInterval(() => {
     if (uid.value && document.visibilityState === 'visible') {
       fetchBalance();
     }
   }, 30000);
 
-  // Limpiar intervalo y event listener al desmontar
   onUnmounted(() => {
     clearInterval(intervalId);
-    window.removeEventListener('focus', handleFocus); // CORRECCIÓN: Usar la misma referencia
+    window.removeEventListener('focus', handleFocus);
   });
 }
 
@@ -266,7 +431,15 @@ onMounted(() => {
   attachFirebaseAuthListener();
   setupBalanceListeners();
 
-  // También forzar actualización cuando se monta el componente
+  // Cargar tasa de cambio inicial
+  try {
+    updateExchangeRate().then(() => {
+      console.log('Tasa de cambio cargada en montaje');
+    });
+  } catch (error) {
+    console.error('Error cargando tasa inicial:', error);
+  }
+
   setTimeout(() => {
     fetchBalance();
   }, 1000);

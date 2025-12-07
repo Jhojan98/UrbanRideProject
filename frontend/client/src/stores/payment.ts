@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-
+import type Fine from '@/models/Fine'
 interface CheckoutSessionRequest {
   priceId: string
   quantity: number
@@ -18,6 +18,7 @@ const usePaymentStore = defineStore('payment', {
       baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8090',
       loading: false,
       error: null as string | null,
+        fines: [] as Fine[],
     }
   },
 
@@ -186,6 +187,56 @@ const usePaymentStore = defineStore('payment', {
     clearError(): void {
       this.error = null
     },
+        async fetchFines(id: string) {
+      try {
+        const response = await fetch(`${this.baseURL}/fine/api/user_fines/user/${id}`, {
+          headers: { Accept: 'application/json' }
+        })
+        if (!response.ok) {
+          console.error('HTTP error fetching fines:', response.status, response.statusText)
+          this.fines = []
+          return
+        }
+        const data = await response.json()
+        this.fines = Array.isArray(data) ? data as Fine[] : []
+      } catch (error) {
+        console.error('Error fetching fines:', error)
+        this.fines = []
+      }
+    },
+    async payFine(idUserFine: number, userId: string, amount: number): Promise<boolean> {
+      try {
+        const url = `${this.baseURL}/fine/api/user_fines/${idUserFine}/pay`;
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        })
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}))
+          this.error = errData.error || `Error al pagar la multa: ${response.status}`
+          console.error('Error paying fine:', this.error)
+          return false
+        }
+
+        // Actualizar el balance del usuario restando el monto de la multa
+        const newBalance = await this.fetchBalance(userId);
+        if (newBalance === null) {
+          this.error = 'Error al actualizar el balance después de pagar la multa';
+          return false;
+        }
+
+        // Refrescar la lista de multas
+        await this.fetchFines(userId);
+        return true;
+      } catch (error) {
+        console.error('Error paying fine:', error);
+        this.error = 'Error al conectar con el servidor para pagar la multa';
+        return false;
+      }
+    }
   },
 })
 
