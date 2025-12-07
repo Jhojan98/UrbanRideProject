@@ -7,6 +7,8 @@ from datetime import datetime
 import httpx
 from sqlalchemy.orm import Session, joinedload
 from fastapi import Depends, FastAPI, HTTPException
+from py_eureka_client import eureka_client
+
 import database
 import models as _models
 from schemas import FineCreate, FineOut, FineUpdate, UserFineCreate, UserFineOut, UserFineUpdate
@@ -26,17 +28,27 @@ app = FastAPI(lifespan=lifespan, title="User Fine Service")
 logging.basicConfig(level=logging.INFO)
 
 
-def _get_users_service_base_url() -> str:
-    users_url = os.getenv("USERS_SERVICE_URL", "http://usuario-service:8001")
-    print(f"Users service URL from env: {users_url}")
-    users_url = users_url.strip()
-    if users_url and not users_url.startswith("http://") and not users_url.startswith("https://"):
-        users_url = "http://" + users_url
-    return users_url.rstrip("/")
+async def _resolve_service_url(service_name: str) -> str:
+    eureka_host = os.getenv("EUREKA_HOST", "eureka-server")
+    eureka_port = os.getenv("EUREKA_PORT", "8761")
+    eureka_server_url = f"http://{eureka_host}:{eureka_port}/eureka/"
+
+    try:
+        app = await eureka_client.get_application(eureka_server_url, service_name)
+        for instance in app.instances:
+            if instance.status == "UP":
+                return instance.homePageUrl.rstrip("/")
+        
+        logging.error(f"No 'UP' instances found for service: {service_name}")
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {service_name}")
+    except Exception as e:
+        logging.error(f"Failed to resolve service '{service_name}': {e}")
+        raise HTTPException(status_code=503, detail=f"Service discovery failed for {service_name}")
+
 
 async def _subtract_balance_from_users_service(user_id: str, amount: int) -> None:
     """Subtract balance from the user in the users service."""
-    base_url = _get_users_service_base_url()
+    base_url = await _resolve_service_url("usuario-service")
     endpoint = f"{base_url}/balance/{user_id}/subtract"
     print(f"Calling users service to subtract balance at: {endpoint}")
 
@@ -173,7 +185,7 @@ async def get_user_fine(user_fine_id: int, db: Session = Depends(database.get_db
 
 
 async def _fetch_user_from_users_service(user_id: str) -> dict:
-    base_url = _get_users_service_base_url()
+    base_url = await _resolve_service_url("usuario-service")
     endpoint = f"{base_url}/login/{user_id}"
     print(f"Calling users service endpoint: {endpoint}")
     
