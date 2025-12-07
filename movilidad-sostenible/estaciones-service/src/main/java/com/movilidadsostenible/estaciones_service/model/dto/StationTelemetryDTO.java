@@ -10,6 +10,8 @@ public class StationTelemetryDTO {
     private boolean cctvStatus;
     private Integer lockedPadlocks;
     private Integer unlockedPadlocks;
+    private Integer availableElectricBikes;
+    private Integer availableMechanicBikes;
     private Long timestamp;
 }
 

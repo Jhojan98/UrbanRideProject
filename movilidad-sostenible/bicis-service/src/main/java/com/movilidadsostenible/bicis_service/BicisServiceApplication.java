@@ -1,5 +1,6 @@
 package com.movilidadsostenible.bicis_service;
 
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -10,6 +11,7 @@ import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableFeignClients
+@EnableRabbit
 public class BicisServiceApplication {
 
 	@PostConstruct

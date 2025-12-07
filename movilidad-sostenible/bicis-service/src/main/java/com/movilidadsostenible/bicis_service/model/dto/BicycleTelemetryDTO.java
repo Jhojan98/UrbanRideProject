@@ -7,6 +7,7 @@ import lombok.Data;
 @Data
 public class BicycleTelemetryDTO {
     private String idBicycle;
+    private String padlockStatus;
     private Double latitude;
     private Double longitude;
     private Double battery;
