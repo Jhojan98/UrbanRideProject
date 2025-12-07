@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -6,6 +7,7 @@ from typing import List
 import httpx
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
+from py_eureka_client import eureka_client
 
 import database
 import models
@@ -35,38 +37,30 @@ models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(lifespan=lifespan, title="Mantenimiento Service")
 
-def _get_bicycle_service_base_url() -> str:
-    bicycle_url= os.getenv("BICYCLE_SERVICE_URL", "http://bicis-service:8002")
-    print(f"Using Bicycle service URL: {bicycle_url}")
-    bicycle_url = bicycle_url.strip()
-    if bicycle_url and not bicycle_url.startswith("http://") and not bicycle_url.startswith("https://"):
-        bicycle_url = "http://" + bicycle_url
-    return bicycle_url.rstrip("/")
 
+async def _resolve_service_url(service_name: str) -> str:
+    eureka_host = os.getenv("EUREKA_HOST", "eureka-server")
+    eureka_port = os.getenv("EUREKA_PORT", "8761")
+    eureka_server_url = f"http://{eureka_host}:{eureka_port}/eureka/"
 
-def _get_station_service_base_url() -> str:
-    """Return Station service base URL """
-    station_url = os.getenv("STATION_SERVICE_URL", "http://stations-service:8003")
-    print(f"Using Station service URL: {station_url}")
-    station_url = station_url.strip()
-    if station_url and not station_url.startswith("http://") and not station_url.startswith("https://"):
-        station_url = "http://" + station_url
-    return station_url.rstrip("/")
+    try:
+        app = await eureka_client.get_application(eureka_server_url, service_name)
+        for instance in app.instances:
+            if instance.status == "UP":
+                return instance.homePageUrl.rstrip("/")
+        
+        logging.error(f"No 'UP' instances found for service: {service_name}")
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {service_name}")
+    except Exception as e:
+        logging.error(f"Failed to resolve service '{service_name}': {e}")
+        raise HTTPException(status_code=503, detail=f"Service discovery failed for {service_name}")
 
-
-def _get_lock_service_base_url() -> str:
-    """Return Lock service base URL """
-    lock_url = os.getenv("LOCK_SERVICE_URL", "http://locks-service:8004")
-    print(f"Using Lock service URL: {lock_url}")
-    lock_url = lock_url.strip()
-    if lock_url and not lock_url.startswith("http://") and not lock_url.startswith("https://"):
-        lock_url = "http://" + lock_url
-    return lock_url.rstrip("/")
 
 async def _ensure_bicycle_exists(bike_id: str) -> dict:
     if not bike_id:
         raise HTTPException(status_code=400, detail="Bike ID is required for bicycle maintenance records.")
-    base_url = _get_bicycle_service_base_url()
+    
+    base_url = await _resolve_service_url("bicis-service")
     endpoint = f"{base_url}/{bike_id}"
     print(f"Checking bicycle existence at {endpoint}")
     try:
@@ -90,7 +84,8 @@ async def _ensure_bicycle_exists(bike_id: str) -> dict:
 async def _ensure_station_exists(station_id: int) -> dict:
     if station_id is None:
         raise HTTPException(status_code=400, detail="Station ID is required for station maintenance records.")
-    base_url = _get_station_service_base_url()
+    
+    base_url = await _resolve_service_url("estaciones-service")
     endpoint = f"{base_url}/stations/{station_id}"
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
@@ -109,7 +104,9 @@ async def _ensure_station_exists(station_id: int) -> dict:
 async def _ensure_lock_exists(lock_id: str) -> dict:
     if not lock_id:
         raise HTTPException(status_code=400, detail="Lock ID is required for lock maintenance records.")
-    base_url = _get_lock_service_base_url()
+    
+    # Assuming 'slots-service' is the correct name for locks
+    base_url = await _resolve_service_url("slots-service")
     endpoint = f"{base_url}/{lock_id}"
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
