@@ -8,15 +8,16 @@
     <!-- SECCIÓN DE RECARGA SIMPLE -->
     <div class="recharge-section">
       <div class="currency-selector">
-        <label>{{ $t('payments.recharge.currency') }}:</label>
-        <button
-          v-for="curr in currencies"
-          :key="curr"
-          @click="selectedCurrency = curr"
-          :class="['currency-btn', { 'active': selectedCurrency === curr }]"
+        <label for="currency-select">{{ $t('payments.recharge.currency') }}:</label>
+        <select
+          id="currency-select"
+          v-model="selectedCurrency"
+          class="currency-select"
         >
-          {{ curr }}
-        </button>
+          <option v-for="curr in currencies" :key="curr" :value="curr">
+            {{ curr }} - {{ getCurrencyName(curr) }}
+          </option>
+        </select>
       </div>
       <div class="recharge-options">
         <div
@@ -40,7 +41,7 @@
       </button>
 
       <div class="recharge-info">
-        <p v-if="selectedCurrency === 'COP'" class="conversion-note">
+        <p v-if="selectedCurrency !== 'USD'" class="conversion-note">
           {{ $t('payments.recharge.estimatedNote', { currency: selectedCurrency }) }}
         </p>
         <p>{{ $t('payments.recharge.security') }}</p>
@@ -50,42 +51,61 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getAuth } from 'firebase/auth'
 import useAuth from '@/stores/auth'
 import usePaymentStore from '@/stores/payment'
+import { fetchExchangeRate } from '@/services/currencyExchange'
 
 const { t: $t } = useI18n()
 
 // Estado
 const loading = ref(false)
-const selectedAmount = ref<number | null>(25000) // Monto por defecto seleccionado en USD
+const selectedAmount = ref<number | null>(null) // Se calculará automáticamente al montar
 
 // Selector de moneda
-const currencies = ['USD', 'COP'] as const
-const selectedCurrency = ref<'USD' | 'COP'>('USD')
+const currencies = ['USD', 'COP', 'EUR'] as const
+const selectedCurrency = ref<'USD' | 'COP' | 'EUR'>('COP')
 
-// Tasa de conversión estimada (1 USD = 4000 COP)
-const USD_TO_COP_RATE = 4000
+// Tasas de conversión dinámicas
+const exchangeRates = ref<{ COP: number; EUR: number }>({
+  COP: 4000, // Valor por defecto USD a COP
+  EUR: 0.92  // Valor por defecto USD a EUR
+})
 
-// Montos de recarga predefinidos en USD (valores reales para Stripe)
-const rechargeAmounts = [
-  { value: 10000, display: '10.000' },
-  { value: 25000, display: '25.000' },
-  { value: 50000, display: '50.000' },
-  { value: 100000, display: '100.000' }
+// Montos de recarga predefinidos en COP
+const rechargeAmountsCOP = [
+  10000,   // $10.000 COP
+  25000,   // $25.000 COP
+  50000,   // $50.000 COP
+  100000   // $100.000 COP
 ]
 
-// Montos formateados según la moneda seleccionada
+// Montos formateados según la moneda seleccionada con conversión dinámica
 const displayedAmounts = computed(() => {
-  return rechargeAmounts.map(amount => {
-    const valueUSD = amount.value
-    const displayValue = selectedCurrency.value === 'COP'
-      ? valueUSD * USD_TO_COP_RATE
-      : valueUSD
+  return rechargeAmountsCOP.map(amountCOP => {
+    let displayValue: number
+    let valueUSD: number
 
-    const locale = selectedCurrency.value === 'COP' ? 'es-CO' : 'en-US'
+    if (selectedCurrency.value === 'COP') {
+      // Mostrar el valor en COP directamente
+      displayValue = amountCOP
+      // Calcular el equivalente en centavos de USD para Stripe
+      valueUSD = Math.round((amountCOP / exchangeRates.value.COP) * 100)
+    } else if (selectedCurrency.value === 'EUR') {
+      // Convertir de COP a EUR para mostrar
+      const amountUSD = amountCOP / exchangeRates.value.COP
+      displayValue = amountUSD * exchangeRates.value.EUR
+      valueUSD = Math.round(amountUSD * 100)
+    } else {
+      // USD: Convertir de COP a USD para mostrar
+      valueUSD = Math.round((amountCOP / exchangeRates.value.COP) * 100)
+      displayValue = valueUSD / 100 // Convertir de centavos a dólares
+    }
+
+    const locale = selectedCurrency.value === 'COP' ? 'es-CO' :
+                   selectedCurrency.value === 'EUR' ? 'es-ES' : 'en-US'
     const formatted = new Intl.NumberFormat(locale, {
       style: 'currency',
       currency: selectedCurrency.value,
@@ -93,18 +113,81 @@ const displayedAmounts = computed(() => {
     }).format(displayValue)
 
     return {
-      valueUSD: valueUSD,
-      formatted: formatted
+      valueUSD: valueUSD, // Valor en centavos de USD para Stripe
+      valueCOP: amountCOP, // Valor original en COP
+      formatted: formatted // Texto formateado para mostrar
     }
   })
 })
 
-// Mapeo de montos a priceIds de Stripe (usa tus priceIds reales de Stripe)
-const priceMap: { [key: number]: string } = {
-  10000: 'price_1SZJg7H5d2VSDRWESK3K2s4c',
-  25000: 'price_1SXRt6H5d2VSDRWEyeJzMcCz',
-  50000: 'price_1SZJgKH5d2VSDRWELkeUDwRx',
-  100000: 'price_1SZJgWH5d2VSDRWEdevIO0e5'
+// Actualizar las tasas de cambio cuando se cambia de moneda
+const updateExchangeRate = async () => {
+  try {
+    if (selectedCurrency.value === 'COP') {
+      // Obtener la tasa de cambio real: 1 USD a COP
+      const rateCOP = await fetchExchangeRate('USD', 'COP', 1)
+      exchangeRates.value.COP = rateCOP
+      console.log(`Tasa de cambio actualizada: 1 USD = ${rateCOP} COP`)
+    } else if (selectedCurrency.value === 'EUR') {
+      // Obtener la tasa de cambio real: 1 USD a EUR
+      const rateEUR = await fetchExchangeRate('USD', 'EUR', 1)
+      exchangeRates.value.EUR = rateEUR
+      console.log(`Tasa de cambio actualizada: 1 USD = ${rateEUR} EUR`)
+    }
+  } catch (error) {
+    console.error('Error obteniendo tasa de cambio, usando valor por defecto:', error)
+    // Mantener valores por defecto en caso de error
+  }
+}
+
+// Observar cambios en la moneda seleccionada
+watch(selectedCurrency, () => {
+  updateExchangeRate()
+})
+
+// Función helper para obtener el nombre de la moneda
+const getCurrencyName = (currency: string): string => {
+  const names: { [key: string]: string } = {
+    USD: 'Dólar estadounidense',
+    COP: 'Peso colombiano',
+    EUR: 'Euro'
+  }
+  return names[currency] || currency
+}
+
+// Cargar tasas iniciales al montar el componente
+onMounted(async () => {
+  // Cargar ambas tasas al inicio
+  try {
+    const [rateCOP, rateEUR] = await Promise.all([
+      fetchExchangeRate('USD', 'COP', 1).catch(() => 4000),
+      fetchExchangeRate('USD', 'EUR', 1).catch(() => 0.92)
+    ])
+    exchangeRates.value.COP = rateCOP
+    exchangeRates.value.EUR = rateEUR
+    console.log('Tasas de cambio cargadas:', exchangeRates.value)
+  } catch (error) {
+    console.error('Error cargando tasas iniciales:', error)
+  }
+
+  // Seleccionar el segundo monto por defecto (25.000 COP)
+  if (displayedAmounts.value.length > 1) {
+    selectedAmount.value = displayedAmounts.value[1].valueUSD
+  }
+})
+
+// Mapeo de montos COP a priceIds de Stripe
+// Estos priceIds deben corresponder a los valores aproximados en USD
+const priceMapCOP: { [key: number]: string } = {
+  10000: 'price_1SZJg7H5d2VSDRWESK3K2s4c',   // ~$2.50 USD
+  25000: 'price_1SXRt6H5d2VSDRWEyeJzMcCz',   // ~$6.25 USD
+  50000: 'price_1SZJgKH5d2VSDRWELkeUDwRx',   // ~$12.50 USD
+  100000: 'price_1SZJgWH5d2VSDRWEdevIO0e5'   // ~$25 USD
+}
+
+// Función helper para obtener el priceId basado en el monto en COP
+const getPriceId = (amountCOP: number): string | undefined => {
+  return priceMapCOP[amountCOP]
 }
 
 // Stores
@@ -131,8 +214,14 @@ const handleRecharge = async () => {
   loading.value = true
 
   try {
-    const priceId = priceMap[selectedAmount.value]
+    // Obtener el objeto completo del monto seleccionado
+    const selectedAmountObj = displayedAmounts.value.find(a => a.valueUSD === selectedAmount.value)
+    if (!selectedAmountObj) throw new Error($t('payments.recharge.priceNotFound'))
+
+    const priceId = getPriceId(selectedAmountObj.valueCOP)
     if (!priceId) throw new Error($t('payments.recharge.priceNotFound'))
+
+    console.log(`Recargando: ${selectedAmountObj.formatted} (${selectedAmountObj.valueUSD} centavos USD, ${selectedAmountObj.valueCOP} COP)`)
 
     // Usar el store para crear la sesión
     const session = await paymentStore.createCheckoutSession(
@@ -205,7 +294,7 @@ const handleRecharge = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
 
   label {
     font-weight: 500;
@@ -213,24 +302,26 @@ const handleRecharge = async () => {
     font-size: 14px;
   }
 
-  .currency-btn {
-    padding: 0.5rem 1.2rem;
+  .currency-select {
+    padding: 0.6rem 1rem;
     border: 2px solid #e0e0e0;
     background: white;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
     font-size: 14px;
+    color: #333;
     transition: all 0.3s;
+    min-width: 200px;
 
     &:hover {
       border-color: var(--color-primary-light);
     }
 
-    &.active {
-      background: var(--color-primary-light);
-      color: white;
+    &:focus {
+      outline: none;
       border-color: var(--color-primary-light);
+      box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
     }
   }
 }
@@ -331,22 +422,20 @@ const handleRecharge = async () => {
   }
 
   .currency-selector {
-    flex-wrap: wrap;
-    gap: 0.25rem !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem !important;
     margin-bottom: 15px;
 
     label {
-      width: 100%;
-      margin-bottom: 0.25rem;
       font-size: 12px;
     }
 
-    .currency-btn {
-      flex: 1;
-      min-width: 45px;
-      padding: 0.4rem 0.6rem !important;
-      font-size: 12px !important;
-      border-radius: 6px;
+    .currency-select {
+      width: 100%;
+      min-width: auto;
+      padding: 0.5rem 0.8rem !important;
+      font-size: 13px !important;
     }
   }
 
@@ -409,18 +498,15 @@ const handleRecharge = async () => {
   }
 
   .currency-selector {
-    gap: 0 !important;
+    gap: 0.4rem !important;
 
     label {
       font-size: 11px;
-      margin-bottom: 4px;
     }
 
-    .currency-btn {
-      min-width: 40px;
-      padding: 0.3rem 0.4rem !important;
-      font-size: 10px !important;
-      flex: 1 1 auto;
+    .currency-select {
+      padding: 0.4rem 0.6rem !important;
+      font-size: 12px !important;
     }
   }
 

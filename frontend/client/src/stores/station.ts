@@ -13,7 +13,7 @@ interface StationExtended extends Station {
 export const useStationStore = defineStore("station", {
   state: () => ({
     baseURL: process.env.VUE_APP_API_URL || "http://localhost:8090",
-    stationsEndpoint: "/station/stations",
+    stationsEndpoint: "/station",
     stations: [] as StationExtended[],
     loading: false,
     error: null as string | null,
@@ -104,7 +104,7 @@ export const useStationStore = defineStore("station", {
 
     async getStationDetails(id: number): Promise<StationExtended | null> {
       try {
-        const url = `${this.baseURL}${this.stationsEndpoint}${id}`;
+        const url = `${this.baseURL}${this.stationsEndpoint}/${id}`;
         const res = await fetch(url);
 
         if (!res.ok) {

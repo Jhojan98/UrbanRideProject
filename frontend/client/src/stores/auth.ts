@@ -13,7 +13,8 @@ const userAuth = defineStore("auth", {
   state() {
     return {
       token: null as string | null,
-      baseURL: process.env.VUE_APP_API_URL || "http://localhost:8090",
+      // Use proxy path by default in dev to avoid CORS; fallback to configured absolute URL if provided
+      baseURL: process.env.VUE_APP_API_URL || "/api",
       message: "",
       isVerified: false,
       pendingVerification: false,
@@ -65,6 +66,7 @@ const userAuth = defineStore("auth", {
           body: JSON.stringify({
             uidUser: userCredential.user.uid,
             userName: username,
+            userEmail: userCredential.user.email,
           }),
         });
 
@@ -134,6 +136,7 @@ const userAuth = defineStore("auth", {
         console.log("=== ENVIANDO DATOS AL BACKEND (LOGIN) ===");
         console.log("email:", email);
         console.log("token:", token ? "Token obtenido" : "No token");
+        console.log(token);
         console.log("=========================================");
 
         // Enviar credenciales al backend
@@ -185,15 +188,39 @@ const userAuth = defineStore("auth", {
         const auth = getAuth();
         const provider = new GoogleAuthProvider();
 
+        // Solicitar permisos explícitos para email y perfil
+        provider.addScope("email");
+        provider.addScope("profile");
+
+        // Configurar para solicitar siempre la selección de cuenta
+        provider.setCustomParameters({
+          prompt: "select_account",
+        });
+
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
+
+        // Asegurar que el correo enviado al backend sea el mismo que registra Firebase
+        const userEmail =
+          user.email ||
+          user.providerData.find((p) => p?.email)?.email ||
+          null;
+
+        if (!userEmail) {
+          this.message = "No se pudo obtener el correo de la cuenta de Google";
+          console.error("Google login sin email disponible", {
+            uid: user.uid,
+            providerData: user.providerData,
+          });
+          return { success: false, code: "missing-email" };
+        }
 
         // Obtener token Firebase (ID token)
         const token = await user.getIdToken();
 
         console.log("=== ENVIANDO DATOS AL BACKEND (GOOGLE LOGIN) ===");
         console.log("uId:", user.uid);
-        console.log("email:", user.email);
+        console.log("email:", userEmail);
         console.log("displayName:", user.displayName);
         console.log("creationTime:", user.metadata.creationTime);
         console.log("================================================");
@@ -228,9 +255,8 @@ const userAuth = defineStore("auth", {
               uidUser: user.uid,
               userName:
                 user.displayName ||
-                (user.email
-                  ? user.email.split("@")[0]
-                  : `user_${user.uid.substring(0, 6)}`),
+                userEmail.split("@")[0] || `user_${user.uid.substring(0, 6)}`,
+              userEmail: userEmail,
             }),
           });
 
@@ -261,7 +287,7 @@ const userAuth = defineStore("auth", {
         this.token = token;
         this.isVerified = true; // Con Google el correo ya está verificado
         this.pendingVerification = false;
-        this.tempEmail = user.email;
+        this.tempEmail = userEmail;
         this.message = "Login con Google exitoso";
         return { success: true, userData };
       } catch (error: unknown) {

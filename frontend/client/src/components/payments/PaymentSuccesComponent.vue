@@ -9,6 +9,18 @@
         <p v-if="uid"><strong>{{ $t('payments.success.user') }}</strong> {{ uid }}</p>
       </div>
 
+      <div class="currency-selector" v-if="newBalance !== null">
+        <label>{{ $t('payments.recharge.currency') }}:</label>
+        <button
+          v-for="curr in currencies"
+          :key="curr"
+          @click="selectedCurrency = curr"
+          :class="['currency-btn', { 'active': selectedCurrency === curr }]"
+        >
+          {{ curr }}
+        </button>
+      </div>
+
       <div class="balance-info" v-if="newBalance !== null">
         <p><strong>{{ $t('payments.success.updatedBalance') }}</strong> {{ formatBalance(newBalance) }}</p>
       </div>
@@ -28,6 +40,7 @@
 <script>
 import { getAuth } from 'firebase/auth';
 import usePaymentStore from '@/stores/payment';
+import { fetchExchangeRate } from '@/services/currencyExchange';
 
 export default {
   name: "PaymentSuccessComponent",
@@ -42,8 +55,18 @@ export default {
       sessionId: null,
       uid: null,
       newBalance: null,
-      paymentStore: usePaymentStore()
+      paymentStore: usePaymentStore(),
+      currencies: ['USD', 'COP'],
+      selectedCurrency: 'COP',
+      exchangeRate: 4000 // Valor por defecto
     };
+  },
+  watch: {
+    selectedCurrency(newCurrency) {
+      if (newCurrency === 'COP' && this.newBalance !== null) {
+        this.updateExchangeRate();
+      }
+    }
   },
   created() {
     // Leer query params que Stripe agrega
@@ -81,18 +104,47 @@ export default {
         if (result !== null) {
           localStorage.setItem("userBalance", this.newBalance.toString());
           console.log("Balance actualizado desde el store:", this.newBalance);
+          // Cargar tasa de cambio después de obtener el balance
+          if (this.selectedCurrency === 'COP') {
+            await this.updateExchangeRate();
+          }
         }
       } catch (error) {
         console.error("Error obteniendo balance actualizado:", error);
       }
     },
 
+    async updateExchangeRate() {
+      if (this.selectedCurrency === 'COP') {
+        try {
+          const rate = await fetchExchangeRate('USD', 'COP', 1);
+          this.exchangeRate = rate;
+          console.log(`Tasa de cambio actualizada: 1 USD = ${rate} COP`);
+        } catch (error) {
+          console.error('Error obteniendo tasa de cambio:', error);
+          this.exchangeRate = 4000; // Fallback
+        }
+      }
+    },
+
     formatBalance(balance) {
-      return new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        minimumFractionDigits: 0
-      }).format(balance);
+      // El balance en DB está en centavos de USD, convertir a USD primero
+      const balanceInUSD = balance / 100;
+
+      if (this.selectedCurrency === 'COP') {
+        const balanceInCOP = balanceInUSD * this.exchangeRate;
+        return new Intl.NumberFormat("es-CO", {
+          style: "currency",
+          currency: "COP",
+          minimumFractionDigits: 0
+        }).format(balanceInCOP);
+      } else {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          minimumFractionDigits: 2
+        }).format(balanceInUSD);
+      }
     }
   }
 };
@@ -138,6 +190,41 @@ p {
   padding: 1rem;
   border-radius: 0.5rem;
   border: 1px solid #e9ecef;
+}
+
+.currency-selector {
+  margin: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.currency-selector label {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.currency-btn {
+  padding: 0.5rem 1.2rem;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.currency-btn:hover {
+  border-color: #2e7d32;
+}
+
+.currency-btn.active {
+  background: #2e7d32;
+  color: white;
+  border-color: #2e7d32;
 }
 
 .balance-info {

@@ -1,11 +1,19 @@
 const { defineConfig } = require('@vue/cli-service')
-const path = require('path')
-const dotenv = require('dotenv')
 
-// Cargar variables de entorno desde la carpeta padre (frontend/.env)
-const envPath = path.resolve(__dirname, '../.env')
-dotenv.config({ path: envPath })
+// Vue CLI carga automáticamente .env de la raíz del proyecto
+// No necesitamos dotenv manual, Vue lo maneja por defecto
 
 module.exports = defineConfig({
-  transpileDependencies: true
+  transpileDependencies: true,
+  // Proxy API calls in dev to avoid CORS while keeping the backend origin configurable
+  devServer: {
+    proxy: {
+      '^/api': {
+        target: process.env.VUE_APP_API_URL || 'http://localhost:8090',
+        changeOrigin: true,
+        pathRewrite: { '^/api': '' },
+        logLevel: 'debug'
+      }
+    }
+  }
 })
