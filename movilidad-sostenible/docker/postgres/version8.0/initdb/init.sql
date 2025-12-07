@@ -1,6 +1,5 @@
 -- Crear bases de datos adicionales
 CREATE DATABASE movilidad_sostenible;
-CREATE DATABASE keycloak;
 
 \connect movilidad_sostenible;
 /* ---------------------------------------------------- */
