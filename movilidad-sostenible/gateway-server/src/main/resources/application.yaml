@@ -96,6 +96,20 @@ spring:
           filters:
             - StripPrefix=1
 
+        - id: reports-service
+          uri: lb://reports-service
+          predicates:
+            - Path=/report/**
+          filters:
+            - StripPrefix=1
+
+        - id: complaints-service
+          uri: lb://complaints-service
+          predicates:
+            - Path=/complaints/**
+          filters:
+            - StripPrefix=1
+
 springdoc:
   api-docs:
     enabled: true
@@ -122,6 +136,10 @@ springdoc:
         url: /slot/v3/api-docs
       - name: Fine Service
         url: /fine/openapi.json
+      - name: Reports Service
+        url: /report/openapi.json
+      - name: Complaints Service
+        url: /complaints/openapi.json
     disable-swagger-default-url: true
     operation-sorter: alpha
     tags-sorter: alpha
