@@ -2,7 +2,7 @@
   <div class="user-dashboard-layout">
     <!-- Barra lateral de navegación -->
     <SidebarComponent
-      title="Dashboard de Usuarios"
+      :title="t('users.title')"
       :active-component="activeComponent"
       :nav-items="navItems"
       @update:active-component="(value: string) => activeComponent = value as 'users' | 'fines' | 'cac' | 'travel'"
@@ -19,21 +19,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SidebarComponent from '@/components/users-dashboard/SidebarComponent.vue'
 import UserListComponent from '@/components/users-dashboard/UserListComponent.vue'
 import FinesComponent from '@/components/users-dashboard/FinesComponent.vue'
 import CaCComponent from '@/components/users-dashboard/CaCComponent.vue'
 import TravelComponent from '@/components/users-dashboard/TravelComponent.vue'
 
+const { t } = useI18n()
+
 const activeComponent = ref<'users' | 'fines' | 'cac' | 'travel'>('users')
 
-const navItems = [
-  { value: 'users', label: 'Usuarios' },
-  { value: 'fines', label: 'Multas' },
-  { value: 'cac', label: 'Quejas y Comentarios' },
-  { value: 'travel', label: 'Viajes' }
-]
+const navItems = computed(() => ([
+  { value: 'users', label: t('users.nav.users') },
+  { value: 'fines', label: t('users.nav.fines') },
+  { value: 'cac', label: t('users.nav.cac') },
+  { value: 'travel', label: t('users.nav.travel') }
+]))
 </script>
 
 <style scoped>

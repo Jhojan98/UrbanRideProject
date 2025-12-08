@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
-import {Station} from '@/models/Station';
+import type { Station, StationDTO } from '@/models/Station';
+import { toStation } from '@/models/Station';
 
-const stationStore = defineStore('station', {
+export const useStationStore = defineStore('station', {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL + '/station/stations',
+    baseURL: process.env.VUE_APP_API_URL + '/station',
   }),
   actions: {
     async fetchStations() {
@@ -21,7 +22,20 @@ const stationStore = defineStore('station', {
           return [];
         }
         const data = await response.json();
-        return data as Station[];
+        console.log('[stationStore] estaciones recibidas (raw):', data);
+
+        const parsed: Station[] = Array.isArray(data)
+          ? (data as StationDTO[]).map(toStation)
+          : [];
+
+        console.log('[stationStore] estaciones parseadas:', parsed.map(s => ({
+          idStation: s.idStation,
+          nameStation: s.nameStation,
+          latitude: s.latitude,
+          longitude: s.longitude,
+        })));
+
+        return parsed;
       } catch (error) {
         console.error('Error fetching stations:', error);
         return [];
@@ -29,3 +43,5 @@ const stationStore = defineStore('station', {
     },
   },
 });
+
+export default useStationStore;

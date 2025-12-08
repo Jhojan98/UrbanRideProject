@@ -12,56 +12,40 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="station in props.stations" :key="station.id">
-                    <td>{{ station.name }}</td>
-                    <td>{{ station.location }}</td>
+                <tr v-for="station in props.stations" :key="station.idStation">
+                    <td>{{ station.nameStation }}</td>
+                    <td>{{ station.latitude }}, {{ station.longitude }}</td>
                     <td>
-                        <span v-if="station.cctvActive" class="status-pill on">{{ t('dashboard.stations.statusActive', 0) }}</span>
+                        <span v-if="station.cctvStatus" class="status-pill on">{{ t('dashboard.stations.statusActive', 0) }}</span>
                         <span v-else class="status-pill off">{{ t('dashboard.stations.statusActive', 1) }}</span>
                     </td>
                     <td>
-                        <span v-if="station.lightingActive" class="status-pill on">{{ t('dashboard.stations.statusActiveF', 0) }}</span>
+                        <span v-if="station.lightingStatus" class="status-pill on">{{ t('dashboard.stations.statusActiveF', 0) }}</span>
                         <span v-else class="status-pill off">{{ t('dashboard.stations.statusActiveF', 1) }}</span>
                     </td>
                     <td
                         class="bike-count-cell"
-                        @click="emitShowBikes(station.id)"
+                        @click="emitShowBikes(station.idStation)"
                         @mouseenter="showSlots(station)"
                         @mouseleave="hideSlots"
                     >
-                        <span class="clickable">{{ station.getCapacityStatus() }}</span>
+                        <span class="clickable">{{ station.availableSlots }} / {{ station.totalSlots }}</span>
                         <!-- Tooltip interno -->
                         <div
-                            v-if="hoveredStation && hoveredStation.id === station.id && tooltipVisible"
+                            v-if="hoveredStation && hoveredStation.idStation === station.idStation && tooltipVisible"
                             class="slots-tooltip"
                         >
-                            <p class="tooltip-title"><span class="material-symbols-outlined">{{ station.getIcon() }}</span> {{ station.category }} - Slots (1-{{ station.maxCapacity }})</p>
-                            <div class="slots-grid">
-                                <div
-                                    v-for="n in station.maxCapacity"
-                                    :key="n"
-                                    :class="['slot-box', getSlotClass(station, n)]"
-                                    :title="getSlotTooltip(station, n)"
-                                >
-                                    <span class="slot-number">{{ n }}</span>
-                                    <span v-if="n <= station.bikes.length" class="slot-lock">
-                                        {{ station.bikes[n-1]?.getLockIcon() }}
-                                    </span>
-                                    <span v-else-if="n <= station.getTotalOccupied()" class="slot-lock">
-                                        📍
-                                    </span>
-                                </div>
+                            <p class="tooltip-title">{{ t('dashboard.stations.tooltip.title', { name: station.nameStation }) }}</p>
+                            <div class="slots-info">
+                                <p><strong>{{ t('dashboard.stations.tooltip.totalSlots') }}</strong> {{ station.totalSlots }}</p>
+                                <p><strong>{{ t('dashboard.stations.tooltip.availableSlots') }}</strong> {{ station.availableSlots }}</p>
+                                <p><strong>{{ t('dashboard.stations.tooltip.electric') }}</strong> {{ station.availableElectricBikes || 0 }}</p>
+                                <p><strong>{{ t('dashboard.stations.tooltip.mechanic') }}</strong> {{ station.availableMechanicBikes || 0 }}</p>
                             </div>
-                            <p class="summary">
-                                <span>🔒 Estacionadas: {{ station.getLockedBikes() }}</span> |
-                                <span>🔓 En viaje: {{ station.getTravelingBikes() }}</span> |
-                                <span>📍 Reservados: {{ station.getReservedSlots() }}</span> |
-                                <span>✅ Disponibles: {{ station.getAvailableBikes() }}</span>
-                            </p>
                         </div>
                     </td>
                     <td>
-                        <span v-if="station.panicButtonActive" class="status-pill on">{{ t('dashboard.stations.panicStatus', 0) }}</span>
+                        <span v-if="station.panicButtonStatus" class="status-pill on">{{ t('dashboard.stations.panicStatus', 0) }}</span>
                         <span v-else class="status-pill off">{{ t('dashboard.stations.panicStatus', 1) }}</span>
                     </td>
                 </tr>
@@ -69,26 +53,22 @@
         </table>
     </div>
 </template>
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Station } from '@/patterns/flyweight'
+import type { Station } from '@/models/Station'
 
 const { t } = useI18n()
-
-// Declaraciones para que el analizador estático reconozca macros de Vue
-declare function defineProps<T>(): T
-declare function defineEmits<T>(): T
-
-// eslint-disable-next-line
-// @ts-ignore Vue macro provided by <script setup>
+// eslint-disable-next-line no-undef
 const props = defineProps<{ stations: Station[] }>()
-const emit = defineEmits<{ (e: 'show-bikes', stationId: string): void }>()
+// eslint-disable-next-line no-undef
+const emit = defineEmits<{ (e: 'show-bikes', stationId: number): void }>()
 
 const hoveredStation = ref<Station | null>(null)
 const tooltipVisible = ref(false)
 
-function emitShowBikes(id: string) {
+function emitShowBikes(id: number) {
     emit('show-bikes', id)
 }
 function showSlots(station: Station) {
@@ -100,52 +80,13 @@ function hideSlots() {
     tooltipVisible.value = false
 }
 
-function getSlotClass(station: Station, slotNumber: number): string {
-    const totalOccupied = station.getTotalOccupied()
-    
-    if (slotNumber > totalOccupied) {
-        return 'empty'
-    }
-    
-    // Si está en el rango de bicicletas físicamente presentes
-    if (slotNumber <= station.bikes.length) {
-        const bike = station.bikes[slotNumber - 1]
-        if (!bike.isLocked) {
-            return 'traveling'
-        }
-        return 'occupied'
-    }
-    
-    // Si está en el rango de slots reservados
-    return 'reserved'
-}
-
-function getSlotTooltip(station: Station, slotNumber: number): string {
-    const totalOccupied = station.getTotalOccupied()
-    
-    if (slotNumber > totalOccupied) {
-        return t('dashboard.stations.slotStatus', 1)
-    }
-    
-    // Si está en el rango de bicicletas físicamente presentes
-    if (slotNumber <= station.bikes.length) {
-        const bike = station.bikes[slotNumber - 1]
-        return `${bike.id} - ${bike.getLockStatus()}`
-    }
-    
-    // Si está en el rango de slots reservados
-    const reservedIndex = slotNumber - station.bikes.length - 1
-    const reserved = station.reservedSlots[reservedIndex]
-    return `Reservado para: ${reserved.bikeName} (${reserved.bikeId})`
-}
-
 </script>
 
 <style lang="scss" scoped>
 .bike-count-cell { position: relative; text-align: center; }
-.bike-count-cell .clickable { 
-  cursor: pointer; 
-  font-weight: 600; 
+.bike-count-cell .clickable {
+  cursor: pointer;
+  font-weight: 600;
   color: var(--color-primary-light);
   display: inline-block;
   min-width: 80px;
@@ -168,14 +109,14 @@ function getSlotTooltip(station: Station, slotNumber: number): string {
     color: var(--color-text-primary-light);
 }
 .tooltip-title { margin:0 0 6px; font-weight:600; font-size:13px; }
-.summary { 
-    margin:8px 0 0; 
-    font-size:11px; 
+.summary {
+    margin:8px 0 0;
+    font-size:11px;
     opacity:.85;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    
+
     span {
         display: flex;
         align-items: center;
@@ -183,30 +124,30 @@ function getSlotTooltip(station: Station, slotNumber: number): string {
     }
 }
 .slots-grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:6px; }
-.slot-box { 
-    display:flex; 
+.slot-box {
+    display:flex;
     flex-direction: column;
-    align-items:center; 
-    justify-content:center; 
-    padding:5px 2px; 
-    border-radius:6px; 
-    font-size:11px; 
-    font-weight:600; 
-    background: var(--color-gray-light); 
+    align-items:center;
+    justify-content:center;
+    padding:5px 2px;
+    border-radius:6px;
+    font-size:11px;
+    font-weight:600;
+    background: var(--color-gray-light);
     color: var(--color-text-primary-light);
     position: relative;
 }
 .slot-box.occupied { background:#16a34a; color:#fff; }
 .slot-box.traveling { background:#f59e0b; color:#fff; }
-.slot-box.reserved { 
-    background:#8b5cf6; 
+.slot-box.reserved {
+    background:#8b5cf6;
     color:#fff;
     border: 2px dashed #fff;
 }
 .slot-box.empty { background:#e5e7eb; color:#6b7280; }
 .slot-number { font-size: 10px; }
-.slot-lock { 
-    font-size: 12px; 
+.slot-lock {
+    font-size: 12px;
     margin-top: 2px;
 }
 </style>

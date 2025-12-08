@@ -6,18 +6,16 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import L from 'leaflet'
 import type { Map as LeafletMap, Marker } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import type { Station } from '@/patterns/flyweight'
+import type { Station } from '@/models/Station'
 
-// Props
-interface Props {
-    stations?: Station[]
-}
+// eslint-disable-next-line no-undef
+const props = defineProps<{ stations: Station[] }>()
 
-// eslint-disable-next-line
-const props = defineProps<Props>()
+const { t } = useI18n()
 
 const map = ref<LeafletMap | null>(null)
 const markers = ref<Marker[]>([])
@@ -51,17 +49,28 @@ function updateMarkers() {
         iconAnchor: [15, 15]
     })
 
-    const bikeIcon = L.divIcon({
-        className: 'bike-marker',
-        html: '<div style="background-color: #10b981; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3);"></div>',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10]
-    })
-
     try {
         // Agregar marcadores de estaciones
         props.stations.forEach((station) => {
             if (!map.value) return
+
+            if (station.latitude == null || station.longitude == null) return
+
+            const availableElectric = station.availableElectricBikes ?? 0
+            const availableMechanical = station.availableMechanicBikes ?? 0
+
+            const popupContent = `
+                <div style="min-width: 220px;">
+                    <h3 style="margin: 0 0 8px 0; color: #1f2937;">${station.nameStation}</h3>
+                    <p style="margin: 4px 0; color: #6b7280; font-size: 12px;">${station.latitude}, ${station.longitude}</p>
+                    <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.slots')}</strong> ${station.availableSlots} / ${station.totalSlots}</p>
+                    <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.electric')}</strong> ${availableElectric}</p>
+                    <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.mechanic')}</strong> ${availableMechanical}</p>
+                    <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.cctv')}</strong> ${station.cctvStatus ? '✅' : '❌'}</p>
+                    <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.lighting')}</strong> ${station.lightingStatus ? '✅' : '❌'}</p>
+                    <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.panic')}</strong> ${station.panicButtonStatus ? '✅' : '❌'}</p>
+                </div>
+            `
 
             const popup = L.popup({
                 closeButton: true,
@@ -69,20 +78,7 @@ function updateMarkers() {
                 closeOnClick: false,
                 className: 'custom-popup',
                 minWidth: 200
-            }).setContent(`
-                <div style="min-width: 200px;">
-                    <h3 style="margin: 0 0 8px 0; color: #1f2937;">${station.name}</h3>
-                    <p style="margin: 4px 0; color: #6b7280; font-size: 12px;">${station.location}</p>
-                    <p style="margin: 4px 0;"><strong>Categoría:</strong> ${station.category}</p>
-                    <p style="margin: 4px 0;"><strong>Capacidad:</strong> ${station.getCapacityStatus()}</p>
-                    <p style="margin: 4px 0;"><strong>🔒 Estacionadas:</strong> ${station.getLockedBikes()}</p>
-                    <p style="margin: 4px 0;"><strong>🔓 En viaje:</strong> ${station.getTravelingBikes()}</p>
-                                        <p style="margin: 4px 0;"><strong>📍 Reservados:</strong> ${station.getReservedSlots()}</p>
-                    <p style="margin: 4px 0;"><strong>✅ Disponibles:</strong> ${station.getAvailableBikes()}</p>
-                    <p style="margin: 4px 0;"><strong>CCTV:</strong> ${station.cctvActive ? '✅' : '❌'}</p>
-                    <p style="margin: 4px 0;"><strong>Iluminación:</strong> ${station.lightingActive ? '✅' : '❌'}</p>
-                </div>
-            `)
+            }).setContent(popupContent)
 
             const stationMarker = L.marker([station.latitude, station.longitude], { icon: stationIcon })
                 .addTo(map.value)
@@ -101,45 +97,6 @@ function updateMarkers() {
 
             markers.value.push(stationMarker)
 
-            // Agregar marcadores de bicicletas en la estación
-            station.bikes.forEach((bike) => {
-                if (!map.value) return
-
-                const bikePopup = L.popup({
-                    closeButton: true,
-                    autoClose: false,
-                    closeOnClick: false,
-                    className: 'custom-popup',
-                    minWidth: 150
-                }).setContent(`
-                    <div style="min-width: 150px;">
-                        <h4 style="margin: 0 0 8px 0; color: #1f2937;">${bike.model} ${bike.getIcon()}</h4>
-                        <p style="margin: 4px 0;"><strong>ID:</strong> ${bike.id}</p>
-                        <p style="margin: 4px 0;"><strong>Estado del candado:</strong> ${bike.getLockIcon()} ${bike.getLockStatus()}</p>
-                        <p style="margin: 4px 0;"><strong>Tipo:</strong> ${bike.type === 'electric' ? 'Eléctrica' : 'Mecánica'}</p>
-                        <p style="margin: 4px 0;"><strong>Condición:</strong> ${bike.condition === 'Optimal' ? 'Óptimo' : 'Mantenimiento'}</p>
-                        ${bike.battery !== undefined ? `<p style="margin: 4px 0;"><strong>Batería:</strong> ${bike.battery}%</p>` : ''}
-                        <p style="margin: 4px 0; color: #6b7280; font-size: 11px;">Estación: ${station.name}</p>
-                    </div>
-                `)
-
-                const bikeMarker = L.marker([bike.latitude, bike.longitude], { icon: bikeIcon })
-                    .addTo(map.value)
-                    .bindPopup(bikePopup)
-
-                // Prevenir errores al cerrar el popup
-                bikeMarker.on('popupclose', (e) => {
-                    try {
-                        if (e.popup && e.popup._map) {
-                            e.popup._map = null
-                        }
-                    } catch (error) {
-                        // Ignorar errores de cierre
-                    }
-                })
-
-                markers.value.push(bikeMarker)
-            })
         })
     } catch (error) {
         console.error('Error al actualizar marcadores:', error)

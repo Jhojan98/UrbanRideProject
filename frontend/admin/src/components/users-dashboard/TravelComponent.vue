@@ -1,10 +1,10 @@
 <template>
     <div class="travel-table-container">
         <div class="header">
-            <h2>Viajes</h2>
+            <h2>{{ t('users.travel.title') }}</h2>
             <div class="actions">
                 <button class="refresh" @click="loadTravels" :disabled="loading">
-                    {{ loading ? 'Cargando...' : 'Actualizar' }}
+                    {{ loading ? t('users.travel.loading') : t('users.travel.btnRefresh') }}
                 </button>
             </div>
         </div>
@@ -13,13 +13,13 @@
             <table class="travel-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Estación Inicio</th>
-                        <th>Estación Fin</th>
-                        <th>Inicio</th>
-                        <th>Fin</th>
-                        <th>Estado</th>
-                        <th>Tipo</th>
+                        <th>{{ t('users.travel.tableHeaders.id') }}</th>
+                        <th>{{ t('users.travel.tableHeaders.startStation') }}</th>
+                        <th>{{ t('users.travel.tableHeaders.endStation') }}</th>
+                        <th>{{ t('users.travel.tableHeaders.start') }}</th>
+                        <th>{{ t('users.travel.tableHeaders.end') }}</th>
+                        <th>{{ t('users.travel.tableHeaders.status') }}</th>
+                        <th>{{ t('users.travel.tableHeaders.type') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -40,15 +40,17 @@
             </table>
         </div>
 
-        <div v-else class="no-data">No hay viajes registrados.</div>
+        <div v-else class="no-data">{{ t('users.travel.noData') }}</div>
     </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import usersStore from '@/stores/userStore'
 import type Travel from '@/models/Travel'
 
+const { t } = useI18n()
 const store = usersStore()
 const travels = ref<Travel[]>([])
 const loading = ref(false)

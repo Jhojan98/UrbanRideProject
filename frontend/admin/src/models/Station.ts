@@ -28,6 +28,12 @@ export interface Station {
   availableSlots: number;
   timestamp: Date;
   slots?: Slot[]; // Opcional: presente cuando se cargan slots completos
+  // Datos de panel admin
+  availableElectricBikes?: number;
+  availableMechanicBikes?: number;
+  cctvStatus?: boolean;
+  lightingStatus?: boolean;
+  panicButtonStatus?: boolean;
 }
 
 // DTO consolidado (acepta con/sin slots)
@@ -42,12 +48,14 @@ export interface SlotDTO {
 
 export interface StationDTO {
   idStation: number;
-  nameStation: string;
+  nameStation?: string; // API puede enviarlo como nameStation o stationName
+  stationName?: string;
   latitude: number;
-  longitude: number;
-  totalSlots: number;
-  availableSlots: number;
-  timestamp: string;
+  longitude?: number;
+  length?: number; // Algunas respuestas usan 'length' para longitud
+  totalSlots?: number;
+  availableSlots?: number;
+  timestamp?: string;
   slots?: SlotDTO[]; // Opcional
 }
 
@@ -69,12 +77,12 @@ export function toSlot(dto: SlotDTO): Slot {
 export function toStation(dto: StationDTO): Station {
   return {
     idStation: dto.idStation,
-    nameStation: dto.nameStation,
+    nameStation: dto.nameStation ?? dto.stationName ?? '',
     latitude: dto.latitude,
-    longitude: dto.longitude,
-    totalSlots: dto.totalSlots,
-    availableSlots: dto.availableSlots,
-    timestamp: new Date(dto.timestamp),
+    longitude: dto.longitude ?? dto.length ?? 0,
+    totalSlots: dto.totalSlots ?? 0,
+    availableSlots: dto.availableSlots ?? 0,
+    timestamp: new Date(dto.timestamp ?? Date.now()),
     slots: dto.slots?.map(toSlot)
   };
 }

@@ -1,13 +1,13 @@
 <template>
   <div class="fines-container">
     <div class="header">
-      <h1>Gestión de Multas</h1>
+      <h1>{{ t('users.fines.title') }}</h1>
       <div class="filters">
         <select v-model="filterStatus" class="filter-select">
-          <option value="">Todos los estados</option>
-          <option value="PENDING">Pendiente</option>
-          <option value="PAID">Pagada</option>
-          <option value="CANCELLED">Cancelada</option>
+          <option value="">{{ t('users.fines.filterAll') }}</option>
+          <option value="PENDING">{{ t('users.fines.filterPending') }}</option>
+          <option value="PAID">{{ t('users.fines.filterPaid') }}</option>
+          <option value="CANCELLED">{{ t('users.fines.filterCancelled') }}</option>
         </select>
       </div>
     </div>
@@ -15,25 +15,25 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-info">
-          <p class="stat-label">Total Multas</p>
+          <p class="stat-label">{{ t('users.fines.stats.total') }}</p>
           <p class="stat-value">{{ userStore.fines.length }}</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-info">
-          <p class="stat-label">Pendientes</p>
+          <p class="stat-label">{{ t('users.fines.stats.pending') }}</p>
           <p class="stat-value">{{ pendingFines }}</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-info">
-          <p class="stat-label">Pagadas</p>
+          <p class="stat-label">{{ t('users.fines.stats.paid') }}</p>
           <p class="stat-value">{{ paidFines }}</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-info">
-          <p class="stat-label">Monto Total</p>
+          <p class="stat-label">{{ t('users.fines.stats.totalAmount') }}</p>
           <p class="stat-value">${{ totalAmount.toFixed(2) }}</p>
         </div>
       </div>
@@ -43,12 +43,12 @@
       <table class="fines-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Razón</th>
-            <th>Descripción</th>
-            <th>Estado</th>
-            <th>Monto</th>
-            <th>Fecha</th>
+            <th>{{ t('users.fines.tableHeaders.id') }}</th>
+            <th>{{ t('users.fines.tableHeaders.reason') }}</th>
+            <th>{{ t('users.fines.tableHeaders.description') }}</th>
+            <th>{{ t('users.fines.tableHeaders.status') }}</th>
+            <th>{{ t('users.fines.tableHeaders.amount') }}</th>
+            <th>{{ t('users.fines.tableHeaders.date') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -72,7 +72,7 @@
       </table>
 
       <div v-if="filteredFines.length === 0" class="no-data">
-        <p>No se encontraron multas</p>
+        <p>{{ t('users.fines.noData') }}</p>
       </div>
     </div>
   </div>
@@ -80,8 +80,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import usersStore from '@/stores/userStore'
 
+const { t } = useI18n()
 const userStore = usersStore()
 const filterStatus = ref('')
 

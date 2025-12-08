@@ -1,12 +1,12 @@
 <template>
   <div class="user-list-container">
     <div class="header">
-      <h1>Lista de Usuarios</h1>
+      <h1>{{ t('users.list.title') }}</h1>
       <div class="search-box">
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Buscar usuario por nombre o email..."
+          :placeholder="t('users.list.searchPlaceholder')"
           class="search-input"
         />
       </div>
@@ -16,12 +16,12 @@
       <table class="users-table">
         <thead>
           <tr>
-            <th>Usuario</th>
-            <th>Email</th>
-            <th>Tipo de Suscripción</th>
-            <th>Balance</th>
-            <th>Fecha de Registro</th>
-            <th>Acciones</th>
+            <th>{{ t('users.list.tableHeaders.user') }}</th>
+            <th>{{ t('users.list.tableHeaders.email') }}</th>
+            <th>{{ t('users.list.tableHeaders.subscription') }}</th>
+            <th>{{ t('users.list.tableHeaders.balance') }}</th>
+            <th>{{ t('users.list.tableHeaders.registrationDate') }}</th>
+            <th>{{ t('users.list.tableHeaders.actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -36,7 +36,7 @@
             <td>{{ user.email }}</td>
             <td>
               <span :class="['badge', `badge-${getSubscriptionClass(user.subscriptionType)}`]">
-                {{ user.subscriptionType ?? 'Sin suscripción' }}
+                {{ user.subscriptionType ?? t('users.list.noSubscription') }}
               </span>
             </td>
             <td>${{ user.balance?.toLocaleString('es-ES') ?? 0 }}</td>
@@ -46,7 +46,7 @@
                 @click.stop="selectUser(user)"
                 class="btn-view"
               >
-                Ver información
+                {{ t('users.list.btnView') }}
               </button>
             </td>
           </tr>
@@ -54,7 +54,7 @@
       </table>
 
       <div v-if="filteredUsers.length === 0" class="no-data">
-        <p>No se encontraron usuarios</p>
+        <p>{{ t('users.list.noData') }}</p>
       </div>
     </div>
 
@@ -74,6 +74,7 @@
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue'
 import type { Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import usersStore from '@/stores/userStore'
 import type User from '@/models/User'
 import type Travel from '@/models/Travel'
@@ -81,6 +82,7 @@ import type Fine from '@/models/Fine'
 import type CaC from '@/models/CaC'
 import UserDetailsModal from './UserDetailsModal.vue'
 
+const { t } = useI18n()
 const userStore = usersStore()
 
 const selectedUser: Ref<User | null> = ref(null)

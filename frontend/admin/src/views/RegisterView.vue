@@ -1,49 +1,49 @@
 <template>
     <div class="register-admin-page">
         <div class="container">
-            <h1>Registro de Administradores</h1>
+            <h1>{{ t('register.title') }}</h1>
 
             <form class="admin-form" @submit.prevent="onSubmit">
                 <div class="form-row">
-                    <label for="name">Nombre</label>
-                    <input id="name" v-model.trim="form.name" type="text" placeholder="Nombre completo" required />
+                    <label for="name">{{ t('register.fields.name') }}</label>
+                    <input id="name" v-model.trim="form.name" type="text" :placeholder="t('register.fields.namePlaceholder')" required />
                     <p v-if="errors.name" class="error-text">{{ errors.name }}</p>
                 </div>
 
                 <div class="form-row">
-                    <label for="email">Email</label>
-                    <input id="email" v-model.trim="form.email" type="email" placeholder="email@dominio.com" required />
+                    <label for="email">{{ t('register.fields.email') }}</label>
+                    <input id="email" v-model.trim="form.email" type="email" :placeholder="t('register.fields.emailPlaceholder')" required />
                     <p v-if="errors.email" class="error-text">{{ errors.email }}</p>
                 </div>
 
                 <div class="form-grid">
                     <div class="form-row">
-                        <label for="password">Contraseña</label>
+                        <label for="password">{{ t('register.fields.password') }}</label>
                         <input id="password" v-model="form.password" type="password" placeholder="••••••••" required />
                         <p v-if="errors.password" class="error-text">{{ errors.password }}</p>
                     </div>
 
                     <div class="form-row">
-                        <label for="confirmPassword">Confirmar contraseña</label>
+                        <label for="confirmPassword">{{ t('register.fields.confirmPassword') }}</label>
                         <input id="confirmPassword" v-model="form.confirmPassword" type="password" placeholder="••••••••" required />
                         <p v-if="errors.confirmPassword" class="error-text">{{ errors.confirmPassword }}</p>
                     </div>
                 </div>
 
                 <div class="form-row">
-                    <label for="role">Rol</label>
+                    <label for="role">{{ t('register.fields.role') }}</label>
                     <select id="role" v-model="form.role" required>
-                        <option value="ADMIN">Admin</option>
-                        <option value="SUPER_ADMIN">Super Admin</option>
+                        <option value="ADMIN">{{ t('register.roles.admin') }}</option>
+                        <option value="SUPER_ADMIN">{{ t('register.roles.superAdmin') }}</option>
                     </select>
                     <p v-if="errors.role" class="error-text">{{ errors.role }}</p>
                 </div>
 
                 <div class="actions">
                     <button class="primary" type="submit" :disabled="submitting">
-                        {{ submitting ? 'Registrando...' : 'Registrar administrador' }}
+                        {{ submitting ? t('register.buttons.submitting') : t('register.buttons.submit') }}
                     </button>
-                    <button class="secondary" type="button" @click="resetForm" :disabled="submitting">Limpiar</button>
+                    <button class="secondary" type="button" @click="resetForm" :disabled="submitting">{{ t('register.buttons.clear') }}</button>
                 </div>
 
                 <p v-if="submitMessage" class="submit-message">{{ submitMessage }}</p>
@@ -55,7 +55,10 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import useAuthStore from '@/stores/auth'
+
+const { t } = useI18n()
 
 type Role = 'ADMIN' | 'SUPER_ADMIN'
 
@@ -79,12 +82,12 @@ const submitting = ref(false)
 const submitMessage = ref('')
 
 const validate = () => {
-    errors.name = !form.name ? 'El nombre es requerido' : null
+    errors.name = !form.name ? t('register.errors.nameRequired') : null
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    errors.email = !form.email ? 'El email es requerido' : (!emailRegex.test(form.email) ? 'Email inválido' : null)
-    errors.password = form.password.length < 6 ? 'La contraseña debe tener al menos 6 caracteres' : null
-    errors.confirmPassword = form.confirmPassword !== form.password ? 'Las contraseñas no coinciden' : null
-    errors.role = !form.role ? 'El rol es requerido' : null
+    errors.email = !form.email ? t('register.errors.emailRequired') : (!emailRegex.test(form.email) ? t('register.errors.emailInvalid') : null)
+    errors.password = form.password.length < 6 ? t('register.errors.passwordLength') : null
+    errors.confirmPassword = form.confirmPassword !== form.password ? t('register.errors.passwordMismatch') : null
+    errors.role = !form.role ? t('register.errors.roleRequired') : null
 
     return !errors.name && !errors.email && !errors.password && !errors.confirmPassword && !errors.role
 }

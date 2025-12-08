@@ -2,37 +2,37 @@
   <div class="modal-overlay" @click="$emit('close')">
     <div class="modal-content" @click.stop>
       <div class="modal-header">
-        <h2>Información del Usuario - {{ user?.userName }}</h2>
+        <h2>{{ t('users.modal.title') }} - {{ user?.userName }}</h2>
         <button @click="$emit('close')" class="btn-close">✕</button>
       </div>
 
       <div class="modal-body">
         <div class="tabs">
-          <button :class="['tab', {active: activeTab === 'travels'}]" @click="activeTab = 'travels'">Viajes ({{ travels.length }})</button>
-          <button :class="['tab', {active: activeTab === 'fines'}]" @click="activeTab = 'fines'">Multas ({{ fines.length }})</button>
-          <button :class="['tab', {active: activeTab === 'cacs'}]" @click="activeTab = 'cacs'">Quejas/Comentarios ({{ cacs.length }})</button>
+          <button :class="['tab', {active: activeTab === 'travels'}]" @click="activeTab = 'travels'">{{ t('users.modal.tabs.travels') }} ({{ travels.length }})</button>
+          <button :class="['tab', {active: activeTab === 'fines'}]" @click="activeTab = 'fines'">{{ t('users.modal.tabs.fines') }} ({{ fines.length }})</button>
+          <button :class="['tab', {active: activeTab === 'cacs'}]" @click="activeTab = 'cacs'">{{ t('users.modal.tabs.cacs') }} ({{ cacs.length }})</button>
         </div>
 
-        <div v-if="loading" class="loading">Cargando información...</div>
+        <div v-if="loading" class="loading">{{ t('users.modal.loading') }}</div>
 
         <!-- Viajes -->
         <div v-if="activeTab === 'travels'">
           <div v-if="travels.length === 0" class="no-data">
-            <p>Este usuario no tiene viajes registrados</p>
+            <p>{{ t('users.modal.noTravels') }}</p>
           </div>
           <div v-else class="travels-list">
             <div v-for="travel in travels" :key="travel.idTravel" class="travel-card">
               <div class="travel-header">
-                <span class="travel-id">Viaje #{{ travel.idTravel }}</span>
+                <span class="travel-id">{{ t('users.modal.travelCard.id') }} #{{ travel.idTravel }}</span>
                 <span :class="['status-badge', `status-${(travel.status ?? '').toLowerCase()}`]">{{ travel.status }}</span>
               </div>
               <div class="travel-details">
-                <div class="detail-row"><span class="label">Tipo:</span><span class="value">{{ travel.travelType }}</span></div>
-                <div class="detail-row"><span class="label">Bicicleta:</span><span class="value">{{ (travel as any).idBicycle ?? '' }}</span></div>
-                <div class="detail-row"><span class="label">Estación de Inicio:</span><span class="value">{{ travel.fromIdStation }}</span></div>
-                <div class="detail-row"><span class="label">Estación de Fin:</span><span class="value">{{ travel.toIdStation ?? '' }}</span></div>
-                <div class="detail-row"><span class="label">Inicio:</span><span class="value">{{ travel.startedAt ? formatDateTime(travel.startedAt as any) : '' }}</span></div>
-                <div class="detail-row" v-if="travel.endedAt"><span class="label">Fin:</span><span class="value">{{ formatDateTime(travel.endedAt as any) }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.travelCard.type') }}:</span><span class="value">{{ travel.travelType }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.travelCard.bicycle') }}:</span><span class="value">{{ (travel as any).idBicycle ?? '' }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.travelCard.startStation') }}:</span><span class="value">{{ travel.fromIdStation }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.travelCard.endStation') }}:</span><span class="value">{{ travel.toIdStation ?? '' }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.travelCard.start') }}:</span><span class="value">{{ travel.startedAt ? formatDateTime(travel.startedAt as any) : '' }}</span></div>
+                <div class="detail-row" v-if="travel.endedAt"><span class="label">{{ t('users.modal.travelCard.end') }}:</span><span class="value">{{ formatDateTime(travel.endedAt as any) }}</span></div>
               </div>
             </div>
           </div>
@@ -41,18 +41,18 @@
         <!-- Multas -->
         <div v-if="activeTab === 'fines'">
           <div v-if="fines.length === 0" class="no-data">
-            <p>Este usuario no registra multas</p>
+            <p>{{ t('users.modal.noFines') }}</p>
           </div>
           <div v-else class="fines-list">
             <div v-for="fine in fines" :key="fine.k_user_fine ?? fine.idFine" class="fine-card">
               <div class="fine-header">
-                <span class="fine-id">Multa #{{ fine.k_user_fine ?? fine.idFine }}</span>
+                <span class="fine-id">{{ t('users.modal.fineCard.id') }} #{{ fine.k_user_fine ?? fine.idFine }}</span>
                 <span :class="['status-badge', `status-${(fine.t_state ?? fine.state ?? '').toLowerCase()}`]">{{ fine.t_state ?? fine.state }}</span>
               </div>
               <div class="fine-details">
-                <div class="detail-row"><span class="label">Razón:</span><span class="value">{{ fine.n_reason ?? fine.fine?.d_description ?? fine.reason ?? '' }}</span></div>
-                <div class="detail-row"><span class="label">Monto:</span><span class="value">${{ (fine.v_amount_snapshot ?? fine.amount ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span></div>
-                <div class="detail-row"><span class="label">Fecha:</span><span class="value">{{ (fine.f_assigned_at ?? fine.timestamp) ? formatDateTime(fine.f_assigned_at as any ?? fine.timestamp as any) : '' }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.fineCard.reason') }}:</span><span class="value">{{ fine.n_reason ?? fine.fine?.d_description ?? fine.reason ?? '' }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.fineCard.amount') }}:</span><span class="value">${{ (fine.v_amount_snapshot ?? fine.amount ?? 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.fineCard.date') }}:</span><span class="value">{{ (fine.f_assigned_at ?? fine.timestamp) ? formatDateTime(fine.f_assigned_at as any ?? fine.timestamp as any) : '' }}</span></div>
               </div>
             </div>
           </div>
@@ -61,18 +61,18 @@
         <!-- Quejas y Comentarios -->
         <div v-if="activeTab === 'cacs'">
           <div v-if="cacs.length === 0" class="no-data">
-            <p>Este usuario no registra quejas o comentarios</p>
+            <p>{{ t('users.modal.noCacs') }}</p>
           </div>
           <div v-else class="cacs-list">
             <div v-for="cac in cacs" :key="cac.idCaC" class="cac-card">
               <div class="cac-header">
-                <span class="cac-id">Ticket #{{ cac.idCaC }}</span>
+                <span class="cac-id">{{ t('users.modal.cacCard.id') }} #{{ cac.idCaC }}</span>
                 <span :class="['status-badge', `status-${(cac.status ?? '').toLowerCase()}`]">{{ cac.status }}</span>
               </div>
               <div class="cac-details">
-                <div class="detail-row"><span class="label">Descripción:</span><span class="value">{{ cac.description }}</span></div>
-                <div class="detail-row"><span class="label">Viaje:</span><span class="value">#{{ cac.idTravel }}</span></div>
-                <div class="detail-row"><span class="label">Fecha:</span><span class="value">{{ cac.date ? formatDate(cac.date as Date) : '' }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.cacCard.description') }}:</span><span class="value">{{ cac.description }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.cacCard.travel') }}:</span><span class="value">#{{ cac.idTravel }}</span></div>
+                <div class="detail-row"><span class="label">{{ t('users.modal.cacCard.date') }}:</span><span class="value">{{ cac.date ? formatDate(cac.date as Date) : '' }}</span></div>
               </div>
             </div>
           </div>
@@ -84,10 +84,13 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineEmits } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type User from '@/models/User'
 import type Travel from '@/models/Travel'
 import type Fine from '@/models/Fine'
 import type CaC from '@/models/CaC'
+
+const { t } = useI18n()
 
 defineProps<{
   user: User | null

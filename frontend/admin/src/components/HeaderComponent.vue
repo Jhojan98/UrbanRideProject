@@ -8,9 +8,9 @@
       </div>
 
       <nav class="nav">
-        <router-link :to="{name: 'stationsDashboard'}" class="nav-link">Dashboard de Estaciones</router-link>
-        <router-link :to="{name: 'usersDashboard'}" class="nav-link">Dashboard de Usuarios</router-link>
-        <router-link :to="{name: 'register'}" class="nav-link">Registro de Admins</router-link>
+        <router-link :to="{name: 'stationsDashboard'}" class="nav-link">{{ t('header.navStations') }}</router-link>
+        <router-link :to="{name: 'usersDashboard'}" class="nav-link">{{ t('header.navUsers') }}</router-link>
+        <router-link :to="{name: 'register'}" class="nav-link">{{ t('header.navRegister') }}</router-link>
       </nav>
 
       <div class="auth-buttons">

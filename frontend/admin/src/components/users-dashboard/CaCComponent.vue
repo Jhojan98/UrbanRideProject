@@ -1,14 +1,14 @@
 <template>
   <div class="cac-container">
     <div class="header">
-      <h1>Quejas y Comentarios</h1>
+      <h1>{{ t('users.cac.title') }}</h1>
       <div class="filters">
         <select v-model="filterStatus" class="filter-select">
-          <option value="">Todos los estados</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="EN_PROCESO">En Proceso</option>
-          <option value="RESUELTO">Resuelto</option>
-          <option value="CERRADO">Cerrado</option>
+          <option value="">{{ t('users.cac.filterAll') }}</option>
+          <option value="PENDIENTE">{{ t('users.cac.filterPending') }}</option>
+          <option value="EN_PROCESO">{{ t('users.cac.filterInProcess') }}</option>
+          <option value="RESUELTO">{{ t('users.cac.filterResolved') }}</option>
+          <option value="CERRADO">{{ t('users.cac.filterClosed') }}</option>
         </select>
       </div>
     </div>
@@ -16,25 +16,25 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-info">
-          <p class="stat-label">Total</p>
+          <p class="stat-label">{{ t('users.cac.stats.total') }}</p>
           <p class="stat-value">{{ userStore.cacs.length }}</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-info">
-          <p class="stat-label">Pendientes</p>
+          <p class="stat-label">{{ t('users.cac.stats.pending') }}</p>
           <p class="stat-value">{{ pendingCaCs }}</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-info">
-          <p class="stat-label">En Proceso</p>
+          <p class="stat-label">{{ t('users.cac.stats.inProcess') }}</p>
           <p class="stat-value">{{ inProcessCaCs }}</p>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-info">
-          <p class="stat-label">Resueltos</p>
+          <p class="stat-label">{{ t('users.cac.stats.resolved') }}</p>
           <p class="stat-value">{{ resolvedCaCs }}</p>
         </div>
       </div>
@@ -48,7 +48,7 @@
         @click="selectCaC(cac)"
       >
         <div class="cac-header">
-          <span class="cac-id">Ticket #{{ cac.idCaC }}</span>
+          <span class="cac-id">{{ t('users.cac.ticketId') }} #{{ cac.idCaC }}</span>
           <span :class="['status-badge', `status-${cac.status.toLowerCase()}`]">
             {{ cac.status }}
           </span>
@@ -61,7 +61,7 @@
         <div class="cac-footer">
           <div class="cac-meta">
             <span class="meta-item">
-              Viaje #{{ cac.idTravel }}
+              {{ t('users.cac.travelId') }} #{{ cac.idTravel }}
             </span>
             <span class="meta-item">
               {{ formatDate(cac.date) }}
@@ -72,37 +72,37 @@
     </div>
 
     <div v-if="filteredCaCs.length === 0" class="no-data">
-      <p>No se encontraron quejas o comentarios</p>
+      <p>{{ t('users.cac.noData') }}</p>
     </div>
 
     <!-- Modal de detalle -->
     <div v-if="selectedCaC" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Detalle del Ticket #{{ selectedCaC.idCaC }}</h2>
+          <h2>{{ t('users.cac.modalTitle') }} #{{ selectedCaC.idCaC }}</h2>
           <button @click="closeModal" class="btn-close">✕</button>
         </div>
 
         <div class="modal-body">
           <div class="detail-section">
-            <h3>Estado</h3>
+            <h3>{{ t('users.cac.modalSections.status') }}</h3>
             <span :class="['status-badge-large', `status-${selectedCaC.status.toLowerCase()}`]">
               {{ selectedCaC.status }}
             </span>
           </div>
 
           <div class="detail-section">
-            <h3>Descripción</h3>
+            <h3>{{ t('users.cac.modalSections.description') }}</h3>
             <p class="description-text">{{ selectedCaC.description }}</p>
           </div>
 
           <div class="detail-section">
-            <h3>Información del Viaje</h3>
-            <p><strong>ID del Viaje:</strong> {{ selectedCaC.idTravel }}</p>
+            <h3>{{ t('users.cac.modalSections.travelInfo') }}</h3>
+            <p><strong>{{ t('users.cac.modalSections.travelIdLabel') }}:</strong> {{ selectedCaC.idTravel }}</p>
           </div>
 
           <div class="detail-section">
-            <h3>Fecha</h3>
+            <h3>{{ t('users.cac.modalSections.date') }}</h3>
             <p>{{ formatDateTime(selectedCaC.date) }}</p>
           </div>
         </div>
@@ -114,9 +114,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import usersStore from '@/stores/userStore'
 import type CaC from '@/models/CaC'
 
+const { t } = useI18n()
 const userStore = usersStore()
 const filterStatus = ref('')
 const selectedCaC: Ref<CaC | null> = ref(null)

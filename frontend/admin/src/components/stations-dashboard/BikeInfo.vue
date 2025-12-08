@@ -1,107 +1,101 @@
 <template>
     <div class="bike-info" v-if="station">
         <div class="bike-info-header">
-            <h3><span class="material-symbols-outlined">{{ station.getIcon() }}</span> {{ t('dashboard.bikes.title', { stationName: station.name }) }}</h3>
-            <p class="subtitle">{{ station.getCapacityStatus() }} - {{ station.category }}</p>
+            <h3>{{ t('dashboard.bikes.title', { stationName: station.nameStation }) }}</h3>
+            <p class="subtitle">{{ station.latitude }}, {{ station.longitude }}</p>
         </div>
-        <table class="dashboard-table bikes-table" v-if="station.bikes.length">
-            <thead>
-                <tr>
-                    <th>{{ t('dashboard.bikes.idC') }}</th>
-                    <th>Estado</th>
-                    <th>{{ t('dashboard.bikes.conditionC') }}</th>
-                    <th>{{ t('dashboard.bikes.modelC') }}</th>
-                    <th>{{ t('dashboard.bikes.typeC') }}</th>
-                    <th>{{ t('dashboard.bikes.batteryC') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="b in station.bikes" :key="b.id" :class="{ 'bike-traveling': !b.isLocked }">
-                    <td>{{ b.id }}</td>
-                    <td>
-                        <span :class="['lock-status', b.isLocked ? 'locked' : 'unlocked']" :title="b.getLockStatus()">
-                            {{ b.getLockIcon() }} {{ b.getLockStatus() }}
-                        </span>
-                    </td>
-                    <td>
-                        <span v-if="b.condition === 'Optimal'">{{ t('dashboard.bikes.bikeCondition', 0) }}</span>
-                        <span v-else>{{ t('dashboard.bikes.bikeCondition', 1) }}</span>
-                    </td>
-                    <td>{{ b.model }}</td>
-                    <td>
-                        <span v-if="b.type === 'electric'" class="type-pill electric">
-                            {{ t('dashboard.bikes.bikeType', 0) }}
-                        </span>
-                        <span v-else class="type-pill mechanical">
-                            {{ t('dashboard.bikes.bikeType', 1) }}
-                        </span>
-                    </td>
-                    <td>
-                        <template v-if="b.type === 'electric'">
-                            <div class="battery-wrapper" :title="`${t('dashboard.bikes.batteryC')} ${b.battery ?? 0}%`">
-                                <div class="battery-bar">
-                                    <div class="battery-fill" :style="{ width: `${b.battery ?? 0}%` }" :class="batteryClass(b.battery)"></div>
-                                </div>
-                                <span class="battery-text">{{ b.battery }}%</span>
-                            </div>
-                        </template>
-                        <template v-else>
-                            <span class="no-battery">—</span>
-                        </template>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-        <div v-else class="empty-message">{{ t('dashboard.isEmpty') }}</div>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <p>{{ t('dashboard.stations.summary.slots') }}</p>
+                <strong>{{ station.availableSlots }} / {{ station.totalSlots }}</strong>
+            </div>
+            <div class="summary-card">
+                <p>{{ t('dashboard.stations.summary.electric') }}</p>
+                <strong>{{ station.availableElectricBikes ?? 0 }}</strong>
+            </div>
+            <div class="summary-card">
+                <p>{{ t('dashboard.stations.summary.mechanic') }}</p>
+                <strong>{{ station.availableMechanicBikes ?? 0 }}</strong>
+            </div>
+        </div>
+
+        <div class="status-row">
+            <span :class="['status-pill', station.cctvStatus ? 'on' : 'off']">
+                {{ t('dashboard.stations.statusLabel.cctv') }}: {{ station.cctvStatus ? t('dashboard.stations.statusLabel.active') : t('dashboard.stations.statusLabel.inactive') }}
+            </span>
+            <span :class="['status-pill', station.lightingStatus ? 'on' : 'off']">
+                {{ t('dashboard.stations.statusLabel.lighting') }}: {{ station.lightingStatus ? t('dashboard.stations.statusLabel.activeF') : t('dashboard.stations.statusLabel.inactiveF') }}
+            </span>
+            <span :class="['status-pill', station.panicButtonStatus ? 'on' : 'off']">
+                {{ t('dashboard.stations.statusLabel.panic') }}: {{ station.panicButtonStatus ? t('dashboard.stations.statusLabel.active') : t('dashboard.stations.statusLabel.inactive') }}
+            </span>
+        </div>
     </div>
+    <div v-else class="bike-info empty">{{ t('dashboard.isEmpty') }}</div>
 </template>
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Station } from '@/patterns/flyweight'
+import type { Station } from '@/models/Station'
 
 const { t } = useI18n()
-
-// Declaraciones macros (para entorno analizador)
-declare function defineProps<T>(): T
-
+// eslint-disable-next-line no-undef
 const props = defineProps<{ station: Station | null }>()
 const station = computed(() => props.station)
-
-function batteryClass(value?: number) {
-    if (value == null) return ''
-    if (value >= 70) return 'high'
-    if (value >= 40) return 'medium'
-    return 'low'
-}
 </script>
 <style lang="scss" scoped>
 .bike-info { margin-top: 1rem; }
 .bike-info-header { display: flex; align-items: baseline; gap: 1rem; }
 .bike-info-header h3 { margin: 0; }
-.subtitle { margin: 0; font-size: .75rem; letter-spacing: .5px; text-transform: uppercase; color: var(--color-text-secondary-light); }
+.subtitle { margin: 0; font-size: .85rem; color: var(--color-text-secondary-light); }
 
-.lock-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    
-    &.locked {
-        background-color: #dcfce7;
-        color: #166534;
-    }
-    
-    &.unlocked {
-        background-color: #fef3c7;
-        color: #92400e;
-    }
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
 }
 
-.bike-traveling {
-    background-color: #fffbeb;
+.summary-card {
+    background: var(--color-surface, #f8fafc);
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-card p { margin: 0; color: var(--color-text-secondary-light); font-size: 0.85rem; }
+.summary-card strong { font-size: 1.1rem; }
+
+.status-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.status-pill {
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
+}
+
+.status-pill.on {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #86efac;
+}
+
+.status-pill.off {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fecdd3;
+}
+
+.bike-info.empty {
+    margin-top: 1rem;
 }
 </style>
