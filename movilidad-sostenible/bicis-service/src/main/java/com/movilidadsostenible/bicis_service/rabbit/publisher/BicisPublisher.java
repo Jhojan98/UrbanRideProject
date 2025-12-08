@@ -1,4 +1,4 @@
-package com.movilidadsostenible.bicis_service.publisher;
+package com.movilidadsostenible.bicis_service.rabbit.publisher;
 
 import com.movilidadsostenible.bicis_service.model.dto.BicycleTelemetryDTO;
 import org.slf4j.Logger;

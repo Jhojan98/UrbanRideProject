@@ -27,6 +27,7 @@
         <module>payment-service</module>
         <module>slots-service</module>
       <module>notification-email-service</module>
+      <module>notification-realtime-service</module>
     </modules>
 
     <properties>

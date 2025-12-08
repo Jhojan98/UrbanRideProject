@@ -3,8 +3,10 @@ package com.movilidadsostenible.viaje_service.controllers;
 import com.movilidadsostenible.viaje_service.clients.StationClientRest;
 import com.movilidadsostenible.viaje_service.clients.UserClientRest;
 import com.movilidadsostenible.viaje_service.models.dto.StartTravelRequestDTO;
+import com.movilidadsostenible.viaje_service.models.dto.TravelStartDTO;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
 import com.movilidadsostenible.viaje_service.models.dto.ReservationTempDTO;
+import com.movilidadsostenible.viaje_service.publisher.TravelPublisher;
 import com.movilidadsostenible.viaje_service.services.TravelService;
 import com.movilidadsostenible.viaje_service.services.ReservationTempService;
 import com.movilidadsostenible.viaje_service.clients.SlotsClient;
@@ -44,6 +46,9 @@ public class TravelController {
 
     @Autowired
     private UserClientRest userClientRest;
+
+    @Autowired
+    private TravelPublisher travelPublisher;
 
     @GetMapping
     @Operation(summary = "Listar viajes")
@@ -224,6 +229,14 @@ public class TravelController {
 
 
         reservationTempService.save(dto);
+
+        TravelStartDTO travelStartDTO = new TravelStartDTO();
+        travelStartDTO.setUserId(req.getUserUid());
+        travelStartDTO.setReservationId(reservationId);
+        travelStartDTO.setStationStartId(req.getStationStartId());
+        travelStartDTO.setStationEndId(req.getStationEndId());
+        travelStartDTO.setSlotStartId(slotId);
+        travelStartDTO.setTravelType(travelType);
 
         Map<String, String> resp = new HashMap<>();
         resp.put("reservationId", reservationId);

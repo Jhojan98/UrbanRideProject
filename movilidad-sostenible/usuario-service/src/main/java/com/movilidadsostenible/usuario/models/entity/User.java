@@ -31,7 +31,7 @@ public class User {
     private String subscriptionType;
 
     @Column(name = "v_balance")
-    private Integer balance;
+    private Double balance;
 
     @Column(name = "t_subcripcion_travels")
     private Integer subcripcionTravels;

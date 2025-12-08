@@ -24,7 +24,7 @@ public class RabbitConfigBicis {
 
     // spring bean for rabbitmq json queue
     @Bean
-    public Queue jsonQueueChargeTravelBalanceConsumer() {
+    public Queue jsonQueueMaintenanceConsumer() {
       return new Queue(jsonQueueNameMaintenancePublisher);
     }
 
@@ -36,9 +36,9 @@ public class RabbitConfigBicis {
 
     // binding between json queue and exchange using routing key
     @Bean
-    public Binding jsonBindingChargeTravelBalanceConsumer() {
+    public Binding jsonBindingMaintenanceConsumer() {
       return BindingBuilder
-        .bind(jsonQueueChargeTravelBalanceConsumer()).
+        .bind(jsonQueueMaintenanceConsumer()).
         to(jsonExchange())
         .with(routingJsonKeyMaintenancePublisher);
     }

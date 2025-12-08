@@ -18,7 +18,7 @@ stompClient.connect({}, () => {
     console.log("Conectado al WebSocket!");
 
     // Suscripción global
-    stompClient.subscribe("/topic/station.update", (msg) => {
+    stompClient.subscribe("/topic/station.update/admin", (msg) => {
         console.log("Nueva ubicación:", JSON.parse(msg.body));
     });
 

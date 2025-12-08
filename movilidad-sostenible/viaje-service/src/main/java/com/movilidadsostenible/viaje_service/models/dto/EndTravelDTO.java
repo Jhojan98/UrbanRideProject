@@ -13,6 +13,8 @@ public class EndTravelDTO {
   private Double latitudeBicycle;
   private Double longitudeBicycle;
 
+  private Integer idStation;
+
   private Long endTravelTimestamp;
 
 }
