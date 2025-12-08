@@ -46,7 +46,7 @@ spring:
             - Path=/bicycle-fastapi/**
           filters:
             - StripPrefix=1
-            
+
         - id: fine-service
           uri: lb://fine-service
           predicates:
@@ -93,6 +93,13 @@ spring:
           uri: lb://slots-service
           predicates:
             - Path=/slot/**
+          filters:
+            - StripPrefix=1
+
+        - id:  notification-realtime-service
+          uri: lb://notification-realtime-service
+          predicates:
+            - Path=/notification/**
           filters:
             - StripPrefix=1
 

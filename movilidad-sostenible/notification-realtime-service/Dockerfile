@@ -13,7 +13,7 @@ RUN ./mvnw clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repac
 
 COPY ./$SERVICE_NAME/src ./src
 
-RUN ./mvnw clean package -Dmaven.test.skip=true
+RUN ./mvnw clean package -DskipTests
 
 FROM openjdk:26-ea-21-jdk-oraclelinux8
 
