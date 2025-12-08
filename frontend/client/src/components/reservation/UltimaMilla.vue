@@ -36,9 +36,14 @@
       </select>
     </div>
 
+    <!-- Mensajes de validación -->
+    <div v-if="validationMessage" class="validation-message" :class="{ error: hasError }">
+      {{ validationMessage }}
+    </div>
+
     <button
       class="btn-confirm"
-      :disabled="!selectedOrigin || !selectedDest || !bikeType"
+      :disabled="!canConfirm"
       @click="confirm"
     >
       {{ $t('reservation.form.reserveBike') }}

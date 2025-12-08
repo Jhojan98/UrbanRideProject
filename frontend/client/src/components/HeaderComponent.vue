@@ -1,33 +1,70 @@
 <template>
   <header class="header" :class="{ 'header-mobile': isMobile, 'sidebar-open': isSidebarOpen }">
-    <!-- Mobile: Hamburger button -->
+    <!-- Mobile Header: Hamburger + Logo + Utilities -->
     <div v-if="isMobile" class="mobile-header">
       <button class="hamburger-btn" @click="isSidebarOpen = !isSidebarOpen" :aria-label="$t('common.menu')">
         <span></span>
         <span></span>
         <span></span>
       </button>
+
       <div class="logo-mobile">
         <img src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
         <span class="logo-text">ECORIDE</span>
       </div>
-      <div class="header-spacer"></div>
+
+      <!-- Mobile utilities (visible in header) -->
+      <div class="mobile-header-utilities">
+        <div class="lang-switcher">
+          <select v-model="locale" @change="persistLocale" class="lang-select">
+            <option value="es">ES</option>
+            <option value="en">EN</option>
+          </select>
+        </div>
+        <toggle-theme />
+      </div>
     </div>
 
-    <!-- Sidebar/Desktop Header -->
-    <div class="header-content" :class="{ 'sidebar-visible': isSidebarOpen || !isMobile }">
-      <!-- Close button para móviles -->
-      <button v-if="isMobile" class="close-btn" @click="isSidebarOpen = false" :aria-label="$t('common.close')">
+    <!-- Backdrop para cerrar sidebar -->
+    <div v-if="isMobile && isSidebarOpen" class="sidebar-backdrop" @click="isSidebarOpen = false"></div>
+
+    <!-- Desktop Header Content -->
+    <div v-if="!isMobile" class="header-content">
+      <div class="logo">
+        <img src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
+        <span class="logo-text">ECORIDE</span>
+      </div>
+
+      <!-- Desktop Navigation -->
+      <nav class="nav">
+        <template v-if="isAuthenticated">
+          <router-link :to="{name: 'home'}" class="nav-link">{{ $t('nav.home') }}</router-link>
+          <router-link :to="{name: 'maps'}" class="nav-link">{{ $t('nav.maps') }}</router-link>
+          <router-link :to="{name: 'profile'}" class="nav-link">{{ $t('nav.profile') }}</router-link>
+        </template>
+      </nav>
+
+      <!-- Desktop Utilities (Theme + Language) -->
+      <div class="header-utilities">
+        <div class="lang-switcher">
+          <select v-model="locale" @change="persistLocale" class="lang-select">
+            <option value="es">ES</option>
+            <option value="en">EN</option>
+          </select>
+        </div>
+        <toggle-theme />
+      </div>
+    </div>
+
+    <!-- Mobile Sidebar Navigation -->
+    <div class="mobile-sidebar" :class="{ 'sidebar-visible': isSidebarOpen }">
+      <!-- Close button -->
+      <button class="close-btn" @click="isSidebarOpen = false" :aria-label="$t('common.close')">
         ✕
       </button>
 
-      <div class="logo">
-        <img v-if="!isMobile" src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
-        <span v-if="!isMobile" class="logo-text">ECORIDE</span>
-      </div>
-
-      <nav class="nav">
-        <!-- Solo mostrar navegación cuando esté autenticado -->
+      <!-- Mobile Navigation Links -->
+      <nav class="mobile-nav">
         <template v-if="isAuthenticated">
           <router-link :to="{name: 'home'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.home') }}</router-link>
           <router-link :to="{name: 'maps'}" class="nav-link" @click="closeSidebarOnMobile">{{ $t('nav.maps') }}</router-link>
@@ -35,31 +72,18 @@
         </template>
       </nav>
 
-      <div class="auth-buttons">
-        <!-- Mostrar botones de Login/Signup solo cuando no esté autenticado -->
+      <!-- Mobile Auth Buttons -->
+      <div class="mobile-auth-buttons">
         <template v-if="showAuthButtons">
           <router-link :to="{ name: 'login' }" class="btn-primary" @click="closeSidebarOnMobile">{{ $t('nav.login') }}</router-link>
           <router-link :to="{ name: 'signup' }" class="btn-primary" @click="closeSidebarOnMobile">{{ $t('nav.signup') }}</router-link>
         </template>
 
-        <!-- Mostrar botón de Logout solo cuando esté autenticado -->
         <button v-if="showLogoutButton" @click="logout" class="btn-primary btn-logout">
           {{ $t('nav.logout') }}
         </button>
-
-        <div class="lang-switcher">
-          <select v-model="locale" @change="persistLocale" class="lang-select">
-            <option value="es">ES</option>
-            <option value="en">EN</option>
-          </select>
-        </div>
-
-        <toggle-theme />
       </div>
     </div>
-
-    <!-- Backdrop para cerrar sidebar al hacer click -->
-    <div v-if="isMobile && isSidebarOpen" class="sidebar-backdrop" @click="isSidebarOpen = false"></div>
   </header>
 </template>
 //TODO: Convertir el logo a webp para optimizar carga

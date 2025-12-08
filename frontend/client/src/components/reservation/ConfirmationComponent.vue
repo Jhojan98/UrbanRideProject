@@ -1,5 +1,27 @@
 <template>
   <div class="reservation">
+    <!-- Modal de éxito (viaje finalizado) -->
+    <Transition name="fade">
+      <div v-if="showSuccessModal" class="success-modal-overlay">
+        <div class="success-modal">
+          <div class="success-icon">✓</div>
+          <h2>¡Viaje Finalizado!</h2>
+          <div class="success-message">
+            <p>Tu viaje ha sido registrado exitosamente.</p>
+            <p class="cost-info">
+              💳 <strong>Cobro: {{ tripDetails.estimatedCost }}</strong>
+            </p>
+            <p class="email-info">
+              📧 Recibirás la factura por correo electrónico en los próximos minutos.
+            </p>
+          </div>
+          <button class="butn-primary" @click="() => { clearReservation(); router.push('/'); }">
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    </Transition>
+
     <div class="reservation-card">
       <h1 class="reservation-title">{{ $t('reservation.confirmation.remainingTime') }}</h1>
       <div class="timer">{{ timeLeft }}</div>
@@ -71,6 +93,7 @@ const travelStore = useTravelStore();
 
 const isLoading = ref(false);
 const isUnlocked = ref(false);
+const showSuccessModal = ref(false);
 const timeLeft = ref<string>('10:00');
 const tripDetails = ref<TripDetails>({
   type: 'Última Milla',
@@ -141,14 +164,16 @@ const unlockBike = async () => {
     const resp = await travelStore.verifyBicycle(userUid, code);
     console.log('[ConfirmationComponent] verify-bicycle OK:', resp);
 
-    // Fin del flujo: limpiar y regresar
+    // Mostrar modal de éxito
     isUnlocked.value = true;
     if (timerInterval) clearInterval(timerInterval);
-    // Mostrar estado desbloqueado y dar unos segundos antes de salir
+    
+    // Mostrar el modal de éxito por 3 segundos
+    showSuccessModal.value = true;
     setTimeout(() => {
       clearReservation();
       router.push('/');
-    }, 1200);
+    }, 3000);
   } catch (err: any) {
     console.error('[ConfirmationComponent] Error verificando bicicleta:', err);
     window.alert('No se pudo verificar/desbloquear la bicicleta: ' + (err?.message ?? String(err)));
@@ -191,5 +216,142 @@ onUnmounted(() => {
 @import "@/styles/global.scss";
 @import "@/styles/reservation.scss";
 
+// Modal de éxito - viaje finalizado
+.success-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.success-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 2.5rem;
+  max-width: 450px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.4s ease;
+
+  .success-icon {
+    font-size: 4rem;
+    color: #2E7D32;
+    margin-bottom: 1rem;
+    animation: popIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  h2 {
+    color: #004E61;
+    font-size: 1.8rem;
+    margin: 0 0 1.5rem 0;
+    font-weight: 600;
+  }
+
+  .success-message {
+    margin-bottom: 2rem;
+    
+    p {
+      margin: 0.75rem 0;
+      color: #666;
+      font-size: 1rem;
+      line-height: 1.5;
+
+      &.cost-info {
+        background: #f0f7ff;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #2E7D32;
+        font-weight: 500;
+        color: #004E61;
+        margin: 1rem 0;
+      }
+
+      &.email-info {
+        background: #fff3cd;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #ff9800;
+        font-size: 0.95rem;
+      }
+    }
+  }
+
+  .butn-primary {
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Dark mode styles */
+[data-theme="dark"] .success-modal {
+  background: var(--color-surface-dark);
+
+  .success-icon {
+    color: var(--color-primary-light);
+  }
+
+  h2 {
+    color: var(--color-primary-light);
+  }
+
+  .success-message {
+    p {
+      color: var(--color-text-secondary-dark);
+
+      &.cost-info {
+        background: rgba(46, 125, 50, 0.15);
+        color: var(--color-primary-light);
+        border-left-color: var(--color-primary-light);
+      }
+
+      &.email-info {
+        background: rgba(255, 152, 0, 0.15);
+        color: var(--color-text-primary-dark);
+        border-left-color: #ff9800;
+      }
+    }
+  }
+}
+
+// Transiciones
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
 
 </style>

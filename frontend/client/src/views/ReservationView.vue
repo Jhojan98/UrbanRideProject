@@ -13,7 +13,7 @@
           />
         </aside>
         <section class="map-panel">
-          <MapComponent :origin="origin" :destination="destination" />
+          <MapComponent :origin="origin" :destination="destination" :use-sockets="false" />
         </section>
       </div>
     </template>

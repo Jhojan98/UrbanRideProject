@@ -1,6 +1,5 @@
 package com.movilidadsostenible.slots_service.rabbit.publisher;
 
-import com.movilidadsostenible.bicis_service.model.dto.BicycleTelemetryDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -16,7 +15,7 @@ public class SlotPublisher {
     @Value("${rabbitmq.routing.maintenance.key}")
     private String jsonMaintenanceRoutingKey;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BicisPublisher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SlotPublisher.class);
 
     private RabbitTemplate rabbitTemplate;
 
@@ -24,8 +23,8 @@ public class SlotPublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void sendJsonMaintenanceMessage(BicycleTelemetryDTO bicycleTelemetryDTO) {
-      LOGGER.info(String.format("JSON Message sent -> %s", bicycleTelemetryDTO.toString()));
-      rabbitTemplate.convertAndSend(jsonExchange, jsonMaintenanceRoutingKey, bicycleTelemetryDTO);
+    public void sendJsonMaintenanceMessage(Object message) {
+      LOGGER.info(String.format("JSON Message sent -> %s", message.toString()));
+      rabbitTemplate.convertAndSend(jsonExchange, jsonMaintenanceRoutingKey, message);
     }
 }

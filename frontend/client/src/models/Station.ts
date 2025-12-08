@@ -79,8 +79,9 @@ export function toStation(dto: StationDTO): Station {
     totalSlots: dto.totalSlots,
     availableSlots: dto.availableSlots,
     timestamp: new Date(dto.timestamp),
-    mechanical: dto.mechanical ?? 0,
-    electric: dto.electric ?? 0,
+    // Mapear tanto mechanical/electric como availableMechanicBikes/availableElectricBikes
+    mechanical: dto.mechanical ?? (dto as any).availableMechanicBikes ?? 0,
+    electric: dto.electric ?? (dto as any).availableElectricBikes ?? 0,
     slots: dto.slots?.map(toSlot)
   };
 }

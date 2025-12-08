@@ -1,6 +1,14 @@
 import * as L from 'leaflet';
 import { type Station, SlotStatus } from '@/models/Station';
 
+// Mapping de tipos de estación a iconos Font Awesome
+const STATION_ICONS: Record<string, { icon: string; color: string }> = {
+  'METRO': { icon: 'fa-subway', color: '#2196F3' },        // Azul para metro
+  'RESIDENTIAL': { icon: 'fa-building', color: '#FF6F00' }, // Naranja para residencial
+  'FINANCIAL_CENTER': { icon: 'fa-landmark', color: '#7B3FF2' }, // Púrpura para comercial/centro financiero
+  'default': { icon: 'fa-bicycle', color: '#4caf50' }      // Verde por defecto
+};
+
 // Íconos compartidos (estado intrínseco)
 class StationFlyweight {
   private static readonly high: L.DivIcon = new L.DivIcon({
@@ -20,34 +28,38 @@ class StationFlyweight {
     className: 'station-none', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
 
-  // ahora acepta un tipo opcional ('metro'|'bike') para cambiar el icono
+  // Crear icono basado en disponibilidad y tipo de estación
   static icon(available: number, total: number, type?: string): L.DivIcon {
-    // elegir el set base según porcentaje
-    let base: L.DivIcon
-    if (available === 0) base = this.none;
-    else {
-      const pct = (available/total)*100;
-      if (pct > 50) base = this.high;
-      else if (pct > 20) base = this.medium;
-      else base = this.low;
-    }
-    // Si es estación de metro, reemplazar el innerHTML por un icono de metro
-    if (type === 'metro') {
-      // clonar pero con icono de metro — solo si el html es string
-      if (typeof base.options.html === 'string') {
-        const replaced = base.options.html.replace('fa-bicycle', 'fa-subway')
-        return new L.DivIcon({
-          html: replaced,
-          className: base.options.className,
-          iconSize: base.options.iconSize,
-          iconAnchor: base.options.iconAnchor,
-          popupAnchor: base.options.popupAnchor
-        })
+    const stationType = type?.toUpperCase() || 'default';
+    const { icon, color } = STATION_ICONS[stationType] || STATION_ICONS['default'];
+    
+    // Determinar color de fondo según disponibilidad pero manteniendo matiz del tipo
+    let bgColor: string;
+    if (available === 0) {
+      bgColor = '#757575'; // Gris para sin disponibilidad
+    } else {
+      const pct = (available / total) * 100;
+      if (pct > 50) {
+        bgColor = color; // Color específico del tipo
+      } else if (pct > 20) {
+        // Mezclar color del tipo con naranja para indicar disponibilidad media
+        bgColor = color; // Mantener color del tipo
+      } else {
+        // Mezclar color del tipo con rojo para indicar baja disponibilidad
+        bgColor = '#f44336'; // Rojo
       }
-      // si no es string, devolver el base original
-      return base
     }
-    return base;
+
+    const hasAnimation = available <= total * 0.2 && available > 0; // Animar solo cuando disponibilidad < 20%
+    const iconHtml = `<div style="width:36px;height:36px;background:${bgColor};border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35)${hasAnimation ? ';animation:pulse 1.8s infinite' : ''}"><i class="fa ${icon}"></i></div>${hasAnimation ? '<style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}</style>' : ''}`;
+
+    return new L.DivIcon({
+      html: iconHtml,
+      className: `station-${available === 0 ? 'none' : 'active'}-${stationType.toLowerCase()}`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 36],
+      popupAnchor: [0, -36]
+    });
   }
 }
 

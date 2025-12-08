@@ -7,6 +7,7 @@ import type CaC from '@/models/CaC';
 const usersStore = defineStore('users', {
   state: () => ({
     baseURL: process.env.VUE_APP_API_URL,
+    complaintsBaseURL: process.env.VUE_APP_COMPLAINTS_URL || process.env.VUE_APP_API_URL || 'http://localhost:5007',
     users: [] as User[],
     travels: [] as Travel[],
     fines: [] as Fine[],
@@ -129,7 +130,7 @@ const usersStore = defineStore('users', {
     },
     async fetchCaCs(id: string) {
       try {
-        const response = await fetch(`${this.baseURL}/cac/user/${id}`, {
+        const response = await fetch(`${this.complaintsBaseURL}/complaints/?skip=0&limit=200`, {
           headers: { Accept: 'application/json' }
         })
         if (!response.ok) {
@@ -138,7 +139,15 @@ const usersStore = defineStore('users', {
           return
         }
         const data = await response.json()
-        this.cacs = Array.isArray(data) ? data as CaC[] : []
+        const list = Array.isArray(data) ? data : []
+        this.cacs = list.map((item: any) => ({
+          idCaC: item.k_id_complaints_and_claims ?? item.idCaC ?? item.id ?? 0,
+          description: item.d_description ?? item.description ?? '',
+          status: item.t_status ?? item.status ?? 'OPEN',
+          idTravel: item.k_id_travel ?? item.idTravel ?? null,
+          type: item.t_type ?? item.type,
+          date: item.f_date ?? item.created_at ?? item.createdAt ?? null,
+        }))
       } catch (error) {
         console.error('Error fetching CaCs:', error)
         this.cacs = []
