@@ -3,8 +3,9 @@ package com.movilidadsostenible.viaje_service.mqtt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.movilidadsostenible.viaje_service.clients.SlotsClient;
 import com.movilidadsostenible.viaje_service.models.dto.EndTravelDTO;
+import com.movilidadsostenible.viaje_service.models.dto.TravelEndDTO;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
-import com.movilidadsostenible.viaje_service.services.NotificationService;
+import com.movilidadsostenible.viaje_service.publisher.TravelPublisher;
 import com.movilidadsostenible.viaje_service.services.ReservationTempService;
 import com.movilidadsostenible.viaje_service.services.TravelService;
 import com.movilidadsostenible.viaje_service.services.ExchangeRateService;
@@ -48,7 +49,7 @@ public class MqttSubscriber implements MqttCallbackExtended {
     private TravelService repository;
 
     @Autowired
-    private NotificationService notificationService;
+    private TravelPublisher travelPublisher;
 
     @Autowired
     private ReservationTempService reservationTempService;
@@ -203,7 +204,15 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
           slotsClient.lockSlotById(slotIdIdFromTopic, bicyIdFromTopic);
 
-          notificationService.notificar( "El viaje con ID " + travel.getIdTravel() + " ha finalizado en el slot " + telemetry.getSlotId() + ".", 3);
+          TravelEndDTO travelEndDTO = new TravelEndDTO();
+          travelEndDTO.setUserId(travel.getUid());
+          travelEndDTO.setTravelId(travel.getIdTravel());
+          travelEndDTO.setTravelType(travel.getTravelType());
+          travelEndDTO.setStationStartId(travel.getFromIdStation());
+          travelEndDTO.setStationEndId(travel.getToIdStation());
+          travelEndDTO.setSlotEndId(telemetry.getSlotId());
+
+          travelPublisher.sendJsonTravelEndMessage(travelEndDTO);
 
 
         } catch (Exception e) {

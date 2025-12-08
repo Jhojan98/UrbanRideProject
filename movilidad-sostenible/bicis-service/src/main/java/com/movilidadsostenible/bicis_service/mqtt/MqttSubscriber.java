@@ -3,6 +3,7 @@ package com.movilidadsostenible.bicis_service.mqtt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.movilidadsostenible.bicis_service.model.dto.BicycleTelemetryDTO;
 import com.movilidadsostenible.bicis_service.model.entity.Bicycle;
+import com.movilidadsostenible.bicis_service.rabbit.publisher.BicisPublisher;
 import com.movilidadsostenible.bicis_service.repositories.BicycleRepository;
 import com.movilidadsostenible.bicis_service.services.websocket.TelemetryWebSocketPublisher;
 import org.eclipse.paho.client.mqttv3.*;
@@ -45,6 +46,9 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
     @Autowired
     private TelemetryWebSocketPublisher webSocketPublisher;
+
+    @Autowired
+    private BicisPublisher bicisPublisher;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private MqttClient client;
@@ -144,6 +148,14 @@ public class MqttSubscriber implements MqttCallbackExtended {
             if (telemetry.getLatitude() != null) bike.setLatitude(telemetry.getLatitude());
             if (telemetry.getLongitude() != null) bike.setLength(telemetry.getLongitude());
             if (telemetry.getBattery() != null) bike.setBattery(telemetry.getBattery());
+            if ("ERROR".equals(telemetry.getPadlockStatus())) {
+                bike.setPadlockStatus("ERROR");
+                bicisPublisher.sendJsonMaintenanceMessage(telemetry);
+            } else if ("LOCKED".equals(telemetry.getPadlockStatus())) {
+                bike.setPadlockStatus("LOCKED");
+            } else if ("UNLOCKED".equals(telemetry.getPadlockStatus())) {
+                bike.setPadlockStatus("UNLOCKED");
+            }
             bike.setLastUpdate(new Timestamp(telemetry.getTimestamp()));
             repository.save(bike);
             webSocketPublisher.sendTelemetry(telemetry);

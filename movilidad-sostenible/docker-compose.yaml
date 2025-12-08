@@ -187,6 +187,10 @@ services:
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_QOS: 1
       MQTT_CLIENT_ID: "bicis-service-${HOSTNAME:-local-dev}"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
     networks:
       - movilidad-sostenible-network
     depends_on:
@@ -195,6 +199,8 @@ services:
       eureka-server:
         condition: service_healthy
       mosquitto:
+        condition: service_started
+      rabbitmq:
         condition: service_started
     restart: always
 
@@ -524,6 +530,31 @@ services:
       rabbitmq:
         condition: service_started
     restart: always
+
+  notification-realtime-service:
+    container_name: notification-realtime-service
+    build:
+      context: ./
+      dockerfile: ./notification-realtime-service/Dockerfile
+    ports:
+      - "8105:8105"
+    environment:
+      PORT: 8105
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_QUEUE_USER_TO_EMAIL: emailQueue
+      RABBITMQ_EXCHANGE_NAME: emailUserExchange
+      RABBITMQ_ROUTING_USER_TO_EMAIL: emailRoutingKey
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
 
 volumes:
   data-postgres:

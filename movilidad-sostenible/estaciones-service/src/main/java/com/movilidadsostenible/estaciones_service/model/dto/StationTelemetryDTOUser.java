@@ -5,11 +5,10 @@ import lombok.Data;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Data
-public class StationTelemetryDTO {
+public class StationTelemetryDTOUser {
     private Integer idStation;
-    private boolean cctvStatus;
-    private Integer lockedPadlocks;
-    private Integer unlockedPadlocks;
+    private Integer availableElectricBikes;
+    private Integer availableMechanicBikes;
     private Long timestamp;
 }
 

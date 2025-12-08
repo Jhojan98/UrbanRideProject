@@ -1,9 +1,12 @@
 package com.movilidadsostenible.viaje_service.controllers;
 
 import com.movilidadsostenible.viaje_service.clients.StationClientRest;
+import com.movilidadsostenible.viaje_service.clients.UserClientRest;
 import com.movilidadsostenible.viaje_service.models.dto.StartTravelRequestDTO;
+import com.movilidadsostenible.viaje_service.models.dto.TravelStartDTO;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
 import com.movilidadsostenible.viaje_service.models.dto.ReservationTempDTO;
+import com.movilidadsostenible.viaje_service.publisher.TravelPublisher;
 import com.movilidadsostenible.viaje_service.services.TravelService;
 import com.movilidadsostenible.viaje_service.services.ReservationTempService;
 import com.movilidadsostenible.viaje_service.clients.SlotsClient;
@@ -40,6 +43,12 @@ public class TravelController {
 
     @Autowired
     private ReservationTempService reservationTempService;
+
+    @Autowired
+    private UserClientRest userClientRest;
+
+    @Autowired
+    private TravelPublisher travelPublisher;
 
     @GetMapping
     @Operation(summary = "Listar viajes")
@@ -135,14 +144,26 @@ public class TravelController {
             return ResponseEntity.badRequest().body(Collections.singletonMap("mensaje", "userUid, stationStartId, stationEndId y bikeType son requeridos"));
         }
 
+        try {
+          Map<String, Object> blockResp = userClientRest.isBlockedForTravel(req.getUserUid());
+          Boolean isBlocked = (Boolean) blockResp.get("blocked");
+          if(isBlocked) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Collections.singletonMap("mensaje", "USUARIO_BLOQUEADO_PARA_VIAJAR"));
+          }
+        } catch (Exception ex) {
+          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                  .body(Collections.singletonMap("mensaje", "Error al verificar estado del usuario: " + ex.getMessage()));
+        }
+
         String bikeType = req.getBikeType().trim().toUpperCase(Locale.ROOT);
-        ResponseEntity<String> slotResp;
+        ResponseEntity<String> slotStartId;
         ResponseEntity<String> slotEndId;
         try {
             if ("ELECTRIC".equals(bikeType)) {
-                slotResp = slotsClient.reserveFirstAvailableElectric(req.getStationStartId());
+                slotStartId = slotsClient.reserveFirstAvailableElectric(req.getStationStartId());
             } else if ("MECHANIC".equals(bikeType)) {
-                slotResp = slotsClient.reserveFirstAvailableMechanic(req.getStationStartId());
+                slotStartId = slotsClient.reserveFirstAvailableMechanic(req.getStationStartId());
             } else {
                 return ResponseEntity.badRequest().body(Collections.singletonMap("mensaje", "bikeType inválido: debe ser ELECTRIC o MECHANIC"));
             }
@@ -150,6 +171,21 @@ public class TravelController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("mensaje", "Error al solicitar slot: " + ex.getMessage()));
         }
+
+        try {
+          slotEndId = slotsClient.reserveFirstUnlocked(req.getStationEndId());
+
+        } catch (Exception ex) {
+          slotsClient.lockSlotById(slotStartId.getBody());
+
+          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(Collections.singletonMap("mensaje", "Error al solicitar slot: " + ex.getMessage()));
+        }
+
+        if (slotStartId == null || !slotStartId.getStatusCode().is2xxSuccessful() || slotStartId.getBody() == null || slotStartId.getBody().isEmpty()) {
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonMap("mensaje", "No hay slots disponibles en la estación solicitada"));
+        }
+
         String travelType;
         try {
             ResponseEntity<String> stationType = stationClient.getTypeById(req.getStationEndId());
@@ -162,20 +198,9 @@ public class TravelController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("mensaje", "Error al obtener tipo de estación: " + ex.getMessage()));
         }
-        try {
-            slotEndId = slotsClient.reserveFirstUnlocked(req.getStationEndId());
-
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("mensaje", "Error al solicitar slot: " + ex.getMessage()));
-        }
-
-        if (slotResp == null || !slotResp.getStatusCode().is2xxSuccessful() || slotResp.getBody() == null || slotResp.getBody().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonMap("mensaje", "No hay slots disponibles en la estación solicitada"));
-        }
 
         // Separar slotId y bicycleId del cuerpo recibido (formato: "slotId|bicycleId")
-        String slotIdRaw = slotResp.getBody();
+        String slotIdRaw = slotStartId.getBody();
         String slotId;
         String bicycleIdParsed = null;
         String[] parts = slotIdRaw.split("\\|");
@@ -204,6 +229,14 @@ public class TravelController {
 
 
         reservationTempService.save(dto);
+
+        TravelStartDTO travelStartDTO = new TravelStartDTO();
+        travelStartDTO.setUserId(req.getUserUid());
+        travelStartDTO.setReservationId(reservationId);
+        travelStartDTO.setStationStartId(req.getStationStartId());
+        travelStartDTO.setStationEndId(req.getStationEndId());
+        travelStartDTO.setSlotStartId(slotId);
+        travelStartDTO.setTravelType(travelType);
 
         Map<String, String> resp = new HashMap<>();
         resp.put("reservationId", reservationId);

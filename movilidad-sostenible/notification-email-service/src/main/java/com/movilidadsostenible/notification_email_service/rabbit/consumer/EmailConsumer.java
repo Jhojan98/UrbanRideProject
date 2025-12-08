@@ -18,9 +18,15 @@ public class EmailConsumer {
     this.emailSenderService = emailSenderService;
   }
 
-  @RabbitListener(queues = "${rabbitmq.queue.user.to.email}")
-  public void consumeJsonMessage(UserDTO user) {
+  @RabbitListener(queues = "${rabbitmq.queue.user.to.email.charge.travel.balance}")
+  public void consumeJsonChargeTravelBalanceMessage(UserDTO user) {
     LOGGER.info("JSON Message received -> {}", user);
-    emailSenderService.sendEmail(user);
+    emailSenderService.sendChargeTravelBalanceEmail(user);
+  }
+
+  @RabbitListener(queues = "${rabbitmq.queue.user.to.email.charge.travel.subscription}")
+  public void consumeJsonChargeTravelSubscriptionMessage(UserDTO user) {
+    LOGGER.info("JSON Message received -> {}", user);
+    emailSenderService.sendChargeTravelSubscriptionEmail(user);
   }
 }

@@ -13,8 +13,11 @@ public class UserPublisher {
     @Value("${rabbitmq.exchange.name}")
     private String jsonExchange;
 
-    @Value("${rabbitmq.routing.user.to.email.key}")
-    private String jsonRoutingKey;
+    @Value("${rabbitmq.routing.user.to.email.travel.balance.key}")
+    private String jsonChargeTravelBalanceRoutingKey;
+
+    @Value("${rabbitmq.routing.user.to.email.travel.subscription.key}")
+    private String jsonChargeTravelSubscriptionRoutingKey;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserPublisher.class);
 
@@ -24,8 +27,12 @@ public class UserPublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void sendJsonMessage(UserDTO userDTO) {
-        LOGGER.info(String.format("JSON Message sent -> %s", userDTO.toString()));
-        rabbitTemplate.convertAndSend(jsonExchange, jsonRoutingKey, userDTO);
+    public void sendJsonhChargeTravelBalanceMessage(UserDTO userDTO) {
+      LOGGER.info(String.format("JSON Message sent -> %s", userDTO.toString()));
+      rabbitTemplate.convertAndSend(jsonExchange, jsonChargeTravelBalanceRoutingKey, userDTO);
+    }
+    public void sendJsonhChargeTravelSubscriptionMessage(UserDTO userDTO) {
+      LOGGER.info(String.format("JSON Message sent -> %s", userDTO.toString()));
+      rabbitTemplate.convertAndSend(jsonExchange, jsonChargeTravelSubscriptionRoutingKey, userDTO);
     }
 }

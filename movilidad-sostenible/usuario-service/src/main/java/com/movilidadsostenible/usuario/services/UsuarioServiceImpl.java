@@ -41,7 +41,7 @@ public class UsuarioServiceImpl implements UserService {
     public User save(User user) {
         // Inicializar balance si viene null
         if (user.getBalance() == null) {
-            user.setBalance(0);
+            user.setBalance(0.0);
         }
         return repository.save(user);
     }
@@ -52,38 +52,47 @@ public class UsuarioServiceImpl implements UserService {
         repository.deleteById(uid);
     }
 
+    // Implementación exigida por la interfaz (Integer)
     @Override
-    public Integer getBalance(String uidUser) {
+    public Double getBalance(String uidUser) {
+        Double bal = byId(uidUser).map(User::getBalance).orElse(null);
+        return bal;
+    }
+
+    // Versión con Double para uso interno (no override)
+    public Double getBalanceDouble(String uidUser) {
         return byId(uidUser).map(User::getBalance).orElse(null);
     }
 
+    // Implementación exigida por la interfaz (Integer amount)
     @Override
     @Transactional
-    public Integer addBalance(String uidUser, Integer amount) {
+    public Double addBalance(String uidUser, Double amount) {
         if (amount == null || amount <= 0) {
             throw new IllegalArgumentException("El monto debe ser positivo");
         }
         User user = byId(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        Integer current = user.getBalance() == null ? 0 : user.getBalance();
+        Double current = user.getBalance() == null ? 0.0 : user.getBalance();
         user.setBalance(current + amount);
         repository.save(user);
-        return user.getBalance();
+        return user.getBalance(); // retornar Double
     }
 
-    @Override
+    // Versión con Double para uso interno (no override)
     @Transactional
-    public Integer subtractBalance(String uidUser, Integer amount) {
+    @Override
+    public Double subtractBalance(String uidUser, Double amount) {
         if (amount == null || amount <= 0) {
             throw new IllegalArgumentException("El monto debe ser positivo");
         }
         User user = byId(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
-        Integer current = user.getBalance() == null ? 0 : user.getBalance();
+        Double current = user.getBalance() == null ? 0.0 : user.getBalance();
         if (current < amount) {
             throw new IllegalArgumentException("Saldo insuficiente");
         }
         user.setBalance(current - amount);
         repository.save(user);
-        return user.getBalance();
+        return user.getBalance(); // retornar Double
     }
 
     // Devuelve true si el usuario NO puede viajar (bloqueado), false si SÍ puede
@@ -115,7 +124,7 @@ public class UsuarioServiceImpl implements UserService {
             }
         }
 
-        Integer balance = user.getBalance();
+        Double balance = user.getBalance();
         boolean hasNegativeOrNullBalance = (balance == null || balance < 0);
 
         boolean hasUnpaidFines;
@@ -132,7 +141,7 @@ public class UsuarioServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void chargeTravel(Integer totalTripValue, Integer excessMinutes, String uidUser) {
+    public void chargeTravel(Double totalTripValue, Integer excessMinutes, String uidUser) {
         if (totalTripValue == null || totalTripValue < 0) {
             throw new IllegalArgumentException("El valor total del viaje debe ser no negativo");
         }
@@ -145,40 +154,52 @@ public class UsuarioServiceImpl implements UserService {
         String subject;
         String message;
 
-        if ("MONTLY".equalsIgnoreCase(subscriptionType)) {
-            Integer travels = user.getSubcripcionTravels();
-            if (travels == null) travels = 0;
-            // Resta 1 por el viaje incluido
-            travels -= 1;
-            // Si hay minutos excedentes, resta 1 adicional
-            if (excessMinutes > 0) {
-                travels -= 1;
-            }
-            user.setSubcripcionTravels(travels);
-
-            subject = "Cobro de viaje por suscripción MONTLY";
-            message = String.format("Se cobró un viaje usando la suscripción mensual. Viajes restantes: %d. Minutos excedentes: %d. Valor base del viaje: %d.", travels, excessMinutes, totalTripValue);
-        } else {
-            // subscriptionType NONE u otro -> cobrar del balance sin importar si queda negativo
-            Integer balance = user.getBalance() == null ? 0 : user.getBalance();
-            Integer newBalance = balance - totalTripValue;
-            user.setBalance(newBalance);
-
-            subject = "Cobro de viaje por balance";
-            message = String.format("Se cobró el viaje del balance. Valor cobrado: %d. Minutos excedentes: %d. Balance anterior: %d. Balance nuevo: %d.", totalTripValue, excessMinutes, balance, newBalance);
-        }
-
-        repository.save(user);
-
-        // Publicar notificación del cobro
         try {
             UserDTO dto = new UserDTO();
             dto.setUserEmail(user.getUserEmail());
-            dto.setSubject(subject);
-            dto.setMessage(message);
-            userPublisher.sendJsonMessage(dto);
+
+            if ("MONTHLY".equalsIgnoreCase(subscriptionType) && user.getSubcripcionTravels() != null && user.getSubcripcionTravels() > 0) {
+                Integer travels = user.getSubcripcionTravels();
+                if (travels == null) travels = 0;
+                // Resta 1 por el viaje incluido
+                travels -= 1;
+                // Si hay minutos excedentes, resta 1 adicional
+                if (excessMinutes > 0) {
+                    travels -= 1;
+                }
+                user.setSubcripcionTravels(travels);
+
+                subject = "Cobro de viaje por suscripción MONTHLY";
+                message = String.format(
+                        "Se cobró un viaje usando la suscripción mensual. Viajes restantes: %d. Minutos excedentes: %d. Valor base del viaje: %.2f.",
+                        travels, excessMinutes, totalTripValue);
+
+                dto.setSubject(subject);
+                dto.setMessage(message);
+
+                userPublisher.sendJsonhChargeTravelSubscriptionMessage(dto);
+
+            } else {
+                // subscriptionType NONE u otro -> cobrar del balance sin importar si queda negativo
+                Double balance = user.getBalance() == null ? 0.0 : user.getBalance();
+                Double newBalance = balance - totalTripValue;
+                user.setBalance(newBalance);
+
+                subject = "Cobro de viaje por balance";
+                message = String.format(
+                        "Se cobró el viaje del balance. Valor cobrado: %.2f. Minutos excedentes: %d. Balance anterior: %.2f. Balance nuevo: %.2f.",
+                        totalTripValue, excessMinutes, balance, newBalance);
+
+                dto.setSubject(subject);
+                dto.setMessage(message);
+
+                userPublisher.sendJsonhChargeTravelBalanceMessage(dto);
+
+            }
         } catch (Exception e) {
-            // No interrumpir la transacción por fallo de publicación; solo registrar
+          // No interrumpir la transacción por fallo de publicación; solo registrar
         }
+
+        repository.save(user);
     }
 }

@@ -60,22 +60,37 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{uid}")
     @Operation(summary = "Actualizar usuario")
     public ResponseEntity<?> updateUser(@Valid @RequestBody User user,
                                         BindingResult result,
-                                        @PathVariable String uid) {
+                                        @PathVariable("uid") String uid) {
         if (result.hasErrors()) {
             return validate(result);
         }
         Optional<User> usuarioOptional = service.byId(uid);
-        if(usuarioOptional.isEmpty()) {
+        if (usuarioOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         User usuarioDB = usuarioOptional.get();
-        usuarioDB.setUserName(user.getUserName());
-        usuarioDB.setSubscriptionType(user.getSubscriptionType());
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(usuarioDB));
+        // Actualización parcial segura
+        if (user.getUserName() != null) {
+            usuarioDB.setUserName(user.getUserName());
+        }
+        if (user.getSubscriptionType() != null) {
+            usuarioDB.setSubscriptionType(user.getSubscriptionType());
+        }
+        // Si el modelo incluye subcripcionTravels y viene presente, actualizarlo
+        try {
+            Integer travels = user.getSubcripcionTravels();
+            if (travels != null) {
+                usuarioDB.setSubcripcionTravels(travels);
+            }
+        } catch (Exception ignored) {
+            // Campo opcional, omitir si no existe
+        }
+        User saved = service.save(usuarioDB);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
@@ -93,7 +108,7 @@ public class UserController {
     @GetMapping("/balance/{uid}")
     @Operation(summary = "Obtener balance de usuario")
     public ResponseEntity<?> getBalance(@PathVariable("uid") String uidUser) {
-        Integer balance = service.getBalance(uidUser);
+        Double balance = service.getBalance(uidUser);
         if (balance == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("message", "Usuario no encontrado"));
@@ -104,9 +119,9 @@ public class UserController {
     @PostMapping("/balance/{uid}/add")
     @Operation(summary = "Agregar saldo al usuario")
     public ResponseEntity<?> addBalance(@PathVariable("uid") String uidUser,
-                                        @RequestParam("amount") Integer amount) {
+                                        @RequestParam("amount") Double amount) {
         try {
-            Integer newBalance = service.addBalance(uidUser, amount);
+            Double newBalance = service.addBalance(uidUser, amount);
             return ResponseEntity.ok(Map.of("uid", uidUser, "balance", newBalance));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -116,9 +131,9 @@ public class UserController {
     @PostMapping("/balance/{uid}/subtract")
     @Operation(summary = "Quitar saldo al usuario")
     public ResponseEntity<?> subtractBalance(@PathVariable("uid") String uidUser,
-                                             @RequestParam("amount") Integer amount) {
+                                             @RequestParam("amount") Double amount) {
         try {
-            Integer newBalance = service.subtractBalance(uidUser, amount);
+            Double newBalance = service.subtractBalance(uidUser, amount);
             return ResponseEntity.ok(Map.of("uid", uidUser, "balance", newBalance));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -144,7 +159,7 @@ public class UserController {
             @Parameter(description = "UID del usuario", required = true)
             @PathVariable("uid") String uidUser,
             @Parameter(description = "Valor total del viaje", required = true)
-            @RequestParam("total") Integer totalTripValue,
+            @RequestParam("total") Double totalTripValue,
             @Parameter(description = "Minutos excedentes", required = true)
             @RequestParam("excessMinutes") Integer excessMinutes
     ) {

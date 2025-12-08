@@ -1,14 +1,17 @@
 package com.movilidadsostenible.estaciones_service.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.movilidadsostenible.estaciones_service.model.dto.StationTelemetryDTO;
+import com.movilidadsostenible.estaciones_service.model.dto.StationTelemetryDTOAdmin;
+import com.movilidadsostenible.estaciones_service.model.dto.StationTelemetryDTOUser;
 import com.movilidadsostenible.estaciones_service.model.entity.Station;
+import com.movilidadsostenible.estaciones_service.publisher.StationPublisher;
 import com.movilidadsostenible.estaciones_service.services.StationsService;
 import com.movilidadsostenible.estaciones_service.services.websocket.TelemetryWebSocketPublisher;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
+import org.eclipse.paho.client.mqttv3.MqttTopic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,13 +37,18 @@ public class MqttSubscriber implements MqttCallbackExtended {
     private String username;
     @Value("${mqtt.password:}")
     private String password;
-    @Value("${mqtt.input-topic}")
-    private String inputTopic;
+    @Value("${mqtt.input-topic.user}")
+    private String inputTopicUser;
+    @Value("${mqtt.input-topic.admin}")
+    private String inputTopicAdmin;
     @Value("${mqtt.qos:1}")
     private int qos;
 
     @Autowired
     private StationsService repository;
+
+    @Autowired
+    private StationPublisher stationPublisher;
 
     @Autowired
     private TelemetryWebSocketPublisher webSocketPublisher;
@@ -75,8 +83,11 @@ public class MqttSubscriber implements MqttCallbackExtended {
                     client.connect(opts);
                     log.info("Conectado a MQTT");
                 }
-                client.subscribe(inputTopic, qos);
-                log.info("Suscrito a topic {} con QoS {}", inputTopic, qos);
+
+                client.subscribe(inputTopicUser, qos);
+                client.subscribe(inputTopicAdmin, qos);
+                log.info("Suscrito a topic {} con QoS {}", inputTopicUser, qos);
+                log.info("Suscrito a topic {} con QoS {}", inputTopicAdmin, qos);
                 return; // éxito
             } catch (Exception e) {
                 log.warn("Fallo conectando/suscribiendo a MQTT. Reintentando en 5s: {}", e.getMessage());
@@ -105,8 +116,9 @@ public class MqttSubscriber implements MqttCallbackExtended {
     public void connectComplete(boolean reconnect, String serverURI) {
         log.info("Conexión MQTT completa. reconnect={}, uri={}", reconnect, serverURI);
         try {
-            if (client != null && client.isConnected()) {
-                client.subscribe(inputTopic, qos);
+            if (client != null && client.isConnected() ) {
+                client.subscribe(inputTopicUser, qos);
+                client.subscribe(inputTopicAdmin, qos);
             }
         } catch (MqttException e) {
             log.error("Error re-suscribiendo tras reconexión", e);
@@ -120,34 +132,80 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
     @Override
     public void messageArrived(String topic, MqttMessage message) {
-        try {
-            String payloadStr = new String(message.getPayload(), StandardCharsets.UTF_8);
-            Integer idFromTopic = extractStationId(topic);
-            StationTelemetryDTO telemetry = objectMapper.readValue(payloadStr, StationTelemetryDTO.class);
-            if (telemetry.getIdStation() == null) {
+        String payloadStr = new String(message.getPayload(), StandardCharsets.UTF_8);
+        boolean isUserTopic = MqttTopic.isMatched(inputTopicUser, topic);
+        boolean isAdminTopic = MqttTopic.isMatched(inputTopicAdmin, topic);
+      System.out.println(isUserTopic);
+      System.out.println(isAdminTopic);
+
+        if (isUserTopic) {
+            try {
+              Integer idFromTopic = extractStationId(topic);
+              StationTelemetryDTOUser telemetry = objectMapper.readValue(payloadStr, StationTelemetryDTOUser.class);
+              if (telemetry.getIdStation() == null) {
                 telemetry.setIdStation(idFromTopic);
-            }
-            if (telemetry.getTimestamp() == null) {
+              }
+              if (telemetry.getTimestamp() == null) {
                 telemetry.setTimestamp(System.currentTimeMillis());
-            }
-            if (telemetry.getIdStation() == null) {
+              }
+              if (telemetry.getIdStation() == null) {
                 log.warn("Mensaje MQTT sin id de estacion. topic={}, payload={}", topic, payloadStr);
                 return;
+              }
+              Optional<Station> opt = repository.findById(telemetry.getIdStation());
+              if (opt.isEmpty()) {
+                log.warn("Estacion {} no existe en BD. Ignorando telemetría.", telemetry.getIdStation());
+                return;
+              }
+              webSocketPublisher.sendTelemetryUser(telemetry);
+
+            } catch (Exception e) {
+              log.error("Error procesando mensaje MQTT", e);
+            }
+        } else if (isAdminTopic) {
+          try {
+            Integer idFromTopic = extractStationId(topic);
+            StationTelemetryDTOAdmin telemetry = objectMapper.readValue(payloadStr, StationTelemetryDTOAdmin.class);
+            if (telemetry.getIdStation() == null) {
+              telemetry.setIdStation(idFromTopic);
+            }
+            if (telemetry.getTimestamp() == null) {
+              telemetry.setTimestamp(System.currentTimeMillis());
+            }
+            if (telemetry.getIdStation() == null) {
+              log.warn("Mensaje MQTT sin id de estacion. topic={}, payload={}", topic, payloadStr);
+              return;
             }
             Optional<Station> opt = repository.findById(telemetry.getIdStation());
             if (opt.isEmpty()) {
-                log.warn("Estacion {} no existe en BD. Ignorando telemetría.", telemetry.getIdStation());
-                return;
+              log.warn("Estacion {} no existe en BD. Ignorando telemetría.", telemetry.getIdStation());
+              return;
             }
             Station station = opt.get();
             station.setCctvStatus(telemetry.isCctvStatus());
             repository.save(station);
 
-            webSocketPublisher.sendTelemetry(telemetry);
+            webSocketPublisher.sendTelemetryAdmin(telemetry);
+
+            if(!telemetry.isCctvStatus()){
+              stationPublisher.sendJsonMaintenanceStationCctvMessage(telemetry);
+            }
+            if(!telemetry.isLightingStatus()){
+              stationPublisher.sendJsonMaintenanceStationLightMessage(telemetry);
+            }
+            if(telemetry.isPanicButtonStatus()){
+              stationPublisher.sendJsonStationPanicButtonMessage(telemetry);
+            }
 
             log.info("Actualizada estacion {} cctvStatus={}", station.getIdStation(), station.getCctvStatus());
-        } catch (Exception e) {
+          } catch (Exception e) {
             log.error("Error procesando mensaje MQTT", e);
+          }
+
+
+        } else {
+            // Mensaje en tópico no esperado
+            log.debug("Mensaje MQTT en tópico no coincidente con filtros. filterUser={}, filterAdmin={}, topic={}", inputTopicUser, inputTopicAdmin, topic);
         }
     }
 
@@ -160,7 +218,7 @@ public class MqttSubscriber implements MqttCallbackExtended {
         // Espera: bikes/{id}/telemetry
         if (topic == null) return null;
         String[] parts = topic.split("/");
-        if (parts.length >= 3 && "station".equals(parts[0]) && "telemetry".equals(parts[2])) {
+        if (parts.length >= 4 && "station".equals(parts[0]) && "telemetry".equals(parts[2])) {
             try { return Integer.parseInt(parts[1]); } catch (NumberFormatException ignored) {}
         }
         return null;
