@@ -97,13 +97,14 @@ export const useTripStore = defineStore('trip', {
       }
 
       try {
-        const sseUrl = `${this.baseURL}/notification/sse/connect?uid=${this.userUid}`;
+        const sseUrl = `${this.baseURL}/notification/sse/connect?uid=${encodeURIComponent(this.userUid)}`;
         console.log(`[SSE] Attempting connection (attempt ${this.connectionAttempts + 1}/${this.maxReconnectAttempts})...`);
         console.log('[SSE] Base URL:', this.baseURL);
         console.log('[SSE] User UID:', this.userUid);
         console.log('[SSE] Full SSE URL:', sseUrl);
 
-        this.eventSource = new EventSource(sseUrl, { withCredentials: true });
+        // Crear EventSource SIN opciones (igual a SseClient.vue que funciona)
+        this.eventSource = new EventSource(sseUrl);
 
         this.eventSource.onopen = () => {
           console.log('[SSE] ✅ Connection opened successfully');
@@ -115,16 +116,13 @@ export const useTripStore = defineStore('trip', {
           this.resetHeartbeat();
         };
 
-        this.eventSource.onmessage = (event) => {
+        // Escuchar eventos con nombre 'mensaje' (como en SseClient)
+        this.eventSource.addEventListener('mensaje', (event) => {
           try {
             console.log('═══════════════════════════════════════════');
-            console.log('[SSE] 📨 MESSAGE RECEIVED');
+            console.log('[SSE] 📨 MESSAGE RECEIVED (evento "mensaje")');
             console.log('═══════════════════════════════════════════');
-            console.log('[SSE] Raw event:', event);
-            console.log('[SSE] Event type:', event.type);
             console.log('[SSE] Raw event.data:', event.data);
-            console.log('[SSE] Data type:', typeof event.data);
-            console.log('[SSE] Data length:', event.data?.length);
 
             let data;
             try {
@@ -186,18 +184,43 @@ export const useTripStore = defineStore('trip', {
             console.error('[SSE] Original event.data:', event.data);
             console.error('═══════════════════════════════════════════');
           }
+        });
+
+        // Fallback: también escuchar onmessage genérico por si el backend envía sin nombre
+        this.eventSource.onmessage = (event) => {
+          console.log('[SSE] 📨 Generic message received (onmessage):', event.data);
+          try {
+            const data = JSON.parse(event.data);
+            this.resetHeartbeat();
+            // Procesar igual que 'mensaje'
+            const messageStr = data.message || '';
+            let notificationType: NotificationData['type'] | null = null;
+            if (messageStr.includes('EXPIRED_TRAVEL')) notificationType = 'EXPIRED_TRAVEL';
+            else if (messageStr.includes('START_TRAVEL')) notificationType = 'START_TRAVEL';
+            else if (messageStr.includes('END_TRAVEL')) notificationType = 'END_TRAVEL';
+
+            if (notificationType) {
+              this.showNotification(notificationType, messageStr);
+            }
+          } catch (e) {
+            console.error('[SSE] Error parsing generic message:', e);
+          }
         };
 
         this.eventSource.onerror = (error) => {
           console.error('[SSE] ❌ Connection error:', error);
           console.error('[SSE] Error type:', error.type);
           console.error('[SSE] ReadyState:', this.eventSource?.readyState);
-          console.error('[SSE] Connection will be closed and reconnection attempted');
-          this.isConnected = false;
-          this.clearHeartbeatTimer();
-          this.eventSource?.close();
-          this.eventSource = null;
-          this.attemptReconnect();
+
+          // Si la conexión se cierra, reintentar
+          if (this.eventSource?.readyState === EventSource.CLOSED) {
+            console.error('[SSE] Connection closed by server, attempting reconnect');
+            this.isConnected = false;
+            this.clearHeartbeatTimer();
+            this.eventSource?.close();
+            this.eventSource = null;
+            this.attemptReconnect();
+          }
         };
       } catch (error) {
         console.error('[SSE] ❌ Error creating EventSource:', error);
