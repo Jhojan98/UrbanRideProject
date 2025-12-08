@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Cliente SSE - notification-realtime-service</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:20px}
+    #events{white-space:pre-wrap;background:#f6f6f6;padding:12px;border:1px solid #ddd;max-height:400px;overflow:auto}
+    label,input,button{margin:6px 0;display:block}
+  </style>
+</head>
+<body>
+  <h1>Cliente SSE para notification-realtime-service</h1>
+
+  <p>Este cliente se conecta al endpoint SSE <code>/sse/connect?uid=...</code> y muestra eventos con nombre <code>connected</code> y <code>mensaje</code>.</p>
+
+  <label>Servidor (change si tu servicio corre en otro puerto):
+    <input id="server" value="http://localhost:8105" style="width:360px" />
+  </label>
+
+  <label>UID (usuario) para conectar:
+    <input id="uid" value="testuser" style="width:200px" />
+  </label>
+
+  <button id="connectBtn">Conectar SSE</button>
+  <button id="disconnectBtn" disabled>Desconectar</button>
+
+  <h3>Eventos recibidos</h3>
+  <div id="events">(aún sin eventos)</div>
+
+  <script>
+    let es = null;
+    const serverInput = document.getElementById('server');
+    const uidInput = document.getElementById('uid');
+    const connectBtn = document.getElementById('connectBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const events = document.getElementById('events');
+
+    function logLine(line){
+      const time = new Date().toLocaleTimeString();
+      events.textContent = `[${time}] ${line}\n` + events.textContent;
+    }
+
+    connectBtn.addEventListener('click', () => {
+      if (es) return;
+      const server = serverInput.value.replace(/\/$/, '');
+      const uid = encodeURIComponent(uidInput.value || 'testuser');
+      const url = `${server}/sse/connect?uid=${uid}`;
+
+      logLine('Intentando conectar a: ' + url);
+
+      // EventSource utilizará el origen del servidor; si tu HTML se sirve desde otro origen
+      // es posible que necesites habilitar CORS en el backend. Si tienes problemas, usa
+      // curl -N (ver instrucciones) o añade @CrossOrigin("*") al controlador.
+
+      es = new EventSource(url);
+
+      es.addEventListener('open', () => logLine('Conexión abierta (open)'));
+      es.addEventListener('error', (e) => logLine('Error o conexión cerrada: ' + JSON.stringify(e)));
+
+      // Evento 'connected' enviado por el backend al conectar
+      es.addEventListener('connected', (ev) => {
+        logLine("Evento 'connected' recibido: " + ev.data);
+      });
+
+      // Evento 'mensaje' con payload JSON
+      es.addEventListener('mensaje', (ev) => {
+        try{
+          const obj = JSON.parse(ev.data);
+          logLine("Evento 'mensaje' -> " + JSON.stringify(obj));
+        }catch(err){
+          logLine("Evento 'mensaje' (no JSON): " + ev.data);
+        }
+      });
+
+      // Mensajes por defecto (sin nombre)
+      es.onmessage = (ev) => {
+        logLine('onmessage: ' + ev.data);
+      };
+
+      connectBtn.disabled = true;
+      disconnectBtn.disabled = false;
+    });
+
+    disconnectBtn.addEventListener('click', () => {
+      if (!es) return;
+      es.close();
+      es = null;
+      connectBtn.disabled = false;
+      disconnectBtn.disabled = true;
+      logLine('Desconectado manualmente');
+    });
+  </script>
+</body>
+</html>
+
