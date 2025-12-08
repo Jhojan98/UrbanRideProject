@@ -14,6 +14,7 @@ const userAuth = defineStore("auth", {
   state() {
     return {
       token: null as string | null,
+      uid: null as string | null,
       // Use proxy path by default in dev to avoid CORS; fallback to configured absolute URL if provided
       baseURL: process.env.VUE_APP_API_URL || "/api",
       message: "",
@@ -32,11 +33,16 @@ const userAuth = defineStore("auth", {
       return new Promise<void>((resolve) => {
         const auth = getAuth();
 
-        // Restore token from localStorage if it exists
+        // Restore token and uid from localStorage if they exist
         const savedToken = localStorage.getItem('authToken');
+        const savedUid = localStorage.getItem('authUid');
         if (savedToken) {
           this.token = savedToken;
           console.log('Token restored from localStorage');
+        }
+        if (savedUid) {
+          this.uid = savedUid;
+          console.log('Uid restored from localStorage');
         }
 
         // Listen for authentication state changes in Firebase
@@ -46,20 +52,25 @@ const userAuth = defineStore("auth", {
             try {
               const token = await user.getIdToken();
               this.token = token;
+              this.uid = user.uid;
               this.isVerified = user.emailVerified;
 
-              // Save token in localStorage
+              // Save token and uid in localStorage
               localStorage.setItem('authToken', token);
-              console.log('Token saved in localStorage');
+              localStorage.setItem('authUid', user.uid);
+              console.log('Token and uid saved in localStorage');
             } catch (error) {
               console.error('Error getting token:', error);
               this.token = null;
+              this.uid = null;
             }
           } else {
             // User not authenticated
             this.token = null;
+            this.uid = null;
             this.isVerified = false;
             localStorage.removeItem('authToken');
+            localStorage.removeItem('authUid');
           }
 
           this.authStateInitialized = true;

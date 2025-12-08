@@ -36,42 +36,37 @@
   </section>
 </template>
 
-<script lang="ts">
-import type { PropType } from 'vue';
+<script setup lang="ts">
 import type Fine from '@/models/Fine';
 
-export default {
-  name: 'FinesDashboard',
-  props: {
-    fines: {
-      type: Array as PropType<Fine[]>,
-      default: () => []
-    },
-    loading: {
-      type: Boolean,
-      default: false
-    }
-  },
-  emits: ['pay'],
-  methods: {
-    formatDate(date: string | number | Date | undefined): string {
-      if (!date) return 'N/A';
-      const dateObj = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
-      return dateObj.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
-    },
-    formatCost(cost: number | undefined): string {
-      if (cost === null || cost === undefined) return 'N/A';
-      const costInUSD = typeof cost === 'number' ? cost : 0;
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2
-      }).format(costInUSD);
-    },
-    emitPay(fineId: number, amount: number | undefined) {
-      this.$emit('pay', fineId, amount);
-    }
-  }
+interface Props {
+  fines: Fine[];
+  loading: boolean;
+}
+
+defineProps<Props>();
+const emit = defineEmits<{
+  (e: 'pay', fineId: number, amount: number | undefined): void;
+}>();
+
+const formatDate = (date: string | number | Date | undefined): string => {
+  if (!date) return 'N/A';
+  const dateObj = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+const formatCost = (cost: number | undefined): string => {
+  if (cost === null || cost === undefined) return 'N/A';
+  const costInUSD = typeof cost === 'number' ? cost : 0;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(costInUSD);
+};
+
+const emitPay = (fineId: number, amount: number | undefined) => {
+  emit('pay', fineId, amount);
 };
 </script>
 

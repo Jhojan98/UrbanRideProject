@@ -21,13 +21,16 @@ export const useTripStore = defineStore('trip', {
     heartbeatTimer: null as number | null,
     heartbeatTimeoutMs: 60000, // si no hay mensajes en 60s, forzar reconnect
     lifecycleListenersAttached: false,
+    userUid: null as string | null,
   }),
 
   actions: {
     attachLifecycleListeners() {
       if (this.lifecycleListenersAttached) return;
+      console.log('[SSE] Attaching lifecycle listeners');
       // Retry when coming back online
       window.addEventListener('online', () => {
+        console.log('[SSE] 🌐 Online event detected');
         if (!this.isConnected && !this.eventSource) {
           console.log('[SSE] Online: attempting to reconnect now');
           this.connectToSSE();
@@ -35,12 +38,14 @@ export const useTripStore = defineStore('trip', {
       });
       // Retry when returning to tab
       document.addEventListener('visibilitychange', () => {
+        console.log('[SSE] 👁️ Visibility change event detected, state:', document.visibilityState);
         if (document.visibilityState === 'visible' && !this.isConnected && !this.eventSource) {
           console.log('[SSE] Tab visible: attempting to reconnect now');
           this.connectToSSE();
         }
       });
       this.lifecycleListenersAttached = true;
+      console.log('[SSE] ✅ Lifecycle listeners attached');
     },
 
     resetHeartbeat() {
@@ -49,7 +54,13 @@ export const useTripStore = defineStore('trip', {
         this.heartbeatTimer = null;
       }
       this.heartbeatTimer = window.setTimeout(() => {
-        console.warn('[SSE] Sin mensajes en ventana de heartbeat. Reintentando...');
+        console.warn('═══════════════════════════════════════════');
+        console.warn('[SSE] ⏱️ HEARTBEAT TIMEOUT');
+        console.warn('═══════════════════════════════════════════');
+        console.warn('[SSE] No messages received in 60 seconds');
+        console.warn('[SSE] Connection will be closed and reconnection attempted');
+        console.warn('[SSE] UID:', this.userUid);
+        console.warn('═══════════════════════════════════════════');
         // Cerrar fuente y reintentar
         try { this.eventSource?.close(); } catch (e) { /* noop */ }
         this.eventSource = null;
@@ -72,13 +83,32 @@ export const useTripStore = defineStore('trip', {
         return;
       }
 
-      try {
-        console.log(`[SSE] Attempting connection (attempt ${this.connectionAttempts + 1}/${this.maxReconnectAttempts})...`);
+      // Get user uid from localStorage or state
+      if (!this.userUid) {
+        this.userUid = localStorage.getItem('authUid');
+        console.log('[SSE] UID loaded from localStorage:', this.userUid);
+      } else {
+        console.log('[SSE] UID already in state:', this.userUid);
+      }
 
-        this.eventSource = new EventSource(`${this.baseURL}/travel/sse/connect`, { withCredentials: true });
+      if (!this.userUid) {
+        console.warn('[SSE] No user uid available, cannot connect to SSE');
+        return;
+      }
+
+      try {
+        const sseUrl = `${this.baseURL}/notification/sse/connect?uid=${this.userUid}`;
+        console.log(`[SSE] Attempting connection (attempt ${this.connectionAttempts + 1}/${this.maxReconnectAttempts})...`);
+        console.log('[SSE] Base URL:', this.baseURL);
+        console.log('[SSE] User UID:', this.userUid);
+        console.log('[SSE] Full SSE URL:', sseUrl);
+
+        this.eventSource = new EventSource(sseUrl, { withCredentials: true });
 
         this.eventSource.onopen = () => {
-          console.log('[SSE] Connection opened successfully');
+          console.log('[SSE] ✅ Connection opened successfully');
+          console.log('[SSE] Event Source state:', this.eventSource?.readyState);
+          console.log('[SSE] Ready to receive messages for UID:', this.userUid);
           this.isConnected = true;
           this.connectionAttempts = 0;
           this.clearReconnectTimer();
@@ -87,36 +117,82 @@ export const useTripStore = defineStore('trip', {
 
         this.eventSource.onmessage = (event) => {
           try {
-            const data = JSON.parse(event.data);
-            this.message = data.message;
+            console.log('═══════════════════════════════════════════');
+            console.log('[SSE] 📨 MESSAGE RECEIVED');
+            console.log('═══════════════════════════════════════════');
+            console.log('[SSE] Raw event:', event);
+            console.log('[SSE] Event type:', event.type);
+            console.log('[SSE] Raw event.data:', event.data);
+            console.log('[SSE] Data type:', typeof event.data);
+            console.log('[SSE] Data length:', event.data?.length);
 
-            console.log('[SSE] Message received:', data.message);
+            let data;
+            try {
+              data = JSON.parse(event.data);
+              console.log('[SSE] ✅ JSON parsed successfully');
+              console.log('[SSE] Parsed data:', data);
+              console.log('[SSE] Data keys:', Object.keys(data));
+            } catch (parseError) {
+              console.error('[SSE] ❌ Failed to parse JSON:', parseError);
+              console.error('[SSE] Raw string:', event.data);
+              throw parseError;
+            }
+
+            this.message = data.message;
+            console.log('[SSE] Message extracted:', this.message);
+            console.log('[SSE] Message type:', typeof this.message);
 
             // Restart heartbeat on receiving any message
             this.resetHeartbeat();
+            console.log('[SSE] ✅ Heartbeat reset');
 
             // Parsear el mensaje para determinar el tipo
             const messageStr = data.message || '';
+            console.log('[SSE] Message string for parsing:', messageStr);
+            console.log('[SSE] Message includes EXPIRED_TRAVEL:', messageStr.includes('EXPIRED_TRAVEL'));
+            console.log('[SSE] Message includes START_TRAVEL:', messageStr.includes('START_TRAVEL'));
+            console.log('[SSE] Message includes END_TRAVEL:', messageStr.includes('END_TRAVEL'));
+
             let notificationType: NotificationData['type'] | null = null;
 
             if (messageStr.includes('EXPIRED_TRAVEL')) {
               notificationType = 'EXPIRED_TRAVEL';
+              console.log('[SSE] ✅ Notification type detected: EXPIRED_TRAVEL');
             } else if (messageStr.includes('START_TRAVEL')) {
               notificationType = 'START_TRAVEL';
+              console.log('[SSE] ✅ Notification type detected: START_TRAVEL');
             } else if (messageStr.includes('END_TRAVEL')) {
               notificationType = 'END_TRAVEL';
+              console.log('[SSE] ✅ Notification type detected: END_TRAVEL');
+            } else {
+              console.log('[SSE] ⚠️ No notification type matched in message');
             }
 
             if (notificationType) {
+              console.log('[SSE] 🔔 Showing notification:', { type: notificationType, message: messageStr });
               this.showNotification(notificationType, messageStr);
+              console.log('[SSE] ✅ Notification displayed');
+            } else {
+              console.log('[SSE] ℹ️ Message received but no type matched - storing anyway');
             }
+            console.log('═══════════════════════════════════════════');
           } catch (error) {
-            console.error('[SSE] Error parsing SSE message:', error);
+            console.error('═══════════════════════════════════════════');
+            console.error('[SSE] ❌ ERROR PROCESSING MESSAGE');
+            console.error('═══════════════════════════════════════════');
+            console.error('[SSE] Error object:', error);
+            console.error('[SSE] Error message:', (error as Error).message);
+            console.error('[SSE] Error stack:', (error as Error).stack);
+            console.error('[SSE] Original event.data:', event.data);
+            console.error('═══════════════════════════════════════════');
           }
         };
 
         this.eventSource.onerror = (error) => {
-          console.error('[SSE] Connection error:', error);
+          console.error('[SSE] ❌ Connection error:', error);
+          console.error('[SSE] Error type:', error.type);
+          console.error('[SSE] ReadyState:', this.eventSource?.readyState);
+          console.error('[SSE] Connection will be closed and reconnection attempted');
           this.isConnected = false;
           this.clearHeartbeatTimer();
           this.eventSource?.close();
@@ -124,7 +200,9 @@ export const useTripStore = defineStore('trip', {
           this.attemptReconnect();
         };
       } catch (error) {
-        console.error('[SSE] Error creating EventSource:', error);
+        console.error('[SSE] ❌ Error creating EventSource:', error);
+        console.error('[SSE] Error object:', error);
+        console.error('[SSE] Error message:', (error as Error).message);
         this.isConnected = false;
         this.attemptReconnect();
       }
@@ -135,16 +213,30 @@ export const useTripStore = defineStore('trip', {
       this.clearReconnectTimer();
 
       if (this.connectionAttempts >= this.maxReconnectAttempts) {
-        console.error('[SSE] Máximo número de intentos de reconexión alcanzado');
+        console.error('═══════════════════════════════════════════');
+        console.error('[SSE] 🛑 MAX RECONNECT ATTEMPTS REACHED');
+        console.error('═══════════════════════════════════════════');
+        console.error('[SSE] Maximum attempts:', this.maxReconnectAttempts);
+        console.error('[SSE] UID:', this.userUid);
+        console.error('[SSE] URL was: ${this.baseURL}/notification/sse/connect?uid=${this.userUid}');
+        console.error('[SSE] Manual reconnection required');
+        console.error('═══════════════════════════════════════════');
         return;
       }
 
       this.connectionAttempts++;
       const delay = this.reconnectDelay * Math.pow(1.5, this.connectionAttempts - 1); // Backoff exponencial
 
-      console.log(`[SSE] Reintentando conexión en ${Math.round(delay / 1000)}s...`);
+      console.log('═══════════════════════════════════════════');
+      console.log('[SSE] 🔄 RECONNECTION ATTEMPT');
+      console.log('═══════════════════════════════════════════');
+      console.log(`[SSE] Attempt ${this.connectionAttempts}/${this.maxReconnectAttempts}`);
+      console.log(`[SSE] Retrying connection in ${Math.round(delay / 1000)}s...`);
+      console.log('[SSE] UID:', this.userUid);
+      console.log('═══════════════════════════════════════════');
 
       this.reconnectTimer = window.setTimeout(() => {
+        console.log('[SSE] Executing reconnection...');
         this.connectToSSE();
       }, delay);
     },
@@ -157,40 +249,57 @@ export const useTripStore = defineStore('trip', {
     },
 
     showNotification(type: NotificationData['type'], message: string) {
+      console.log('[SSE] Creating notification object:', { type, message, timestamp: Date.now() });
       this.notification = {
         type,
         message,
         timestamp: Date.now(),
       };
       this.isVisible = true;
+      console.log('[SSE] Notification visibility set to true');
+      console.log('[SSE] Current notification state:', this.notification);
     },
 
     closeNotification() {
+      console.log('[SSE] Closing notification');
       this.isVisible = false;
       // Clear notification after animation
       setTimeout(() => {
         this.notification = null;
+        console.log('[SSE] Notification cleared from state');
       }, 300);
     },
 
     disconnect() {
-      console.log('[SSE] Disconnecting SSE');
+      console.log('═══════════════════════════════════════════');
+      console.log('[SSE] 🔌 MANUAL DISCONNECT');
+      console.log('═══════════════════════════════════════════');
+      console.log('[SSE] UID:', this.userUid);
+      console.log('[SSE] Connection status:', this.isConnected);
       this.isConnected = false;
       this.clearReconnectTimer();
       this.clearHeartbeatTimer();
       if (this.eventSource) {
         this.eventSource.close();
         this.eventSource = null;
+        console.log('[SSE] EventSource closed');
       }
+      console.log('[SSE] ✅ Disconnected successfully');
+      console.log('═══════════════════════════════════════════');
     },
 
     getConnectionStatus() {
-      return {
+      const status = {
         isConnected: this.isConnected,
         connectionAttempts: this.connectionAttempts,
         maxReconnectAttempts: this.maxReconnectAttempts,
         status: this.isConnected ? 'Connected' : 'Disconnected',
+        userUid: this.userUid,
+        baseURL: this.baseURL,
+        sseUrl: `${this.baseURL}/notification/sse/connect?uid=${this.userUid}`,
       };
+      console.log('[SSE] Connection Status:', status);
+      return status;
     },
   },
 })
