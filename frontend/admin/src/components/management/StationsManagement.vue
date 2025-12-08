@@ -3,7 +3,7 @@
     <div class="section-header">
       <h2>{{ t('management.stations.title') }}</h2>
       <button class="btn-primary" @click="showForm = true">
-        <span class="material-symbols-outlined">add</span>
+        <span class="material-symbols-outlined">añadir</span>
         {{ t('management.stations.create') }}
       </button>
     </div>
@@ -95,10 +95,10 @@
             </td>
             <td>
               <button class="btn-info btn-sm" @click="$emit('view-slots', station.idStation)">
-                <span class="material-symbols-outlined">grid_view</span>
+                <span class="material-symbols-outlined">Vista</span>
               </button>
               <button class="btn-danger btn-sm" @click="handleDelete(station.idStation)">
-                <span class="material-symbols-outlined">delete</span>
+                <span class="material-symbols-outlined">eliminar</span>
               </button>
             </td>
           </tr>

@@ -11,28 +11,28 @@
             :class="['tab', { active: activeTab === 'cities' }]" 
             @click="activeTab = 'cities'"
           >
-            <span class="material-symbols-outlined">location_city</span>
+            <span class="material-symbols-outlined">Ciudad</span>
             Ciudades ({{ cityStore.cities.length }})
           </button>
           <button 
             :class="['tab', { active: activeTab === 'stations' }]" 
             @click="activeTab = 'stations'"
           >
-            <span class="material-symbols-outlined">store</span>
+            <span class="material-symbols-outlined">Estaciones</span>
             Estaciones ({{ stationStore.stations.length }})
           </button>
           <button 
             :class="['tab', { active: activeTab === 'bicycles' }]" 
             @click="activeTab = 'bicycles'"
           >
-            <span class="material-symbols-outlined">pedal_bike</span>
+            <span class="material-symbols-outlined">Bicicletas</span>
             Bicicletas ({{ bicycleStore.bicycles.length }})
           </button>
           <button 
             :class="['tab', { active: activeTab === 'slots' }]" 
             @click="activeTab = 'slots'"
           >
-            <span class="material-symbols-outlined">grid_view</span>
+            <span class="material-symbols-outlined">Slots</span>
             Slots ({{ stationStore.slots.length }})
           </button>
         </div>

@@ -3,7 +3,7 @@
     <div class="section-header">
       <h2>{{ t('management.cities.title') }}</h2>
       <button class="btn-primary" @click="showForm = true">
-        <span class="material-symbols-outlined">add</span>
+        <span class="material-symbols-outlined">añadir</span>
         {{ t('management.cities.create') }}
       </button>
     </div>
@@ -43,7 +43,7 @@
             <td>{{ city.cityName }}</td>
             <td>
               <button class="btn-danger btn-sm" @click="handleDelete(city.idCity)">
-                <span class="material-symbols-outlined">delete</span>
+                <span class="material-symbols-outlined">eliminar</span>
               </button>
             </td>
           </tr>

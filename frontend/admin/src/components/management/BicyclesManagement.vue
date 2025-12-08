@@ -3,7 +3,7 @@
     <div class="section-header">
       <h2>{{ t('management.bicycles.title') }}</h2>
       <button class="btn-primary" @click="showForm = true">
-        <span class="material-symbols-outlined">add</span>
+        <span class="material-symbols-outlined">añadir</span>
         {{ t('management.bicycles.create') }}
       </button>
     </div>
@@ -26,8 +26,8 @@
           <div class="form-group">
             <label>{{ t('management.bicycles.padlockStatus') }}</label>
             <select v-model="form.padlockStatus" required>
-              <option value="LOCKED">LOCKED</option>
-              <option value="UNLOCKED">UNLOCKED</option>
+              <option value="LOCKED">BLOQUEADA</option>
+              <option value="UNLOCKED">DESBLOQUEADA</option>
             </select>
           </div>
         </div>
@@ -78,7 +78,7 @@
             </td>
             <td>
               <button class="btn-danger btn-sm" @click="handleDelete(bicycle.idBicycle)">
-                <span class="material-symbols-outlined">delete</span>
+                <span class="material-symbols-outlined">eliminar</span>
               </button>
             </td>
           </tr>

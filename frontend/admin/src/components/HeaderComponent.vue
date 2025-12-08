@@ -1,116 +1,59 @@
-.header {
-  background-color: var(--color-primary-light);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 0.5rem 0; /* Reducido de 1rem */
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  height: 56px; /* Altura fija */
+<template>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <img src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
+        <span class="logo-text">ECORIDE</span>
+      </div>
+      <nav class="nav">
+        <router-link :to="{name: 'stationsDashboard'}" class="nav-link">
+          Dashboard de Estaciones
+        </router-link>
+        <router-link :to="{name: 'usersDashboard'}" class="nav-link">
+          Dashboard de Usuarios
+        </router-link>
+        <router-link :to="{name: 'adminManagement'}" class="nav-link">
+          Gestión de Admin
+        </router-link>
+        <router-link :to="{name: 'register'}" class="nav-link">
+          Registro de Admins
+        </router-link>
+      </nav>
+      <div class="auth-buttons">
+        <button class="lang-switch" @click="toggleLocale">{{ currentLocaleLabel }}</button>
+        <button class="logout-btn" @click="logout">{{ t('dashboard.logout') }}</button>
+        <toggle-theme />
+      </div>
+    </div>
+  </header>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import ToggleTheme from './ToggleTheme.vue'
+import { useI18n } from 'vue-i18n'
+import useAuthStore from '@/stores/auth'
+
+const router = useRouter()
+const { locale, t } = useI18n({ useScope: 'global' })
+const authStore = useAuthStore()
+
+// Alternar entre idiomas español e inglés
+const toggleLocale = () => {
+  locale.value = locale.value === 'es' ? 'en' : 'es'
 }
 
-.header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 1.5rem; /* Reducido de 2rem */
-  height: 100%;
-}
+// Etiqueta del idioma actual
+const currentLocaleLabel = computed(() => (locale.value === 'es' ? 'ES' : 'EN'))
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+// Manejar el cierre de sesión
+const logout = () => {
+  authStore.logout()
+  router.push({ name: 'login' })
 }
+</script>
 
-.logo-img {
-  height: 32px; /* Reducido de 40px */
-  width: auto;
-  object-fit: cover;
-  border-radius: 50%;
-}
-
-.logo-text {
-  font-size: 1.2rem; /* Reducido de 1.5rem */
-  font-weight: bold;
-  color: #FFFFFF;
-  text-transform: uppercase; /* Para consistencia con el diseño */
-  letter-spacing: 0.5px;
-}
-
-.nav {
-  display: flex;
-  gap: 1.5rem; /* Reducido de 2rem */
-  align-items: center;
-}
-
-.nav-link {
-  text-decoration: none;
-  color: var(--color-background-light);
-  font-weight: 500;
-  font-size: 0.9rem; /* Tamaño consistente */
-  transition: color 0.3s;
-  text-transform: none; /* Sin mayúsculas forzadas */
-  letter-spacing: normal;
-  padding: 0.25rem 0;
-}
-
-.nav-link:hover {
-  color: var(--color-surface-light);
-  transform: translateY(-1px); /* Animación más sutil */
-}
-
-.nav-link.router-link-active {
-  color: var(--color-accent-light);
-  font-weight: 600;
-  border-bottom: 2px solid var(--color-accent-light);
-}
-
-.auth-buttons {
-  display: flex;
-  gap: 0.75rem; /* Reducido de 1rem */
-  align-items: center;
-}
-
-.lang-switch, .logout-btn {
-  padding: 0.4rem 0.8rem; /* Más compactos */
-  font-size: 0.85rem;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  text-transform: none; /* Sin mayúsculas */
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.lang-switch:hover, .logout-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 0.5rem;
-    height: auto;
-  }
-  
-  .nav {
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-  
-  .nav-link {
-    font-size: 0.8rem;
-  }
-  
-  .auth-buttons {
-    gap: 0.5rem;
-  }
-}
+<style lang="scss" scoped>
+@import "@/styles/header.scss";
+</style>
