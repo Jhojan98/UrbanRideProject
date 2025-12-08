@@ -3,7 +3,7 @@ package com.movilidadsostenible.bicis_service.mqtt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.movilidadsostenible.bicis_service.model.dto.BicycleTelemetryDTO;
 import com.movilidadsostenible.bicis_service.model.entity.Bicycle;
-import com.movilidadsostenible.bicis_service.publisher.BicisPublisher;
+import com.movilidadsostenible.bicis_service.rabbit.publisher.BicisPublisher;
 import com.movilidadsostenible.bicis_service.repositories.BicycleRepository;
 import com.movilidadsostenible.bicis_service.services.websocket.TelemetryWebSocketPublisher;
 import org.eclipse.paho.client.mqttv3.*;

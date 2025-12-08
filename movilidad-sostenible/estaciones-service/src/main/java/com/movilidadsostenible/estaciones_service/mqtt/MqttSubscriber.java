@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.movilidadsostenible.estaciones_service.model.dto.StationTelemetryDTOAdmin;
 import com.movilidadsostenible.estaciones_service.model.dto.StationTelemetryDTOUser;
 import com.movilidadsostenible.estaciones_service.model.entity.Station;
+import com.movilidadsostenible.estaciones_service.publisher.StationPublisher;
 import com.movilidadsostenible.estaciones_service.services.StationsService;
 import com.movilidadsostenible.estaciones_service.services.websocket.TelemetryWebSocketPublisher;
 import jakarta.annotation.PostConstruct;
@@ -45,6 +46,9 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
     @Autowired
     private StationsService repository;
+
+    @Autowired
+    private StationPublisher stationPublisher;
 
     @Autowired
     private TelemetryWebSocketPublisher webSocketPublisher;
@@ -183,10 +187,22 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
             webSocketPublisher.sendTelemetryAdmin(telemetry);
 
+            if(!telemetry.isCctvStatus()){
+              stationPublisher.sendJsonMaintenanceStationCctvMessage(telemetry);
+            }
+            if(!telemetry.isLightingStatus()){
+              stationPublisher.sendJsonMaintenanceStationLightMessage(telemetry);
+            }
+            if(telemetry.isPanicButtonStatus()){
+              stationPublisher.sendJsonStationPanicButtonMessage(telemetry);
+            }
+
             log.info("Actualizada estacion {} cctvStatus={}", station.getIdStation(), station.getCctvStatus());
           } catch (Exception e) {
             log.error("Error procesando mensaje MQTT", e);
           }
+
+
         } else {
             // Mensaje en tópico no esperado
             log.debug("Mensaje MQTT en tópico no coincidente con filtros. filterUser={}, filterAdmin={}, topic={}", inputTopicUser, inputTopicAdmin, topic);
