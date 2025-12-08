@@ -14,9 +14,9 @@
     </div>
 
     <div class="slots-grid">
-      <div
-        v-for="slot in filteredSlots"
-        :key="slot.idSlot"
+      <div 
+        v-for="slot in filteredSlots" 
+        :key="slot.idSlot" 
         :class="['slot-card', slot.padlockStatus.toLowerCase()]"
       >
         <div class="slot-header">
@@ -28,7 +28,7 @@
         <div class="slot-body">
           <p><strong>{{ t('management.slots.station') }}:</strong> {{ getStationName(slot.stationId) }}</p>
           <p>
-            <strong>{{ t('management.slots.bicycle') }}:</strong>
+            <strong>{{ t('management.slots.bicycle') }}:</strong> 
             <code v-if="slot.bicycleId">{{ slot.bicycleId }}</code>
             <span v-else class="text-muted">{{ t('management.slots.noBicycle') }}</span>
           </p>
@@ -51,14 +51,14 @@
       <div class="modal-content" @click.stop>
         <h3>{{ t('management.slots.assignBicycleTitle') }}</h3>
         <p>{{ t('management.slots.assigningToSlot') }}: <strong>{{ selectedSlot?.idSlot }}</strong></p>
-
+        
         <div class="form-group">
           <label>{{ t('management.slots.selectBicycle') }}</label>
           <select v-model="selectedBicycleId">
             <option value="">{{ t('management.slots.chooseBicycle') }}</option>
-            <option
-              v-for="bicycle in availableBicycles"
-              :key="bicycle.idBicycle"
+            <option 
+              v-for="bicycle in availableBicycles" 
+              :key="bicycle.idBicycle" 
               :value="bicycle.idBicycle"
             >
               {{ bicycle.idBicycle }} - {{ bicycle.model }} ({{ bicycle.padlockStatus }})
@@ -67,9 +67,9 @@
         </div>
 
         <div class="form-actions">
-          <button
-            class="btn-primary"
-            @click="handleAssign"
+          <button 
+            class="btn-primary" 
+            @click="handleAssign" 
             :disabled="!selectedBicycleId || stationStore.loading"
           >
             {{ stationStore.loading ? t('common.assigning') : t('common.assign') }}
@@ -127,7 +127,7 @@ function openAssignDialog(slot: AdminSlot) {
 
 async function handleAssign() {
   if (!selectedSlot.value || !selectedBicycleId.value) return;
-
+  
   try {
     await stationStore.assignBicycleToSlot(selectedSlot.value.idSlot, selectedBicycleId.value);
     showAssignDialog.value = false;

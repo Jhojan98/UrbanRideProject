@@ -3,7 +3,8 @@ import LoginView from '@/views/LoginView.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import UserLayout from '@/layouts/UserLayout.vue'
-import BicyclesView from '@/views/BicyclesView.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
+import AdminManagementView from '@/views/AdminManagementView.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -15,27 +16,32 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/stations-dashboard',
     name: 'stationsDashboard',
-    component: DashboardLayout,
-    meta: { isAuthenticated: true, layout: 'main' }
-  },
-  {
-    path: '/bicycles-dashboard',
-    name: 'bicyclesDashboard',
-    component: BicyclesView,
-    meta: { isAuthenticated: true,layout: 'main' }
+    component: DashboardLayout
   },
   {
     path: '/register',
     name: 'register',
     component: RegisterView,
-    meta: { isAuthenticated: true, layout: 'main' }
+    meta: { layout: 'main' }
   },
   {
     path: '/users-dashboard',
     name: 'usersDashboard',
     component: UserLayout,
-    meta: { isAuthenticated: true, layout: 'main' }
-  }
+    meta: { layout: 'main' }
+  },
+  {
+    path: '/admin-management',
+    name: 'adminManagement',
+    component: AdminManagementView,
+    meta: { layout: 'main' }
+  },
+  /*{
+    path: '/admin-dashboard',
+    name: 'adminDashboard',
+    component: MainLayout,
+    meta: { layout: 'main' }
+  }*/
 ]
 
 const router = createRouter({
