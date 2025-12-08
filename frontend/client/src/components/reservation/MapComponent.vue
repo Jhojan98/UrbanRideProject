@@ -68,14 +68,6 @@ import { StationWebSocketService } from '@/services/StationWebSocketService'
 import { useStationStore } from '@/stores/station'
 import type { Station } from '@/models/Station'
 
-// Type used by WS and factories when payload shape may vary
-type StationLike = Station & {
-  id?: number
-  name?: string
-  free_spots?: number
-  type?: string
-}
-
 // Interfaz para props de origen/destino
 interface StationPoint {
   idStation?: number
@@ -350,48 +342,19 @@ onMounted(() => {
     stationsRendered.value = false
   }
 
-  // Attempt to connect to station WebSocket and request initial load.
+  // Attempt to connect to station WebSocket for real-time bike availability updates
+  // Stations are loaded from the store (renderStationsFromStore), WS only updates bike counts
   try {
-    stationWsService.connect((stations, factory) => {
-      // Initial bulk received: render all stations on the map
+    stationWsService.connect((station, factory) => {
+      // Update incremental: telemetry received, update single station marker
       try {
-        stations.forEach((st: StationLike) => {
-          const mk = factory.getStationMarker(st as unknown as StationLike)
-          mk.setTranslator($t)
-          mk.render(map.value as LeafletMap)
-          mk.onClick((station: StationLike) => {
-            const payload = {
-              id: station.idStation ?? station.id,
-              name: station.nameStation ?? station.name,
-              latitude: station.latitude,
-              longitude: station.longitude,
-              free_spots: station.availableSlots ?? station.free_spots ?? 0,
-              type: station.type ?? 'bike'
-            }
-            if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-            else clickedStation.value = payload
-          })
-        })
-      } catch (e) { console.error('[Map] Error rendering bulk stations', e) }
-    }, (station, factory) => {
-      // Update incremental: render/update single station
-      try {
-        const mk = factory.getStationMarker(station as unknown as StationLike)
-        mk.setTranslator($t)
-        mk.render(map.value as LeafletMap)
-        mk.onClick((st: StationLike) => {
-          const payload = {
-            id: st.idStation ?? st.id,
-            name: st.nameStation ?? st.name,
-            latitude: st.latitude,
-            longitude: st.longitude,
-            free_spots: st.availableSlots ?? st.free_spots ?? 0,
-            type: st.type ?? 'bike'
-          }
-          if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-          else clickedStation.value = payload
-        })
-      } catch (e) { console.error('[Map] Error updating station', e) }
+        const mk = factory.getMarkerById(station.idStation);
+        if (mk) {
+          mk.update(station);
+          mk.updatePopupContent();
+        }
+        console.log(`[Map] Station ${station.idStation} updated: ⚡ ${station.electric}, ⚙️ ${station.mechanical}`);
+      } catch (e) { console.error('[Map] Error updating station from WS telemetry', e) }
     })
   } catch (e) { console.warn('[Map] Could not connect to Stations WS', e) }
 
@@ -399,7 +362,6 @@ onMounted(() => {
   setTimeout(() => {
     try {
       console.log('[Map DEBUG] Stations WS connected?', stationWsService.getIsConnected());
-      console.log('[Map DEBUG] Stations WS has initial bulk?', stationWsService.getHasInitialBulk());
       console.log('[Map DEBUG] Station factory size:', stationWsService.getFactory().size());
       console.log('[Map DEBUG] Stations cache count:', stationWsService.getStationCount());
       console.log('[Map DEBUG] Stations from service:', stationWsService.getStations());
@@ -412,7 +374,6 @@ onMounted(() => {
   setTimeout(() => {
     try {
       console.log('[Map DEBUG] (later) Stations WS connected?', stationWsService.getIsConnected());
-      console.log('[Map DEBUG] (later) Stations WS has initial bulk?', stationWsService.getHasInitialBulk());
       console.log('[Map DEBUG] (later) Station factory size:', stationWsService.getFactory().size());
       console.log('[Map DEBUG] (later) Stations cache count:', stationWsService.getStationCount());
     } catch (err) { void err }

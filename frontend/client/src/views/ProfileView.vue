@@ -1,154 +1,48 @@
 <template>
   <div class="profile-container">
-    <!-- Sidebar -->
-    <aside class="profile-sidebar">
-      <nav class="sidebar-nav">
+    <main class="profile-main">
+      <header class="profile-header">
+        <h1>{{ $t('profile.tabs.overview') }}</h1>
+      </header>
+
+      <nav class="dashboard-nav">
         <button
-          @click="activeTab = 'overview'"
-          :class="['sidebar-btn', { active: activeTab === 'overview' }]"
-        >
-          {{ $t('profile.tabs.overview') }}
-        </button>
-        <button
-          @click="activeTab = 'trips'"
-          :class="['sidebar-btn', { active: activeTab === 'trips' }]"
+          :class="['nav-btn', { active: activeDashboard === 'trips' }]"
+          @click="activeDashboard = 'trips'"
         >
           {{ $t('profile.tabs.trips') }}
         </button>
         <button
-          @click="activeTab = 'fines'"
-          :class="['sidebar-btn', { active: activeTab === 'fines' }]"
+          :class="['nav-btn', { active: activeDashboard === 'fines' }]"
+          @click="activeDashboard = 'fines'"
         >
           {{ $t('profile.tabs.fines') }}
         </button>
       </nav>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="profile-main">
-      <!-- Overview Tab -->
-      <div v-if="activeTab === 'overview'" class="profile">
-        <div class="profile-header">
-          <h1>{{ welcomeText }}</h1>
-        </div>
-        <div class="profile-content">
-          <!-- Balance and Card Section (Centered) -->
-          <section class="profile-section balance-section">
-            <h2 class="section-title">{{ $t('profile.balance.title') }}</h2>
-            <div class="balance-card centered-card">
-              <div class="currency-selector">
-                <label for="currency-select">{{ $t('profile.balance.currency') }}:</label>
-                <select
-                  id="currency-select"
-                  v-model="selectedCurrency"
-                  class="currency-select"
-                >
-                  <option value="USD">USD - {{ $t('balance.currencies.USD') }}</option>
-                  <option value="COP">COP - {{ $t('balance.currencies.COP') }}</option>
-                </select>
-              </div>
-              <div class="balance-display">
-                <span class="balance-label">{{ $t('profile.balance.currentBalance') }}</span>
-                <span class="balance-value">
-                  {{ formattedBalance }}
-                  <button @click="refreshBalance" class="refresh-btn" title="Actualizar saldo">
-                    ⟳
-                  </button>
-                  <span v-if="isLoadingBalance" class="loading-spinner">↻</span>
-                </span>
-              </div>
-              <div class="card-info">
-                <h4>{{ $t('profile.balance.registeredCard') }}</h4>
-                <div class="card-details">
-                  <span class="card-type">Visa</span>
-                  <span class="card-number">**** **** **** 1234</span>
-                  <span class="card-expiry">{{ $t('profile.balance.expires') }} 12/28</span>
-                </div>
-              </div>
-              <div class="payment-actions">
-                <button class="btn-add-balance" @click="goToPaymentMethods">
-                  {{ $t('profile.balance.addBalance') }}
-                </button>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
+      <section class="dashboard-content">
+        <TripDashboard
+          v-if="activeDashboard === 'trips'"
+          :travels="travels"
+          :loading="isLoadingTrips"
+        />
+        <FinesDashboard
+          v-else
+          :fines="fines"
+          :loading="isLoadingFines"
+          @pay="payFine"
+        />
+      </section>
 
-      <!-- Trips Tab -->
-      <div v-if="activeTab === 'trips'" class="profile">
-        <div class="profile-header">
-          <h1>{{ $t('profile.trips.title') }}</h1>
-        </div>
-        <div class="profile-content">
-          <section class="profile-section">
-            <div v-if="isLoadingTrips" class="loading-message">
-              {{ $t('profile.loading') }}
-            </div>
-            <div v-else-if="travels.length === 0" class="empty-message">
-              {{ $t('profile.trips.noTrips') }}
-            </div>
-            <div v-else class="table-container">
-              <table class="trips-table">
-                <thead>
-                  <tr>
-                    <th>{{ $t('profile.trips.startStation') }}</th>
-                    <th>{{ $t('profile.trips.endStation') }}</th>
-                    <th>{{ $t('profile.trips.date') }}</th>
-                    <th>{{ $t('profile.trips.status') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="trip in travels" :key="trip.idTravel">
-                    <td>{{ trip.fromIdStation }}</td>
-                    <td>{{ trip.toIdStation || 'N/A' }}</td>
-                    <td>{{ formatDate(trip.startedAt) }}</td>
-                    <td>{{ trip.status }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      <!-- Fines Tab -->
-      <div v-if="activeTab === 'fines'" class="profile">
-        <div class="profile-header">
-          <h1>{{ $t('profile.fines.title') }}</h1>
-        </div>
-        <div class="profile-content">
-          <section class="profile-section">
-            <div v-if="isLoadingFines" class="loading-message">
-              {{ $t('profile.loading') }}
-            </div>
-            <div v-else-if="fines.length === 0" class="empty-message">
-              {{ $t('profile.fines.noFines') }}
-            </div>
-            <div v-else class="fines-list">
-              <div v-for="fine in fines" :key="fine.k_user_fine" class="fine-card" :class="{ 'fine-paid': fine.t_state === 'PAID' }">
-                <div class="fine-header">
-                  <h3>{{ $t('profile.fines.fineId') }}: {{ fine.k_user_fine }}</h3>
-                  <span class="fine-status" :class="{ paid: fine.t_state === 'PAID', pending: fine.t_state !== 'PAID' }">
-                    {{ fine.t_state === 'PAID' ? $t('profile.fines.paid') : $t('profile.fines.pending') }}
-                  </span>
-                </div>
-                <div class="fine-details">
-                  <p><strong>{{ $t('profile.fines.reason') }}:</strong> {{ fine.n_reason }}</p>
-                  <p><strong>{{ $t('profile.fines.amount') }}:</strong> {{ formatCost(fine.v_amount_snapshot) }}</p>
-                  <p><strong>{{ $t('profile.fines.date') }}:</strong> {{ formatDate(fine.f_assigned_at) }}</p>
-                  <p v-if="fine.fine?.d_description"><strong>{{ $t('profile.fines.description') }}:</strong> {{ fine.fine.d_description }}</p>
-                </div>
-                <div v-if="fine.t_state !== 'PAID'" class="fine-actions">
-                  <button class="btn-pay-fine" @click="payFine(fine.k_user_fine, fine.v_amount_snapshot)">
-                    {{ $t('profile.fines.payNow') }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
+      <BalanceCard
+        class="dashboard-balance"
+        :selected-currency="selectedCurrency"
+        :formatted-balance="formattedBalance"
+        :is-loading="isLoadingBalance"
+        @refresh="refreshBalance"
+        @add-balance="goToPaymentMethods"
+        @currency-change="handleCurrencyChange"
+      />
     </main>
   </div>
 </template>
@@ -163,6 +57,9 @@ import { useTravelStore } from "@/stores/travel";
 import { fetchExchangeRate } from "@/services/currencyExchange";
 import type Travel from "@/models/Travel";
 import type Fine from "@/models/Fine";
+import TripDashboard from "@/components/dashboard/TripDashboard.vue";
+import FinesDashboard from "@/components/dashboard/FinesDashboard.vue";
+import BalanceCard from "@/components/dashboard/BalanceCard.vue";
 
 const router = useRouter();
 const { t: $t } = useI18n();
@@ -185,18 +82,12 @@ const exchangeRates = ref<{ COP: number }>({
   COP: 4000 // Default value USD to COP
 });
 
-// Tab activo
-const activeTab = ref<'overview' | 'trips' | 'fines'>('overview');
+// Dashboard tab activo (trips/fines)
+const activeDashboard = ref<'trips' | 'fines'>('trips');
 
 // Datos de viajes y multas
 const travels = ref<Travel[]>([]);
 const fines = ref<Fine[]>([]);
-
-// Welcome text format
-const welcomeText = computed(() => {
-  const name = userName.value ?? "CLIENT";
-  return `Welcome back, ${name}`;
-});
 
 // Format balance
 const formattedBalance = computed(() => {
@@ -216,13 +107,6 @@ const formattedBalance = computed(() => {
     minimumFractionDigits: selectedCurrency.value === 'COP' ? 0 : 2
   }).format(displayAmount);
 });
-
-// Funciones helper para formateo
-const formatDate = (date: string | number | Date | undefined): string => {
-  if (!date) return 'N/A';
-  const dateObj = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
-  return dateObj.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' });
-};
 
 const formatCost = (cost: number | undefined): string => {
   if (cost === null || cost === undefined) return 'N/A';
@@ -258,6 +142,10 @@ const updateExchangeRate = async () => {
 watch(selectedCurrency, () => {
   updateExchangeRate();
 });
+
+function handleCurrencyChange(currency: 'USD' | 'COP') {
+  selectedCurrency.value = currency;
+}
 
 // Pagar multa
 async function payFine(fineId: number, amount: number | undefined) {

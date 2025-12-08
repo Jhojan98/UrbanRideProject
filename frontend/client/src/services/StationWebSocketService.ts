@@ -1,35 +1,34 @@
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { type Station, type StationDTO, toStation } from '@/models/Station';
+import { type Station } from '@/models/Station';
 import { StationFactory } from '@/patterns/StationFlyweight';
 import { useStationStore } from '@/stores/station';
 
 /**
- * WebSocket service for handling stations and their slots.
+ * WebSocket service for real-time bike availability updates.
+ *
+ * Stations are loaded from the store (static data: location, name, etc).
+ * WebSocket only updates bike counts via /topic/station.update/user
+ *
  * Flow:
  * 1. connect() -> establishes STOMP connection over SockJS
- * 2. requestInitialLoad() -> sends message to /app/stations.request for initial bulk
- * 3. Subscriptions:
- *    - /topic/stations.bulk   (complete array of stations with slots)
- *    - /topic/station.update  (incremental updates of a single station)
+ * 2. subscribe() -> subscribes to /topic/station.update/user
+ * 3. handleTelemetry() -> updates bike counts from received messages
  */
 export class StationWebSocketService {
   private client: Client | null = null;
   private factory: StationFactory;
   private isConnected = false;
-  private hasBulk = false;
   private stationsCache: Map<number, Station> = new Map();
   private stationStore = useStationStore();
 
-  private onInitialLoad?: (stations: Station[], factory: StationFactory) => void;
   private onUpdate?: (station: Station, factory: StationFactory) => void;
 
   constructor(factory?: StationFactory){
     this.factory = factory || new StationFactory();
   }
 
-  connect(onInitialLoad?: (stations: Station[], factory: StationFactory)=>void, onUpdate?: (station: Station, factory: StationFactory)=>void){
-    this.onInitialLoad = onInitialLoad;
+  connect(onUpdate?: (station: Station, factory: StationFactory)=>void){
     this.onUpdate = onUpdate;
 
     // Direct connection to stations service (not via gateway)
@@ -49,8 +48,6 @@ export class StationWebSocketService {
         console.log('[Stations WS] Connected');
         this.isConnected = true;
         this.subscribe();
-        // Request initial load automatically
-        this.requestInitialLoad();
       },
       onStompError: frame => {
         console.error('[Stations WS] STOMP error:', frame.headers['message']);
@@ -72,103 +69,64 @@ export class StationWebSocketService {
   private subscribe(){
     if(!this.client){ console.error('STOMP not initialized'); return; }
 
-    // Initial bulk
-    this.client.subscribe('/topic/stations.bulk', msg => this.handleBulk(msg));
-    // Individual updates
-    this.client.subscribe('/topic/station.update', msg => this.handleUpdate(msg));
+    // Real-time telemetry: updates bike availability
+    this.client.subscribe('/topic/station.update/user', msg => this.handleTelemetry(msg));
 
     console.log('[Stations WS] Subscriptions made');
   }
 
-  private handleBulk(message: IMessage){
+  private handleTelemetry(message: IMessage){
     try {
-      const arr: StationDTO[] = JSON.parse(message.body);
-      const stations: Station[] = arr.map(toStation);
-      stations.forEach(st => {
-        this.stationsCache.set(st.idStation, st);
-        this.factory.getStationMarker(st); // updates/creates in pool
-        console.log(`[Stations WS] Bulk - Station ${st.idStation} (${st.nameStation}): ⚡ ${st.electric}, ⚙️ ${st.mechanical}`);
-      });
-      this.hasBulk = true;
-      if(this.onInitialLoad){ this.onInitialLoad(stations, this.factory); }
-      console.log(`[Stations WS] Bulk received (${stations.length} stations)`);
-    } catch(e){
-      console.error('[Stations WS] Error parse bulk:', e, 'payload:', message.body);
-    }
-  }
-
-  private handleUpdate(message: IMessage){
-    try {
-      const parsed = JSON.parse(message.body) as Partial<StationDTO> & { id?: number };
-      const idStation = parsed.idStation ?? parsed.id;
-      if (!idStation) {
-        console.warn('[Stations WS] Update sin idStation, se ignora. Payload:', parsed);
-        return;
-      }
-
-      // Reuse previous data to complete lat/lng when update only brings telemetry; don't require new coordinates
-      const cached = this.stationsCache.get(idStation);
-      const storeStation = this.stationStore?.getStationById(idStation);
-
-      const locked = parsed.lockedPadlocks ?? cached?.lockedPadlocks ?? 0;
-      const unlocked = parsed.unlockedPadlocks ?? cached?.unlockedPadlocks ?? 0;
-
-      const merged: StationDTO = {
-        idStation,
-        nameStation: parsed.nameStation ?? cached?.nameStation ?? storeStation?.nameStation ?? 'Station',
-        latitude: parsed.latitude ?? cached?.latitude ?? storeStation?.latitude ?? NaN,
-        longitude: parsed.longitude ?? cached?.longitude ?? storeStation?.longitude ?? NaN,
-        totalSlots: parsed.totalSlots ?? cached?.totalSlots ?? storeStation?.totalSlots ?? (locked + unlocked),
-        availableSlots: parsed.availableSlots ?? parsed.unlockedPadlocks ?? cached?.availableSlots ?? cached?.unlockedPadlocks ?? storeStation?.availableSlots ?? unlocked,
-        timestamp: parsed.timestamp ?? Date.now(),
-        mechanical: parsed.mechanical ?? parsed.availableMechanicBikes ?? cached?.mechanical ?? cached?.availableMechanicBikes ?? storeStation?.mechanical,
-        electric: parsed.electric ?? parsed.availableElectricBikes ?? cached?.electric ?? cached?.availableElectricBikes ?? storeStation?.electric,
-        cctvStatus: parsed.cctvStatus ?? cached?.cctvStatus,
-        lockedPadlocks: parsed.lockedPadlocks ?? cached?.lockedPadlocks,
-        unlockedPadlocks: parsed.unlockedPadlocks ?? cached?.unlockedPadlocks,
-        availableElectricBikes: parsed.availableElectricBikes ?? cached?.availableElectricBikes,
-        availableMechanicBikes: parsed.availableMechanicBikes ?? cached?.availableMechanicBikes,
-        slots: parsed.slots ?? undefined
+      // Parse telemetry data from /topic/station.update/user
+      const telemetry = JSON.parse(message.body) as {
+        idStation?: number;
+        timestamp?: number;
+        availableElectricBikes?: number;
+        availableMechanicBikes?: number;
       };
 
-      // Si seguimos sin coordenadas, pero hay cache, conservar las previas; si no hay, no renderizamos pero evitamos crash
-      if ((Number.isNaN(merged.latitude) || Number.isNaN(merged.longitude)) && cached) {
-        merged.latitude = cached.latitude;
-        merged.longitude = cached.longitude;
-      }
-
-      if (Number.isNaN(merged.latitude) || Number.isNaN(merged.longitude)) {
-        // Only update telemetry cache if there is previous cache; avoid creating marker without position
-        if (cached || storeStation) {
-          const base = cached ?? storeStation;
-          if (!base) { return; }
-          const station = { ...base, ...toStation({ ...merged, latitude: base.latitude, longitude: base.longitude }) } as Station;
-          this.stationsCache.set(station.idStation, station);
-          if(this.onUpdate){ this.onUpdate(station, this.factory); }
-          console.log(`[Stations WS] Update station ${station.idStation} (without moving marker): ⚡ ${station.electric}, ⚙️ ${station.mechanical}`);
-        } else {
-          console.warn('[Stations WS] Update without coordinates and without cache, cannot render or cache. idStation:', idStation);
-        }
+      const idStation = telemetry.idStation;
+      if (!idStation) {
+        console.warn('[Stations WS] Telemetry sin idStation válido, se ignora');
         return;
       }
 
-      const station = toStation(merged);
-      this.stationsCache.set(station.idStation, station);
-      this.factory.getStationMarker(station);
-      if(this.onUpdate){ this.onUpdate(station, this.factory); }
-      console.log(`[Stations WS] Update station ${station.idStation} (${station.nameStation}): ⚡ ${station.electric}, ⚙️ ${station.mechanical}`);
-    } catch(e){
-      console.error('[Stations WS] Error parse update:', e, 'payload:', message.body);
-    }
-  }
+      // Get station from cache OR from store
+      let station = this.stationsCache.get(idStation);
 
-  requestInitialLoad(){
-    if(!this.client || !this.isConnected){
-      console.warn('[Stations WS] Not connected, cannot request bulk');
-      return;
+      if (!station) {
+        // Try to get from store if not in cache
+        const storeStation = this.stationStore?.getStationById(idStation);
+        if (!storeStation) {
+          console.warn(`[Stations WS] Estación ${idStation} no encontrada en cache ni store, se ignora`);
+          return;
+        }
+        // Use store station and cache it
+        station = storeStation;
+        this.stationsCache.set(idStation, station);
+      }
+
+      // Update only bike counts
+      station.electric = telemetry.availableElectricBikes ?? station.electric;
+      station.mechanical = telemetry.availableMechanicBikes ?? station.mechanical;
+      station.availableElectricBikes = telemetry.availableElectricBikes ?? station.availableElectricBikes;
+      station.availableMechanicBikes = telemetry.availableMechanicBikes ?? station.availableMechanicBikes;
+      station.timestamp = new Date(telemetry.timestamp ?? Date.now());
+
+      // Update the marker in factory to reflect changes
+      const marker = this.factory.getMarkerById(idStation);
+      if (marker) {
+        marker.update(station);
+        // Refresh popup content to show updated bike counts
+        marker.updatePopupContent();
+      }
+
+      // Notify listeners
+      if(this.onUpdate){ this.onUpdate(station, this.factory); }
+      console.log(`[Stations WS] Telemetry station ${idStation}: ⚡ ${station.electric}, ⚙️ ${station.mechanical}`);
+    } catch(e){
+      console.error('[Stations WS] Error parsing telemetry:', e, 'payload:', message.body);
     }
-    this.client.publish({ destination: '/app/stations.request', body: JSON.stringify({ action: 'load_all' }) });
-    console.log('[Stations WS] Bulk request sent');
   }
 
   disconnect(){
@@ -181,7 +139,6 @@ export class StationWebSocketService {
 
   // State helpers
   getIsConnected(){ return this.isConnected; }
-  getHasInitialBulk(){ return this.hasBulk; }
   getFactory(){ return this.factory; }
   getStationCount(){ return this.factory.size(); }
   getStations(): Station[] { return Array.from(this.stationsCache.values()); }
