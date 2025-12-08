@@ -1,17 +1,15 @@
-package com.movilidadsostenible.viaje_service;
+package com.movilidadsostenible.notification_realtime_service;
 
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 
-@EnableFeignClients
-@EnableRabbit
 @SpringBootApplication
-public class ViajeServiceApplication {
+@EnableRabbit
+public class NotificationRealtimeServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(ViajeServiceApplication.class, args);
+		SpringApplication.run(NotificationRealtimeServiceApplication.class, args);
 	}
 
 }
