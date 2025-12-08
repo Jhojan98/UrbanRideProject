@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import City from "@/models/City";
+import type City from "@/models/City";
 
 const cityStore = defineStore("city", {
   state: () => ({

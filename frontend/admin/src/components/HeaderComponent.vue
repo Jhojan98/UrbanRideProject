@@ -9,6 +9,7 @@
 
       <nav class="nav">
         <router-link :to="{name: 'stationsDashboard'}" class="nav-link">{{ t('header.navStations') }}</router-link>
+        <router-link :to="{name: 'bicyclesDashboard'}" class="nav-link">{{ t('header.navBicycles') }}</router-link>
         <router-link :to="{name: 'usersDashboard'}" class="nav-link">{{ t('header.navUsers') }}</router-link>
         <router-link :to="{name: 'register'}" class="nav-link">{{ t('header.navRegister') }}</router-link>
       </nav>

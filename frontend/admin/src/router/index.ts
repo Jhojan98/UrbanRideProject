@@ -3,6 +3,8 @@ import LoginView from '@/views/LoginView.vue'
 import DashboardLayout from '@/layouts/DashboardLayout.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import UserLayout from '@/layouts/UserLayout.vue'
+import BicyclesView from '@/views/BicyclesView.vue'
+
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
@@ -13,20 +15,27 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/stations-dashboard',
     name: 'stationsDashboard',
-    component: DashboardLayout
+    component: DashboardLayout,
+    meta: { isAuthenticated: true, layout: 'main' }
+  },
+  {
+    path: '/bicycles-dashboard',
+    name: 'bicyclesDashboard',
+    component: BicyclesView,
+    meta: { isAuthenticated: true,layout: 'main' }
   },
   {
     path: '/register',
     name: 'register',
     component: RegisterView,
-    meta: { layout: 'main' }
+    meta: { isAuthenticated: true, layout: 'main' }
   },
   {
-  path: '/users-dashboard',
-  name: 'usersDashboard',
-  component: UserLayout,
-  meta: { layout: 'main' }
-}
+    path: '/users-dashboard',
+    name: 'usersDashboard',
+    component: UserLayout,
+    meta: { isAuthenticated: true, layout: 'main' }
+  }
 ]
 
 const router = createRouter({
