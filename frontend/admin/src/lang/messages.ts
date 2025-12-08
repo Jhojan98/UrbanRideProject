@@ -1,5 +1,5 @@
-import es from './locales/es'
-import en from './locales/en'
+import es from './es'
+import en from './en'
 
 export const messages = {
     es,

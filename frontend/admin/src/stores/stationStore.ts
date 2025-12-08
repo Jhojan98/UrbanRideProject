@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
-import type { AdminStation } from "@/models/AdminStation";
+import type { Station } from "@/models/Station";
 import type { AdminSlot } from "@/models/AdminSlot";
 
 export const useStationStore = defineStore("station", {
   state: () => ({
     baseURL: process.env.VUE_APP_API_URL,
-    stations: [] as AdminStation[],
+    stations: [] as Station[],
     slots: [] as AdminSlot[],
     loading: false,
     error: null as string | null,
@@ -13,7 +13,7 @@ export const useStationStore = defineStore("station", {
 
   getters: {
     getStationById: (state) => (id: number) => state.stations.find(s => s.idStation === id),
-    getSlotsByStation: (state) => (stationId: number) => 
+    getSlotsByStation: (state) => (stationId: number) =>
       state.slots.filter(slot => slot.stationId === stationId),
   },
 

@@ -84,13 +84,16 @@ export class BicycleWebSocketService {
     this.client.subscribe('/topic/bicycle.location', (message: IMessage) => {
       try {
         const payload = JSON.parse(message.body);
-        console.log('[Bicycles WS] Actualización recibida:', payload);
+        console.log('[Bicycles WS] 📨 Actualización recibida:', payload);
 
-        // Extraer el bikeId del header o del payload si viene incluido
-        const bikeId = message.headers['bikeId'] || payload.bikeId || payload.id;
+        // Extraer el bikeId con múltiples variantes posibles
+        const bikeId = message.headers['bikeId']
+          || payload.bikeId
+          || payload.id
+          || payload.idBicycle;
 
         if (!bikeId) {
-          console.warn('[Bicycles WS] Actualización sin bikeId:', payload);
+          console.warn('[Bicycles WS] ⚠️ Actualización sin bikeId:', payload);
           return;
         }
 
@@ -98,7 +101,7 @@ export class BicycleWebSocketService {
           latitude: payload.latitude,
           longitude: payload.longitude,
           battery: payload.battery,
-          timestamp: payload.timestamp
+          timestamp: payload.timestamp || Date.now()
         };
 
         // Validar que los datos sean válidos
@@ -107,16 +110,22 @@ export class BicycleWebSocketService {
           typeof update.longitude !== 'number' ||
           typeof update.battery !== 'number'
         ) {
-          console.error('[Bicycles WS] Datos inválidos:', update);
+          console.error('[Bicycles WS] ❌ Datos inválidos:', update);
           return;
         }
 
+        console.log(`[Bicycles WS] 🚲 Actualizando bicicleta ${bikeId}:`, {
+          lat: update.latitude,
+          lon: update.longitude,
+          battery: update.battery
+        });
+
         // Notificar actualización
         if (this.onLocationUpdate) {
-          this.onLocationUpdate(bikeId, update);
+          this.onLocationUpdate(String(bikeId), update);
         }
       } catch (error) {
-        console.error('[Bicycles WS] Error procesando mensaje:', error);
+        console.error('[Bicycles WS] ❌ Error procesando mensaje:', error);
       }
     });
   }

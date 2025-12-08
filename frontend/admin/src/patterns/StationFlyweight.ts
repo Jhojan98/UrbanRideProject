@@ -20,9 +20,11 @@ class StationFlyweight {
     className: 'station-none', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
   });
 
-  static icon(available: number, total: number): L.DivIcon {
-    if (available === 0) return this.none;
-    const pct = (available/total)*100;
+  static icon(available?: number | null, total?: number | null): L.DivIcon {
+    const av = available ?? 0;
+    const tot = total ?? 1;
+    if (av === 0) return this.none;
+    const pct = (av/tot)*100;
     if (pct > 50) return this.high;
     if (pct > 20) return this.medium;
     return this.low;
@@ -33,14 +35,34 @@ export class StationMarker {
   private marker: L.Marker | null = null;
   constructor(private station: Station) {}
 
-  render(map: L.Map): L.Marker {
-    const pos: L.LatLngExpression = [this.station.latitude, this.station.longitude];
+  render(map: L.Map): L.Marker | null {
+    const lat = this.station.latitude;
+    const lon = this.station.longitude ?? this.station.length;
+
+    // Validar coordenadas
+    if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) {
+      const stationId = this.station.idStation;
+      const stationName = this.station.nameStation || this.station.stationName;
+      console.warn(`[StationFlyweight] ⚠️ Coordenadas inválidas para estación ${stationId} (${stationName}):`, { lat, lon });
+
+      // Si ya existe un marcador, eliminarlo
+      if (this.marker) {
+        this.marker.remove();
+        this.marker = null;
+      }
+      return null;
+    }
+
+    const available = this.station.availableSlots ?? 0;
+    const total = this.station.totalSlots ?? 0;
+    const pos: L.LatLngExpression = [lat, lon];
+
     if (!this.marker) {
-      this.marker = L.marker(pos, { icon: StationFlyweight.icon(this.station.availableSlots, this.station.totalSlots) });
+      this.marker = L.marker(pos, { icon: StationFlyweight.icon(available, total) });
       this.marker.addTo(map);
     } else {
       this.marker.setLatLng(pos);
-      this.marker.setIcon(StationFlyweight.icon(this.station.availableSlots, this.station.totalSlots));
+      this.marker.setIcon(StationFlyweight.icon(available, total));
     }
     this.marker.bindPopup(this.popupHtml());
     return this.marker;
@@ -53,14 +75,18 @@ export class StationMarker {
 
   private popupHtml(): string {
     const s = this.station;
-    const pct = ((s.availableSlots/s.totalSlots)*100).toFixed(0);
-    const color = s.availableSlots===0? '#757575': parseInt(pct)>50? '#4caf50': parseInt(pct)>20? '#ff9800': '#f44336';
+    const available = s.availableSlots ?? 0;
+    const total = s.totalSlots ?? 0;
+    const lon = s.longitude ?? s.length ?? 0;
+    const name = s.nameStation || s.stationName || 'Estación';
+    const pct = ((available/total)*100).toFixed(0);
+    const color = available===0? '#757575': parseInt(pct)>50? '#4caf50': parseInt(pct)>20? '#ff9800': '#f44336';
     return `<div style='font-family:Arial;min-width:240px'>
-      <h4 style='margin:0 0 6px 0;color:#2c3e50;border-bottom:2px solid ${color};padding-bottom:4px'>🅿️ ${s.nameStation}</h4>
+      <h4 style='margin:0 0 6px 0;color:#2c3e50;border-bottom:2px solid ${color};padding-bottom:4px'>🅿️ ${name}</h4>
       <div style='font-size:12px;color:#444;margin-bottom:8px'>
-        <strong>Disponibles:</strong> <span style='color:${color};font-weight:bold'>${s.availableSlots}</span>/<span>${s.totalSlots}</span>
+        <strong>Disponibles:</strong> <span style='color:${color};font-weight:bold'>${available}</span>/<span>${total}</span>
         <span style='background:${color};color:#fff;padding:2px 6px;border-radius:4px;font-size:11px;margin-left:6px'>${pct}%</span>
-        <div style='margin-top:4px'>Lat: ${s.latitude.toFixed(5)} | Lon: ${s.longitude.toFixed(5)}</div>
+        <div style='margin-top:4px'>Lat: ${s.latitude.toFixed(5)} | Lon: ${lon.toFixed(5)}</div>
       </div>
       ${this.slotsHtml()}
     </div>`;

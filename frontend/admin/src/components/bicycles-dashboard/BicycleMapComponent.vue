@@ -42,7 +42,7 @@ function updateMarkers() {
 
     try {
         // Crear un Set con los IDs de las bicicletas actuales
-        const currentBikeIds = new Set(props.bikes.map(b => b.id))
+        const currentBikeIds = new Set(props.bikes.map(b => b.id || b.idBicycle))
 
         // Eliminar marcadores de bicicletas que ya no existen
         renderedMarkers.value.forEach((marker, bikeId) => {
@@ -56,20 +56,26 @@ function updateMarkers() {
         props.bikes.forEach((bike) => {
             if (!map.value) return
 
+            const bikeId = bike.id || bike.idBicycle || ''
+            const lat = bike.lat ?? bike.latitude
+            const lon = bike.lon ?? bike.length
+
             // Validar coordenadas
-            if (bike.lat == null || bike.lon == null) {
-                console.warn(`Bicicleta ${bike.id} sin coordenadas válidas`)
+            if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) {
+                console.warn(`Bicicleta ${bikeId} sin coordenadas válidas`, { lat, lon, bike })
                 return
             }
 
             // Obtener o crear el marcador usando el factory
             const bicycleMarker = props.factory.getBicycleMarker(bike)
 
-            // Renderizar el marcador en el mapa
-            bicycleMarker.render(map.value)
+            // Renderizar el marcador en el mapa (puede retornar null si hay error)
+            const marker = bicycleMarker.render(map.value)
 
-            // Guardar referencia
-            renderedMarkers.value.set(bike.id, bicycleMarker)
+            // Solo guardar referencia si el marcador fue creado exitosamente
+            if (marker) {
+                renderedMarkers.value.set(bikeId, bicycleMarker)
+            }
         })
 
         console.log('✅ Marcadores de bicicletas actualizados:', renderedMarkers.value.size)

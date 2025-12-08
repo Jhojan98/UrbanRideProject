@@ -22,37 +22,37 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="bike in bikes" :key="bike.id" class="bike-row">
+                    <tr v-for="bike in bikes" :key="bike.id || bike.idBicycle" class="bike-row">
                         <td class="series">
-                            <strong>#{{ bike.series }}</strong>
+                            <strong>#{{ bike.series || 'N/A' }}</strong>
                         </td>
                         <td class="bike-id">
-                            <code>{{ bike.id }}</code>
+                            <code>{{ bike.id || bike.idBicycle || 'N/A' }}</code>
                         </td>
                         <td class="bike-type">
-                            <span :class="['type-badge', bike.model.toLowerCase()]">
-                                <span v-if="bike.model === 'ELECTRIC'">⚡</span>
+                            <span :class="['type-badge', getModelLowerCase(bike.model)]">
+                                <span v-if="isElectric(bike.model)">⚡</span>
                                 <span v-else>🔧</span>
-                                {{ bike.model === 'ELECTRIC' ? 'Eléctrica' : 'Mecánica' }}
+                                {{ isElectric(bike.model) ? 'Eléctrica' : 'Mecánica' }}
                             </span>
                         </td>
                         <td class="lock-status">
-                            <span :class="['status-badge', getLockStatusClass(bike.lockStatus)]">
-                                {{ getLockStatusText(bike.lockStatus) }}
+                            <span :class="['status-badge', getLockStatusClass(bike.lockStatus || bike.padlockStatus)]">
+                                {{ getLockStatusText(bike.lockStatus || bike.padlockStatus) }}
                             </span>
                         </td>
                         <td class="battery">
                             <span
-                                v-if="bike.model === 'ELECTRIC'"
+                                v-if="isElectric(bike.model)"
                                 :class="['battery-indicator', getBatteryClass(bike.battery)]"
                             >
-                                🔋 {{ bike.battery }}%
+                                🔋 {{ getBatteryValue(bike.battery) }}%
                             </span>
                             <span v-else class="na">N/A</span>
                         </td>
                         <td class="location">
-                            <small v-if="bike.lat != null && bike.lon != null">
-                                {{ bike.lat.toFixed(4) }}, {{ bike.lon.toFixed(4) }}
+                            <small v-if="hasLocation(bike)">
+                                {{ getLatitude(bike).toFixed(4) }}, {{ getLongitude(bike).toFixed(4) }}
                             </small>
                             <span v-else class="na">Sin ubicación</span>
                         </td>
@@ -72,8 +72,9 @@ const props = defineProps<{ bikes: Bike[] }>()
 
 const bikes = computed(() => props.bikes)
 
-function getLockStatusClass(status: string): string {
-    switch (status) {
+function getLockStatusClass(status: string | undefined): string {
+    const statusUpper = (status || '').toUpperCase()
+    switch (statusUpper) {
         case 'UNLOCKED':
             return 'unlocked'
         case 'LOCKED':
@@ -85,8 +86,9 @@ function getLockStatusClass(status: string): string {
     }
 }
 
-function getLockStatusText(status: string): string {
-    switch (status) {
+function getLockStatusText(status: string | undefined): string {
+    const statusUpper = (status || '').toUpperCase()
+    switch (statusUpper) {
         case 'UNLOCKED':
             return 'Desbloqueada'
         case 'LOCKED':
@@ -94,15 +96,40 @@ function getLockStatusText(status: string): string {
         case 'ERROR':
             return 'Error'
         default:
-            return status
+            return status || 'Desconocido'
     }
 }
 
-function getBatteryClass(battery: string): string {
-    const level = parseInt(battery)
+function getBatteryClass(battery: string | number | undefined): string {
+    const level = typeof battery === 'number' ? battery : parseInt(String(battery || '0'))
     if (level < 20) return 'low'
     if (level < 50) return 'medium'
     return 'high'
+}
+
+function getBatteryValue(battery: string | number | undefined): number {
+    return typeof battery === 'number' ? battery : parseInt(String(battery || '0'))
+}
+
+function getModelLowerCase(model: string): string {
+    return (model || '').toLowerCase()
+}
+
+function isElectric(model: string): boolean {
+    const modelUpper = (model || '').toUpperCase()
+    return modelUpper === 'ELECTRIC' || modelUpper === 'ELÉCTRICA'
+}
+
+function hasLocation(bike: Bike): boolean {
+    return (bike.lat != null && bike.lon != null) || (bike.latitude != null && bike.length != null)
+}
+
+function getLatitude(bike: Bike): number {
+    return bike.lat ?? bike.latitude ?? 0
+}
+
+function getLongitude(bike: Bike): number {
+    return bike.lon ?? bike.length ?? 0
 }
 </script>
 

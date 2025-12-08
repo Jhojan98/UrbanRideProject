@@ -1,10 +1,10 @@
 <template>
   <div class="management-container">
     <h1 class="page-title">{{ t('management.title') }}</h1>
-    
+
     <div class="tabs-container">
-      <button 
-        v-for="tab in tabs" 
+      <button
+        v-for="tab in tabs"
         :key="tab.id"
         :class="['tab-button', { active: activeTab === tab.id }]"
         @click="activeTab = tab.id"
@@ -16,13 +16,13 @@
 
     <div class="tab-content">
       <CitiesManagement v-if="activeTab === 'cities'" />
-      <StationsManagement 
-        v-else-if="activeTab === 'stations'" 
-        @view-slots="handleViewSlots" 
+      <StationsManagement
+        v-else-if="activeTab === 'stations'"
+        @view-slots="handleViewSlots"
       />
       <BicyclesManagement v-else-if="activeTab === 'bicycles'" />
-      <SlotsManagement 
-        v-else-if="activeTab === 'slots'" 
+      <SlotsManagement
+        v-else-if="activeTab === 'slots'"
         :initial-station-id="selectedStationForSlots"
       />
     </div>
@@ -40,7 +40,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCityStore } from '@/stores/cityStore';
 import { useStationStore } from '@/stores/stationStore';
-import { useBicycleStore } from '@/stores/bicycleStore';
+import { useBikeStore } from '@/stores/bikeStore';
 import CitiesManagement from './CitiesManagement.vue';
 import StationsManagement from './StationsManagement.vue';
 import BicyclesManagement from './BicyclesManagement.vue';
@@ -49,7 +49,7 @@ import SlotsManagement from './SlotsManagement.vue';
 const { t } = useI18n();
 const cityStore = useCityStore();
 const stationStore = useStationStore();
-const bicycleStore = useBicycleStore();
+const bicycleStore = useBikeStore();
 
 const activeTab = ref('cities');
 const selectedStationForSlots = ref<number | null>(null);

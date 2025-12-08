@@ -18,16 +18,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import BicycleList from '@/components/bicycles-dashboard/BicycleList.vue'
 import BicycleMapComponent from '@/components/bicycles-dashboard/BicycleMapComponent.vue'
 import { useBikeStore } from '@/stores/bikeStore'
-import type Bike from '@/models/Bike'
 
 const bikeStore = useBikeStore()
 
-const bikes = ref<Bike[]>([])
-const bikesList = computed(() => bikes.value)
+// Usar directamente los getters del store (son reactivos)
+const bikesList = computed(() => bikeStore.bikes)
 const bicycleFactory = computed(() => bikeStore.factory)
 
 onMounted(async () => {
@@ -35,9 +34,8 @@ onMounted(async () => {
 
     // Cargar bicicletas iniciales
     await bikeStore.fetchBikes()
-    bikes.value = bikeStore.allBikes
-
-    console.log('✅ Bicicletas cargadas:', bikes.value.length)
+    console.log('✅ Bicicletas cargadas:', bikeStore.bikes.length)
+    console.log('📊 Datos de bicicletas:', bikeStore.bikes)
 
     // Conectar WebSocket para actualizaciones en tiempo real
     bikeStore.connectWebSocket()
@@ -47,13 +45,6 @@ onUnmounted(() => {
     console.log('🔌 Desconectando WebSocket de bicicletas')
     bikeStore.disconnectWebSocket()
 })
-
-// Observar cambios en el store
-import { watch } from 'vue'
-watch(() => bikeStore.allBikes, (newBikes) => {
-    bikes.value = newBikes
-    console.log('🔄 Bicicletas actualizadas:', newBikes.length)
-}, { deep: true })
 </script>
 
 <style lang="scss" scoped>

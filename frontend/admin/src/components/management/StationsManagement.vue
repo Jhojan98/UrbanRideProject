@@ -85,9 +85,9 @@
           <tr v-for="station in stationStore.stations" :key="station.idStation">
             <td>{{ station.idStation }}</td>
             <td>{{ station.stationName }}</td>
-            <td>{{ getCityName(station.idCity) }}</td>
-            <td><span class="type-badge">{{ station.type }}</span></td>
-            <td>{{ station.latitude.toFixed(4) }}, {{ station.length.toFixed(4) }}</td>
+            <td>{{ station.idCity ? getCityName(station.idCity) : '-' }}</td>
+            <td><span class="type-badge">{{ station.type || 'METRO' }}</span></td>
+            <td>{{ station.latitude.toFixed(4) }}, {{ (station.length ?? station.longitude ?? 0).toFixed(4) }}</td>
             <td>
               <span :class="['status-indicator', station.cctvStatus ? 'active' : 'inactive']">
                 {{ station.cctvStatus ? '●' : '○' }}
@@ -110,6 +110,7 @@
 </template>
 
 <script setup lang="ts">
+/* eslint-disable no-undef */
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCityStore } from '@/stores/cityStore';
@@ -184,7 +185,7 @@ async function handleDelete(id: number) {
 
 .status-indicator {
   font-size: 1.5rem;
-  
+
   &.active {
     color: #10b981;
   }

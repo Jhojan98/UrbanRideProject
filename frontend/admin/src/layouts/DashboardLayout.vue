@@ -26,33 +26,38 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import StationInfo from '@/components/stations-dashboard/StationInfo.vue'
 import BikeInfo from '@/components/stations-dashboard/BikeInfo.vue'
 import MapComponent from '@/components/stations-dashboard/MapComponent.vue'
-import type { Station } from '@/models/Station'
 import { useStationStore } from '@/stores/stationStore'
 import { StationWebSocketService, type AdminStationUpdate } from '@/services/StationWebSocketService'
 
 const stationStore = useStationStore()
 const wsService = new StationWebSocketService()
 
-const stations = ref<Station[]>([])
-const stationsList = computed(() => stations.value)
+// Usar directamente el store para mantener reactividad
+const stationsList = computed(() => stationStore.stations)
 
 const selectedStationId = ref<number | null>(null)
-const selectedStation = computed(() => stations.value.find(s => s.idStation === selectedStationId.value) || null)
+const selectedStation = computed(() => stationStore.stations.find(s => s.idStation === selectedStationId.value) || null)
 
 onMounted(async () => {
     console.log('🚀 Cargando estaciones desde backend...')
-    const loaded = await stationStore.fetchStations()
-    stations.value = Array.isArray(loaded) ? loaded : []
-    wsService.registerStations(stations.value)
+    await stationStore.fetchStations()
+    console.log('✅ Estaciones cargadas:', stationStore.stations.length)
+    wsService.registerStations(stationStore.stations)
 
     wsService.connect((stationId: number, adminData: AdminStationUpdate) => {
-        const st = stations.value.find(s => s.idStation === stationId)
-        if (st) {
-            st.availableElectricBikes = adminData.availableElectricBikes
-            st.availableMechanicBikes = adminData.availableMechanicBikes
-            st.cctvStatus = adminData.cctvStatus
-            st.panicButtonStatus = adminData.panicButtonStatus
-            st.lightingStatus = adminData.lightingStatus
+        // Actualizar directamente en el store para mantener reactividad
+        const stationIndex = stationStore.stations.findIndex(s => s.idStation === stationId)
+        if (stationIndex !== -1) {
+            const station = stationStore.stations[stationIndex]
+            station.availableElectricBikes = adminData.availableElectricBikes
+            station.availableMechanicBikes = adminData.availableMechanicBikes
+            station.cctvStatus = adminData.cctvStatus
+            station.panicButtonStatus = adminData.panicButtonStatus
+            station.lightingStatus = adminData.lightingStatus
+
+            console.log(`[Dashboard] 🔄 Estación ${stationId} actualizada vía WebSocket:`, adminData)
+        } else {
+            console.warn(`[Dashboard] ⚠️ Estación ${stationId} no encontrada`)
         }
     })
 })

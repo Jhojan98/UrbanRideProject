@@ -18,17 +18,32 @@ export interface Slot {
   lastUpdated: Date;
 }
 
-/** Modelo principal de estación (consolidado con slots opcionales) */
+/**
+ * Modelo unificado de Estación
+ * Acepta campos de ambas convenciones: backend (stationName, length)
+ * y admin (nameStation, longitude, length)
+ */
 export interface Station {
   idStation: number;
-  nameStation: string;
+
+  // Nombre flexible: acepta nameStation o stationName
+  nameStation?: string;
+  stationName?: string;
+
+  // Ubicación flexible: acepta latitude/longitude o latitude/length
   latitude: number;
-  longitude: number;
-  totalSlots: number;
-  availableSlots: number;
-  timestamp: Date;
-  slots?: Slot[]; // Opcional: presente cuando se cargan slots completos
-  // Datos de panel admin
+  longitude?: number;
+  length?: number;  // longitude en algunas respuestas del backend
+
+  // Información general
+  totalSlots?: number;
+  availableSlots?: number;
+  timestamp?: Date | string;
+  slots?: Slot[];
+
+  // Datos administrativos
+  idCity?: number;
+  type?: string;
   availableElectricBikes?: number;
   availableMechanicBikes?: number;
   cctvStatus?: boolean;
@@ -36,7 +51,7 @@ export interface Station {
   panicButtonStatus?: boolean;
 }
 
-// DTO consolidado (acepta con/sin slots)
+// DTO consolidado
 export interface SlotDTO {
   idSlot: number;
   idStation: number;
@@ -48,15 +63,18 @@ export interface SlotDTO {
 
 export interface StationDTO {
   idStation: number;
-  nameStation?: string; // API puede enviarlo como nameStation o stationName
+  nameStation?: string;
   stationName?: string;
   latitude: number;
   longitude?: number;
-  length?: number; // Algunas respuestas usan 'length' para longitud
+  length?: number;
   totalSlots?: number;
   availableSlots?: number;
   timestamp?: string;
-  slots?: SlotDTO[]; // Opcional
+  slots?: SlotDTO[];
+  idCity?: number;
+  type?: string;
+  cctvStatus?: boolean;
 }
 
 // Conversores unificados
@@ -72,17 +90,41 @@ export function toSlot(dto: SlotDTO): Slot {
 }
 
 /**
- * Conversor único: maneja StationDTO con o sin slots
+ * Conversor único: maneja StationDTO con campos flexibles
  */
 export function toStation(dto: StationDTO): Station {
   return {
     idStation: dto.idStation,
-    nameStation: dto.nameStation ?? dto.stationName ?? '',
+    nameStation: dto.nameStation,
+    stationName: dto.stationName,
     latitude: dto.latitude,
-    longitude: dto.longitude ?? dto.length ?? 0,
+    longitude: dto.longitude,
+    length: dto.length,
     totalSlots: dto.totalSlots ?? 0,
     availableSlots: dto.availableSlots ?? 0,
-    timestamp: new Date(dto.timestamp ?? Date.now()),
-    slots: dto.slots?.map(toSlot)
+    timestamp: dto.timestamp ? new Date(dto.timestamp) : new Date(),
+    slots: dto.slots?.map(toSlot),
+    idCity: dto.idCity,
+    type: dto.type,
+    cctvStatus: dto.cctvStatus
   };
 }
+
+/**
+ * Helpers para acceso unificado a campos
+ */
+export const StationHelpers = {
+  getName(station: Station): string {
+    return (station.nameStation || station.stationName || '') as string;
+  },
+
+  getLongitude(station: Station): number {
+    return station.longitude ?? station.length ?? 0;
+  },
+
+  getTimestamp(station: Station): Date {
+    if (station.timestamp instanceof Date) return station.timestamp;
+    if (typeof station.timestamp === 'string') return new Date(station.timestamp);
+    return new Date();
+  }
+};

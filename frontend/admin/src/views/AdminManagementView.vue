@@ -4,32 +4,32 @@
       <div class="management-header">
         <h2>Gestión Administrativa</h2>
       </div>
-      
+
       <div class="management-body">
         <div class="tabs">
-          <button 
-            :class="['tab', { active: activeTab === 'cities' }]" 
+          <button
+            :class="['tab', { active: activeTab === 'cities' }]"
             @click="activeTab = 'cities'"
           >
             <span class="material-symbols-outlined">location_city</span>
             Ciudades ({{ cityStore.cities.length }})
           </button>
-          <button 
-            :class="['tab', { active: activeTab === 'stations' }]" 
+          <button
+            :class="['tab', { active: activeTab === 'stations' }]"
             @click="activeTab = 'stations'"
           >
             <span class="material-symbols-outlined">store</span>
             Estaciones ({{ stationStore.stations.length }})
           </button>
-          <button 
-            :class="['tab', { active: activeTab === 'bicycles' }]" 
+          <button
+            :class="['tab', { active: activeTab === 'bicycles' }]"
             @click="activeTab = 'bicycles'"
           >
             <span class="material-symbols-outlined">pedal_bike</span>
             Bicicletas ({{ bicycleStore.bicycles.length }})
           </button>
-          <button 
-            :class="['tab', { active: activeTab === 'slots' }]" 
+          <button
+            :class="['tab', { active: activeTab === 'slots' }]"
             @click="activeTab = 'slots'"
           >
             <span class="material-symbols-outlined">grid_view</span>
@@ -67,7 +67,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useCityStore } from '@/stores/cityStore';
 import { useStationStore } from '@/stores/stationStore';
-import { useBicycleStore } from '@/stores/bicycleStore';
+import { useBikeStore } from '@/stores/bikeStore';
 import CitiesManagement from '@/components/management/CitiesManagement.vue';
 import StationsManagement from '@/components/management/StationsManagement.vue';
 import BicyclesManagement from '@/components/management/BicyclesManagement.vue';
@@ -75,7 +75,7 @@ import SlotsManagement from '@/components/management/SlotsManagement.vue';
 
 const cityStore = useCityStore();
 const stationStore = useStationStore();
-const bicycleStore = useBicycleStore();
+const bicycleStore = useBikeStore();
 
 const activeTab = ref<'cities' | 'stations' | 'bicycles' | 'slots'>('cities');
 const selectedStationForSlots = ref<number | null>(null);

@@ -104,18 +104,25 @@ class BicycleFlyweight {
      * Obtiene el ícono compartido basado en el tipo y estado de la bicicleta
      */
     public static getIcon(bike: Bike): L.DivIcon {
+        // Obtener estado del candado usando campos flexibles
+        const lockStatus = (bike.lockStatus || bike.padlockStatus || '').toUpperCase();
+
         // Si está bloqueada o con error, mostrar ícono de bloqueo
-        if (bike.lockStatus === 'LOCKED' || bike.lockStatus === 'ERROR') {
+        if (lockStatus === 'LOCKED' || lockStatus === 'ERROR') {
             return this.lockedIcon;
         }
 
+        // Obtener modelo usando campos flexibles
+        const model = (bike.model || '').toUpperCase();
+
         // Si es mecánica, usar ícono azul
-        if (bike.model === 'MECHANIC') {
+        if (model === 'MECHANIC' || model === 'MECÁNICA') {
             return this.mechanicIcon;
         }
 
         // Si es eléctrica, verificar batería
-        const batteryLevel = parseInt(bike.battery || '100');
+        const battery = bike.battery != null ? bike.battery.toString() : '100';
+        const batteryLevel = parseInt(battery);
         return batteryLevel < 20 ? this.lowBatteryIcon : this.icon;
     }
 }
@@ -135,8 +142,25 @@ export class BicycleMarker {
     /**
      * Crea o actualiza el marcador en el mapa
      */
-    public render(map: L.Map): L.Marker {
-        const position: L.LatLngExpression = [this.bicycle.lat, this.bicycle.lon];
+    public render(map: L.Map): L.Marker | null {
+        // Obtener coordenadas usando campos flexibles
+        const lat = this.bicycle.lat ?? this.bicycle.latitude;
+        const lon = this.bicycle.lon ?? this.bicycle.length;
+
+        // Validar que las coordenadas sean válidas
+        if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) {
+            const bikeId = this.bicycle.id || this.bicycle.idBicycle;
+            console.warn(`[BicycleFlyweight] ⚠️ Coordenadas inválidas para bicicleta ${bikeId}:`, { lat, lon });
+
+            // Si ya existe un marcador, eliminarlo
+            if (this.marker) {
+                this.marker.remove();
+                this.marker = null;
+            }
+            return null;
+        }
+
+        const position: L.LatLngExpression = [lat, lon];
 
         if (!this.marker) {
             // Crear nuevo marcador usando el Flyweight (ícono compartido)
@@ -167,7 +191,7 @@ export class BicycleMarker {
      * Obtiene el ID de la bicicleta
      */
     public getId(): string {
-        return this.bicycle.id;
+        return (this.bicycle.id || this.bicycle.idBicycle || '') as string;
     }
 
     /**
@@ -191,12 +215,17 @@ export class BicycleMarker {
      * Crea el contenido HTML del popup
      */
     private createPopupContent(): string {
-        const modelText = this.bicycle.model === 'ELECTRIC' ? 'Eléctrica' : 'Mecánica';
-        const modelIcon = this.bicycle.model === 'ELECTRIC' ? '⚡' : '🔧';
+        // Usar campos flexibles para modelo
+        const model = (this.bicycle.model || '').toUpperCase();
+        const isElectric = model === 'ELECTRIC' || model === 'ELÉCTRICA';
+        const modelText = isElectric ? 'Eléctrica' : 'Mecánica';
+        const modelIcon = isElectric ? '⚡' : '🔧';
 
+        // Usar campos flexibles para estado del candado
+        const lockStatus = (this.bicycle.lockStatus || this.bicycle.padlockStatus || '').toUpperCase();
         let lockStatusText = '';
         let lockStatusColor = '';
-        switch (this.bicycle.lockStatus) {
+        switch (lockStatus) {
             case 'UNLOCKED':
                 lockStatusText = 'Desbloqueada';
                 lockStatusColor = '#4caf50';
@@ -209,25 +238,30 @@ export class BicycleMarker {
                 lockStatusText = 'Error';
                 lockStatusColor = '#f44336';
                 break;
+            default:
+                lockStatusText = lockStatus || 'Desconocido';
+                lockStatusColor = '#9E9E9E';
         }
 
         let batterySection = '';
-        if (this.bicycle.model === 'ELECTRIC') {
-            const batteryLevel = parseInt(this.bicycle.battery || '0');
+        if (isElectric) {
+            const battery = this.bicycle.battery != null ? this.bicycle.battery.toString() : '0';
+            const batteryLevel = parseInt(battery);
             const batteryColor = batteryLevel < 20 ? '#f44336' : batteryLevel < 50 ? '#ff9800' : '#4caf50';
             batterySection = `
                 <p style="margin: 5px 0;">
                     <strong>Batería:</strong>
                     <span style="color: ${batteryColor}; font-weight: bold;">
-                        ${this.bicycle.battery}%
+                        ${batteryLevel}%
                     </span>
                 </p>
             `;
         }
 
         let timestampSection = '';
-        if (this.bicycle.timestamp) {
-            const date = this.bicycle.timestamp;
+        const timestamp = this.bicycle.timestamp || this.bicycle.lastUpdate;
+        if (timestamp) {
+            const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
             const formattedDate = date.toLocaleDateString('es-CO', {
                 year: 'numeric',
                 month: '2-digit',
@@ -267,8 +301,8 @@ export class BicycleMarker {
                     ${batterySection}
                     <p style="margin: 5px 0;">
                         <strong>Ubicación:</strong><br/>
-                        Lat: ${this.bicycle.lat.toFixed(6)}<br/>
-                        Lon: ${this.bicycle.lon.toFixed(6)}
+                        Lat: ${(this.bicycle.lat ?? this.bicycle.latitude ?? 0).toFixed(6)}<br/>
+                        Lon: ${(this.bicycle.lon ?? this.bicycle.length ?? 0).toFixed(6)}
                     </p>
                     ${timestampSection}
                 </div>
@@ -288,7 +322,8 @@ export class BicycleFactory {
      * Obtiene o crea un BicycleMarker
      */
     public getBicycleMarker(bicycle: Bike): BicycleMarker {
-        let marker = this.bicycleMarkers.get(bicycle.id);
+        const bikeId = (bicycle.id || bicycle.idBicycle || '') as string;
+        let marker = this.bicycleMarkers.get(bikeId);
 
         if (marker) {
             // Reutilizar marcador existente y actualizar sus datos
@@ -296,7 +331,7 @@ export class BicycleFactory {
         } else {
             // Crear nuevo marcador
             marker = new BicycleMarker(bicycle);
-            this.bicycleMarkers.set(bicycle.id, marker);
+            this.bicycleMarkers.set(bikeId, marker);
         }
 
         return marker;

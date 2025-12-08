@@ -54,15 +54,24 @@ function updateMarkers() {
         props.stations.forEach((station) => {
             if (!map.value) return
 
-            if (station.latitude == null || station.longitude == null) return
+            // Obtener coordenadas usando campos flexibles
+            const lat = station.latitude
+            const lon = station.longitude ?? station.length
+
+            if (lat == null || lon == null) {
+                console.warn(`Estación ${station.nameStation || station.stationName} sin coordenadas válidas`, { lat, lon, station })
+                return
+            }
 
             const availableElectric = station.availableElectricBikes ?? 0
             const availableMechanical = station.availableMechanicBikes ?? 0
 
+            const stationName = station.nameStation || station.stationName || 'N/A'
+
             const popupContent = `
                 <div style="min-width: 220px;">
-                    <h3 style="margin: 0 0 8px 0; color: #1f2937;">${station.nameStation}</h3>
-                    <p style="margin: 4px 0; color: #6b7280; font-size: 12px;">${station.latitude}, ${station.longitude}</p>
+                    <h3 style="margin: 0 0 8px 0; color: #1f2937;">${stationName}</h3>
+                    <p style="margin: 4px 0; color: #6b7280; font-size: 12px;">${lat.toFixed(4)}, ${lon.toFixed(4)}</p>
                     <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.slots')}</strong> ${station.availableSlots} / ${station.totalSlots}</p>
                     <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.electric')}</strong> ${availableElectric}</p>
                     <p style="margin: 4px 0;"><strong>${t('dashboard.stations.map.mechanic')}</strong> ${availableMechanical}</p>
@@ -80,7 +89,7 @@ function updateMarkers() {
                 minWidth: 200
             }).setContent(popupContent)
 
-            const stationMarker = L.marker([station.latitude, station.longitude], { icon: stationIcon })
+            const stationMarker = L.marker([lat, lon], { icon: stationIcon })
                 .addTo(map.value)
                 .bindPopup(popup)
 

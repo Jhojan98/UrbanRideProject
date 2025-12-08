@@ -68,8 +68,8 @@
               </span>
             </td>
             <td>
-              <span :class="['status-badge', bicycle.padlockStatus.toLowerCase()]">
-                {{ bicycle.padlockStatus }}
+              <span :class="['status-badge', (bicycle.padlockStatus || bicycle.lockStatus || '').toLowerCase()]">
+                {{ bicycle.padlockStatus || bicycle.lockStatus }}
               </span>
             </td>
             <td>
@@ -77,7 +77,7 @@
               <span v-else>N/A</span>
             </td>
             <td>
-              <button class="btn-danger btn-sm" @click="handleDelete(bicycle.idBicycle)">
+              <button class="btn-danger btn-sm" @click="handleDelete(bicycle.idBicycle || bicycle.id || '')">
                 <span class="material-symbols-outlined">delete</span>
               </button>
             </td>

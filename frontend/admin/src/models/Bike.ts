@@ -1,64 +1,72 @@
 /**
- * DTO de Bicicleta desde el backend
- */
-export interface BikeDTO {
-  idBicycle: string;
-  series: number;
-  model: string;
-  padlockStatus: string;
-  lastUpdate?: string;
-  latitude?: number;
-  length?: number;
-  battery?: number;
-}
-
-/**
- * Bicycle - Modelo que representa una bicicleta
+ * Modelo unificado de Bicicleta
+ * Acepta campos del backend (idBicycle, padlockStatus, latitude, length)
+ * y del frontend (id, lockStatus, lat, lon) sin necesidad de conversión
  */
 export default interface Bike {
-  id: string;
+  // ID flexible: acepta idBicycle (backend) o id (frontend)
+  idBicycle?: string;
+  id?: string;
+
   series: number;
-  model: "MECHANIC" | "ELECTRIC";
-  lockStatus: "LOCKED" | "UNLOCKED" | "ERROR";
-  lat: number;
-  lon: number;
-  battery: string;
+  model: "MECHANIC" | "ELECTRIC" | string;
+
+  // Estado del candado flexible: acepta padlockStatus (backend) o lockStatus (frontend)
+  padlockStatus?: string;
+  lockStatus?: "LOCKED" | "UNLOCKED" | "ERROR" | string;
+
+  // Ubicación flexible: acepta latitude/length (backend) o lat/lon (frontend)
+  latitude?: number;
+  lat?: number;
+  length?: number;  // longitude en backend
+  lon?: number;     // longitude en frontend
+
+  battery?: number | string;
+
+  // Timestamp flexible: acepta lastUpdate (backend) o timestamp (frontend)
+  lastUpdate?: Date | string;
   timestamp?: Date;
 }
 
 /**
- * Convierte un DTO de bicicleta del backend al modelo Bike
+ * Helpers para acceso unificado a campos
  */
-export function toBike(dto: BikeDTO): Bike {
-  // Normalizar el modelo
-  let model: "MECHANIC" | "ELECTRIC" = "MECHANIC";
-  if (dto.model) {
-    const upperModel = dto.model.toUpperCase();
-    if (upperModel === "ELECTRIC" || upperModel === "ELÉCTRICA") {
-      model = "ELECTRIC";
-    }
-  }
+export const BikeHelpers = {
+  getId(bike: Bike): string {
+    return (bike.id || bike.idBicycle || '') as string;
+  },
 
-  // Normalizar el estado del candado
-  let lockStatus: "LOCKED" | "UNLOCKED" | "ERROR" = "LOCKED";
-  if (dto.padlockStatus) {
-    const upperStatus = dto.padlockStatus.toUpperCase();
-    if (upperStatus === "UNLOCKED" || upperStatus === "DESBLOQUEADO") {
-      lockStatus = "UNLOCKED";
-    } else if (upperStatus === "ERROR") {
-      lockStatus = "ERROR";
-    }
-  }
+  getModel(bike: Bike): "MECHANIC" | "ELECTRIC" {
+    const model = typeof bike.model === 'string' ? bike.model.toUpperCase() : bike.model;
+    return (model === "ELECTRIC" || model === "ELÉCTRICA") ? "ELECTRIC" : "MECHANIC";
+  },
 
-  return {
-    id: dto.idBicycle,
-    series: dto.series,
-    model,
-    lockStatus,
-    lat: dto.latitude ?? 0,
-    lon: dto.length ?? 0, // length en backend = longitude
-    battery: dto.battery != null ? dto.battery.toString() : "0",
-    timestamp: dto.lastUpdate ? new Date(dto.lastUpdate) : undefined,
-  };
-}
+  getLockStatus(bike: Bike): "LOCKED" | "UNLOCKED" | "ERROR" {
+    const status = (bike.lockStatus || bike.padlockStatus || 'LOCKED').toUpperCase();
+    if (status === "UNLOCKED" || status === "DESBLOQUEADO") return "UNLOCKED";
+    if (status === "ERROR") return "ERROR";
+    return "LOCKED";
+  },
+
+  getLat(bike: Bike): number {
+    return bike.lat ?? bike.latitude ?? 0;
+  },
+
+  getLon(bike: Bike): number {
+    return bike.lon ?? bike.length ?? 0;
+  },
+
+  getBattery(bike: Bike): string {
+    if (bike.battery == null) return "0";
+    return typeof bike.battery === 'string' ? bike.battery : bike.battery.toString();
+  },
+
+  getTimestamp(bike: Bike): Date | undefined {
+    if (bike.timestamp instanceof Date) return bike.timestamp;
+    if (bike.lastUpdate) {
+      return bike.lastUpdate instanceof Date ? bike.lastUpdate : new Date(bike.lastUpdate);
+    }
+    return undefined;
+  }
+};
 

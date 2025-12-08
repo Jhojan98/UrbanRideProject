@@ -13,8 +13,8 @@
             </thead>
             <tbody>
                 <tr v-for="station in props.stations" :key="station.idStation">
-                    <td>{{ station.nameStation }}</td>
-                    <td>{{ station.latitude }}, {{ station.longitude }}</td>
+                    <td>{{ station.nameStation || station.stationName || 'N/A' }}</td>
+                    <td>{{ station.latitude?.toFixed(4) || 'N/A' }}, {{ (station.longitude ?? station.length)?.toFixed(4) || 'N/A' }}</td>
                     <td>
                         <span v-if="station.cctvStatus" class="status-pill on">{{ t('dashboard.stations.statusActive', 0) }}</span>
                         <span v-else class="status-pill off">{{ t('dashboard.stations.statusActive', 1) }}</span>

@@ -1,6 +1,11 @@
 /**
  * Barrel export para facilitar imports
  */
-export type { AdminBicycle } from './AdminBicycle';
-export type { AdminStation } from './AdminStation';
 export type { AdminSlot } from './AdminSlot';
+export type { default as Bike } from './Bike';
+export type { Station } from './Station';
+export type { default as User } from './User';
+export type { default as Travel } from './Travel';
+export type { default as Fine } from './Fine';
+export type { default as CaC } from './CaC';
+export type { default as City } from './City';
