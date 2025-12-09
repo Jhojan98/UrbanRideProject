@@ -31,7 +31,6 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
     @Override
     public void onMessage(Message message, byte[] pattern) {
         String expiredKey = message.toString();
-        System.out.println(expiredKey.replace(":ttl", ":data"));
         ReservationTempDTO reservationTempDTO = reservationTempService.getExpired(expiredKey.replace(":ttl", ":data"));
 
         if (reservationTempDTO != null) {

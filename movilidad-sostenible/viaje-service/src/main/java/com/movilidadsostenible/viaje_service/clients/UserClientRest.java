@@ -16,7 +16,7 @@ public interface UserClientRest {
     @PostMapping("/travel/charge/{uid}")
     void chargeTrip(
             @PathVariable("uid") String uidUser,
-            @RequestParam("total") Integer totalTripValue,
+            @RequestParam("total") Double totalTripValue,
             @RequestParam("excessMinutes") Integer excessMinutes
     );
 

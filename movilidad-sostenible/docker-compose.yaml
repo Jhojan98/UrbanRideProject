@@ -234,6 +234,10 @@ services:
         condition: service_started
       usuario-service:
         condition: service_started
+      notification-realtime-service:
+        condition: service_started
+      notification-email-service:
+        condition: service_started
       postgres17:
         condition: service_started
       redis-stack:

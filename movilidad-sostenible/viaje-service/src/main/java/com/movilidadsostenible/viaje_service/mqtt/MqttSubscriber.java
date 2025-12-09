@@ -2,10 +2,12 @@ package com.movilidadsostenible.viaje_service.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.movilidadsostenible.viaje_service.clients.SlotsClient;
+import com.movilidadsostenible.viaje_service.clients.UserClientRest;
 import com.movilidadsostenible.viaje_service.models.dto.EndTravelDTO;
 import com.movilidadsostenible.viaje_service.models.dto.TravelEndDTO;
+import com.movilidadsostenible.viaje_service.models.dto.TravelStartDTO;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
-import com.movilidadsostenible.viaje_service.publisher.TravelPublisher;
+import com.movilidadsostenible.viaje_service.rabbit.publisher.TravelPublisher;
 import com.movilidadsostenible.viaje_service.services.ReservationTempService;
 import com.movilidadsostenible.viaje_service.services.TravelService;
 import com.movilidadsostenible.viaje_service.services.ExchangeRateService;
@@ -47,18 +49,16 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
     @Autowired
     private TravelService repository;
-
     @Autowired
     private TravelPublisher travelPublisher;
-
     @Autowired
     private ReservationTempService reservationTempService;
-
     @Autowired
     private SlotsClient slotsClient;
-
     @Autowired
     private ExchangeRateService exchangeRateService;
+    @Autowired
+    private UserClientRest userClientRest;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private MqttClient client;
@@ -159,6 +159,7 @@ public class MqttSubscriber implements MqttCallbackExtended {
           }
 
           Optional<Travel> opt = repository.findFirstByIdBicycleAndStatus(telemetry.getIdBicycle(), "IN_PROGRESS");
+
           if (opt.isEmpty()) {
               log.warn("Bicicleta {} no existe en BD. Ignorando telemetría.", telemetry.getIdBicycle());
               return;
@@ -180,18 +181,19 @@ public class MqttSubscriber implements MqttCallbackExtended {
           final double COP_PER_UDT = exchangeRateService.getCopPerUsd();
 
           double costUdT = 0.0;
+          int extraMinutes = 0;
 
           if (("LAST MILE").equalsIgnoreCase(travel.getTravelType())) {
               // Última milla: 45 min máximo a 17,500 COP; minuto adicional 250 COP
               int includedMinutes = 45;
-              int extraMinutes = (int) Math.max(0, durationMinutes - includedMinutes);
+              extraMinutes = (int) Math.max(0, durationMinutes - includedMinutes);
               double baseCop = 17500.0;
               double extraCop = extraMinutes * 250.0;
               costUdT = (baseCop + extraCop) / COP_PER_UDT;
           } else if (("LONG TRAVEL").equalsIgnoreCase(travel.getTravelType())) {
               // Recorrido largo: 75 min máximo a 25,000 COP; minuto adicional 1,000 COP
               int includedMinutes = 75;
-              int extraMinutes = (int) Math.max(0, durationMinutes - includedMinutes);
+              extraMinutes = (int) Math.max(0, durationMinutes - includedMinutes);
               double baseCop = 25000.0;
               double extraCop = extraMinutes * 1000.0;
               costUdT = (baseCop + extraCop) / COP_PER_UDT;
@@ -199,6 +201,13 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
           // Usar el setter correcto del costo en la entidad Travel
           travel.setTravelCost(costUdT);
+
+          try {
+            userClientRest.chargeTrip(travel.getUid(), costUdT, extraMinutes);
+          }
+          catch (Exception e) {
+            log.error("Error cobrando viaje al usuario {}: {}", travel.getUid(), e.getMessage());
+          }
 
           repository.save(travel);
 
@@ -210,7 +219,6 @@ public class MqttSubscriber implements MqttCallbackExtended {
           travelEndDTO.setTravelType(travel.getTravelType());
           travelEndDTO.setStationStartId(travel.getFromIdStation());
           travelEndDTO.setStationEndId(travel.getToIdStation());
-          travelEndDTO.setSlotEndId(telemetry.getSlotId());
 
           travelPublisher.sendJsonTravelEndMessage(travelEndDTO);
 

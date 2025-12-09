@@ -124,7 +124,7 @@ public class BicicletaController {
                     description = "Datos base de la bicicleta eléctrica (sin id ni model)",
                     content = @Content(mediaType = "application/json",
                             schema = @Schema(implementation = Bicycle.class),
-                            examples = @ExampleObject(value = "{\n  \"series\": 2025,\n  \"padlockStatus\": \"UNLOCKED\",\n  \"battery\": 80\n}")))
+                            examples = @ExampleObject(value = "{\n  \"series\": 2026,\n  \"padlockStatus\": \"UNLOCKED\"}")))
             @Valid @RequestBody Bicycle bicycle,
             BindingResult result) {
         if (result.hasErrors()) {

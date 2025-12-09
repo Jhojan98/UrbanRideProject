@@ -2,6 +2,7 @@ package com.movilidadsostenible.notification_realtime_service.consumer;
 
 import com.movilidadsostenible.notification_realtime_service.controllers.SseController;
 import com.movilidadsostenible.notification_realtime_service.model.dto.TravelEndDTO;
+import com.movilidadsostenible.notification_realtime_service.model.dto.TravelReservationDTO;
 import com.movilidadsostenible.notification_realtime_service.model.dto.TravelStartDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,12 @@ public class EmailConsumer {
   private SseController sseController;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(EmailConsumer.class);
+
+  @RabbitListener(queues = "${rabbitmq.queue.travel.reservation}")
+  public void consumeJsonTravelReservationMessage(TravelReservationDTO travelReservationDTO) {
+    LOGGER.info("JSON Message received -> {}", travelReservationDTO);
+    sseController.sendToUser(travelReservationDTO.getUserId(), travelReservationDTO);
+  }
 
   @RabbitListener(queues = "${rabbitmq.queue.travel.start}")
   public void consumeJsonTravelStartMessage(TravelStartDTO travelStartDTO) {

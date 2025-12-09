@@ -23,11 +23,16 @@ public class ReservationTempServiceImpl implements ReservationTempService {
 
     @Override
     public void save(ReservationTempDTO dto) {
-
         String baseKey = TEMP_PREFIX + dto.getReservationId();
         redisTemplate.opsForHash().putAll(baseKey+ UID_PREFIX + dto.getUserId() + DATA_SUFFIX, dto.toMap());
         redisTemplate.opsForValue().set(baseKey + UID_PREFIX + dto.getUserId() + TTL_SUFFIX, "",
                 10, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public void saveOnlyResources(ReservationTempDTO dto) {
+      String baseKey = TEMP_PREFIX + dto.getReservationId();
+      redisTemplate.opsForHash().putAll(baseKey+ UID_PREFIX + dto.getUserId() + DATA_SUFFIX, dto.toMap());
     }
 
 
