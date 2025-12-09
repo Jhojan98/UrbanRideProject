@@ -9,4 +9,5 @@ export default interface Maintenance {
   bikeId: "string";
   stationId: number;
   lockId: "string";
+  id:number
 }

@@ -236,7 +236,8 @@ const usePaymentStore = defineStore('payment', {
         this.error = 'Error connecting to server to pay the fine';
         return false;
       }
-    }
+    },
+
   },
 })
 

@@ -16,9 +16,10 @@
           <li> Prioridad en reservas</li>
           <li> Soporte 24/7</li>
         </ul>
-        
+
         <div class="price-section">
-          <span class="price">{{ $t('subscription.purchase.price') }}</span>
+          <span class="original-price">$39.00 USD</span>
+          <span class="price-label">{{ $t('subscription.purchase.price') || 'Precio del plan mensual' }}</span>
         </div>
       </div>
     </div>
@@ -29,7 +30,7 @@
         <h4>{{ $t('subscription.purchase.currentBalance') }}</h4>
         <p class="balance-amount">{{ formattedBalance }}</p>
       </div>
-      
+
       <div class="requirement-info">
         <p v-if="canSubscribe" class="success-message">
            {{ $t('subscription.purchase.eligible') }}
@@ -86,23 +87,35 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getAuth } from 'firebase/auth'
+import { useRouter } from 'vue-router'
 import useAuth from '@/stores/auth'
-import useSubscriptionStore from '@/stores/subscription'
+import usePaymentStore from '@/stores/payment'
 
 const { t: $t } = useI18n()
+const router = useRouter()
 
 // Stores
 const authStore = useAuth()
-const subscriptionStore = useSubscriptionStore()
+const paymentStore = usePaymentStore()
+
+// Precio de la suscripción
+const SUBSCRIPTION_PRICE = 39
 
 // Estado reactivo
 const loading = ref(false)
 const canSubscribe = ref(false)
 const purchaseSuccess = ref(false)
+const error = ref<string | null>(null)
+const userBalance = ref<number>(0)
 
 // Computed
-const formattedBalance = computed(() => subscriptionStore.formattedBalance)
-const error = computed(() => subscriptionStore.error)
+const formattedBalance = computed(() => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2
+  }).format(userBalance.value)
+})
 
 // Inicializar al montar
 onMounted(async () => {
@@ -113,45 +126,62 @@ onMounted(async () => {
 const checkSubscriptionEligibility = async () => {
   const firebaseAuth = getAuth()
   const firebaseUser = firebaseAuth.currentUser
-  
+
   if (!firebaseUser) {
     console.warn('Usuario no autenticado')
+    error.value = 'Usuario no autenticado'
     return
   }
 
-  canSubscribe.value = await subscriptionStore.canSubscribe(firebaseUser.uid)
+  try {
+    // Obtener balance del usuario
+    const balance = await paymentStore.fetchBalance(firebaseUser.uid)
+
+    if (balance !== null) {
+      userBalance.value = balance
+      canSubscribe.value = balance >= SUBSCRIPTION_PRICE
+
+      console.log(`[Subscription] Balance: $${balance}, Required: $${SUBSCRIPTION_PRICE}, Can subscribe: ${canSubscribe.value}`)
+    } else {
+      error.value = 'No se pudo obtener el saldo'
+      canSubscribe.value = false
+    }
+  } catch (err) {
+    console.error('Error verificando elegibilidad:', err)
+    error.value = 'Error al verificar saldo'
+    canSubscribe.value = false
+  }
 }
 
 // Manejar compra
 const handlePurchase = async () => {
-  const firebaseAuth = getAuth()
-  const firebaseUser = firebaseAuth.currentUser
-  
-  if (!firebaseUser) {
-    alert($t('subscription.purchase.notAuthenticated'))
+  if (!canSubscribe.value) {
+    error.value = `Saldo insuficiente. Necesitas al menos $${SUBSCRIPTION_PRICE} USD`
     return
   }
 
   loading.value = true
-  purchaseSuccess.value = false
-  subscriptionStore.clearError()
+  error.value = null
 
   try {
-    const result = await subscriptionStore.purchaseMonthlySubscription({
-      userId: firebaseUser.uid,
-      token: authStore.token || undefined
-    })
+    const result = await authStore.buySubscription()
 
     if (result) {
       purchaseSuccess.value = true
-      // Actualizar estado de elegibilidad
+
+      // Actualizar balance después de la compra
       await checkSubscriptionEligibility()
+
+      // Redirigir al perfil después de 3 segundos
+      setTimeout(() => {
+        router.push({ name: 'profile' })
+      }, 3000)
     } else {
-      alert($t('subscription.purchase.error'))
+      error.value = 'Error al procesar la compra. Por favor intenta nuevamente.'
     }
-  } catch (error) {
-    console.error('Error en compra de suscripción:', error)
-    alert($t('subscription.purchase.error'))
+  } catch (err) {
+    console.error('Error comprando suscripción:', err)
+    error.value = 'Error al procesar la compra'
   } finally {
     loading.value = false
   }
@@ -161,207 +191,352 @@ const handlePurchase = async () => {
 <style lang="scss" scoped>
 .subscription-purchase {
   max-width: 600px;
-  margin: 0 auto;
-  padding: 24px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin: 30px auto;
+  padding: 2rem;
+  background: var(--color-background-light);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  color: var(--color-text-primary-light);
+  font-family: 'Inter', sans-serif;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .subscription-purchase {
+  background: var(--color-surface-dark);
+  color: var(--color-text-primary-dark);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
 }
 
 .header {
   text-align: center;
-  margin-bottom: 32px;
-  
+  margin-bottom: 2rem;
+
   h1 {
-    font-size: 28px;
-    color: #333;
-    margin-bottom: 8px;
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: inherit;
+    margin-bottom: 0.5rem;
   }
-  
+
   p {
-    color: #666;
-    font-size: 16px;
+    color: var(--color-text-secondary-light);
+    font-size: 1rem;
+  }
+
+  [data-theme="dark"] & p {
+    color: var(--color-text-secondary-dark);
   }
 }
 
 .subscription-info {
-  margin-bottom: 32px;
-  
+  margin-bottom: 2rem;
+
   .info-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--color-primary-light) 0%, #1b5e20 100%);
     color: white;
-    padding: 24px;
+    padding: 1.5rem;
     border-radius: 12px;
-    
-    h3 {
-      font-size: 20px;
-      margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(46, 125, 50, 0.4);
     }
-    
+
+    h3 {
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
     .features {
       list-style: none;
       padding: 0;
-      margin-bottom: 24px;
-      
+      margin-bottom: 1.5rem;
+
       li {
-        padding: 8px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        
+        padding: 0.6rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        font-size: 0.95rem;
+
         &:last-child {
           border-bottom: none;
         }
       }
     }
-    
+
     .price-section {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      
-      .price {
-        font-size: 12px;
-        opacity: 0.8;
-      }
-      
+      gap: 0.3rem;
+      text-align: center;
+      padding-top: 0.5rem;
+
       .original-price {
-        font-size: 32px;
-        font-weight: bold;
+        font-size: 2rem;
+        font-weight: 700;
       }
-      
-      .converted-price {
-        font-size: 14px;
+
+      .price-label {
+        font-size: 0.85rem;
         opacity: 0.9;
       }
+    }
+  }
+
+  [data-theme="dark"] .info-card {
+    background: linear-gradient(135deg, var(--color-primary-dark) 0%, #1b5e20 100%);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.25);
+
+    &:hover {
+      box-shadow: 0 6px 16px rgba(76, 175, 80, 0.35);
     }
   }
 }
 
 .current-status {
-  background: #f8f9fa;
-  padding: 20px;
+  background: var(--color-gray-very-light, #f8f9fa);
+  padding: 1.5rem;
   border-radius: 12px;
-  margin-bottom: 24px;
-  
+  margin-bottom: 1.5rem;
+  border: 1.5px solid var(--color-border-light);
+  transition: background 0.3s ease, border 0.3s ease;
+
   .balance-info {
     text-align: center;
-    margin-bottom: 16px;
-    
+    margin-bottom: 1rem;
+
     h4 {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--color-text-secondary-light);
+      margin-bottom: 0.5rem;
+      font-weight: 600;
     }
-    
+
     .balance-amount {
-      font-size: 32px;
-      font-weight: bold;
-      color: #2e7d32;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-primary-light);
+    }
+
+    [data-theme="dark"] & h4 {
+      color: var(--color-text-secondary-dark);
+    }
+
+    [data-theme="dark"] & .balance-amount {
+      color: var(--color-green-light);
     }
   }
-  
+
   .requirement-info {
     text-align: center;
-    
+
     .success-message {
-      color: #2e7d32;
-      font-weight: 500;
-      margin-bottom: 8px;
+      color: var(--color-primary-light);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
     }
-    
+
     .warning-message {
       color: #f57c00;
-      font-weight: 500;
-      margin-bottom: 8px;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
     }
-    
+
     .requirement {
-      font-size: 14px;
-      color: #666;
+      font-size: 0.85rem;
+      color: var(--color-text-secondary-light);
+    }
+
+    [data-theme="dark"] & .success-message {
+      color: var(--color-green-light);
+    }
+
+    [data-theme="dark"] & .requirement {
+      color: var(--color-text-secondary-dark);
     }
   }
 }
 
+[data-theme="dark"] .current-status {
+  background: var(--color-gray-light);
+  border-color: var(--color-border-dark);
+}
+
 .purchase-btn {
   width: 100%;
-  padding: 16px;
-  font-size: 18px;
+  padding: 1rem;
+  margin-top: 0.6rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-primary-light);
+  color: var(--color-button-text-light);
   font-weight: 600;
-  margin-bottom: 24px;
-  
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.15s ease, box-shadow 0.25s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-green-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    background: var(--color-gray-light);
+    color: var(--color-gray-medium);
+  }
+}
+
+[data-theme="dark"] .purchase-btn {
+  background: var(--color-primary-dark);
+  color: var(--color-button-text-dark);
+
+  &:hover:not(:disabled) {
+    background: var(--color-green-light);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
   }
 }
 
 .error-message {
   background: #ffebee;
   color: #c62828;
-  padding: 12px;
+  padding: 1rem;
   border-radius: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
   text-align: center;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: 1px solid #ef5350;
+}
+
+[data-theme="dark"] .error-message {
+  background: rgba(211, 47, 47, 0.15);
+  color: #ef5350;
+  border-color: #c62828;
 }
 
 .success-message {
   background: #e8f5e9;
-  color: #2e7d32;
-  padding: 20px;
+  color: var(--color-primary-light);
+  padding: 1.5rem;
   border-radius: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 1.5rem;
   text-align: center;
-  
+  border: 1px solid var(--color-primary-light);
+
   h3 {
     margin-top: 0;
-    margin-bottom: 12px;
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+    font-size: 1.3rem;
   }
-  
+
   .success-details {
-    background: white;
-    padding: 16px;
+    background: var(--color-background-light);
+    padding: 1rem;
     border-radius: 8px;
-    margin-top: 16px;
+    margin-top: 1rem;
     text-align: left;
-    
+    border: 1px solid var(--color-border-light);
+
     p {
-      margin: 8px 0;
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
     }
+  }
+}
+
+[data-theme="dark"] .success-message {
+  background: rgba(76, 175, 80, 0.15);
+  color: var(--color-green-light);
+  border-color: var(--color-green-light);
+
+  .success-details {
+    background: var(--color-surface-dark);
+    border-color: var(--color-border-dark);
   }
 }
 
 .additional-info {
   text-align: center;
-  color: #666;
-  font-size: 14px;
-  
-  .small-text {
-    font-size: 12px;
-    opacity: 0.7;
-    margin-top: 8px;
+  color: var(--color-text-secondary-light);
+  font-size: 0.9rem;
+  line-height: 1.6;
+
+  p {
+    margin: 0.5rem 0;
   }
+
+  .small-text {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-top: 0.8rem;
+    font-style: italic;
+  }
+}
+
+[data-theme="dark"] .additional-info {
+  color: var(--color-text-secondary-dark);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .subscription-purchase {
-    padding: 16px;
+    padding: 1.5rem;
     border-radius: 12px;
+    margin: 20px auto;
   }
-  
+
   .header h1 {
-    font-size: 24px;
+    font-size: 1.5rem;
   }
-  
+
+  .header p {
+    font-size: 0.9rem;
+  }
+
   .info-card {
-    padding: 16px !important;
-    
+    padding: 1.2rem !important;
+
+    h3 {
+      font-size: 1.1rem !important;
+    }
+
+    .features li {
+      font-size: 0.85rem !important;
+    }
+
     .original-price {
-      font-size: 24px !important;
+      font-size: 1.6rem !important;
+    }
+
+    .price-label {
+      font-size: 0.8rem !important;
     }
   }
-  
+
   .balance-amount {
-    font-size: 24px !important;
+    font-size: 1.6rem !important;
+  }
+
+  .current-status {
+    padding: 1.2rem;
+  }
+
+  .purchase-btn {
+    font-size: 0.95rem;
+    padding: 0.9rem;
   }
 }
 </style>

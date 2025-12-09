@@ -44,6 +44,17 @@
         </template>
       </nav>
 
+      <!-- Desktop Auth Buttons -->
+      <div class="auth-buttons">
+        <template v-if="showAuthButtons">
+          <router-link :to="{ name: 'login' }" class="btn-primary">{{ $t('nav.login') }}</router-link>
+          <router-link :to="{ name: 'signup' }" class="btn-primary">{{ $t('nav.signup') }}</router-link>
+        </template>
+        <button v-if="showLogoutButton" @click="logout" class="btn-primary btn-logout">
+          {{ $t('nav.logout') }}
+        </button>
+      </div>
+
       <!-- Desktop Utilities (Theme + Language) -->
       <div class="header-utilities">
         <div class="lang-switcher">
@@ -75,8 +86,12 @@
       <!-- Mobile Auth Buttons -->
       <div class="mobile-auth-buttons">
         <template v-if="showAuthButtons">
-          <router-link :to="{ name: 'login' }" class="btn-primary" @click="closeSidebarOnMobile">{{ $t('nav.login') }}</router-link>
-          <router-link :to="{ name: 'signup' }" class="btn-primary" @click="closeSidebarOnMobile">{{ $t('nav.signup') }}</router-link>
+          <router-link :to="{ name: 'login' }" class="btn-primary" @click="closeSidebarOnMobile">
+            {{ $t('nav.login') }}
+          </router-link>
+          <router-link :to="{ name: 'signup' }" class="btn-primary" @click="closeSidebarOnMobile">
+            {{ $t('nav.signup') }}
+          </router-link>
         </template>
 
         <button v-if="showLogoutButton" @click="logout" class="btn-primary btn-logout">
@@ -108,19 +123,33 @@ const isSidebarOpen = ref(false);
 const isMobile = ref(window.innerWidth <= 768);
 
 // Verificar si el usuario está autenticado
-const isAuthenticated = computed(() => !!token.value);
+const isAuthenticated = computed(() => {
+  const auth = !!token.value;
+  console.log('[Header] isAuthenticated:', auth, 'token:', token.value);
+  return auth;
+});
 
 // Verificar si estamos en una ruta de autenticación (login, signup, verify-email)
 const isAuthRoute = computed(() => {
   const authRoutes = ['login', 'signup', 'verify-email'];
-  return authRoutes.includes(route.name as string);
+  const isAuth = authRoutes.includes(route.name as string);
+  console.log('[Header] isAuthRoute:', isAuth, 'route:', route.name);
+  return isAuth;
 });
 
 // Mostrar botones de login/signup solo cuando NO esté autenticado y NO esté en ruta de auth
-const showAuthButtons = computed(() => !isAuthenticated.value && !isAuthRoute.value);
+const showAuthButtons = computed(() => {
+  const show = !isAuthenticated.value && !isAuthRoute.value;
+  console.log('[Header] showAuthButtons:', show);
+  return show;
+});
 
 // Mostrar botón de logout solo cuando esté autenticado
-const showLogoutButton = computed(() => isAuthenticated.value);
+const showLogoutButton = computed(() => {
+  const show = isAuthenticated.value;
+  console.log('[Header] showLogoutButton:', show);
+  return show;
+});
 
 // Cerrar sidebar automáticamente en móviles al cambiar de ruta
 watch(() => route.path, () => {

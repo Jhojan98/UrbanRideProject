@@ -35,6 +35,13 @@
             <span class="material-symbols-outlined">grid_view</span>
             Slots ({{ stationStore.slots.length }})
           </button>
+          <button
+            :class="['tab', { active: activeTab === 'maintenances' }]"
+            @click="activeTab = 'maintenances'"
+          >
+            <span class="material-symbols-outlined">build</span>
+            Mantenimientos
+          </button>
         </div>
 
         <div v-if="loading" class="loading">Cargando información...</div>
@@ -58,6 +65,11 @@
         <div v-if="activeTab === 'slots'">
           <SlotsManagement :initial-station-id="selectedStationForSlots" />
         </div>
+
+        <!-- Mantenimientos -->
+        <div v-if="activeTab === 'maintenances'">
+          <MaintenancesManagement />
+        </div>
       </div>
     </div>
   </div>
@@ -72,12 +84,13 @@ import CitiesManagement from '@/components/management/CitiesManagement.vue';
 import StationsManagement from '@/components/management/StationsManagement.vue';
 import BicyclesManagement from '@/components/management/BicyclesManagement.vue';
 import SlotsManagement from '@/components/management/SlotsManagement.vue';
+import MaintenancesManagement from '@/components/management/MaintenancesManagement.vue';
 
 const cityStore = useCityStore();
 const stationStore = useStationStore();
 const bicycleStore = useBikeStore();
 
-const activeTab = ref<'cities' | 'stations' | 'bicycles' | 'slots'>('cities');
+const activeTab = ref<'cities' | 'stations' | 'bicycles' | 'slots' | 'maintenances'>('cities');
 const selectedStationForSlots = ref<number | null>(null);
 
 const loading = computed(() => {

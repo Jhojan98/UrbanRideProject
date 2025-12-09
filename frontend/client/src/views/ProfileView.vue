@@ -75,17 +75,13 @@
                   <span v-if="isLoadingBalance" class="loading-spinner">↻</span>
                 </span>
               </div>
-              <div class="card-info">
-                <h4>{{ $t('profile.balance.registeredCard') }}</h4>
-                <div class="card-details">
-                  <span class="card-type">Visa</span>
-                  <span class="card-number">**** **** **** 1234</span>
-                  <span class="card-expiry">{{ $t('profile.balance.expires') }} 12/28</span>
-                </div>
-              </div>
+
               <div class="payment-actions">
                 <button class="btn-add-balance" @click="goToPaymentMethods">
                   {{ $t('profile.balance.addBalance') }}
+                </button>
+                <button class="btn-buy-subscription" @click="goToSubscription">
+                  💳 {{ $t('profile.balance.buySubscription') || 'Comprar Suscripción' }}
                 </button>
               </div>
             </div>
@@ -359,6 +355,11 @@ const formatCost = (cost: number | undefined): string => {
 // Navegar a PaymentMethods
 function goToPaymentMethods() {
   router.push({ name: "payment-methods" });
+}
+
+// Navegar a compra de suscripción
+function goToSubscription() {
+  router.push({ name: "purchase-subscription" });
 }
 
 // Descarga de reportes desde reports-service
@@ -728,22 +729,81 @@ onMounted(() => {
   }
 }
 
-.btn-add-balance {
-  background: #2E7D32;
-  color: white;
+.btn-add-balance,
+.btn-buy-subscription {
+  background: var(--color-primary-light);
+  color: var(--color-button-text-light);
   padding: 0.6rem 1.2rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
   font-size: 16px;
-  font-weight: 500;
-  transition: all 0.3s;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.15);
+}
+
+.btn-buy-subscription {
+  background: linear-gradient(135deg, var(--color-primary-light) 0%, #1b5e20 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-buy-subscription::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-buy-subscription:hover::before {
+  left: 100%;
+}
+
+.btn-add-balance:hover,
+.btn-buy-subscription:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 125, 50, 0.3);
 }
 
 .btn-add-balance:hover {
-  background: #1f5620;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+  background: var(--color-green-light);
+}
+
+.btn-buy-subscription:hover {
+  background: linear-gradient(135deg, var(--color-green-light) 0%, #2e7d32 100%);
+  box-shadow: 0 6px 16px rgba(46, 125, 50, 0.4);
+}
+
+.btn-add-balance:active,
+.btn-buy-subscription:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.2);
+}
+
+[data-theme="dark"] .btn-add-balance,
+[data-theme="dark"] .btn-buy-subscription {
+  background: var(--color-primary-dark);
+  color: var(--color-button-text-dark);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+
+[data-theme="dark"] .btn-buy-subscription {
+  background: linear-gradient(135deg, var(--color-primary-dark) 0%, #1b5e20 100%);
+}
+
+[data-theme="dark"] .btn-add-balance:hover,
+[data-theme="dark"] .btn-buy-subscription:hover {
+  background: var(--color-green-light);
+  box-shadow: 0 6px 16px rgba(76, 175, 80, 0.35);
+}
+
+[data-theme="dark"] .btn-buy-subscription:hover {
+  background: linear-gradient(135deg, var(--color-green-light) 0%, var(--color-primary-light) 100%);
 }
 
 .refresh-btn {
@@ -840,8 +900,10 @@ onMounted(() => {
 
   .payment-actions {
     width: 100%;
+    flex-direction: column;
 
-    .btn-add-balance {
+    .btn-add-balance,
+    .btn-buy-subscription {
       width: 100%;
       padding: 0.8rem !important;
       font-size: 14px;

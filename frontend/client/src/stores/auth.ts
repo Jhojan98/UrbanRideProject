@@ -451,6 +451,28 @@ const userAuth = defineStore("auth", {
         return false;
       }
     },
+        async buySubscription() {
+          try {
+            const url = `${this.baseURL}/user/subscription/purchase/${this.uid}`;
+            const res = await fetch(url, {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                Authorization: `Bearer ${this.token}`,
+              },
+            });
+            if (!res.ok) {
+              const txt = await res.text().catch(() => "");
+              throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
+            }
+            const data = await res.json();
+            console.log("Subscription purchase response:", data);
+            return data;
+          }
+          catch (error: unknown) {
+            console.error("Error al comprar suscripción:", error);
+          }
+    }
   },
 });
 

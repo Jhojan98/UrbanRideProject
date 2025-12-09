@@ -11,6 +11,7 @@ import DestinationMapComponent from '@/components/DestinationMapComponent.vue'
 import ReportProblemComponent from '@/components/ReportProblemComponent.vue'
 import PaymentSuccesComponent from '@/components/payments/PaymentSuccesComponent.vue'
 import PaymentCancelComponent from '@/components/payments/PaymentCancelComponent.vue'
+import PurchaseSubscriptionComponent from '@/components/subscription/PurchaseSubscriptionComponent.vue'
 
 
 const routes: Array<RouteRecordRaw> = [
@@ -94,10 +95,13 @@ const routes: Array<RouteRecordRaw> = [
     name: 'payment-methods',
     component: PaymentMethodsComponent,
     meta: { requireAuth: true, layout: 'main' }
+  },
+  {
+    path: '/purchase-subscription',
+    name: 'purchase-subscription',
+    component: PurchaseSubscriptionComponent,
+    meta: { requireAuth: true, layout: 'main' }
   }
-
-
-
 ]
 
 const router = createRouter({

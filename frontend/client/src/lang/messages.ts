@@ -193,7 +193,27 @@ export const messages = {
                 expires: 'Expira:',
                 managePayments: 'Gestionar métodos de pago',
                 addBalance: 'Añadir saldo',
+                buySubscription: 'Comprar Suscripción',
                 currency: 'Moneda'
+            },
+            subscription: {
+                purchase: {
+                    title: 'Comprar Suscripción',
+                    subtitle: 'Accede a viajes ilimitados y beneficios exclusivos',
+                    price: 'Precio del plan mensual',
+                    currentBalance: 'Tu Saldo Actual',
+                    eligible: '✓ Saldo suficiente para la compra',
+                    insufficientBalance: '⚠ Saldo insuficiente',
+                    minimumRequirement: 'Saldo mínimo requerido: $39.00 USD',
+                    button: 'Comprar Suscripción',
+                    processing: 'Procesando compra...',
+                    note: 'La suscripción se renovará automáticamente cada mes.',
+                    terms: 'Al comprar aceptas los términos y condiciones del servicio.',
+                    success: {
+                        title: '¡Suscripción Activada!',
+                        message: 'Tu suscripción mensual ha sido activada exitosamente. Redirigiendo...'
+                    }
+                }
             }
         },
         reservation: {
@@ -582,8 +602,28 @@ export const messages = {
                 registeredCard: 'Registered Card',
                 expires: 'Expires:',
                 managePayments: 'Manage payment methods',
-                addBalance: 'Add balance',
+                addBalance: 'Add Balance',
+                buySubscription: 'Buy Subscription',
                 currency: 'Currency'
+            },
+            subscription: {
+                purchase: {
+                    title: 'Buy Subscription',
+                    subtitle: 'Get unlimited rides and exclusive benefits',
+                    price: 'Monthly plan price',
+                    currentBalance: 'Your Current Balance',
+                    eligible: '✓ Sufficient balance for purchase',
+                    insufficientBalance: '⚠ Insufficient balance',
+                    minimumRequirement: 'Minimum required balance: $39.00 USD',
+                    button: 'Buy Subscription',
+                    processing: 'Processing purchase...',
+                    note: 'Subscription will automatically renew every month.',
+                    terms: 'By purchasing you agree to the service terms and conditions.',
+                    success: {
+                        title: 'Subscription Activated!',
+                        message: 'Your monthly subscription has been successfully activated. Redirecting...'
+                    }
+                }
             }
         },
         reservation: {
