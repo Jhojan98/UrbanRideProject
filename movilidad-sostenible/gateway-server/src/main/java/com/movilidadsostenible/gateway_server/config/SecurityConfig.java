@@ -33,8 +33,7 @@ public class SecurityConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
         // Permitir orígenes comunes en desarrollo y el puerto 8090 (gateway)
-        corsConfig.setAllowedOrigins(Arrays.asList("http://localhost:8080","http://localhost:8081","http://localhost:8000","http://localhost:8090"));
-        // Además permitir patrones (útil si usas diferentes puertos/hosts en dev)
+        corsConfig.setAllowedOrigins(Arrays.asList("http://localhost:8080","http://localhost:8081"));
         corsConfig.setAllowedOriginPatterns(Collections.singletonList("*"));
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(Collections.singletonList("*"));
