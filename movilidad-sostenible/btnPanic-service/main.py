@@ -6,6 +6,7 @@ import logging
 
 import crud, models, schemas, database
 from eureka import start as start_eureka, stop as stop_eureka
+from rabbit import start_panic_consumer, stop_panic_consumer
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,8 +18,10 @@ models.Base.metadata.create_all(bind=database.engine_2)
 async def lifespan(app: FastAPI):
     # Startup logic
     eureka_handle = await start_eureka()
+    start_panic_consumer()
     yield
     # Shutdown logic
+    stop_panic_consumer()
     await stop_eureka(eureka_handle)
 
 app = FastAPI(lifespan=lifespan)

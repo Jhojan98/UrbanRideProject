@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 class panic_buttonBase(BaseModel):
     k_id_station: int
-    f_activation_date: datetime
+    f_activation_date: Optional[datetime] = None
 
     class Config:
         from_attributes = True
