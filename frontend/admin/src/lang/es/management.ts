@@ -4,7 +4,8 @@ export default {
     cities: 'Ciudades',
     stations: 'Estaciones',
     bicycles: 'Bicicletas',
-    slots: 'Espacios'
+    slots: 'Espacios',
+    complaints: 'Quejas y Reclamos'
   },
   cities: {
     title: 'Gestión de Ciudades',
@@ -98,6 +99,37 @@ export default {
       locked: 'Bloqueado',
       unlocked: 'Desbloqueado',
       reserved: 'Reservado'
+    }
+  },
+  complaints: {
+    title: 'Gestión de Quejas y Reclamos',
+    allStatus: 'Todos los estados',
+    type: 'Tipo',
+    description: 'Descripción',
+    travelId: 'ID Viaje',
+    date: 'Fecha',
+    details: 'Detalles de la Queja',
+    createdAt: 'Fecha de Creación',
+    updatedAt: 'Última Actualización',
+    empty: 'No hay quejas o reclamos registrados',
+    emptyFilter: 'No hay quejas o reclamos con este estado',
+    updateSuccess: 'Estado actualizado exitosamente',
+    updateError: 'Error al actualizar el estado',
+    confirmDelete: '¿Está seguro que desea eliminar esta queja?',
+    deleteSuccess: 'Queja eliminada exitosamente',
+    deleteError: 'Error al eliminar la queja',
+    status: {
+      label: 'Estado',
+      open: 'Abierto',
+      inProgress: 'En Progreso',
+      resolved: 'Resuelto',
+      closed: 'Cerrado'
+    },
+    types: {
+      complaint: 'Queja',
+      claim: 'Reclamo',
+      suggestion: 'Sugerencia',
+      other: 'Otro'
     }
   }
 }

@@ -25,6 +25,7 @@
         v-else-if="activeTab === 'slots'"
         :initial-station-id="selectedStationForSlots"
       />
+      <ComplaintsManagement v-else-if="activeTab === 'complaints'" />
     </div>
 
     <!-- Loading overlay -->
@@ -41,15 +42,18 @@ import { useI18n } from 'vue-i18n';
 import { useCityStore } from '@/stores/cityStore';
 import { useStationStore } from '@/stores/stationStore';
 import { useBikeStore } from '@/stores/bikeStore';
+import { useComplaintsStore } from '@/stores/complaintsStore';
 import CitiesManagement from './CitiesManagement.vue';
 import StationsManagement from './StationsManagement.vue';
 import BicyclesManagement from './BicyclesManagement.vue';
 import SlotsManagement from './SlotsManagement.vue';
+import ComplaintsManagement from './ComplaintsManagement.vue';
 
 const { t } = useI18n();
 const cityStore = useCityStore();
 const stationStore = useStationStore();
 const bicycleStore = useBikeStore();
+const complaintsStore = useComplaintsStore();
 
 const activeTab = ref('cities');
 const selectedStationForSlots = ref<number | null>(null);
@@ -59,10 +63,11 @@ const tabs = [
   { id: 'stations', label: 'management.tabs.stations', icon: 'store' },
   { id: 'bicycles', label: 'management.tabs.bicycles', icon: 'pedal_bike' },
   { id: 'slots', label: 'management.tabs.slots', icon: 'grid_view' },
+  { id: 'complaints', label: 'management.tabs.complaints', icon: 'report_problem' },
 ];
 
 const isLoading = computed(() => {
-  return cityStore.loading || stationStore.loading || bicycleStore.loading;
+  return cityStore.loading || stationStore.loading || bicycleStore.loading || complaintsStore.loading;
 });
 
 function handleViewSlots(stationId: number) {
@@ -76,6 +81,7 @@ onMounted(async () => {
     stationStore.fetchStations(),
     stationStore.fetchSlots(),
     bicycleStore.fetchBicycles(),
+    complaintsStore.fetchComplaints(),
   ]);
 });
 </script>

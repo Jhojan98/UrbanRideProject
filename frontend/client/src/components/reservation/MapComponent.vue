@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, defineProps, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import L from 'leaflet'
@@ -63,28 +63,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow
 })
 
-import { BicycleFactory } from '@/patterns/BicycleFlyweight'
-import { BicycleWebSocketService } from '@/services/BicycleWebSocketService'
 import { StationFactory } from '@/patterns/StationFlyweight'
 import { StationWebSocketService } from '@/services/StationWebSocketService'
 import { useStationStore } from '@/stores/station'
 import type { Station } from '@/models/Station'
 
 // Type used by WS and factories when payload shape may vary
-type StationLike = Station | {
-  id?: number
-  idStation?: number
-  name?: string
-  nameStation?: string
-  latitude: number
-  longitude: number
-  availableSlots?: number
-  free_spots?: number
+interface StationLikeExtended extends Station {
   type?: string
-  cctvStatus?: boolean
-  mechanical?: number
-  electric?: number
-  totalSlots?: number
 }
 
 // Interfaz para props de origen/destino
@@ -110,8 +96,6 @@ const { t: $t } = useI18n()
 const stationStore = useStationStore()
 const map = ref<LeafletMap | null>(null)
 const isMounted = ref<boolean>(false)
-const bicycleFactory = new BicycleFactory()
-const wsService = new BicycleWebSocketService(bicycleFactory)
 const stationFactory = new StationFactory()
 const stationWsService = new StationWebSocketService(stationFactory)
 // Flag para evitar re-renderizado redundante de estaciones
@@ -294,7 +278,7 @@ function renderStationsFromStore() {
 
   stations.forEach(s => {
     try {
-      const marker = stationFactory.getStationMarker(s as any)
+      const marker = stationFactory.getStationMarker(s)
       marker.setTranslator($t)
       marker.render(map.value as LeafletMap)
     } catch (e) {
@@ -341,7 +325,7 @@ onMounted(() => {
         if (props.initialStations && props.initialStations.length) {
           console.log('[Map] Using initialStations prop as fallback')
           props.initialStations.forEach(st => {
-            const marker = stationFactory.getStationMarker(st as any)
+            const marker = stationFactory.getStationMarker(st)
             marker.render(map.value as LeafletMap)
           })
           stationsRendered.value = true
@@ -352,7 +336,7 @@ onMounted(() => {
       if (props.initialStations && props.initialStations.length) {
         console.log('[Map] Using initialStations prop as fallback after error')
         props.initialStations.forEach(st => {
-          const marker = stationFactory.getStationMarker(st as any)
+          const marker = stationFactory.getStationMarker(st)
           marker.render(map.value as LeafletMap)
         })
         stationsRendered.value = true
@@ -363,47 +347,30 @@ onMounted(() => {
     stationsRendered.value = false
   }
 
-  // Intentar conectar al WebSocket de estaciones y solicitar carga inicial.
+  // Intentar conectar al WebSocket de estaciones para actualizaciones en tiempo real
   try {
-    stationWsService.connect((stations, factory) => {
-      // Bulk inicial recibido: renderizar todas las estaciones en el mapa
-      try {
-        stations.forEach((st: StationLike) => {
-          const mk = factory.getStationMarker(st as unknown as StationLike)
-          mk.setTranslator($t)
-          mk.render(map.value as LeafletMap)
-          mk.onClick((station: StationLike) => {
-            const payload = {
-              id: station.idStation ?? station.id,
-              name: station.nameStation ?? station.name,
-              latitude: station.latitude,
-              longitude: station.longitude,
-              free_spots: station.availableSlots ?? station.free_spots ?? 0,
-              type: station.type ?? 'bike'
-            }
-            if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-            else clickedStation.value = payload
-          })
-        })
-      } catch (e) { console.error('[Map] Error rendering bulk stations', e) }
-    }, (station, factory) => {
+    stationWsService.connect((station, factory) => {
       // Update incremental: render/update single station
+      if (!map.value || !isMounted.value) return
       try {
-        const mk = factory.getStationMarker(station as unknown as StationLike)
+        const stationExt = station as StationLikeExtended
+        const mk = factory.getStationMarker(stationExt)
         mk.setTranslator($t)
         mk.render(map.value as LeafletMap)
-        mk.onClick((st: StationLike) => {
+        mk.onClick((st) => {
+          const stExt = st as StationLikeExtended
           const payload = {
-            id: st.idStation ?? st.id,
-            name: st.nameStation ?? st.name,
-            latitude: st.latitude,
-            longitude: st.longitude,
-            free_spots: st.availableSlots ?? st.free_spots ?? 0,
-            type: st.type ?? 'bike'
+            id: stExt.idStation ?? 0,
+            name: stExt.nameStation ?? '',
+            latitude: stExt.latitude,
+            longitude: stExt.longitude,
+            free_spots: stExt.availableSlots ?? 0,
+            type: stExt.type ?? 'bike'
           }
           if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
           else clickedStation.value = payload
         })
+        console.log(`[Map] Station updated via WS: ${stationExt.nameStation} (ID: ${stationExt.idStation})`)
       } catch (e) { console.error('[Map] Error updating station', e) }
     })
   } catch (e) { console.warn('[Map] No se pudo conectar al Stations WS', e) }
@@ -412,7 +379,6 @@ onMounted(() => {
   setTimeout(() => {
     try {
       console.log('[Map DEBUG] Stations WS connected?', stationWsService.getIsConnected());
-      console.log('[Map DEBUG] Stations WS has initial bulk?', stationWsService.getHasInitialBulk());
       console.log('[Map DEBUG] Station factory size:', stationWsService.getFactory().size());
       console.log('[Map DEBUG] Stations cache count:', stationWsService.getStationCount());
       console.log('[Map DEBUG] Stations from service:', stationWsService.getStations());
@@ -425,16 +391,10 @@ onMounted(() => {
   setTimeout(() => {
     try {
       console.log('[Map DEBUG] (later) Stations WS connected?', stationWsService.getIsConnected());
-      console.log('[Map DEBUG] (later) Stations WS has initial bulk?', stationWsService.getHasInitialBulk());
       console.log('[Map DEBUG] (later) Station factory size:', stationWsService.getFactory().size());
       console.log('[Map DEBUG] (later) Stations cache count:', stationWsService.getStationCount());
     } catch (err) { void err }
   }, 6000);
-  // WebSocket de estaciones (fallback, no esencial)
-  // stationWsService.connect(...) - comentado para evitar ruido
-
-  // WebSocket de bicicletas (opcional)
-  // wsService.connect(...) - comentado para evitar ruido
 
   // Marcar el componente como montado
   isMounted.value = true
@@ -449,10 +409,8 @@ onUnmounted(() => {
   pendingTimeouts.clear()
 
   // Desconectar WebSocket si se conectó
-  try { wsService.disconnect() } catch (e) { void e }
   try { stationWsService.disconnect() } catch (e) { void e }
 
-  bicycleFactory.clear()
   stationFactory.clear()
 
   if (originMarker) { originMarker.remove(); originMarker = null }
@@ -568,37 +526,37 @@ watch(() => [props.origin, props.destination], () => {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 
-.map-overlay h4 { 
-  margin: 0 0 6px 0; 
-  font-size: 13px; 
+.map-overlay h4 {
+  margin: 0 0 6px 0;
+  font-size: 13px;
 }
 
 [data-theme="dark"] .map-overlay h4 {
   color: var(--color-primary-light);
 }
 
-.overlay-section { 
-  margin-bottom: 8px; 
-  border-bottom: 1px solid #eee; 
-  padding-bottom: 6px; 
+.overlay-section {
+  margin-bottom: 8px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 6px;
 }
 
 [data-theme="dark"] .overlay-section {
   border-bottom-color: var(--color-border-dark);
 }
 
-.overlay-section:last-child { 
-  border-bottom: none; 
-  margin-bottom: 0; 
-  padding-bottom: 0; 
+.overlay-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .row { margin: 3px 0; }
 
-.muted { 
-  color: #666; 
-  font-style: italic; 
-  font-size: 12px; 
+.muted {
+  color: #666;
+  font-style: italic;
+  font-size: 12px;
 }
 
 [data-theme="dark"] .muted {
@@ -640,8 +598,8 @@ watch(() => [props.origin, props.destination], () => {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
-.modal-content h3 { 
-  margin: 0 0 8px 0; 
+.modal-content h3 {
+  margin: 0 0 8px 0;
   color: #333;
 }
 

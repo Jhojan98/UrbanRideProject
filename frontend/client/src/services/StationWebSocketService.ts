@@ -111,14 +111,29 @@ export class StationWebSocketService {
       station.mechanical = telemetry.availableMechanicBikes ?? station.mechanical;
       station.availableElectricBikes = telemetry.availableElectricBikes ?? station.availableElectricBikes;
       station.availableMechanicBikes = telemetry.availableMechanicBikes ?? station.availableMechanicBikes;
+      // Sincronizar availableSlots con la suma de bicis reportadas (se usa para icono/popup)
+      if (station.availableElectricBikes !== undefined || station.availableMechanicBikes !== undefined) {
+        const mech = station.availableMechanicBikes ?? station.mechanical ?? 0;
+        const elec = station.availableElectricBikes ?? station.electric ?? 0;
+        station.availableSlots = mech + elec;
+      }
       station.timestamp = new Date(telemetry.timestamp ?? Date.now());
+
+      // Propagate telemetry to Pinia store so dropdowns/reservations use fresh data
+      try {
+        this.stationStore?.updateStationTelemetry(idStation, {
+          availableElectricBikes: telemetry.availableElectricBikes,
+          availableMechanicBikes: telemetry.availableMechanicBikes,
+          timestamp: telemetry.timestamp
+        });
+      } catch (e) {
+        console.warn('[Stations WS] No se pudo actualizar store con telemetría', e);
+      }
 
       // Update the marker in factory to reflect changes
       const marker = this.factory.getMarkerById(idStation);
       if (marker) {
         marker.update(station);
-        // Refresh popup content to show updated bike counts
-        marker.updatePopupContent();
       }
 
       // Notify listeners

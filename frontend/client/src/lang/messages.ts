@@ -117,8 +117,8 @@ export const messages = {
                 reports: 'Reportes'
             },
             complaints: {
-                title: 'Quejas y mantenimiento',
-                subtitle: 'Reporta incidencias o levanta solicitudes de mantenimiento.',
+                title: 'Quejas',
+                subtitle: 'Reporta incidencias para soporte.',
                 formTitle: 'Reportar queja',
                 formSubtitle: 'Ingresa una queja para soporte. El ID de viaje es opcional.',
                 descriptionLabel: 'Descripción',
@@ -136,10 +136,7 @@ export const messages = {
                 success: 'Queja registrada (#{id})',
                 errorRequired: 'La descripción es obligatoria',
                 errorNumeric: 'El ID de viaje debe ser numérico',
-                submitError: 'No se pudo enviar la queja',
-                maintenanceTitle: 'Solicitar mantenimiento',
-                maintenanceSubtitle: 'Redirige al servicio de mantenimiento para crear un ticket.',
-                openMaintenance: 'Abrir mantenimiento'
+                submitError: 'No se pudo enviar la queja'
             },
             reportsSection: {
                 title: 'Reportes',
@@ -148,8 +145,7 @@ export const messages = {
                     bicycleUsage: 'Uso de bicicletas',
                     stationDemand: 'Demanda de estaciones',
                     bicycleDemand: 'Demanda de bicicletas',
-                    dailyTrips: 'Viajes diarios',
-                    maintenances: 'Mantenimientos'
+                    dailyTrips: 'Viajes diarios'
                 },
                 downloadExcel: 'Excel',
                 downloadPdf: 'PDF',
@@ -220,7 +216,19 @@ export const messages = {
                 warning: 'La bicicleta se reservará por',
                 warningMinutes: '10 minutos',
                 reserveBike: 'Reservar Bicicleta',
-                selectionAlert: 'Por favor selecciona el tipo de bicicleta y el tipo de viaje.'
+                selectionAlert: 'Por favor selecciona el tipo de bicicleta y el tipo de viaje.',
+                noBikesAvailable: 'No hay bicicletas disponibles'
+            },
+            ultimaMilla: {
+                title: 'Última Milla',
+                longTripTitle: 'Recorrido Largo',
+                subtitle: 'Elige un origen desde metro y un destino de bici',
+                longTripSubtitle: 'Selecciona origen y destino para tu recorrido largo',
+                originLabel: 'Estación origen (metro)',
+                originLongTripLabel: 'Estación origen',
+                destinationLabel: 'Estación destino',
+                selectPoint: 'Selecciona un punto',
+                selectStation: 'Selecciona una estación'
             },
             confirmation: {
                 remainingTime: 'Tiempo restante de reserva',
@@ -495,12 +503,12 @@ export const messages = {
                 overview: 'Overview',
                 trips: 'Trips',
                 fines: 'Fines',
-                complaints: 'Complaints / Maintenance',
+                complaints: 'Complaints',
                 reports: 'Reports'
             },
             complaints: {
-                title: 'Complaints and maintenance',
-                subtitle: 'Report incidents or raise maintenance requests.',
+                title: 'Complaints',
+                subtitle: 'Report incidents for support.',
                 formTitle: 'Submit complaint',
                 formSubtitle: 'Enter a complaint for support. Travel ID is optional.',
                 descriptionLabel: 'Description',
@@ -518,10 +526,7 @@ export const messages = {
                 success: 'Complaint recorded (#{id})',
                 errorRequired: 'Description is required',
                 errorNumeric: 'Travel ID must be numeric',
-                submitError: 'Could not submit the complaint',
-                maintenanceTitle: 'Request maintenance',
-                maintenanceSubtitle: 'Redirects to the maintenance service to create a ticket.',
-                openMaintenance: 'Open maintenance'
+                submitError: 'Could not submit the complaint'
             },
             reportsSection: {
                 title: 'Reports',
@@ -530,8 +535,7 @@ export const messages = {
                     bicycleUsage: 'Bicycle usage',
                     stationDemand: 'Station demand',
                     bicycleDemand: 'Bicycle demand',
-                    dailyTrips: 'Daily trips',
-                    maintenances: 'Maintenances'
+                    dailyTrips: 'Daily trips'
                 },
                 downloadExcel: 'Excel',
                 downloadPdf: 'PDF',

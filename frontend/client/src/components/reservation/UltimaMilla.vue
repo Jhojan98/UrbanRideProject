@@ -52,8 +52,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, defineEmits, computed, defineProps, onMounted } from "vue"
+import { ref, watch, computed, onMounted } from "vue"
+import { useI18n } from 'vue-i18n'
 import { useStationStore } from '@/stores/station'
+
+type StationOption = {
+  idStation?: number
+  nameStation?: string
+  latitude?: number
+  longitude?: number
+  availableSlots?: number
+  totalSlots?: number
+  type?: string
+  mechanical?: number
+  electric?: number
+  availableMechanicBikes?: number
+  availableElectricBikes?: number
+}
 
 // Props recibidos desde ReserveFormComponent
 const props = defineProps<{
@@ -62,10 +77,12 @@ const props = defineProps<{
   rideType?: string
 }>()
 
+const { t: $t } = useI18n()
+
 const stationStore = useStationStore()
 
 // Obtener estaciones desde el store, filtradas por tipo
-const metros = computed(() => {
+const metros = computed<StationOption[]>(() => {
   return stationStore.allStations.filter(s =>
     s.type?.toUpperCase() === 'METRO'
   ).map(s => ({
@@ -82,7 +99,7 @@ const metros = computed(() => {
 })
 
 // Todas las estaciones normalizadas (para viaje largo y destinos)
-const allStationsNormalized = computed(() => {
+const allStationsNormalized = computed<StationOption[]>(() => {
   return stationStore.allStations.map(s => ({
     idStation: s.idStation,
     nameStation: s.nameStation,
@@ -95,16 +112,11 @@ const allStationsNormalized = computed(() => {
     electric: s.electric ?? 0
   }))
 })
+const selectedOrigin = ref<StationOption | null>(null)
+const selectedDest = ref<StationOption | null>(null)
 
-// Only bike stations (for compatibility with previous code)
-const stations = computed(() => {
-  return allStationsNormalized.value.filter(s =>
-    s.type === 'BIKE' || s.type === 'BICYCLE'
-  )
-})
-
-const selectedOrigin = ref<any | null>(null)
-const selectedDest = ref<any | null>(null)
+const validationMessage = ref<string>('')
+const hasError = ref<boolean>(false)
 
 // Use props values
 const bikeType = computed(() => props.bikeType ?? '')
@@ -126,14 +138,25 @@ const destinationOptions = computed(() => {
   return allStationsNormalized.value
 })
 
+// Habilitar el botón solo si todo está completo (disponibilidad se valida al confirmar)
+const hasSelectedOrigin = computed(() => !!selectedOrigin.value)
+const hasSelectedDestination = computed(() => !!selectedDest.value)
+const hasSelectedBikeAndRide = computed(() => !!bikeType.value && !!rideType.value)
+
+const canConfirm = computed(() =>
+  hasSelectedOrigin.value &&
+  hasSelectedDestination.value &&
+  hasSelectedBikeAndRide.value
+)
+
 const emit = defineEmits<{
-  confirm: [{ origin: any; destination: any; bikeType: string; rideType: string }]
-  "update:origin": [any | null]
-  "update:destination": [any | null]
+  confirm: [{ origin: StationOption; destination: StationOption; bikeType: string; rideType: string }]
+  "update:origin": [StationOption | null]
+  "update:destination": [StationOption | null]
 }>()
 
 // Disable origin stations based on bike type availability
-function isOriginDisabled(station: { idStation?: number; nameStation?: string; type?: string; mechanical?: number; electric?: number }) {
+function isOriginDisabled(station: StationOption) {
   // Si no hay tipo de bici seleccionado, no deshabilitar ninguna por disponibilidad
   if (!bikeType.value) return false
 
@@ -144,15 +167,15 @@ function isOriginDisabled(station: { idStation?: number; nameStation?: string; t
   if (station.type?.toUpperCase() === 'RESIDENCIAL' || station.type?.toUpperCase() === 'RESIDENTIAL') return false
 
   // Para estaciones de bici, verificar disponibilidad del tipo seleccionado
-  const mechanical = station.mechanical ?? 0
-  const electric = station.electric ?? 0
+  const mechanical = station.mechanical ?? station.availableMechanicBikes ?? 0
+  const electric = station.electric ?? station.availableElectricBikes ?? 0
   const available = bikeType.value === 'mechanical' ? mechanical : electric
 
   return available === 0
 }
 
 // Disable destination stations based on availability and if it's the same as origin
-function isDestinationDisabled(station: { idStation?: number; nameStation?: string; type?: string; mechanical?: number; electric?: number }) {
+function isDestinationDisabled(station: StationOption) {
   // Get ID of current start station (already selected from ReserveFormComponent)
   const currentStationId = props.currentStation?.idStation ?? null
 
@@ -178,8 +201,8 @@ function isDestinationDisabled(station: { idStation?: number; nameStation?: stri
   }
 
   // Para estaciones de bici, verificar disponibilidad del tipo seleccionado
-  const mechanical = station.mechanical ?? 0
-  const electric = station.electric ?? 0
+  const mechanical = station.mechanical ?? station.availableMechanicBikes ?? 0
+  const electric = station.electric ?? station.availableElectricBikes ?? 0
   const available = bikeType.value === 'mechanical' ? mechanical : electric
 
   const disabled = available === 0
@@ -235,6 +258,22 @@ watch(() => [props.bikeType, props.rideType], () => {
 })
 
 function confirm() {
+  if (!canConfirm.value || !selectedOrigin.value || !selectedDest.value) {
+    window.alert($t('reservation.form.selectionAlert') || 'Por favor completa todos los campos')
+    return
+  }
+
+  // Validar disponibilidad del tipo de bicicleta elegido en la estación de origen
+  const mechanical = selectedOrigin.value.mechanical ?? selectedOrigin.value.availableMechanicBikes ?? 0
+  const electric = selectedOrigin.value.electric ?? selectedOrigin.value.availableElectricBikes ?? 0
+  const available = bikeType.value === 'electric' ? electric : mechanical
+
+  if (available <= 0) {
+    const bikeTypeLabel = bikeType.value === 'electric' ? $t('reservation.form.electric') : $t('reservation.form.mechanical')
+    window.alert(`${$t('reservation.form.noBikesAvailable') || 'No hay bicicletas disponibles'} (${bikeTypeLabel})`)
+    return
+  }
+
   emit("confirm", {
     origin: selectedOrigin.value,
     destination: selectedDest.value,

@@ -87,7 +87,20 @@ export class StationMarker {
     return this.marker;
   }
 
-  update(station: Station) { this.station = station; }
+  update(station: Station) {
+    this.station = station;
+    // Keep icon and popup in sync with latest data (used by telemetry updates)
+    if (this.marker) {
+      this.marker.setIcon(
+        StationFlyweight.icon(
+          this.station.availableSlots ?? 0,
+          this.station.totalSlots ?? 0,
+          (this.station as any).type
+        )
+      );
+      this.updatePopupContent();
+    }
+  }
   getId(): number { return this.station.idStation; }
   getStation(): Station { return this.station; }
   remove() { if (this.marker) { this.marker.remove(); this.marker = null; } }

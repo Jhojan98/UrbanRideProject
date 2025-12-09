@@ -12,6 +12,7 @@
         >
           <option value="USD">USD - {{ $t('balance.currencies.USD') }}</option>
           <option value="COP">COP - {{ $t('balance.currencies.COP') }}</option>
+          <option value="EUR">EUR - {{ $t('balance.currencies.EUR') }}</option>
         </select>
       </div>
     </div>
@@ -45,10 +46,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, defineProps } from 'vue';
+import { ref, watch } from 'vue';
 
 interface Props {
-  selectedCurrency: 'USD' | 'COP';
+  selectedCurrency: 'USD' | 'COP' | 'EUR';
   formattedBalance: string;
   isLoading: boolean;
 }

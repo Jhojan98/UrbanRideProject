@@ -9,5 +9,8 @@ export default {
   cancel: 'Cancelar',
   assign: 'Asignar',
   assigning: 'Asignando...',
-  loading: 'Cargando...'
+  loading: 'Cargando...',
+  refresh: 'Actualizar',
+  view: 'Ver',
+  delete: 'Eliminar'
 }

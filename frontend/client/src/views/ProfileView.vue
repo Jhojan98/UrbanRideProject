@@ -60,8 +60,9 @@
                   v-model="selectedCurrency"
                   class="currency-select"
                 >
-                  <option value="USD">USD - Dólar</option>
-                  <option value="COP">COP - Peso Colombiano</option>
+                  <option value="USD">USD - {{ $t('balance.currencies.USD') }}</option>
+                  <option value="COP">COP - {{ $t('balance.currencies.COP') }}</option>
+                  <option value="EUR">EUR - {{ $t('balance.currencies.EUR') }}</option>
                 </select>
               </div>
               <div class="balance-display">
@@ -167,7 +168,7 @@
         </div>
       </div>
 
-      <!-- Complaints / Maintenance Tab -->
+      <!-- Complaints Tab -->
       <div v-if="activeTab === 'complaints'" class="profile">
         <div class="profile-header">
           <h1>{{ $t('profile.complaints.title') }}</h1>
@@ -209,38 +210,6 @@
               </button>
             </form>
           </div>
-          <div class="action-card">
-            <h3>{{ $t('profile.complaints.maintenanceTitle') }}</h3>
-            <p>{{ $t('profile.complaints.maintenanceSubtitle') }}</p>
-            <form class="maintenance-form" @submit.prevent="submitMaintenance">
-              <label class="input-label">¿Qué elemento tiene falla?</label>
-              <select v-model="maintenanceForm.itemType">
-                <option value="BICYCLE">Bicicleta</option>
-                <option value="STATION">Estación de recarga</option>
-                <option value="LOCK">Candado de seguridad</option>
-              </select>
-
-              <label class="input-label">Código o número del elemento</label>
-              <input
-                v-model="maintenanceForm.itemId"
-                type="text"
-                placeholder="Encuentra el código en el elemento (ej: ABC123)"
-                required
-              />
-
-              <label class="input-label">¿Cuál es el problema?</label>
-              <textarea
-                v-model="maintenanceForm.problemDescription"
-                placeholder="Describe qué está funcionando mal (ej: La cadena está rota, el candado no abre, etc)"
-                rows="4"
-                required
-              />
-
-              <button class="btn-primary" type="submit" :disabled="supportStore.loading">
-                {{ supportStore.loading ? 'Reportando...' : 'Reportar falla' }}
-              </button>
-            </form>
-          </div>
         </div>
       </div>
 
@@ -277,14 +246,6 @@
             <div class="report-actions">
               <button class="btn-primary" @click="downloadReport('daily-trips.xlsx')">{{ $t('profile.reportsSection.downloadExcel') }}</button>
               <button class="btn-secondary" @click="downloadReport('daily-trips.pdf')">{{ $t('profile.reportsSection.downloadPdf') }}</button>
-            </div>
-          </div>
-          <div class="action-card">
-            <h3>{{ $t('profile.reportsSection.cards.maintenances') }}</h3>
-            <div class="report-actions">
-              <button class="btn-primary" @click="downloadReport('maintenances.xlsx')">{{ $t('profile.reportsSection.downloadExcel') }}</button>
-              <button class="btn-secondary" @click="downloadReport('maintenances.pdf')">{{ $t('profile.reportsSection.downloadPdf') }}
-              </button>
             </div>
           </div>
         </div>
@@ -324,11 +285,12 @@ const isLoadingTrips = ref(false);
 const isLoadingFines = ref(false);
 
 // Selector de moneda
-const selectedCurrency = ref<'USD' | 'COP'>('USD');
+const selectedCurrency = ref<'USD' | 'COP' | 'EUR'>('USD');
 
 // Tasas de conversión dinámicas
-const exchangeRates = ref<{ COP: number }>({
-  COP: 4000 // Valor por defecto USD a COP
+const exchangeRates = ref<{ COP: number; EUR: number }>({
+  COP: 4000, // Valor por defecto USD a COP
+  EUR: 0.92  // Valor por defecto USD a EUR
 });
 
 // Tab activo
@@ -347,13 +309,6 @@ const complaintForm = reactive({
 const complaintError = ref("");
 const complaintSuccess = ref("");
 
-// Mantenimiento (simplificado para usuario)
-const maintenanceForm = reactive({
-  itemType: "BICYCLE" as "BICYCLE" | "STATION" | "LOCK",
-  itemId: "",
-  problemDescription: "",
-});
-
 // Texto de bienvenida
 const welcomeText = computed(() => {
   const name = userName.value ?? "CLIENTE";
@@ -366,11 +321,15 @@ const formattedBalance = computed(() => {
 
   // El balance viene en dólares (no en centavos), usar directamente
   const amountInUSD = balance.value;
-  const displayAmount = selectedCurrency.value === 'COP'
-    ? amountInUSD * exchangeRates.value.COP
-    : amountInUSD;
+  let displayAmount = amountInUSD;
 
-  const locale = selectedCurrency.value === 'COP' ? 'es-CO' : 'en-US';
+  if (selectedCurrency.value === 'COP') {
+    displayAmount = amountInUSD * exchangeRates.value.COP;
+  } else if (selectedCurrency.value === 'EUR') {
+    displayAmount = amountInUSD * exchangeRates.value.EUR;
+  }
+
+  const locale = selectedCurrency.value === 'COP' ? 'es-CO' : selectedCurrency.value === 'EUR' ? 'de-DE' : 'en-US';
 
   return new Intl.NumberFormat(locale, {
     style: "currency",
@@ -400,15 +359,6 @@ const formatCost = (cost: number | undefined): string => {
 // Navegar a PaymentMethods
 function goToPaymentMethods() {
   router.push({ name: "payment-methods" });
-}
-
-// Abrir portales de quejas / mantenimiento (backends FastAPI)
-function openComplaintsPortal() {
-  window.open('http://localhost:5007/docs', '_blank');
-}
-
-function openMaintenancePortal() {
-  window.open('http://localhost:5006/docs', '_blank');
 }
 
 // Descarga de reportes desde reports-service
@@ -463,49 +413,21 @@ async function submitComplaint() {
   complaintForm.travelId = "";
 }
 
-// Enviar solicitud de mantenimiento
-async function submitMaintenance() {
-  if (!maintenanceForm.problemDescription.trim()) {
-    alert("La descripción del problema es obligatoria");
-    return;
-  }
-
-  if (!maintenanceForm.itemId.trim()) {
-    alert("El ID del elemento es obligatorio");
-    return;
-  }
-
-  try {
-    const resp = await supportStore.submitMaintenance({
-      entityType: maintenanceForm.itemType,
-      maintenanceType: "CORRECTIVE",
-      triggeredBy: "USER",
-      description: maintenanceForm.problemDescription.trim(),
-      date: new Date().toISOString(),
-      cost: 0,
-      [maintenanceForm.itemType === "BICYCLE" ? "bikeId" : maintenanceForm.itemType === "STATION" ? "stationId" : "lockId"]: maintenanceForm.itemId,
-    });
-    
-    alert("Solicitud de mantenimiento enviada exitosamente");
-    maintenanceForm.problemDescription = "";
-    maintenanceForm.itemId = "";
-    maintenanceForm.itemType = "BICYCLE";
-  } catch (error) {
-    alert("No se pudo enviar la solicitud de mantenimiento");
-  }
-}
-
 // Actualizar tasa de cambio dinámicamente
 const updateExchangeRate = async () => {
-  if (selectedCurrency.value === 'COP') {
-    try {
+  try {
+    if (selectedCurrency.value === 'COP') {
       const rateCOP = await fetchExchangeRate('USD', 'COP', 1);
       exchangeRates.value.COP = rateCOP;
       console.log(`Tasa de cambio actualizada: 1 USD = ${rateCOP} COP`);
-    } catch (error) {
-      console.error('Error obteniendo tasa de cambio, usando valor por defecto:', error);
-      // Mantener valor por defecto en caso de error
+    } else if (selectedCurrency.value === 'EUR') {
+      const rateEUR = await fetchExchangeRate('USD', 'EUR', 1);
+      exchangeRates.value.EUR = rateEUR;
+      console.log(`Tasa de cambio actualizada: 1 USD = ${rateEUR} EUR`);
     }
+  } catch (error) {
+    console.error('Error obteniendo tasa de cambio, usando valor por defecto:', error);
+    // Mantener valor por defecto en caso de error
   }
 };
 

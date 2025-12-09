@@ -26,10 +26,10 @@
             <option value="">{{ $t('report.selectStation') }}</option>
             <option
               v-for="station in stations"
-              :key="station.id"
-              :value="station.id"
+              :key="station.idStation"
+              :value="station.idStation"
             >
-              {{ station.name }}
+              {{ station.nameStation }}
             </option>
           </select>
         </div>
@@ -175,12 +175,12 @@ const loading = ref(false)
 const showSuccess = ref(false)
 const reportId = ref('')
 
-// Datos de ejemplo
+// Datos de ejemplo - usando modelo Station correcto
 const stations = ref([
-  { id: '1', name: 'Estación Centro' },
-  { id: '2', name: 'Parque Sikuani' },
-  { id: '3', name: 'Zona Universitaria' },
-  { id: '4', name: 'Estación Sur' }
+  { idStation: 1, nameStation: 'Estación Centro' },
+  { idStation: 2, nameStation: 'Parque Sikuani' },
+  { idStation: 3, nameStation: 'Zona Universitaria' },
+  { idStation: 4, nameStation: 'Estación Sur' }
 ])
 
 const problemTypes = ref([
