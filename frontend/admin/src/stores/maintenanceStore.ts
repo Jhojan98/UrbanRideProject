@@ -1,13 +1,29 @@
 import { defineStore } from 'pinia';
 import type Maintenance from '@/models/Maintenance';
 
+type MaintenancePayload = {
+  entityType: string;
+  maintenanceType: string;
+  triggeredBy: string;
+  description: string;
+  status: string;
+  date: string | Date;
+  cost: number;
+  bikeId: string | null;
+  stationId: number | null;
+  lockId: string | null;
+  id?: string;
+};
+
 export const useMaintenanceStore = defineStore('maintenance', {
   state: () => ({
     baseURL: process.env.VUE_APP_API_URL + '/maintenance',
     maintList: [] as Maintenance[],
+    loading: false as boolean,
   }),
   actions: {
     async fetchMaintenances() {
+      this.loading = true;
       try {
         const response = await fetch(`${this.baseURL}/maintenance/`, {
           method: 'GET',
@@ -27,9 +43,12 @@ export const useMaintenanceStore = defineStore('maintenance', {
       } catch (error) {
         console.error('Error fetching maintenances:', error);
         this.maintList = [];
+      } finally {
+        this.loading = false;
       }
     },
-    async createMaintenance(entityType: string, maintenanceType: string, triggeredBy: string, description: string, status: string, date: Date, cost: number, bikeId: string, stationId: number, lockId: string, id: string) {
+    async createMaintenance(payload: MaintenancePayload) {
+      this.loading = true;
       try {
         const response = await fetch(`${this.baseURL}/maintenance/`, {
           method: 'POST',
@@ -38,17 +57,11 @@ export const useMaintenanceStore = defineStore('maintenance', {
             Accept: 'application/json',
           },
           body: JSON.stringify({
-            entityType,
-            maintenanceType,
-            triggeredBy,
-            description,
-            status,
-            date,
-            cost,
-            bikeId,
-            stationId,
-            lockId,
-            id
+            ...payload,
+            date: payload.date ? new Date(payload.date) : undefined,
+            bikeId: payload.bikeId ?? null,
+            stationId: payload.stationId ?? null,
+            lockId: payload.lockId ?? null,
           }),
         });
 
@@ -58,7 +71,7 @@ export const useMaintenanceStore = defineStore('maintenance', {
             response.status,
             response.statusText
           );
-          return null;
+          throw new Error('No se pudo crear la orden de mantenimiento');
         }
 
         const created = await response.json();
@@ -66,7 +79,51 @@ export const useMaintenanceStore = defineStore('maintenance', {
         return created;
       } catch (error) {
         console.error('Error creating maintenance:', error);
-        return null;
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async updateMaintenance(id: string, payload: MaintenancePayload) {
+      this.loading = true;
+      try {
+        const response = await fetch(`${this.baseURL}/maintenance/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            ...payload,
+            date: payload.date ? new Date(payload.date) : undefined,
+            bikeId: payload.bikeId ?? null,
+            stationId: payload.stationId ?? null,
+            lockId: payload.lockId ?? null,
+          }),
+        });
+
+        if (!response.ok) {
+          console.error(
+            'HTTP error updating maintenance:',
+            response.status,
+            response.statusText
+          );
+          throw new Error('No se pudo actualizar la orden de mantenimiento');
+        }
+
+        const updated = await response.json();
+        const index = this.maintList.findIndex(m => String((m as Maintenance).id ?? '') === id);
+        if (index !== -1) {
+          this.maintList.splice(index, 1, updated);
+        } else {
+          this.maintList.push(updated);
+        }
+        return updated;
+      } catch (error) {
+        console.error('Error updating maintenance:', error);
+        throw error;
+      } finally {
+        this.loading = false;
       }
     },
   },

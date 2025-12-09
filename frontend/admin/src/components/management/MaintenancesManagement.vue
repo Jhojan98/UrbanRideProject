@@ -4,8 +4,8 @@
       <h2>Órdenes de Mantenimiento</h2>
     </div>
     <div class="form-card">
-      <h3>Crear nueva orden de mantenimiento</h3>
-      <form @submit.prevent="handleCreate">
+      <h3>{{ isEditing ? 'Editar orden de mantenimiento' : 'Crear nueva orden de mantenimiento' }}</h3>
+      <form @submit.prevent="handleSubmit">
         <div class="form-row">
           <div class="form-group">
             <label>Tipo de entidad</label>
@@ -55,7 +55,7 @@
           </div>
           <div class="form-group">
             <label>ID Orden</label>
-            <input v-model="form.id" />
+            <input v-model="form.id" :disabled="isEditing" />
           </div>
         </div>
         <div class="form-row">
@@ -73,7 +73,10 @@
           </div>
         </div>
         <div class="form-actions">
-          <button class="btn-primary" type="submit" :disabled="!isFormValid">Crear</button>
+          <button class="btn-primary" type="submit" :disabled="!isFormValid || loading">
+            {{ isEditing ? 'Guardar cambios' : 'Crear' }}
+          </button>
+          <button v-if="isEditing" class="btn-secondary" type="button" @click="resetForm">Cancelar</button>
         </div>
       </form>
     </div>
@@ -101,6 +104,7 @@
             <th>ID Estación</th>
             <th>ID Candado</th>
             <th>ID Orden</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -116,6 +120,12 @@
             <td>{{ m.stationId }}</td>
             <td>{{ m.lockId }}</td>
             <td>{{ m.id }}</td>
+            <td>
+              <button class="btn-info btn-sm" type="button" @click="startEdit(m)">
+                <span class="material-symbols-outlined">edit</span>
+                Editar
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -126,6 +136,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import type Maintenance from '@/models/Maintenance';
 import { useMaintenanceStore } from '@/stores/maintenanceStore';
 
 const maintenanceStore = useMaintenanceStore();
@@ -143,7 +154,7 @@ const triggeredByOptions = {
   IOT_ALERT: 'Alerta IoT',
 };
 
-const form = ref({
+const initialFormState = {
   entityType: 'BICYCLE',
   maintenanceType: 'PREVENTIVE',
   triggeredBy: 'ADMIN',
@@ -155,7 +166,11 @@ const form = ref({
   stationId: '',
   lockId: '',
   id: ''
-});
+};
+
+const form = ref({ ...initialFormState });
+const isEditing = ref(false);
+const editingId = ref<string | null>(null);
 
 const isFormValid = computed(() => {
   if (form.value.entityType === 'BICYCLE') {
@@ -180,54 +195,73 @@ function formatDate(date: string | Date) {
   });
 }
 
-async function handleCreate() {
+function normalizePayload() {
+  const stationId = form.value.stationId ? Number(form.value.stationId) : null;
+  return {
+    entityType: form.value.entityType,
+    maintenanceType: form.value.maintenanceType,
+    triggeredBy: form.value.triggeredBy,
+    description: form.value.description,
+    status: form.value.status,
+    date: form.value.date,
+    cost: form.value.cost,
+    bikeId: form.value.entityType === 'BICYCLE' ? form.value.bikeId : null,
+    stationId: form.value.entityType === 'STATION' ? stationId : null,
+    lockId: form.value.entityType === 'LOCK' ? form.value.lockId : null,
+  };
+}
+
+function resetForm() {
+  Object.assign(form.value, initialFormState);
+  isEditing.value = false;
+  editingId.value = null;
+}
+
+function startEdit(record: Maintenance) {
+  const recordId = (record as Maintenance).id;
+  if (recordId === undefined || recordId === null) {
+    error.value = 'No se puede editar esta orden porque no tiene identificador.';
+    return;
+  }
+
   error.value = null;
+  isEditing.value = true;
+  editingId.value = String(recordId);
+  const recordDate = record.date ? new Date(record.date as unknown as string) : null;
+  Object.assign(form.value, {
+    entityType: record.entityType,
+    maintenanceType: record.maintenanceType,
+    triggeredBy: record.triggeredBy,
+    description: record.description,
+    status: record.status,
+    date: recordDate ? recordDate.toISOString().slice(0, 10) : '',
+    cost: record.cost ?? 0,
+    bikeId: record.bikeId || '',
+    stationId: record.stationId ?? '',
+    lockId: record.lockId || '',
+    id: String(recordId),
+  });
+}
+
+async function handleSubmit() {
+  error.value = null;
+  const payload = normalizePayload();
+
   try {
-    let bikeId = '';
-    let stationId = 0;
-    let lockId = '';
-    if (form.value.entityType === 'BICYCLE') {
-      bikeId = form.value.bikeId;
-      stationId = 0;
-      lockId = '';
-    } else if (form.value.entityType === 'STATION') {
-      bikeId = '';
-      stationId = Number(form.value.stationId);
-      lockId = '';
-    } else if (form.value.entityType === 'LOCK') {
-      bikeId = '';
-      stationId = 0;
-      lockId = form.value.lockId;
+    if (isEditing.value && editingId.value) {
+      await maintenanceStore.updateMaintenance(editingId.value, payload);
+    } else {
+      await maintenanceStore.createMaintenance({ ...payload, id: form.value.id || undefined });
     }
-    await maintenanceStore.createMaintenance(
-      form.value.entityType,
-      form.value.maintenanceType,
-      form.value.triggeredBy,
-      form.value.description,
-      form.value.status,
-      new Date(form.value.date),
-      form.value.cost,
-      bikeId,
-      stationId,
-      lockId,
-      form.value.id
-    );
     await maintenanceStore.fetchMaintenances();
-    Object.assign(form.value, {
-      entityType: 'BICYCLE',
-      maintenanceType: 'PREVENTIVE',
-      triggeredBy: 'ADMIN',
-      description: '',
-      status: 'PENDING',
-      date: '',
-      cost: 0,
-      bikeId: '',
-      stationId: '',
-      lockId: '',
-      id: ''
-    });
-  } catch (e: any) {
-    error.value = e.message || 'Error al crear la orden';
+    resetForm();
+  } catch (err: unknown) {
+    const message = err instanceof Error
+      ? err.message
+      : isEditing.value
+        ? 'Error al actualizar la orden'
+        : 'Error al crear la orden';
+    error.value = message;
   }
 }
 
@@ -236,7 +270,8 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '@/styles/management-shared-styles.scss';
 .section {
   background: var(--color-surface);
   border-radius: 12px;
@@ -304,11 +339,11 @@ onMounted(() => {
     transition: border-color 0.2s, box-shadow 0.2s;
   }
   .form-group input:focus, .form-group select:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.08);
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.12);
   }
   .form-group input:hover, .form-group select:hover {
-    border-color: var(--color-primary);
+    border-color: var(--color-primary-light);
   }
   .form-actions {
     display: flex;
@@ -316,7 +351,7 @@ onMounted(() => {
     margin-top: 1.5rem;
   }
   .btn-primary {
-    background: var(--color-primary);
+    background: var(--color-primary-light);
     color: white;
     border: none;
     border-radius: 6px;
@@ -327,7 +362,7 @@ onMounted(() => {
     transition: background 0.2s;
   }
   .btn-primary:hover, .btn-primary:focus {
-    background: var(--color-primary-dark, #0056b3);
+    background: var(--color-primary-dark, #1e5a1f);
   }
 .data-table {
   overflow-x: auto;
@@ -368,7 +403,7 @@ onMounted(() => {
   width: 50px;
   height: 50px;
   border: 4px solid var(--color-border);
-  border-top-color: var(--color-primary);
+  border-top-color: var(--color-primary-light);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
