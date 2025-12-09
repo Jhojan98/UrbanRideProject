@@ -5,13 +5,26 @@
     <h3 v-if="props.station">{{ props.station.nameStation }}</h3>
     <h3 v-else>{{ $t('reservation.form.selectStation') || 'Selecciona una estación' }}</h3>
 
-    <p v-if="props.station" class="availability">
-      🚲 {{ $t('reservation.form.bikesAvailable') }}: <strong>{{ props.station.availableSlots }}</strong>
-    </p>
+    <div v-if="props.station" class="availability-section">
+      <p class="availability">
+        🚲 {{ $t('reservation.form.bikesAvailable') }}: <strong>{{ props.station.availableSlots }}</strong>
+      </p>
+      
+      <div class="bike-type-availability">
+        <div class="bike-count">
+          <span class="icon">⚡</span>
+          <span>{{ $t('reservation.form.electric') }}: <strong>{{ props.station.electric || 0 }}</strong></span>
+        </div>
+        <div class="bike-count">
+          <span class="icon">🔧</span>
+          <span>{{ $t('reservation.form.mechanical') }}: <strong>{{ props.station.mechanical || 0 }}</strong></span>
+        </div>
+      </div>
 
-    <p v-if="props.station?.totalSlots" class="availability">
-      🅿️ {{ $t('reservation.form.totalSlots') }}: <strong>{{ props.station.totalSlots }}</strong>
-    </p>
+      <p v-if="props.station?.totalSlots" class="availability">
+        🅿️ {{ $t('reservation.form.totalSlots') }}: <strong>{{ props.station.totalSlots }}</strong>
+      </p>
+    </div>
 
     <label class="label">{{ $t('reservation.form.bikeType') }}</label>
     <div class="select-group">
@@ -57,7 +70,7 @@
     </div>
 
     <div class="balance-container">
-      {{ $t('reservation.form.balance') }} <strong>${{ props.balance }}</strong>
+      {{ $t('reservation.form.balance') }} <strong>${{ props.balance?.toLocaleString() || '0' }}</strong>
       <button class="btn-secondary" @click="recharge">{{ $t('reservation.form.recharge') }}</button>
     </div>
 
@@ -70,8 +83,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed, watch, ref, onMounted, onUnmounted } from 'vue'
 import UltimaMilla from "@/components/reservation/UltimaMilla.vue"
-import { ref, defineEmits, withDefaults, defineProps } from 'vue'
 import { getAuth } from 'firebase/auth'
 import { useTravelStore } from '@/stores/travel'
 import { useI18n } from 'vue-i18n';
@@ -216,8 +229,32 @@ function onDestinationUpdate(destination: Station | null) {
 
 // Handler when UltimaMilla emits confirm (Reserve Bike button)
 async function onConfirmRoute(payload: { origin: Station; destination: Station; bikeType: string; rideType: string }) {
-  // Ejecutar reserva para ambos tipos de viaje (short_trip y long_trip)
-  if (!payload) return
+  // Validar que todos los campos estén completos
+  if (!payload) {
+    window.alert($t('reservation.form.selectionAlert') || 'Por favor complete todos los campos')
+    return
+  }
+
+  if (!payload.bikeType || !payload.rideType) {
+    window.alert($t('reservation.form.selectionAlert') || 'Por favor seleccione tipo de bicicleta y tipo de viaje')
+    return
+  }
+
+  if (!payload.origin || !payload.destination) {
+    window.alert('Por favor seleccione estación de origen y destino')
+    return
+  }
+
+  // Validar disponibilidad de bicicletas del tipo seleccionado
+  const availableBikes = payload.bikeType === 'electric' 
+    ? (payload.origin?.electric || 0) 
+    : (payload.origin?.mechanical || 0)
+
+  if (availableBikes <= 0) {
+    const bikeTypeLabel = payload.bikeType === 'electric' ? 'eléctricas' : 'mecánicas'
+    window.alert(`No hay bicicletas ${bikeTypeLabel} disponibles en la estación seleccionada`)
+    return
+  }
 
   // Obtener uid del usuario (Firebase)
   const firebaseAuth = getAuth()
@@ -275,5 +312,19 @@ async function onConfirmRoute(payload: { origin: Station; destination: Station; 
 
 <style lang="scss" scoped>
 @import "@/styles/maps.scss";
-.status-message { margin: .75rem 0; padding: .6rem .8rem; background: #F1F8E9; color: #2E7D32; border: 1px solid #C5E1A5; border-radius: 8px; }
+
+.status-message { 
+  margin: .75rem 0; 
+  padding: .6rem .8rem; 
+  background: #F1F8E9; 
+  color: #2E7D32; 
+  border: 1px solid #C5E1A5; 
+  border-radius: 8px; 
+}
+
+[data-theme="dark"] .status-message {
+  background: rgba(46, 125, 50, 0.15);
+  color: var(--color-primary-light);
+  border-color: rgba(46, 125, 50, 0.3);
+}
 </style>

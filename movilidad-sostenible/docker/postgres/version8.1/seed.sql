@@ -15,7 +15,8 @@ TRUNCATE TABLE maintenance RESTART IDENTITY CASCADE;
 INSERT INTO city (n_city_name) VALUES 
 ('Bogotá'),
 ('Medellín'),
-('Cali');
+('Cali'),
+('Villavicencio');
 
 INSERT INTO users (k_uid_user, n_user_name, n_user_email, t_subscription_type, v_balance) VALUES
 ('user-001', 'Juan Perez', 'juan.perez@example.com', 'MONTHLY', 500.00),
@@ -37,13 +38,17 @@ INSERT INTO fine (v_amount, d_description) VALUES
 (15000, 'Estacionamiento incorrecto');
 
 -- 5. Stations
--- Assuming city IDs: 1=Bogotá, 2=Medellín, 3=Cali
+-- Assuming city IDs: 1=Bogotá, 2=Medellín, 3=Cali, 4=Villavicencio
 INSERT INTO station (n_station_name, n_latitude, n_length, k_id_city, t_type, t_cctv_status) VALUES
 ('Estación Central', 4.6097, -74.0817, 1, 'METRO', true),
 ('Estación Norte', 4.7110, -74.0721, 1, 'RESIDENTIAL', true),
 ('Estación Poblado', 6.2092, -75.5712, 2, 'FINANCIAL CENTER', true),
 ('Estación Estadio', 6.2518, -75.5636, 2, 'METRO', false),
-('Estación Chipichape', 3.4756, -76.5269, 3, 'FINANCIAL CENTER', true);
+('Estación Chipichape', 3.4756, -76.5269, 3, 'FINANCIAL CENTER', true),
+('Centro Villavicencio', 4.1430, -73.6308, 4, 'METRO', true),
+('Parque Bolívar', 4.1487, -73.6298, 4, 'RESIDENTIAL', true),
+('Centro Comercial Villavicencio', 4.1345, -73.6450, 4, 'FINANCIAL CENTER', false),
+('Parque Metropolitano', 4.1520, -73.6120, 4, 'RESIDENTIAL', true);
 
 -- 6. Bicycles
 -- Formato requerido: PREFIX-###### (6 dígitos)

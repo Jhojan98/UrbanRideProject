@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
+@CrossOrigin(origins = "*")
 @Tag(name = "Estaciones", description = "CRUD de estaciones y creación automática de slots")
 public class StationsController {
 

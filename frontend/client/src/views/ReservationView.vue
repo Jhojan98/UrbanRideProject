@@ -13,7 +13,7 @@
           />
         </aside>
         <section class="map-panel">
-          <MapComponent :origin="origin" :destination="destination" />
+          <MapComponent :origin="origin" :destination="destination" :use-sockets="false" />
         </section>
       </div>
     </template>
@@ -27,8 +27,11 @@ import ConfirmationComponent from '@/components/reservation/ConfirmationComponen
 import MapComponent from '@/components/reservation/MapComponent.vue';
 import ReserveFormComponent from '@/components/reservation/ReserveFormComponent.vue';
 import { useReservation } from '@/composables/useReservation';
+import usePaymentStore from '@/stores/payment';
+import { getAuth } from 'firebase/auth';
 
 const { hasActiveReservation } = useReservation();
+const paymentStore = usePaymentStore();
 
 // Tipos para coordinar origen/destino entre el formulario y el mapa
 interface Endpoint {
@@ -48,12 +51,31 @@ interface Endpoint {
 
 const origin = ref<Endpoint | null>(null)
 const destination = ref<Endpoint | null>(null)
-const userBalance = ref<number>(50000) // Example initial balance
+const userBalance = ref<number>(0)
+const isLoadingBalance = ref<boolean>(false)
 
-// TODO: Get real user balance from profile or store
+// Cargar el balance real del usuario
+async function fetchUserBalance() {
+  try {
+    isLoadingBalance.value = true
+    const firebaseAuth = getAuth()
+    const currentUser = firebaseAuth.currentUser
+    
+    if (currentUser?.uid) {
+      const balance = await paymentStore.fetchBalance(currentUser.uid)
+      userBalance.value = balance ?? 0
+      console.log('[ReservationView] Balance cargado:', userBalance.value)
+    }
+  } catch (error) {
+    console.error('[ReservationView] Error cargando balance:', error)
+    userBalance.value = 0
+  } finally {
+    isLoadingBalance.value = false
+  }
+}
+
 onMounted(() => {
-  // Here the user balance should be loaded from a store (e.g., userStore)
-  // For now we use a default value
+  fetchUserBalance()
 })
 
 // Selection by map click disabled; origin/destination are chosen via dropdown in the form.

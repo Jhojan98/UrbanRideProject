@@ -12,8 +12,8 @@ interface StationExtended extends Station {
 
 export const useStationStore = defineStore("station", {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL || "http://localhost:8090",
-    stationsEndpoint: "/station",
+    baseURL: process.env.VUE_APP_STATIONS_URL || "http://localhost:8005",
+    stationsEndpoint: "/",
     stations: [] as StationExtended[],
     loading: false,
     error: null as string | null,
@@ -34,14 +34,26 @@ export const useStationStore = defineStore("station", {
       try {
         const url = `${this.baseURL}${this.stationsEndpoint}`;
         console.log("[StationStore] Fetching from URL:", url);
+        console.log("[StationStore] baseURL:", this.baseURL);
+        console.log("[StationStore] stationsEndpoint:", this.stationsEndpoint);
 
-        const res = await fetch(url);
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        console.log("[StationStore] Response status:", res.status, res.statusText);
 
         if (!res.ok) {
-          throw new Error(`HTTP ${res.status} ${res.statusText}`);
+          const errorBody = await res.text();
+          console.error("[StationStore] Error body:", errorBody);
+          throw new Error(`HTTP ${res.status} ${res.statusText}: ${errorBody}`);
         }
 
         const data = await res.json();
+        console.log("[StationStore] Response data:", data);
 
         // Handle different response formats
         let list: Station[] = [];
