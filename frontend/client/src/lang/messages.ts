@@ -112,7 +112,48 @@ export const messages = {
             tabs: {
                 overview: 'Resumen',
                 trips: 'Viajes',
-                fines: 'Multas'
+                fines: 'Multas',
+                complaints: 'Quejas / Mantenimiento',
+                reports: 'Reportes'
+            },
+            complaints: {
+                title: 'Quejas y mantenimiento',
+                subtitle: 'Reporta incidencias o levanta solicitudes de mantenimiento.',
+                formTitle: 'Reportar queja',
+                formSubtitle: 'Ingresa una queja para soporte. El ID de viaje es opcional.',
+                descriptionLabel: 'Descripción',
+                descriptionPlaceholder: 'Describe el inconveniente',
+                typeLabel: 'Tipo',
+                typeOptions: {
+                    bicycle: 'Bicicleta',
+                    slot: 'Candado / Slot',
+                    station: 'Estación'
+                },
+                travelIdLabel: 'ID de viaje (opcional)',
+                travelIdPlaceholder: 'Ej: 102',
+                submit: 'Enviar queja',
+                submitting: 'Enviando...',
+                success: 'Queja registrada (#{id})',
+                errorRequired: 'La descripción es obligatoria',
+                errorNumeric: 'El ID de viaje debe ser numérico',
+                submitError: 'No se pudo enviar la queja',
+                maintenanceTitle: 'Solicitar mantenimiento',
+                maintenanceSubtitle: 'Redirige al servicio de mantenimiento para crear un ticket.',
+                openMaintenance: 'Abrir mantenimiento'
+            },
+            reportsSection: {
+                title: 'Reportes',
+                subtitle: 'Descarga reportes operativos en PDF o Excel.',
+                cards: {
+                    bicycleUsage: 'Uso de bicicletas',
+                    stationDemand: 'Demanda de estaciones',
+                    bicycleDemand: 'Demanda de bicicletas',
+                    dailyTrips: 'Viajes diarios',
+                    maintenances: 'Mantenimientos'
+                },
+                downloadExcel: 'Excel',
+                downloadPdf: 'PDF',
+                downloadError: 'No se pudo descargar el reporte. Verifica que reports-service (5004) esté arriba.'
             },
             trips: {
                 title: 'Historial de Viajes',
@@ -453,7 +494,48 @@ export const messages = {
             tabs: {
                 overview: 'Overview',
                 trips: 'Trips',
-                fines: 'Fines'
+                fines: 'Fines',
+                complaints: 'Complaints / Maintenance',
+                reports: 'Reports'
+            },
+            complaints: {
+                title: 'Complaints and maintenance',
+                subtitle: 'Report incidents or raise maintenance requests.',
+                formTitle: 'Submit complaint',
+                formSubtitle: 'Enter a complaint for support. Travel ID is optional.',
+                descriptionLabel: 'Description',
+                descriptionPlaceholder: 'Describe the issue',
+                typeLabel: 'Type',
+                typeOptions: {
+                    bicycle: 'Bicycle',
+                    slot: 'Lock / Slot',
+                    station: 'Station'
+                },
+                travelIdLabel: 'Travel ID (optional)',
+                travelIdPlaceholder: 'e.g. 102',
+                submit: 'Send complaint',
+                submitting: 'Sending...',
+                success: 'Complaint recorded (#{id})',
+                errorRequired: 'Description is required',
+                errorNumeric: 'Travel ID must be numeric',
+                submitError: 'Could not submit the complaint',
+                maintenanceTitle: 'Request maintenance',
+                maintenanceSubtitle: 'Redirects to the maintenance service to create a ticket.',
+                openMaintenance: 'Open maintenance'
+            },
+            reportsSection: {
+                title: 'Reports',
+                subtitle: 'Download operational reports in PDF or Excel.',
+                cards: {
+                    bicycleUsage: 'Bicycle usage',
+                    stationDemand: 'Station demand',
+                    bicycleDemand: 'Bicycle demand',
+                    dailyTrips: 'Daily trips',
+                    maintenances: 'Maintenances'
+                },
+                downloadExcel: 'Excel',
+                downloadPdf: 'PDF',
+                downloadError: 'Could not download the report. Check that reports-service (5004) is up.'
             },
             trips: {
                 title: 'Trip History',

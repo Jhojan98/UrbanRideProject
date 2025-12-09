@@ -30,13 +30,13 @@
           @click="() => { activeTab = 'complaints'; mobileMenuOpen = false; }"
           :class="['sidebar-btn', { active: activeTab === 'complaints' }]"
         >
-          Quejas / Mantenimiento
+          {{ $t('profile.tabs.complaints') }}
         </button>
         <button
           @click="() => { activeTab = 'reports'; mobileMenuOpen = false; }"
           :class="['sidebar-btn', { active: activeTab === 'reports' }]"
         >
-          Reportes
+          {{ $t('profile.tabs.reports') }}
         </button>
       </nav>
     </aside>
@@ -170,49 +170,49 @@
       <!-- Complaints / Maintenance Tab -->
       <div v-if="activeTab === 'complaints'" class="profile">
         <div class="profile-header">
-          <h1>Quejas y mantenimiento</h1>
-          <p class="muted">Reporta incidencias o levanta solicitudes de mantenimiento.</p>
+          <h1>{{ $t('profile.complaints.title') }}</h1>
+          <p class="muted">{{ $t('profile.complaints.subtitle') }}</p>
         </div>
         <div class="profile-content cards-grid">
           <div class="action-card">
-            <h3>Reportar queja</h3>
-            <p>Ingresa una queja para soporte. El ID de viaje es opcional.</p>
+            <h3>{{ $t('profile.complaints.formTitle') }}</h3>
+            <p>{{ $t('profile.complaints.formSubtitle') }}</p>
             <form class="complaint-form" @submit.prevent="submitComplaint">
-              <label class="input-label">Descripción</label>
+              <label class="input-label">{{ $t('profile.complaints.descriptionLabel') }}</label>
               <textarea
                 v-model="complaintForm.description"
-                placeholder="Describe el inconveniente"
+                :placeholder="$t('profile.complaints.descriptionPlaceholder')"
                 rows="3"
                 required
               />
 
-              <label class="input-label">Tipo</label>
+              <label class="input-label">{{ $t('profile.complaints.typeLabel') }}</label>
               <select v-model="complaintForm.type">
-                <option value="BICYCLE">Bicicleta</option>
-                <option value="SLOT">Candado / Slot</option>
-                <option value="STATION">Estación</option>
+                <option value="BICYCLE">{{ $t('profile.complaints.typeOptions.bicycle') }}</option>
+                <option value="SLOT">{{ $t('profile.complaints.typeOptions.slot') }}</option>
+                <option value="STATION">{{ $t('profile.complaints.typeOptions.station') }}</option>
               </select>
 
-              <label class="input-label">ID de viaje (opcional)</label>
+              <label class="input-label">{{ $t('profile.complaints.travelIdLabel') }}</label>
               <input
                 v-model="complaintForm.travelId"
                 type="number"
                 min="1"
-                placeholder="Ej: 102"
+                :placeholder="$t('profile.complaints.travelIdPlaceholder')"
               />
 
               <p v-if="complaintError" class="text-error">{{ complaintError }}</p>
               <p v-if="complaintSuccess" class="text-success">{{ complaintSuccess }}</p>
 
               <button class="btn-primary" type="submit" :disabled="supportStore.loading">
-                {{ supportStore.loading ? 'Enviando...' : 'Enviar queja' }}
+                {{ supportStore.loading ? $t('profile.complaints.submitting') : $t('profile.complaints.submit') }}
               </button>
             </form>
           </div>
           <div class="action-card">
-            <h3>Solicitar mantenimiento</h3>
-            <p>Redirige al servicio de mantenimiento para crear un ticket.</p>
-            <button class="btn-primary" @click="openMaintenancePortal">Abrir mantenimiento</button>
+            <h3>{{ $t('profile.complaints.maintenanceTitle') }}</h3>
+            <p>{{ $t('profile.complaints.maintenanceSubtitle') }}</p>
+            <button class="btn-primary" @click="openMaintenancePortal">{{ $t('profile.complaints.openMaintenance') }}</button>
           </div>
         </div>
       </div>
@@ -220,43 +220,44 @@
       <!-- Reports Tab -->
       <div v-if="activeTab === 'reports'" class="profile">
         <div class="profile-header">
-          <h1>Reportes</h1>
-          <p class="muted">Descarga reportes operativos en PDF o Excel.</p>
+          <h1>{{ $t('profile.reportsSection.title') }}</h1>
+          <p class="muted">{{ $t('profile.reportsSection.subtitle') }}</p>
         </div>
         <div class="profile-content cards-grid">
           <div class="action-card">
-            <h3>Uso de bicicletas</h3>
+            <h3>{{ $t('profile.reportsSection.cards.bicycleUsage') }}</h3>
             <div class="report-actions">
-              <button class="btn-primary" @click="downloadReport('bicycle-usage.xlsx')">Excel</button>
-              <button class="btn-secondary" @click="downloadReport('bicycle-usage.pdf')">PDF</button>
+              <button class="btn-primary" @click="downloadReport('bicycle-usage.xlsx')">{{ $t('profile.reportsSection.downloadExcel') }}</button>
+              <button class="btn-secondary" @click="downloadReport('bicycle-usage.pdf')">{{ $t('profile.reportsSection.downloadPdf') }}</button>
             </div>
           </div>
           <div class="action-card">
-            <h3>Demanda de estaciones</h3>
+            <h3>{{ $t('profile.reportsSection.cards.stationDemand') }}</h3>
             <div class="report-actions">
-              <button class="btn-primary" @click="downloadReport('station-demand.xlsx')">Excel</button>
-              <button class="btn-secondary" @click="downloadReport('station-demand.pdf')">PDF</button>
+              <button class="btn-primary" @click="downloadReport('station-demand.xlsx')">{{ $t('profile.reportsSection.downloadExcel') }}</button>
+              <button class="btn-secondary" @click="downloadReport('station-demand.pdf')">{{ $t('profile.reportsSection.downloadPdf') }}</button>
             </div>
           </div>
           <div class="action-card">
-            <h3>Demanda de bicicletas</h3>
+            <h3>{{ $t('profile.reportsSection.cards.bicycleDemand') }}</h3>
             <div class="report-actions">
-              <button class="btn-primary" @click="downloadReport('bicycle-demand.xlsx')">Excel</button>
-              <button class="btn-secondary" @click="downloadReport('bicycle-demand.pdf')">PDF</button>
+              <button class="btn-primary" @click="downloadReport('bicycle-demand.xlsx')">{{ $t('profile.reportsSection.downloadExcel') }}</button>
+              <button class="btn-secondary" @click="downloadReport('bicycle-demand.pdf')">{{ $t('profile.reportsSection.downloadPdf') }}</button>
             </div>
           </div>
           <div class="action-card">
-            <h3>Viajes diarios</h3>
+            <h3>{{ $t('profile.reportsSection.cards.dailyTrips') }}</h3>
             <div class="report-actions">
-              <button class="btn-primary" @click="downloadReport('daily-trips.xlsx')">Excel</button>
-              <button class="btn-secondary" @click="downloadReport('daily-trips.pdf')">PDF</button>
+              <button class="btn-primary" @click="downloadReport('daily-trips.xlsx')">{{ $t('profile.reportsSection.downloadExcel') }}</button>
+              <button class="btn-secondary" @click="downloadReport('daily-trips.pdf')">{{ $t('profile.reportsSection.downloadPdf') }}</button>
             </div>
           </div>
           <div class="action-card">
-            <h3>Mantenimientos</h3>
+            <h3>{{ $t('profile.reportsSection.cards.maintenances') }}</h3>
             <div class="report-actions">
-              <button class="btn-primary" @click="downloadReport('maintenances.xlsx')">Excel</button>
-              <button class="btn-secondary" @click="downloadReport('maintenances.pdf')">PDF</button>
+              <button class="btn-primary" @click="downloadReport('maintenances.xlsx')">{{ $t('profile.reportsSection.downloadExcel') }}</button>
+              <button class="btn-secondary" @click="downloadReport('maintenances.pdf')">{{ $t('profile.reportsSection.downloadPdf') }}
+              </button>
             </div>
           </div>
         </div>
@@ -380,7 +381,7 @@ function openMaintenancePortal() {
 async function downloadReport(file: string) {
   try {
     const blob = await supportStore.downloadReport(file);
-    if (!blob) throw new Error(supportStore.error || 'Error descargando');
+    if (!blob) throw new Error(supportStore.error || $t('profile.reportsSection.downloadError'));
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = file;
@@ -388,7 +389,7 @@ async function downloadReport(file: string) {
     URL.revokeObjectURL(link.href);
   } catch (err) {
     console.error('Error descargando reporte', err);
-    alert('No se pudo descargar el reporte. Verifica que reports-service (5004) esté arriba.');
+    alert($t('profile.reportsSection.downloadError'));
   }
 }
 
@@ -398,7 +399,7 @@ async function submitComplaint() {
   complaintSuccess.value = "";
 
   if (!complaintForm.description.trim()) {
-    complaintError.value = "La descripción es obligatoria";
+    complaintError.value = $t('profile.complaints.errorRequired');
     return;
   }
 
@@ -407,7 +408,7 @@ async function submitComplaint() {
     : undefined;
 
   if (complaintForm.travelId && Number.isNaN(travelIdNumber)) {
-    complaintError.value = "El ID de viaje debe ser numérico";
+    complaintError.value = $t('profile.complaints.errorNumeric');
     return;
   }
 
@@ -418,11 +419,11 @@ async function submitComplaint() {
   });
 
   if (!resp) {
-    complaintError.value = supportStore.error || "No se pudo enviar la queja";
+    complaintError.value = supportStore.error || $t('profile.complaints.submitError');
     return;
   }
 
-  complaintSuccess.value = `Queja registrada (#${resp.k_id_complaints_and_claims})`;
+  complaintSuccess.value = $t('profile.complaints.success', { id: resp.k_id_complaints_and_claims });
   complaintForm.description = "";
   complaintForm.type = "BICYCLE";
   complaintForm.travelId = "";
