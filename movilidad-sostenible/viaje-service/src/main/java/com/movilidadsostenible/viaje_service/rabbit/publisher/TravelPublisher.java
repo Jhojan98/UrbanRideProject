@@ -15,8 +15,11 @@ public class TravelPublisher {
     @Value("${rabbitmq.exchange.name}")
     private String jsonExchange;
 
-    @Value("${rabbitmq.routing.travel.start.key}")
-    private String jsonTravelStartRoutingKey;
+  @Value("${rabbitmq.routing.travel.reservation.key}")
+  private String jsonTravelReservationRoutingKey;
+
+  @Value("${rabbitmq.routing.travel.start.key}")
+  private String jsonTravelStartRoutingKey;
 
     @Value("${rabbitmq.routing.travel.end.key}")
     private String jsonTravelEndRoutingKey;
@@ -31,7 +34,7 @@ public class TravelPublisher {
 
   public void sendJsonTravelReservationMessage(TravelReservationDTO travelStartDTO) {
     LOGGER.info(String.format("JSON Message sent -> %s", travelStartDTO.toString()));
-    rabbitTemplate.convertAndSend(jsonExchange, jsonTravelStartRoutingKey, travelStartDTO);
+    rabbitTemplate.convertAndSend(jsonExchange, jsonTravelReservationRoutingKey, travelStartDTO);
   }
   public void sendJsonTravelStartMessage(TravelStartDTO travelStartDTO) {
     LOGGER.info(String.format("JSON Message sent -> %s", travelStartDTO.toString()));
