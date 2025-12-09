@@ -30,7 +30,7 @@ public interface SlotsClient {
     @PostMapping("/{slotId}/lock")
     ResponseEntity<String> lockSlotById(@PathVariable("slotId") String slotId, @RequestParam("bicycleId") String bicycleId);
 
-  // Consumir endpoint que bloquea un slot por ID (LOCKED) y asigna bicycleId
+  // Consumir endpoint que bloquea un slot por ID (UNLOCKED) y asigna bicycleId
   @PostMapping("/{slotId}/unlock")
   ResponseEntity<String> unlockSlotById(@PathVariable("slotId") String slotId, @RequestParam("bicycleId") String bicycleId);
 

@@ -61,10 +61,9 @@ public class StationsController {
                     @ApiResponse(responseCode = "404", description = "Estación no encontrada")
             }
     )
-    public ResponseEntity<?> getById(@PathVariable Integer id) {
+    public ResponseEntity<Station> getById(@PathVariable Integer id) {
         Optional<Station> opt = service.findById(id);
-        return opt.<ResponseEntity<?>>map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.of(opt);
     }
 
     // Nuevo endpoint: obtener solo el campo `type` de la estación por id

@@ -13,7 +13,7 @@ class MaintenanceRecordBase(BaseModel):
     t_entity_type: Literal["BICYCLE", "STATION", "LOCK"] = Field(
         alias="entityType",
     )
-    t_maintenace_type: Literal["PREVENTIVE", "CORRECTIVE", "INSPECTION"] = Field(
+    t_maintenance_type: Literal["PREVENTIVE", "CORRECTIVE", "INSPECTION"] = Field(
         default="PREVENTIVE",
         alias="maintenanceType",
     )
@@ -40,3 +40,29 @@ class MaintenanceRecordCreate(MaintenanceRecordBase):
 
 class MaintenanceRecord(MaintenanceRecordBase):
     k_id_maintenance: str = Field(alias="id")
+
+
+class MaintenancePartialUpdate(BaseModel):
+    t_entity_type: Optional[Literal["BICYCLE", "STATION", "LOCK"]] = Field(default=None, alias="entityType")
+    t_maintenance_type: Optional[Literal["PREVENTIVE", "CORRECTIVE", "INSPECTION"]] = Field(
+        default=None,
+        alias="maintenanceType",
+    )
+    t_triggered_by: Optional[Literal["ADMIN", "USER", "IOT_ALERT"]] = Field(default=None, alias="triggeredBy")
+    d_description: Optional[str] = Field(default=None, alias="description")
+    t_status: Optional[Literal['PENDING', 'SOLVING', 'RESOLVED']] = Field(default=None, alias="status")
+    f_date: Optional[date] = Field(default=None, alias="date")
+    v_cost: Optional[int] = Field(default=None, alias="cost")
+    k_id_bicycle: Optional[str] = Field(default=None, alias="bikeId")
+    k_id_station: Optional[int] = Field(default=None, alias="stationId")
+    k_id_slot: Optional[str] = Field(default=None, alias="lockId")
+
+    class Config:
+        populate_by_name = True
+        from_attributes = True
+
+class MaintenanceStatusUpdate(BaseModel):
+    t_status: Literal['PENDING', 'SOLVING', 'RESOLVED'] = Field(alias="status")
+
+    class Config:
+        populate_by_name = True
