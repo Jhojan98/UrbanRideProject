@@ -95,6 +95,20 @@ spring:
             - Path=/slot/**
           filters:
             - StripPrefix=1
+          
+        - id: maintenance-service
+          uri: lb://maintenance-service
+          predicates:
+            - Path=/maintenance/**
+          filters:
+            - StripPrefix=1
+        
+        - id: btnpanic-service
+          uri: lb://btnpanic-service
+          predicates:
+            - Path=/btnpanic/**
+          filters:
+            - StripPrefix=1
 
         - id: reports-service
           uri: lb://reports-service
