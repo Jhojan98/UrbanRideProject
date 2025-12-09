@@ -296,6 +296,10 @@ services:
       MQTT_BROKER_URL: tcp://mosquitto:1883
       MQTT_QOS: 1
       MQTT_CLIENT_ID: "station-service-${HOSTNAME:-local-dev}"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
     networks:
       - movilidad-sostenible-network
     depends_on:
