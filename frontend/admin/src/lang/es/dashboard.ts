@@ -14,6 +14,15 @@ export default {
         slotStatus: 'Ocupado | Libre',
         aviables: 'Cupos disponibles: {count}',
         cathegory: 'Metro | Centro financiero | Residencial',
+
+        filter: {
+            label: 'Filtrar por Ciudad:',
+            all: 'Todas las ciudades',
+            showing: 'Mostrando {filtered} de {total} estaciones',
+            showingAll: 'Mostrando todas las estaciones ({total})',
+            noResults: 'No hay estaciones en esta ciudad'
+        },
+
         tooltip: {
             title: 'Estación: {name} - Capacidad',
             totalSlots: 'Total de slots:',

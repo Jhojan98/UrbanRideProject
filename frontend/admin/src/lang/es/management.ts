@@ -1,0 +1,103 @@
+export default {
+  title: 'Gestión',
+  tabs: {
+    cities: 'Ciudades',
+    stations: 'Estaciones',
+    bicycles: 'Bicicletas',
+    slots: 'Espacios'
+  },
+  cities: {
+    title: 'Gestión de Ciudades',
+    create: 'Crear Ciudad',
+    newCity: 'Nueva Ciudad',
+    idCity: 'ID Ciudad',
+    cityName: 'Nombre de Ciudad',
+    empty: 'No hay ciudades registradas',
+    createSuccess: 'Ciudad creada exitosamente',
+    createError: 'Error al crear la ciudad',
+    confirmDelete: '¿Está seguro que desea eliminar esta ciudad?',
+    deleteSuccess: 'Ciudad eliminada exitosamente',
+    deleteError: 'Error al eliminar la ciudad'
+  },
+  stations: {
+    title: 'Gestión de Estaciones',
+    create: 'Crear Estación',
+    newStation: 'Nueva Estación',
+    idStation: 'ID Estación',
+    stationName: 'Nombre de Estación',
+    latitude: 'Latitud',
+    longitude: 'Longitud',
+    city: 'Ciudad',
+    selectCity: 'Seleccione una ciudad',
+    type: 'Tipo',
+    location: 'Ubicación',
+    cctv: 'CCTV',
+    cctvStatus: 'Estado CCTV',
+    filterByCity: 'Filtrar por Ciudad:',
+    allCities: 'Todas las ciudades',
+    filtered: 'Mostrando {count} de {total} estaciones',
+    empty: 'No hay estaciones registradas',
+    createSuccess: 'Estación creada exitosamente',
+    createError: 'Error al crear la estación',
+    confirmDelete: '¿Está seguro que desea eliminar esta estación?',
+    deleteSuccess: 'Estación eliminada exitosamente',
+    deleteError: 'Error al eliminar la estación',
+    unknownCity: 'Ciudad desconocida (ID: {id})',
+    unknownStation: 'Estación desconocida (ID: {id})',
+    types: {
+      metro: 'Metro',
+      plaza: 'Plaza',
+      parque: 'Parque',
+      comercial: 'Comercial'
+    }
+  },
+  bicycles: {
+    title: 'Gestión de Bicicletas',
+    create: 'Crear Bicicleta',
+    newBicycle: 'Nueva Bicicleta',
+    type: 'Tipo',
+    electric: 'Eléctrica',
+    mechanic: 'Mecánica',
+    series: 'Serie',
+    model: 'Modelo',
+    padlockStatus: 'Estado Candado',
+    battery: 'Batería (%)',
+    filterByType: 'Filtrar por Tipo:',
+    filterByLock: 'Filtrar por Candado:',
+    allTypes: 'Todos los tipos',
+    allLocks: 'Todos los candados',
+    filtered: 'Mostrando {count} de {total} bicicletas',
+    empty: 'No hay bicicletas registradas',
+    createSuccess: 'Bicicleta creada exitosamente',
+    createError: 'Error al crear la bicicleta',
+    confirmDelete: '¿Está seguro que desea eliminar esta bicicleta?',
+    deleteSuccess: 'Bicicleta eliminada exitosamente',
+    deleteError: 'Error al eliminar la bicicleta',
+    na: 'N/A',
+    padlock: {
+      locked: 'Bloqueado',
+      unlocked: 'Desbloqueado'
+    }
+  },
+  slots: {
+    title: 'Gestión de Espacios',
+    filterByStation: 'Filtrar por Estación:',
+    allStations: 'Todas las estaciones',
+    station: 'Estación',
+    bicycle: 'Bicicleta',
+    noBicycle: 'Sin bicicleta',
+    assignBicycle: 'Asignar Bicicleta',
+    assignBicycleTitle: 'Asignar Bicicleta a Espacio',
+    assigningToSlot: 'Asignando a espacio',
+    selectBicycle: 'Seleccionar Bicicleta',
+    chooseBicycle: 'Elija una bicicleta',
+    empty: 'No hay espacios disponibles',
+    assignSuccess: 'Bicicleta asignada exitosamente',
+    assignError: 'Error al asignar la bicicleta',
+    status: {
+      locked: 'Bloqueado',
+      unlocked: 'Desbloqueado',
+      reserved: 'Reservado'
+    }
+  }
+}

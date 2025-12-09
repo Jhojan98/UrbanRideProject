@@ -14,15 +14,15 @@
     </div>
 
     <div class="slots-grid">
-      <div
-        v-for="slot in filteredSlots"
-        :key="slot.idSlot"
-        :class="['slot-card', slot.padlockStatus.toLowerCase()]"
-      >
+        <div
+          v-for="slot in filteredSlots"
+          :key="slot.idSlot"
+          :class="['slot-card', slot.padlockStatus.toString().toLowerCase()]"
+        >
         <div class="slot-header">
           <h4>{{ slot.idSlot }}</h4>
-          <span :class="['slot-status', slot.padlockStatus.toLowerCase()]">
-            {{ slot.padlockStatus }}
+          <span :class="['slot-status', slot.padlockStatus.toString().toLowerCase()]">
+            {{ t('management.slots.status.' + slot.padlockStatus.toString().toLowerCase()) }}
           </span>
         </div>
         <div class="slot-body">
@@ -117,7 +117,7 @@ const availableBicycles = computed(() => {
 
 function getStationName(stationId: number): string {
   const station = stationStore.stations.find(s => s.idStation === stationId);
-  return station ? (station.nameStation || station.stationName || `Station ${stationId}`) : `Station ${stationId}`;
+  return station ? (station.nameStation || station.stationName || t('management.stations.unknownStation', { id: stationId })) : t('management.stations.unknownStation', { id: stationId });
 }
 
 function openAssignDialog(slot: AdminSlot) {

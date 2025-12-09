@@ -32,7 +32,7 @@
       <table v-if="cityStore.cities.length">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>{{ t('common.id') }}</th>
             <th>{{ t('management.cities.cityName') }}</th>
             <th>{{ t('common.actions') }}</th>
           </tr>

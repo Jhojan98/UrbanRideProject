@@ -8,6 +8,29 @@
       </button>
     </div>
 
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <div class="filter-group">
+        <label>{{ t('management.bicycles.filterByType') }}</label>
+        <select v-model="selectedTypeFilter">
+          <option :value="null">{{ t('management.bicycles.allTypes') }}</option>
+          <option value="ELECTRIC">{{ t('management.bicycles.electric') }}</option>
+          <option value="MECHANIC">{{ t('management.bicycles.mechanic') }}</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>{{ t('management.bicycles.filterByLock') }}</label>
+        <select v-model="selectedLockFilter">
+          <option :value="null">{{ t('management.bicycles.allLocks') }}</option>
+          <option value="LOCKED">{{ t('management.bicycles.padlock.locked') }}</option>
+          <option value="UNLOCKED">{{ t('management.bicycles.padlock.unlocked') }}</option>
+        </select>
+      </div>
+      <div v-if="selectedTypeFilter || selectedLockFilter" class="filter-info">
+        {{ t('management.bicycles.filtered', { count: filteredBicycles.length, total: bicycleStore.bicycles.length }) }}
+      </div>
+    </div>
+
     <div v-if="showForm" class="form-card">
       <h3>{{ t('management.bicycles.newBicycle') }}</h3>
       <form @submit.prevent="handleCreate">
@@ -47,10 +70,10 @@
     </div>
 
     <div class="data-table">
-      <table v-if="bicycleStore.bicycles.length">
+      <table v-if="filteredBicycles.length">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>{{ t('common.id') }}</th>
             <th>{{ t('management.bicycles.series') }}</th>
             <th>{{ t('management.bicycles.model') }}</th>
             <th>{{ t('management.bicycles.padlockStatus') }}</th>
@@ -59,7 +82,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="bicycle in bicycleStore.bicycles" :key="bicycle.idBicycle">
+          <tr v-for="bicycle in filteredBicycles" :key="bicycle.idBicycle">
             <td><code>{{ bicycle.idBicycle }}</code></td>
             <td>{{ bicycle.series }}</td>
             <td>
@@ -68,13 +91,13 @@
               </span>
             </td>
             <td>
-              <span :class="['status-badge', (bicycle.padlockStatus || bicycle.lockStatus || '').toLowerCase()]">
-                {{ bicycle.padlockStatus || bicycle.lockStatus }}
+              <span :class="['status-badge', (bicycle.padlockStatus || bicycle.lockStatus || '').toString().toLowerCase()]">
+                {{ t('management.bicycles.padlock.' + ((bicycle.padlockStatus || bicycle.lockStatus || '').toString().toLowerCase())) }}
               </span>
             </td>
             <td>
               <span v-if="bicycle.model === 'ELECTRIC'">{{ bicycle.battery }}%</span>
-              <span v-else>N/A</span>
+              <span v-else>{{ t('common.na') }}</span>
             </td>
             <td>
               <button class="btn-danger btn-sm" @click="handleDelete(bicycle.idBicycle || bicycle.id || '')">
@@ -90,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useBicycleStore } from '@/stores/bicycleStore';
 
@@ -98,11 +121,29 @@ const { t } = useI18n();
 const bicycleStore = useBicycleStore();
 
 const showForm = ref(false);
+const selectedTypeFilter = ref<string | null>(null);
+const selectedLockFilter = ref<string | null>(null);
+
 const form = ref({
   type: 'ELECTRIC',
   series: new Date().getFullYear(),
   padlockStatus: 'UNLOCKED',
   battery: 100,
+});
+
+const filteredBicycles = computed(() => {
+  let filtered = bicycleStore.bicycles;
+
+  if (selectedTypeFilter.value) {
+    filtered = filtered.filter(bike => bike.model === selectedTypeFilter.value);
+  }
+
+  if (selectedLockFilter.value) {
+    const lockStatus = bike => bike.padlockStatus || bike.lockStatus || '';
+    filtered = filtered.filter(bike => lockStatus(bike) === selectedLockFilter.value);
+  }
+
+  return filtered;
 });
 
 async function handleCreate() {

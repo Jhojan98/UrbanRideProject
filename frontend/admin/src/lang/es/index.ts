@@ -4,6 +4,8 @@ import header from './header'
 import footer from './footer'
 import users from './users'
 import register from './register'
+import management from './management'
+import common from './common'
 
 export default {
     login,
@@ -11,5 +13,7 @@ export default {
     header,
     footer,
     users,
-    register
+    register,
+    management,
+    common
 }

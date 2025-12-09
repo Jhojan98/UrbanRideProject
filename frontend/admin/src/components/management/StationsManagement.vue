@@ -8,6 +8,22 @@
       </button>
     </div>
 
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <div class="filter-group">
+        <label>{{ t('management.stations.filterByCity') }}</label>
+        <select v-model="selectedCityFilter">
+          <option :value="null">{{ t('management.stations.allCities') }}</option>
+          <option v-for="city in cityStore.cities" :key="city.idCity" :value="city.idCity">
+            {{ city.cityName }}
+          </option>
+        </select>
+      </div>
+      <div v-if="selectedCityFilter" class="filter-info">
+        {{ t('management.stations.filtered', { count: filteredStations.length, total: stationStore.stations.length }) }}
+      </div>
+    </div>
+
     <div v-if="showForm" class="form-card">
       <h3>{{ t('management.stations.newStation') }}</h3>
       <form @submit.prevent="handleCreate">
@@ -69,27 +85,31 @@
     </div>
 
     <div class="data-table">
-      <table v-if="stationStore.stations.length">
+      <table v-if="filteredStations.length">
         <thead>
           <tr>
-            <th>ID</th>
+            <th>{{ t('common.id') }}</th>
             <th>{{ t('management.stations.stationName') }}</th>
             <th>{{ t('management.stations.city') }}</th>
             <th>{{ t('management.stations.type') }}</th>
             <th>{{ t('management.stations.location') }}</th>
-            <th>CCTV</th>
+            <th>{{ t('management.stations.cctv') }}</th>
             <th>{{ t('common.actions') }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="station in stationStore.stations" :key="station.idStation">
+          <tr v-for="station in filteredStations" :key="station.idStation">
             <td>{{ station.idStation }}</td>
             <td>{{ station.stationName }}</td>
             <td>{{ station.idCity ? getCityName(station.idCity) : '-' }}</td>
-            <td><span class="type-badge">{{ station.type || 'METRO' }}</span></td>
+            <td>
+              <span class="type-badge">
+                {{ t('management.stations.types.' + ((station.type || 'METRO').toString().toLowerCase())) }}
+              </span>
+            </td>
             <td>{{ station.latitude.toFixed(4) }}, {{ (station.length ?? station.longitude ?? 0).toFixed(4) }}</td>
             <td>
-              <span :class="['status-indicator', station.cctvStatus ? 'active' : 'inactive']">
+              <span :class="['status-indicator', station.cctvStatus ? 'active' : 'inactive']" :aria-label="station.cctvStatus ? t('common.active') : t('common.inactive')">
                 {{ station.cctvStatus ? '●' : '○' }}
               </span>
             </td>
@@ -111,7 +131,7 @@
 
 <script setup lang="ts">
 /* eslint-disable no-undef */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useCityStore } from '@/stores/cityStore';
 import { useStationStore } from '@/stores/stationStore';
@@ -125,6 +145,8 @@ defineEmits<{
 }>();
 
 const showForm = ref(false);
+const selectedCityFilter = ref<number | null>(null);
+
 const form = ref({
   idStation: 0,
   stationName: '',
@@ -135,9 +157,16 @@ const form = ref({
   cctvStatus: true,
 });
 
+const filteredStations = computed(() => {
+  if (selectedCityFilter.value === null) {
+    return stationStore.stations;
+  }
+  return stationStore.stations.filter(station => station.idCity === selectedCityFilter.value);
+});
+
 function getCityName(cityId: number): string {
   const city = cityStore.cities.find(c => c.idCity === cityId);
-  return city ? city.cityName : `City ${cityId}`;
+  return city ? city.cityName : t('management.stations.unknownCity', { id: cityId });
 }
 
 async function handleCreate() {
