@@ -357,7 +357,7 @@ const maintenanceForm = reactive({
 // Texto de bienvenida
 const welcomeText = computed(() => {
   const name = userName.value ?? "CLIENTE";
-  return `Bienvenido de nuevo, ${name}`;
+  return $t('profile.header.welcome_user', { name });
 });
 
 // Formato de balance
