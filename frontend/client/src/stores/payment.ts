@@ -15,7 +15,7 @@ interface CheckoutSessionResponse {
 const usePaymentStore = defineStore('payment', {
   state() {
     return {
-      baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8090',
+      baseURL: '/api',
       loading: false,
       error: null as string | null,
         fines: [] as Fine[],

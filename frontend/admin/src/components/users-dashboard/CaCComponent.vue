@@ -193,15 +193,12 @@ const selectedComplaint = ref<Complaint | null>(null);
 
 const filteredComplaints = computed(() => {
   const complaints = Array.isArray(complaintsStore.complaints) ? complaintsStore.complaints : [];
-  console.log('[CaCComponent] 📊 Total quejas en store:', complaints.length);
-  console.log('[CaCComponent] 🔍 Filtro actual:', filterStatus.value);
 
   if (filterStatus.value === 'all') {
     return complaints;
   }
 
   const filtered = complaints.filter(c => c.t_status === filterStatus.value);
-  console.log('[CaCComponent] ✅ Quejas filtradas:', filtered.length);
   return filtered;
 });
 
@@ -280,14 +277,22 @@ function formatDate(date: Date | string | undefined): string {
 async function handleStatusChange(id: number, event: Event) {
   const target = event.target as HTMLSelectElement;
   const newStatus = target.value;
+  const complaintIndex = complaintsStore.complaints.findIndex(c => c.k_id_complaints_and_claims === id);
+  const previousStatus = complaintIndex !== -1 ? complaintsStore.complaints[complaintIndex].t_status : null;
 
   try {
+    // Actualización optimista: actualizar UI inmediatamente
+    if (complaintIndex !== -1) {
+      complaintsStore.complaints[complaintIndex].t_status = newStatus;
+    }
+
     await complaintsStore.updateComplaintStatus(id, newStatus);
-    alert(t('management.complaints.updateSuccess'));
   } catch (error) {
+    // Revertir el cambio en la UI si falla
+    if (complaintIndex !== -1 && previousStatus) {
+      complaintsStore.complaints[complaintIndex].t_status = previousStatus;
+    }
     alert(t('management.complaints.updateError'));
-    // Revertir el cambio en caso de error
-    await complaintsStore.fetchComplaints();
   }
 }
 
@@ -309,29 +314,10 @@ function viewComplaint(complaint: Complaint) {
 }
 
 onMounted(async () => {
-  console.log('[CaCComponent] 🚀 Componente montado, iniciando carga de quejas...');
-  console.log('[CaCComponent] 🔗 Base URL:', complaintsStore.baseURL);
-
   try {
-    // Siempre cargar las quejas al entrar al componente
     await complaintsStore.fetchComplaints();
-
-    console.log('[CaCComponent] ✅ Quejas cargadas exitosamente:', complaintsStore.complaints.length);
-    console.log('[CaCComponent] 📊 Estadísticas:', {
-      loading: complaintsStore.loading,
-      error: complaintsStore.error,
-      total: complaintsStore.complaints.length,
-      open: complaintsStore.openComplaints.length,
-      inProgress: complaintsStore.inProgressComplaints.length,
-      resolved: complaintsStore.resolvedComplaints.length,
-      closed: complaintsStore.closedComplaints.length
-    });
-
-    if (complaintsStore.complaints.length > 0) {
-      console.log('[CaCComponent] 📋 Ejemplo de queja:', complaintsStore.complaints[0]);
-    }
   } catch (error) {
-    console.error('[CaCComponent] ❌ Error al cargar quejas:', error);
+    console.error('[CaCComponent] Error al cargar quejas:', error);
   }
 });
 </script>

@@ -152,13 +152,28 @@ async function handleAssign() {
 
   label {
     font-weight: 500;
+    color: var(--color-text-primary-light);
   }
 
   select {
     padding: 0.5rem 1rem;
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-light);
     border-radius: 4px;
     font-size: 0.9rem;
+    background: var(--color-background-light);
+    color: var(--color-text-primary-light);
+  }
+}
+
+[data-theme="dark"] .filter-group {
+  label {
+    color: var(--color-text-primary-dark);
+  }
+
+  select {
+    background: var(--color-surface-dark);
+    color: var(--color-text-primary-dark);
+    border-color: var(--color-border-dark);
   }
 }
 
@@ -169,11 +184,12 @@ async function handleAssign() {
 }
 
 .slot-card {
-  background: white;
+  background: var(--color-background-light);
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s, box-shadow 0.2s;
+  color: var(--color-text-primary-light);
 
   &:hover {
     transform: translateY(-2px);
@@ -193,18 +209,37 @@ async function handleAssign() {
   }
 }
 
+[data-theme="dark"] .slot-card {
+  background: var(--color-surface-dark);
+  color: var(--color-text-primary-dark);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+}
+
 .slot-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-light);
 
   h4 {
     margin: 0;
     font-family: monospace;
     font-size: 1.1rem;
+    color: var(--color-text-primary-light);
+  }
+}
+
+[data-theme="dark"] .slot-header {
+  border-bottom-color: var(--color-border-dark);
+
+  h4 {
+    color: var(--color-text-primary-dark);
   }
 }
 
@@ -231,31 +266,69 @@ async function handleAssign() {
   }
 }
 
+[data-theme="dark"] .slot-status {
+  &.locked {
+    background: #064e3b;
+    color: #a7f3d0;
+  }
+
+  &.unlocked {
+    background: #78350f;
+    color: #fde68a;
+  }
+
+  &.reserved {
+    background: #1e3a8a;
+    color: #bfdbfe;
+  }
+}
+
 .slot-body {
   margin-bottom: 1rem;
 
   p {
     margin: 0.5rem 0;
     font-size: 0.9rem;
+    color: var(--color-text-primary-light);
   }
 
   code {
-    background: var(--color-background-soft);
+    background: var(--color-gray-very-light);
     padding: 0.2rem 0.5rem;
     border-radius: 4px;
     font-family: monospace;
     font-size: 0.9rem;
+    color: var(--color-text-primary-light);
   }
 
   .text-muted {
-    color: var(--color-text-secondary);
+    color: var(--color-text-secondary-light);
     font-style: italic;
+  }
+}
+
+[data-theme="dark"] .slot-body {
+  p {
+    color: var(--color-text-primary-dark);
+  }
+
+  code {
+    background: var(--color-background-dark);
+    color: var(--color-text-primary-dark);
+  }
+
+  .text-muted {
+    color: var(--color-text-secondary-dark);
   }
 }
 
 .slot-actions {
   padding-top: 0.75rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border-light);
+}
+
+[data-theme="dark"] .slot-actions {
+  border-top-color: var(--color-border-dark);
 }
 
 .modal-overlay {
@@ -272,17 +345,37 @@ async function handleAssign() {
   animation: fadeIn 0.2s;
 }
 
+[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.75);
+}
+
 .modal-content {
-  background: white;
+  background: var(--color-background-light);
   padding: 2rem;
   border-radius: 12px;
   max-width: 500px;
   width: 90%;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   animation: slideUp 0.3s;
+  color: var(--color-text-primary-light);
 
   h3 {
     margin-top: 0;
+    color: var(--color-text-primary-light);
+  }
+
+  p {
+    color: var(--color-text-primary-light);
+  }
+}
+
+[data-theme="dark"] .modal-content {
+  background: var(--color-surface-dark);
+  color: var(--color-text-primary-dark);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+
+  h3, p {
+    color: var(--color-text-primary-dark);
   }
 }
 

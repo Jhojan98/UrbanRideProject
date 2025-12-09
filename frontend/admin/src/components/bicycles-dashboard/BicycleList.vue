@@ -1,44 +1,44 @@
 <template>
     <div class="bicycle-list">
         <div class="list-header">
-            <h3>Bicicletas Registradas</h3>
-            <span class="bike-count">{{ bikes.length }} bicicletas</span>
+            <h3>{{ t('dashboard.bikes.registered') }}</h3>
+            <span class="bike-count">{{ t('dashboard.bikes.count', { count: bikes.length }) }}</span>
         </div>
 
         <div v-if="bikes.length === 0" class="empty-state">
-            No hay bicicletas registradas
+            {{ t('dashboard.bikes.empty') }}
         </div>
 
         <div v-else class="table-container">
             <table class="bikes-table">
                 <thead>
                     <tr>
-                        <th>Serie</th>
-                        <th>ID</th>
-                        <th>Tipo</th>
-                        <th>Estado Bloqueo</th>
-                        <th>Batería</th>
-                        <th>Ubicación</th>
+                        <th>{{ t('dashboard.bikes.series') }}</th>
+                        <th>{{ t('dashboard.bikes.id') }}</th>
+                        <th>{{ t('dashboard.bikes.type') }}</th>
+                        <th>{{ t('dashboard.bikes.lockStatus') }}</th>
+                        <th>{{ t('dashboard.bikes.battery') }}</th>
+                        <th>{{ t('dashboard.bikes.location') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="bike in bikes" :key="bike.id || bike.idBicycle" class="bike-row">
                         <td class="series">
-                            <strong>#{{ bike.series || 'N/A' }}</strong>
+                            <strong>#{{ bike.series || t('dashboard.bikes.na') }}</strong>
                         </td>
                         <td class="bike-id">
-                            <code>{{ bike.id || bike.idBicycle || 'N/A' }}</code>
+                            <code>{{ bike.id || bike.idBicycle || t('dashboard.bikes.na') }}</code>
                         </td>
                         <td class="bike-type">
                             <span :class="['type-badge', getModelLowerCase(bike.model)]">
                                 <span v-if="isElectric(bike.model)">⚡</span>
                                 <span v-else>🔧</span>
-                                {{ isElectric(bike.model) ? 'Eléctrica' : 'Mecánica' }}
+                                {{ isElectric(bike.model) ? t('dashboard.bikes.electric') : t('dashboard.bikes.mechanic') }}
                             </span>
                         </td>
                         <td class="lock-status">
                             <span :class="['status-badge', getLockStatusClass(bike.lockStatus || bike.padlockStatus)]">
-                                {{ getLockStatusText(bike.lockStatus || bike.padlockStatus) }}
+                                {{ t(getLockStatusKey(bike.lockStatus || bike.padlockStatus)) }}
                             </span>
                         </td>
                         <td class="battery">
@@ -66,11 +66,28 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type Bike from '@/models/Bike'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // eslint-disable-next-line no-undef
 const props = defineProps<{ bikes: Bike[] }>()
 
 const bikes = computed(() => props.bikes)
+
+function getLockStatusKey(status: string | undefined): string {
+    const statusUpper = (status || '').toUpperCase()
+    switch (statusUpper) {
+        case 'UNLOCKED':
+            return 'dashboard.bikes.padlock.unlocked'
+        case 'LOCKED':
+            return 'dashboard.bikes.padlock.locked'
+        case 'ERROR':
+            return 'dashboard.bikes.padlock.error'
+        default:
+            return 'dashboard.bikes.padlock.unknown'
+    }
+}
 
 function getLockStatusClass(status: string | undefined): string {
     const statusUpper = (status || '').toUpperCase()
@@ -83,20 +100,6 @@ function getLockStatusClass(status: string | undefined): string {
             return 'error'
         default:
             return ''
-    }
-}
-
-function getLockStatusText(status: string | undefined): string {
-    const statusUpper = (status || '').toUpperCase()
-    switch (statusUpper) {
-        case 'UNLOCKED':
-            return 'Desbloqueada'
-        case 'LOCKED':
-            return 'Bloqueada'
-        case 'ERROR':
-            return 'Error'
-        default:
-            return status || 'Desconocido'
     }
 }
 

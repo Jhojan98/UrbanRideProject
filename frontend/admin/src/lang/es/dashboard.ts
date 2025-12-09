@@ -61,7 +61,25 @@ export default {
         typeC: 'Tipo',
         batteryC: 'Batería',
         bikeType: 'Eléctrica | Mecánica',
-        bikeCondition: 'Óptima | Requiere mantenimiento'
+        bikeCondition: 'Óptima | Requiere mantenimiento',
+        registered: 'Bicicletas Registradas',
+        count: '{count} bicicletas',
+        empty: 'No hay bicicletas registradas',
+        series: 'Serie',
+        id: 'ID',
+        type: 'Tipo',
+        lockStatus: 'Estado Bloqueo',
+        battery: 'Batería',
+        location: 'Ubicación',
+        electric: 'Eléctrica',
+        mechanic: 'Mecánica',
+        na: 'N/A',
+        padlock: {
+            locked: 'Bloqueada',
+            unlocked: 'Desbloqueada',
+            error: 'Error',
+            unknown: 'Desconocido'
+        }
     },
     isEmpty: 'No hay bicicletas en esta estación',
     logout: 'Cerrar sesión'

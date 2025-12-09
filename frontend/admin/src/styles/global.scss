@@ -88,6 +88,11 @@ body {
   line-height: 1.5;
 }
 
+[data-theme="dark"] body {
+  background-color: var(--color-background-dark);
+  color: var(--color-text-primary-dark);
+}
+
 /* Containers */
 .container {
   max-width: 1200px;
@@ -153,6 +158,14 @@ textarea {
   color: var(--select-text);
   background-color: var(--select-bg);
   transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: var(--color-surface-dark);
+  color: var(--color-text-primary-dark);
+  border-color: var(--color-border-dark);
 }
 
 .link-inline {

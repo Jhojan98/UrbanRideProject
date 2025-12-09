@@ -99,5 +99,81 @@ export default {
       unlocked: 'Unlocked',
       reserved: 'Reserved'
     }
+  },
+  complaints: {
+    title: 'Complaints Management',
+    allStatus: 'All statuses',
+    type: 'Type',
+    description: 'Description',
+    travelId: 'Travel ID',
+    date: 'Date',
+    details: 'Complaint Details',
+    createdAt: 'Creation Date',
+    updatedAt: 'Last Update',
+    empty: 'No complaints or claims registered',
+    emptyFilter: 'No complaints or claims with this status',
+    updateSuccess: 'Status updated successfully',
+    updateError: 'Error updating status',
+    confirmDelete: 'Are you sure you want to delete this complaint?',
+    deleteSuccess: 'Complaint deleted successfully',
+    deleteError: 'Error deleting complaint',
+    status: {
+      label: 'Status',
+      open: 'Open',
+      inProgress: 'In Progress',
+      resolved: 'Resolved',
+      closed: 'Closed'
+    },
+    types: {
+      complaint: 'Complaint',
+      claim: 'Claim',
+      suggestion: 'Suggestion',
+      other: 'Other'
+    }
+  },
+  maintenance: {
+    title: 'Maintenance Orders',
+    create: 'Create maintenance order',
+    edit: 'Edit maintenance order',
+    newOrder: 'Create new maintenance order',
+    entityType: 'Entity type',
+    maintenanceType: 'Maintenance type',
+    triggeredBy: 'Requested by',
+    description: 'Description',
+    status: 'Status',
+    date: 'Date',
+    cost: 'Cost',
+    orderId: 'Order ID',
+    bikeId: 'Bike ID',
+    stationId: 'Station ID',
+    lockId: 'Lock ID',
+    saveChanges: 'Save changes',
+    cancel: 'Cancel',
+    loading: 'Loading orders...',
+    empty: 'No maintenance orders',
+    editButton: 'Edit',
+    createSuccess: 'Order created successfully',
+    updateSuccess: 'Order updated successfully',
+    createError: 'Error creating order',
+    updateError: 'Error updating order',
+    entities: {
+      bicycle: 'Bicycle',
+      station: 'Station',
+      lock: 'Lock'
+    },
+    types: {
+      preventive: 'Preventive',
+      corrective: 'Corrective',
+      inspection: 'Inspection'
+    },
+    triggers: {
+      admin: 'Administrator',
+      iotAlert: 'IoT Alert'
+    },
+    statuses: {
+      pending: 'Pending',
+      solving: 'In Progress',
+      resolved: 'Resolved'
+    }
   }
 }

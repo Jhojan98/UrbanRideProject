@@ -1,18 +1,30 @@
 const { defineConfig } = require('@vue/cli-service')
+const path = require('path')
+const dotenv = require('dotenv')
 
-// Vue CLI automatically loads .env from project root
-// We don't need manual dotenv, Vue handles it by default
+// Cargar variables de entorno desde la carpeta padre (frontend/.env)
+const envPath = path.resolve(__dirname, '../.env')
+dotenv.config({ path: envPath })
 
 module.exports = defineConfig({
   transpileDependencies: true,
-  // Proxy API calls in dev to avoid CORS while keeping the backend origin configurable
   devServer: {
     proxy: {
       '^/api': {
-        target: process.env.VUE_APP_API_URL || 'http://localhost:8090',
+        target: process.env.VUE_APP_API_URL,
         changeOrigin: true,
-        pathRewrite: { '^/api': '' },
-        logLevel: 'debug'
+        pathRewrite: {
+          '^/api': ''
+        },
+        onProxyRes(proxyRes) {
+          // Limpiar headers CORS conflictivos - solo dejar un valor
+          proxyRes.headers['access-control-allow-origin'] = '*'
+          // Asegurar que métodos y headers CORS incluyan PATCH
+          proxyRes.headers['access-control-allow-methods'] = 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
+          proxyRes.headers['access-control-allow-headers'] = 'Content-Type,Authorization'
+          // Permitir credenciales si es necesario
+          proxyRes.headers['access-control-allow-credentials'] = 'true'
+        }
       }
     }
   }

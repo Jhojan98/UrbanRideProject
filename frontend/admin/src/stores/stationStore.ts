@@ -4,7 +4,7 @@ import type { AdminSlot } from "@/models/AdminSlot";
 
 export const useStationStore = defineStore("station", {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL,
+    baseURL: '/api',
     stations: [] as Station[],
     slots: [] as AdminSlot[],
     loading: false,
@@ -165,7 +165,7 @@ import {Station} from '@/models/Station';
 
 const stationStore = defineStore('station', {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL + '/station/stations',
+    baseURL: '/api/station/stations',
   }),
   actions: {
     async fetchStations() {

@@ -5,14 +5,13 @@ import { bicycleWebSocketService, type BicycleLocationUpdate } from "@/services/
 
 export const useBikeStore = defineStore("bike", {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL + "/bicy",
+    baseURL: '/api/bicy',
     bikes: [] as Bike[],
     bicycleFactory: new BicycleFactory(),
     isWebSocketConnected: false,
     loading: false,
     error: null as string | null,
   }),
-
   getters: {
     /**
      * Obtiene todas las bicicletas
@@ -72,8 +71,6 @@ export const useBikeStore = defineStore("bike", {
         // Usar datos directamente sin conversión DTO
         if (Array.isArray(data)) {
           this.bikes = data;
-          console.log("[BikeStore] Bicicletas cargadas:", this.bikes.length);
-          console.log("[BikeStore] Ejemplo de bicicleta:", this.bikes[0]);
         } else {
           this.bikes = [];
         }
@@ -98,7 +95,6 @@ export const useBikeStore = defineStore("bike", {
      */
     connectWebSocket() {
       if (this.isWebSocketConnected) {
-        console.log("[BikeStore] WebSocket ya está conectado");
         return;
       }
 
@@ -107,7 +103,6 @@ export const useBikeStore = defineStore("bike", {
       });
 
       this.isWebSocketConnected = true;
-      console.log("[BikeStore] WebSocket conectado");
     },
 
     /**
@@ -138,15 +133,8 @@ export const useBikeStore = defineStore("bike", {
 
         // Actualizar también el marcador en el factory
         this.bicycleFactory.getBicycleMarker(updatedBike);
-
-        console.log(`[BikeStore] 🔄 Bicicleta ${bikeId} actualizada vía WebSocket:`, {
-          lat: update.latitude,
-          lon: update.longitude,
-          battery: update.battery,
-        });
-      } else {
-        console.warn(`[BikeStore] ⚠️ Bicicleta ${bikeId} no encontrada en el store`);
       }
+      // Bicicleta no encontrada en el store
     },
 
     /**
@@ -156,7 +144,6 @@ export const useBikeStore = defineStore("bike", {
       if (this.isWebSocketConnected) {
         bicycleWebSocketService.disconnect();
         this.isWebSocketConnected = false;
-        console.log("[BikeStore] WebSocket desconectado");
       }
     },
 

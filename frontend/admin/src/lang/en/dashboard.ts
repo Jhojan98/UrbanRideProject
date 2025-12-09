@@ -52,7 +52,25 @@ export default {
         typeC: 'Type',
         batteryC: 'Battery',
         bikeType: 'Electric | Mechanical',
-        bikeCondition: 'Optimal | Needs maintenance'
+        bikeCondition: 'Optimal | Needs maintenance',
+        registered: 'Registered Bicycles',
+        count: '{count} bicycles',
+        empty: 'No bicycles registered',
+        series: 'Series',
+        id: 'ID',
+        type: 'Type',
+        lockStatus: 'Lock Status',
+        battery: 'Battery',
+        location: 'Location',
+        electric: 'Electric',
+        mechanic: 'Mechanical',
+        na: 'N/A',
+        padlock: {
+            locked: 'Locked',
+            unlocked: 'Unlocked',
+            error: 'Error',
+            unknown: 'Unknown'
+        }
     },
     isEmpty: 'No bikes at this station',
     logout: 'Log out'

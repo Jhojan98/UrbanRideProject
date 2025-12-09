@@ -3,7 +3,7 @@ import type Travel from "@/models/Travel";
 
 export const useTravelStore = defineStore("history", {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL + "/travel",
+    baseURL: "/api/travel",
     travels: [] as Travel[],
 
   }),

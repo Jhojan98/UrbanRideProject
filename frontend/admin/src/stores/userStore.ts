@@ -6,8 +6,8 @@ import type CaC from '@/models/CaC';
 
 const usersStore = defineStore('users', {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL,
-    complaintsBaseURL: process.env.VUE_APP_COMPLAINTS_URL || process.env.VUE_APP_API_URL || 'http://localhost:5007',
+    baseURL: '/api',
+    complaintsBaseURL: '/api/complaints',
     users: [] as User[],
     travels: [] as Travel[],
     fines: [] as Fine[],
@@ -116,13 +116,11 @@ const usersStore = defineStore('users', {
               }
             }
           } catch (error) {
-            console.log(`Error obteniendo multas del usuario:`, error)
+            // Error al obtener multas del usuario
           }
         }
 
-        console.log('Multas recibidas:', allFines)
         this.fines = allFines
-        console.log('Multas en store:', this.fines)
       } catch (error) {
         console.error('Error fetching all fines:', error)
         this.fines = []

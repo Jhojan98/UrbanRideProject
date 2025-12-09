@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type Maintenance from '@/models/Maintenance';
+import { getAuth } from 'firebase/auth';
 
 type MaintenancePayload = {
   entityType: string;
@@ -17,7 +18,7 @@ type MaintenancePayload = {
 
 export const useMaintenanceStore = defineStore('maintenance', {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL + '/maintenance',
+    baseURL:   'api/maintenance',
     maintList: [] as Maintenance[],
     loading: false as boolean,
   }),
@@ -25,9 +26,14 @@ export const useMaintenanceStore = defineStore('maintenance', {
     async fetchMaintenances() {
       this.loading = true;
       try {
+        const auth = getAuth();
+        const token = await auth.currentUser?.getIdToken();
         const response = await fetch(`${this.baseURL}/maintenance/`, {
           method: 'GET',
-          headers: { Accept: 'application/json' },
+          headers: {
+            Accept: 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` })
+          },
         });
         if (!response.ok) {
           console.error(
@@ -50,11 +56,14 @@ export const useMaintenanceStore = defineStore('maintenance', {
     async createMaintenance(payload: MaintenancePayload) {
       this.loading = true;
       try {
-        const response = await fetch(`${this.baseURL}/maintenance/`, {
+        const auth = getAuth();
+        const token = await auth.currentUser?.getIdToken();
+        const response = await fetch(`${this.baseURL}/maintenance`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` })
           },
           body: JSON.stringify({
             ...payload,
@@ -87,11 +96,14 @@ export const useMaintenanceStore = defineStore('maintenance', {
     async updateMaintenance(id: string, payload: MaintenancePayload) {
       this.loading = true;
       try {
+        const auth = getAuth();
+        const token = await auth.currentUser?.getIdToken();
         const response = await fetch(`${this.baseURL}/maintenance/${id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` })
           },
           body: JSON.stringify({
             ...payload,

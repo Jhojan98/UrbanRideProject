@@ -15,8 +15,7 @@ const userAuth = defineStore("auth", {
     return {
       token: null as string | null,
       uid: null as string | null,
-      // Use proxy path by default in dev to avoid CORS; fallback to configured absolute URL if provided
-      baseURL: process.env.VUE_APP_API_URL || "/api",
+      baseURL: "/api",
       message: "",
       isVerified: false,
       pendingVerification: false,

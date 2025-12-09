@@ -26,6 +26,10 @@
   }
 }
 
+[data-theme="dark"] .section-header h2 {
+  color: var(--color-text-primary-dark);
+}
+
 .filter-section {
   background: var(--color-gray-very-light);
   padding: 1rem 1.5rem;
@@ -36,6 +40,11 @@
   gap: 1.5rem;
   flex-wrap: wrap;
   align-items: flex-end;
+}
+
+[data-theme="dark"] .filter-section {
+  background: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
 
   .filter-group {
     display: flex;
@@ -59,6 +68,15 @@
       cursor: pointer;
       transition: all 0.3s ease;
 
+[data-theme="dark"] .filter-section .filter-group label {
+  color: var(--color-text-primary-dark);
+}
+
+[data-theme="dark"] .filter-section .filter-group select {
+  background: var(--color-background-dark);
+  color: var(--color-text-primary-dark);
+  border-color: var(--color-border-dark);
+
       &:hover {
         border-color: var(--color-primary-light);
       }
@@ -78,6 +96,12 @@
     font-size: 0.85rem;
     color: var(--color-text-secondary-light);
     font-weight: 500;
+  }
+}
+
+[data-theme="dark"] .filter-section .filter-info {
+  background: var(--color-background-dark);
+  color: var(--color-text-secondary-dark);
     white-space: nowrap;
   }
 }
@@ -95,6 +119,15 @@
     margin-bottom: 1.5rem;
     color: var(--color-text-primary-light);
     font-size: 1.25rem;
+  }
+}
+
+[data-theme="dark"] .form-card {
+  background: var(--color-surface-dark);
+  border-color: var(--color-border-dark);
+
+  h3 {
+    color: var(--color-text-primary-dark);
   }
 }
 
@@ -140,6 +173,27 @@
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+  }
+}
+
+[data-theme="dark"] .form-group {
+  label {
+    color: var(--color-text-primary-dark);
+  }
+
+  input, select {
+    background: var(--color-surface-dark);
+    color: var(--color-text-primary-dark);
+    border-color: var(--color-border-dark);
+
+    &:hover {
+      border-color: var(--color-primary-dark);
+    }
+
+    &:focus {
+      border-color: var(--color-primary-dark);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
     }
   }
 }
@@ -216,6 +270,35 @@
             font-family: monospace;
             font-size: 0.9rem;
             color: var(--color-text-secondary-light);
+          }
+        }
+      }
+    }
+  }
+}
+
+[data-theme="dark"] .data-table {
+  table {
+    background: var(--color-surface-dark);
+
+    thead {
+      background: var(--color-primary-dark);
+    }
+
+    tbody {
+      tr {
+        border-bottom-color: var(--color-border-dark);
+
+        &:hover {
+          background: var(--color-background-dark);
+        }
+
+        td {
+          color: var(--color-text-primary-dark);
+
+          code {
+            background: var(--color-background-dark);
+            color: var(--color-text-secondary-dark);
           }
         }
       }

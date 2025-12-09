@@ -1,89 +1,92 @@
 <template>
   <div class="section">
     <div class="section-header">
-      <h2>Órdenes de Mantenimiento</h2>
+      <h2>{{ t('management.maintenance.title') }}</h2>
     </div>
     <div class="form-card">
-      <h3>{{ isEditing ? 'Editar orden de mantenimiento' : 'Crear nueva orden de mantenimiento' }}</h3>
+      <h3>{{ isEditing ? t('management.maintenance.edit') : t('management.maintenance.newOrder') }}</h3>
       <form @submit.prevent="handleSubmit">
         <div class="form-row">
           <div class="form-group">
-            <label>Tipo de entidad</label>
+            <label>{{ t('management.maintenance.entityType') }}</label>
             <select v-model="form.entityType" required>
-              <option value="BICYCLE">Bicicleta</option>
-              <option value="STATION">Estación</option>
-              <option value="LOCK">Candado</option>
+              <option value="BICYCLE">{{ t('management.maintenance.entities.bicycle') }}</option>
+              <option value="STATION">{{ t('management.maintenance.entities.station') }}</option>
+              <option value="LOCK">{{ t('management.maintenance.entities.lock') }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Tipo de mantenimiento</label>
+            <label>{{ t('management.maintenance.maintenanceType') }}</label>
             <select v-model="form.maintenanceType" required>
-              <option v-for="(label, key) in maintenanceTypes" :key="key" :value="key">{{ label }}</option>
+              <option value="PREVENTIVE">{{ t('management.maintenance.types.preventive') }}</option>
+              <option value="CORRECTIVE">{{ t('management.maintenance.types.corrective') }}</option>
+              <option value="INSPECTION">{{ t('management.maintenance.types.inspection') }}</option>
             </select>
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Solicitado por</label>
+            <label>{{ t('management.maintenance.triggeredBy') }}</label>
             <select v-model="form.triggeredBy" required>
-              <option v-for="(label, key) in triggeredByOptions" :key="key" :value="key">{{ label }}</option>
+              <option value="ADMIN">{{ t('management.maintenance.triggers.admin') }}</option>
+              <option value="IOT_ALERT">{{ t('management.maintenance.triggers.iotAlert') }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Descripción</label>
+            <label>{{ t('management.maintenance.description') }}</label>
             <input v-model="form.description" required />
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Estado</label>
+            <label>{{ t('management.maintenance.status') }}</label>
             <select v-model="form.status" required>
-              <option value="PENDING">Pendiente</option>
-              <option value="SOLVING">En Proceso</option>
-              <option value="RESOLVED">Resuelto</option>
+              <option value="PENDING">{{ t('management.maintenance.statuses.pending') }}</option>
+              <option value="SOLVING">{{ t('management.maintenance.statuses.solving') }}</option>
+              <option value="RESOLVED">{{ t('management.maintenance.statuses.resolved') }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Fecha</label>
+            <label>{{ t('management.maintenance.date') }}</label>
             <input type="date" v-model="form.date" required />
           </div>
         </div>
         <div class="form-row">
           <div class="form-group">
-            <label>Costo</label>
+            <label>{{ t('management.maintenance.cost') }}</label>
             <input type="number" v-model.number="form.cost" min="0" required />
           </div>
           <div class="form-group">
-            <label>ID Orden</label>
+            <label>{{ t('management.maintenance.orderId') }}</label>
             <input v-model="form.id" :disabled="isEditing" />
           </div>
         </div>
         <div class="form-row">
           <div v-if="form.entityType === 'BICYCLE'" class="form-group">
-            <label>ID Bicicleta <span style="color:red">*</span></label>
+            <label>{{ t('management.maintenance.bikeId') }} <span style="color:red">*</span></label>
             <input v-model="form.bikeId" required />
           </div>
           <div v-if="form.entityType === 'STATION'" class="form-group">
-            <label>ID Estación <span style="color:red">*</span></label>
+            <label>{{ t('management.maintenance.stationId') }} <span style="color:red">*</span></label>
             <input v-model="form.stationId" required />
           </div>
           <div v-if="form.entityType === 'LOCK'" class="form-group">
-            <label>ID Candado <span style="color:red">*</span></label>
+            <label>{{ t('management.maintenance.lockId') }} <span style="color:red">*</span></label>
             <input v-model="form.lockId" required />
           </div>
         </div>
         <div class="form-actions">
           <button class="btn-primary" type="submit" :disabled="!isFormValid || loading">
-            {{ isEditing ? 'Guardar cambios' : 'Crear' }}
+            {{ isEditing ? t('management.maintenance.saveChanges') : t('management.maintenance.create') }}
           </button>
-          <button v-if="isEditing" class="btn-secondary" type="button" @click="resetForm">Cancelar</button>
+          <button v-if="isEditing" class="btn-secondary" type="button" @click="resetForm">{{ t('management.maintenance.cancel') }}</button>
         </div>
       </form>
     </div>
 
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>Cargando órdenes...</p>
+      <p>{{ t('management.maintenance.loading') }}</p>
     </div>
     <div v-else-if="error" class="error-state">
       <span class="material-symbols-outlined">error</span>
@@ -93,18 +96,18 @@
       <table v-if="maintenances.length">
         <thead>
           <tr>
-            <th>Entidad</th>
-            <th>Tipo</th>
-            <th>Solicitado por</th>
-            <th>Descripción</th>
-            <th>Estado</th>
-            <th>Fecha</th>
-            <th>Costo</th>
-            <th>ID Bicicleta</th>
-            <th>ID Estación</th>
-            <th>ID Candado</th>
-            <th>ID Orden</th>
-            <th>Acciones</th>
+            <th>{{ t('management.maintenance.entityType') }}</th>
+            <th>{{ t('management.maintenance.maintenanceType') }}</th>
+            <th>{{ t('management.maintenance.triggeredBy') }}</th>
+            <th>{{ t('management.maintenance.description') }}</th>
+            <th>{{ t('management.maintenance.status') }}</th>
+            <th>{{ t('management.maintenance.date') }}</th>
+            <th>{{ t('management.maintenance.cost') }}</th>
+            <th>{{ t('management.maintenance.bikeId') }}</th>
+            <th>{{ t('management.maintenance.stationId') }}</th>
+            <th>{{ t('management.maintenance.lockId') }}</th>
+            <th>{{ t('management.maintenance.orderId') }}</th>
+            <th>{{ t('common.actions') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -123,13 +126,13 @@
             <td>
               <button class="btn-info btn-sm" type="button" @click="startEdit(m)">
                 <span class="material-symbols-outlined">edit</span>
-                Editar
+                {{ t('management.maintenance.editButton') }}
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <p v-else class="empty-message">No hay órdenes de mantenimiento registradas.</p>
+      <p v-else class="empty-message">{{ t('management.maintenance.empty') }}</p>
     </div>
   </div>
 </template>
@@ -138,21 +141,14 @@
 import { ref, onMounted, computed } from 'vue';
 import type Maintenance from '@/models/Maintenance';
 import { useMaintenanceStore } from '@/stores/maintenanceStore';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const maintenanceStore = useMaintenanceStore();
 const loading = computed(() => maintenanceStore.loading);
 const error = ref<string | null>(null);
 const maintenances = computed(() => maintenanceStore.maintList);
-
-const maintenanceTypes = {
-  PREVENTIVE: 'Preventivo',
-  CORRECTIVE: 'Correctivo',
-  INSPECTION: 'Inspección',
-};
-const triggeredByOptions = {
-  ADMIN: 'Administrador',
-  IOT_ALERT: 'Alerta IoT',
-};
 
 const initialFormState = {
   entityType: 'BICYCLE',

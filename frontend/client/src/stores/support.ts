@@ -3,8 +3,8 @@ import type { ComplaintPayload, ComplaintResponse } from "@/models/Complaint";
 
 export const useSupportStore = defineStore("support", {
   state: () => ({
-    complaintsBaseURL: process.env.VUE_APP_API_URL+'/complaints',
-    reportsBaseURL: process.env.VUE_APP_API_URL+'/reports',
+    complaintsBaseURL: '/api/complaints',
+    reportsBaseURL: '/api/reports',
     loading: false,
     error: null as string | null,
     lastComplaint: null as ComplaintResponse | null,

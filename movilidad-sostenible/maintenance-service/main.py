@@ -64,7 +64,7 @@ async def _resolve_service_url(service_name: str) -> str:
 async def _ensure_bicycle_exists(bike_id: str) -> dict:
     if not bike_id:
         raise HTTPException(status_code=400, detail="Bike ID is required for bicycle maintenance records.")
-    
+
     base_url = await _resolve_service_url("bicis-service")
     endpoint = f"{base_url}/{bike_id}"
     print(f"Checking bicycle existence at {endpoint}")
@@ -89,7 +89,7 @@ async def _ensure_bicycle_exists(bike_id: str) -> dict:
 async def _ensure_station_exists(station_id: int) -> dict:
     if station_id is None:
         raise HTTPException(status_code=400, detail="Station ID is required for station maintenance records.")
-    
+
     base_url = await _resolve_service_url("estaciones-service")
     endpoint = f"{base_url}/{station_id}"
     try:
@@ -109,7 +109,7 @@ async def _ensure_station_exists(station_id: int) -> dict:
 async def _ensure_lock_exists(lock_id: str) -> dict:
     if not lock_id:
         raise HTTPException(status_code=400, detail="Lock ID is required for lock maintenance records.")
-    
+
     # Assuming 'slots-service' is the correct name for locks
     base_url = await _resolve_service_url("slots-service")
     endpoint = f"{base_url}/{lock_id}"
@@ -187,7 +187,7 @@ async def update_maintenance_record(maintenance_id: str, record: schemas.Mainten
     db_record = db.query(models.MaintenanceRecord).filter(models.MaintenanceRecord.k_id_maintenance == maintenance_id).first()
     if db_record is None:
         raise HTTPException(status_code=404, detail="Maintenance record not found")
-    
+
     _validate_entity_reference(record)
     if record.t_entity_type == "BICYCLE":
         await _ensure_bicycle_exists(record.k_id_bicycle)
@@ -199,7 +199,7 @@ async def update_maintenance_record(maintenance_id: str, record: schemas.Mainten
     payload = _normalize_entity_payload(payload, record.t_entity_type)
     for key, value in payload.items():
         setattr(db_record, key, value)
-    
+
     db.commit()
     db.refresh(db_record)
     return db_record
@@ -266,7 +266,7 @@ def delete_maintenance_record(maintenance_id: str, db: Session = Depends(databas
     db_record = db.query(models.MaintenanceRecord).filter(models.MaintenanceRecord.k_id_maintenance == maintenance_id).first()
     if db_record is None:
         raise HTTPException(status_code=404, detail="Maintenance record not found")
-    
+
     db.delete(db_record)
     db.commit()
     return {"ok": True}

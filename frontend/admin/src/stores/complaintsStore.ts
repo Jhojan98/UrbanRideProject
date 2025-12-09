@@ -3,7 +3,7 @@ import type Complaint from "@/models/Complaint";
 
 export const useComplaintsStore = defineStore("complaints", {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL + "/complaints",
+    baseURL: '/api/complaints',
     complaints: [] as Complaint[],
     loading: false,
     error: null as string | null,
@@ -51,28 +51,39 @@ export const useComplaintsStore = defineStore("complaints", {
     },
 
     async updateComplaintStatus(id: number, status: string) {
-      this.loading = true;
       this.error = null;
       try {
+        console.log('[ComplaintsStore] Actualizando queja:', { id, status });
+        const payload = { t_status: status };
+        console.log('[ComplaintsStore] Payload:', JSON.stringify(payload));
+
         const response = await fetch(`${this.baseURL}/complaints/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify(payload),
         });
+
         if (!response.ok) {
-          console.error("HTTP error updating complaint status:", response.status, response.statusText);
-          return;
+          const errorText = await response.text();
+          console.error("HTTP error updating complaint status:", response.status, response.statusText, errorText);
+          throw new Error(`Error ${response.status}: ${errorText}`);
         }
-        await this.fetchComplaints();
+
+        const result = await response.json();
+        console.log('[ComplaintsStore] Update successful:', result);
+
+        // Actualizar solo el registro específico en lugar de recargar todo
+        const index = this.complaints.findIndex(c => c.k_id_complaints_and_claims === id);
+        if (index !== -1) {
+          this.complaints[index] = result;
+        }
       } catch (error) {
         console.error("Error updating complaint status:", error);
         this.error = error instanceof Error ? error.message : "Error desconocido";
         throw error;
-      } finally {
-        this.loading = false;
       }
     },
 

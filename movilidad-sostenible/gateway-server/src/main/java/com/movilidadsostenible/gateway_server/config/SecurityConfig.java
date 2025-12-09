@@ -35,7 +35,7 @@ public class SecurityConfig {
         // Permitir orígenes comunes en desarrollo y el puerto 8090 (gateway)
         corsConfig.setAllowedOrigins(Arrays.asList("http://localhost:8080","http://localhost:8081"));
         corsConfig.setAllowedOriginPatterns(Collections.singletonList("*"));
-        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         corsConfig.setAllowedHeaders(Collections.singletonList("*"));
         corsConfig.setAllowCredentials(true);
         corsConfig.setMaxAge(3600L);

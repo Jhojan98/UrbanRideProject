@@ -131,5 +131,50 @@ export default {
       suggestion: 'Sugerencia',
       other: 'Otro'
     }
+  },
+  maintenance: {
+    title: 'Órdenes de Mantenimiento',
+    create: 'Crear orden de mantenimiento',
+    edit: 'Editar orden de mantenimiento',
+    newOrder: 'Crear nueva orden de mantenimiento',
+    entityType: 'Tipo de entidad',
+    maintenanceType: 'Tipo de mantenimiento',
+    triggeredBy: 'Solicitado por',
+    description: 'Descripción',
+    status: 'Estado',
+    date: 'Fecha',
+    cost: 'Costo',
+    orderId: 'ID Orden',
+    bikeId: 'ID Bicicleta',
+    stationId: 'ID Estación',
+    lockId: 'ID Candado',
+    saveChanges: 'Guardar cambios',
+    cancel: 'Cancelar',
+    loading: 'Cargando órdenes...',
+    empty: 'No hay órdenes de mantenimiento',
+    editButton: 'Editar',
+    createSuccess: 'Orden creada exitosamente',
+    updateSuccess: 'Orden actualizada exitosamente',
+    createError: 'Error al crear la orden',
+    updateError: 'Error al actualizar la orden',
+    entities: {
+      bicycle: 'Bicicleta',
+      station: 'Estación',
+      lock: 'Candado'
+    },
+    types: {
+      preventive: 'Preventivo',
+      corrective: 'Correctivo',
+      inspection: 'Inspección'
+    },
+    triggers: {
+      admin: 'Administrador',
+      iotAlert: 'Alerta IoT'
+    },
+    statuses: {
+      pending: 'Pendiente',
+      solving: 'En Proceso',
+      resolved: 'Resuelto'
+    }
   }
 }

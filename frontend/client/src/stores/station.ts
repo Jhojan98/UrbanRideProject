@@ -16,7 +16,7 @@ type RawStation = Partial<StationExtended> & Record<string, unknown>;
 
 export const useStationStore = defineStore("station", {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL,
+    baseURL: "/api",
     stationsEndpoint: "/station",
     stations: [] as StationExtended[],
     loading: false,

@@ -3,7 +3,7 @@ import type City from "@/models/City";
 
 export const useCityStore = defineStore("city", {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL,
+    baseURL: '/api',
     cities: [] as City[],
     loading: false,
     error: null as string | null,
