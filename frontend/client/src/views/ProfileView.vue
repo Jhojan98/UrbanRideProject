@@ -212,7 +212,34 @@
           <div class="action-card">
             <h3>{{ $t('profile.complaints.maintenanceTitle') }}</h3>
             <p>{{ $t('profile.complaints.maintenanceSubtitle') }}</p>
-            <button class="btn-primary" @click="openMaintenancePortal">{{ $t('profile.complaints.openMaintenance') }}</button>
+            <form class="maintenance-form" @submit.prevent="submitMaintenance">
+              <label class="input-label">¿Qué elemento tiene falla?</label>
+              <select v-model="maintenanceForm.itemType">
+                <option value="BICYCLE">Bicicleta</option>
+                <option value="STATION">Estación de recarga</option>
+                <option value="LOCK">Candado de seguridad</option>
+              </select>
+
+              <label class="input-label">Código o número del elemento</label>
+              <input
+                v-model="maintenanceForm.itemId"
+                type="text"
+                placeholder="Encuentra el código en el elemento (ej: ABC123)"
+                required
+              />
+
+              <label class="input-label">¿Cuál es el problema?</label>
+              <textarea
+                v-model="maintenanceForm.problemDescription"
+                placeholder="Describe qué está funcionando mal (ej: La cadena está rota, el candado no abre, etc)"
+                rows="4"
+                required
+              />
+
+              <button class="btn-primary" type="submit" :disabled="supportStore.loading">
+                {{ supportStore.loading ? 'Reportando...' : 'Reportar falla' }}
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -319,6 +346,13 @@ const complaintForm = reactive({
 });
 const complaintError = ref("");
 const complaintSuccess = ref("");
+
+// Mantenimiento (simplificado para usuario)
+const maintenanceForm = reactive({
+  itemType: "BICYCLE" as "BICYCLE" | "STATION" | "LOCK",
+  itemId: "",
+  problemDescription: "",
+});
 
 // Texto de bienvenida
 const welcomeText = computed(() => {
@@ -427,6 +461,38 @@ async function submitComplaint() {
   complaintForm.description = "";
   complaintForm.type = "BICYCLE";
   complaintForm.travelId = "";
+}
+
+// Enviar solicitud de mantenimiento
+async function submitMaintenance() {
+  if (!maintenanceForm.problemDescription.trim()) {
+    alert("La descripción del problema es obligatoria");
+    return;
+  }
+
+  if (!maintenanceForm.itemId.trim()) {
+    alert("El ID del elemento es obligatorio");
+    return;
+  }
+
+  try {
+    const resp = await supportStore.submitMaintenance({
+      entityType: maintenanceForm.itemType,
+      maintenanceType: "CORRECTIVE",
+      triggeredBy: "USER",
+      description: maintenanceForm.problemDescription.trim(),
+      date: new Date().toISOString(),
+      cost: 0,
+      [maintenanceForm.itemType === "BICYCLE" ? "bikeId" : maintenanceForm.itemType === "STATION" ? "stationId" : "lockId"]: maintenanceForm.itemId,
+    });
+    
+    alert("Solicitud de mantenimiento enviada exitosamente");
+    maintenanceForm.problemDescription = "";
+    maintenanceForm.itemId = "";
+    maintenanceForm.itemType = "BICYCLE";
+  } catch (error) {
+    alert("No se pudo enviar la solicitud de mantenimiento");
+  }
 }
 
 // Actualizar tasa de cambio dinámicamente

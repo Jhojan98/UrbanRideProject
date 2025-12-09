@@ -2,6 +2,10 @@ import { defineStore } from "pinia";
 
 export type ComplaintType = "BICYCLE" | "SLOT" | "STATION";
 export type ComplaintStatus = "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED" | "PENDING";
+export type MaintenanceType = "PREVENTIVE" | "CORRECTIVE" | "INSPECTION";
+export type MaintenanceEntityType = "BICYCLE" | "STATION" | "LOCK";
+export type MaintenanceTriggeredBy = "ADMIN" | "USER" | "IOT_ALERT";
+export type MaintenanceStatus = "PENDING" | "SOLVING" | "RESOLVED";
 
 export interface ComplaintPayload {
   description: string;
@@ -18,6 +22,33 @@ export interface ComplaintResponse {
   t_type: ComplaintType;
 }
 
+export interface MaintenancePayload {
+  entityType: MaintenanceEntityType;
+  maintenanceType?: MaintenanceType;
+  triggeredBy: MaintenanceTriggeredBy;
+  description: string;
+  status?: MaintenanceStatus;
+  date: string;
+  cost?: number;
+  bikeId?: string;
+  stationId?: number;
+  lockId?: string;
+}
+
+export interface MaintenanceResponse {
+  id: string;
+  entityType: MaintenanceEntityType;
+  maintenanceType: MaintenanceType;
+  triggeredBy: MaintenanceTriggeredBy;
+  description: string;
+  status: MaintenanceStatus;
+  date: string;
+  cost?: number;
+  bikeId?: string;
+  stationId?: number;
+  lockId?: string;
+}
+
 export const useSupportStore = defineStore("support", {
   state: () => ({
     complaintsBaseURL: process.env.VUE_APP_COMPLAINTS_URL || "http://localhost:5007",
@@ -26,6 +57,7 @@ export const useSupportStore = defineStore("support", {
     loading: false,
     error: null as string | null,
     lastComplaint: null as ComplaintResponse | null,
+    lastMaintenance: null as MaintenanceResponse | null,
   }),
 
   actions: {
@@ -82,6 +114,51 @@ export const useSupportStore = defineStore("support", {
       } catch (err: any) {
         this.error = err?.message || "No se pudo descargar el reporte";
         console.error("[SupportStore] downloadReport error:", err);
+        return null;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async submitMaintenance(payload: MaintenancePayload): Promise<MaintenanceResponse | null> {
+      this.loading = true;
+      this.error = null;
+      this.lastMaintenance = null;
+
+      const body = {
+        entityType: payload.entityType,
+        maintenanceType: payload.maintenanceType || "PREVENTIVE",
+        triggeredBy: payload.triggeredBy,
+        description: payload.description,
+        status: payload.status || "PENDING",
+        date: payload.date,
+        cost: payload.cost || null,
+        bikeId: payload.bikeId || null,
+        stationId: payload.stationId || null,
+        lockId: payload.lockId || null,
+      };
+
+      try {
+        const res = await fetch(`${this.maintenanceBaseURL}/maintenance/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          throw new Error(`HTTP ${res.status} ${res.statusText} ${text}`);
+        }
+
+        const data = (await res.json()) as MaintenanceResponse;
+        this.lastMaintenance = data;
+        return data;
+      } catch (err: any) {
+        this.error = err?.message || "Error al enviar solicitud de mantenimiento";
+        console.error("[SupportStore] submitMaintenance error:", err);
         return null;
       } finally {
         this.loading = false;

@@ -780,3 +780,76 @@
     font-size: 0.95rem;
   }
 }
+
+/* Estilos para inputs y textareas */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+select,
+textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: #333;
+  background: white;
+  transition: border-color 0.3s, box-shadow 0.3s;
+
+  &::placeholder {
+    color: #999;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #2E7D32;
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+  }
+
+  &:hover:not(:focus) {
+    border-color: #bdbdbd;
+  }
+}
+
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--color-surface-dark);
+  color: var(--color-text-primary-dark);
+  border-color: var(--color-border-dark);
+
+  &::placeholder {
+    color: var(--color-text-secondary-dark);
+  }
+
+  &:focus {
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+  }
+
+  &:hover:not(:focus) {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.input-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+[data-theme="dark"] .input-label {
+  color: var(--color-text-secondary-dark);
+}
+
