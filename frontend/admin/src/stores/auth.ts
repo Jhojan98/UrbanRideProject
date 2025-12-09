@@ -10,7 +10,7 @@ const userAuthStore = defineStore("auth", {
   state() {
     return {
       token: null as string | null,
-      baseURL: process.env.VUE_APP_API_URL || "http://localhost:8090",
+      baseURL: '/api',
       message: "",
       isVerified: false,
       pendingVerification: false,
@@ -34,12 +34,6 @@ const userAuthStore = defineStore("auth", {
 
         // Obtener token de Firebase
         const token = await userCredential.user.getIdToken();
-
-        console.log("=== ENVIANDO DATOS AL BACKEND (ADMIN LOGIN) ===");
-        console.log("email:", email);
-        console.log("uid:", userCredential.user.uid);
-        console.log("token:", token ? "Token obtenido" : "No token");
-        console.log("================================================");
 
         // Verificar si el administrador existe en la base de datos
         const uri = `${this.baseURL}/admin/login/${userCredential.user.uid}`;

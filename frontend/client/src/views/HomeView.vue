@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <!-- Sección Hero (principal con llamada a la acción) -->
+    <!-- Hero Section (main with call to action) -->
     <section class="hero">
       <div class="hero-content">
 
@@ -23,11 +23,11 @@
     </section>
 
 
-    <!-- Sección de Beneficios -->
+    <!-- Benefits Section -->
     <section class="benefits">
       <h2 class="section-title">{{ $t('home.discover') }}</h2>
       <div class="benefits-grid">
-        <!-- Cada benefit-card es un beneficio del servicio -->
+        <!-- Each benefit-card is a service benefit -->
         <div class="benefit-card">
           <h3>{{ $t('home.cards.health.title') }}</h3>
           <p>{{ $t('home.cards.health.text') }}</p>
@@ -43,7 +43,7 @@
       </div>
     </section>
 
-    <!-- Sección de Estaciones -->
+    <!-- Stations Section -->
     <section class="stations">
       <div class="stations-header">
         <h2 class="section-title">{{ $t('home.stations.title') }}</h2>
@@ -63,7 +63,7 @@ const router = useRouter();
 const { t: $t } = useI18n();
 
 const learnMore = () => {
-  // TODO: Implementar navegación a la página de información
+  // TODO: Implement navigation to info page
   router.push('/about');
 };
 </script>

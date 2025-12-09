@@ -1,0 +1,91 @@
+export default {
+    form: {
+        stationDetails: 'Detalles de la Estación',
+        defaultStation: 'Selecciona una estación',
+        selectStation: 'Selecciona una estación',
+        bikesAvailable: 'Bicicletas Disponibles',
+        totalSlots: 'Total de puestos',
+        bikeType: 'Tipo de Bicicleta:',
+        mechanical: 'Mecánica',
+        electric: 'Eléctrica',
+        rideType: 'Tipo de Viaje:',
+        lastMile: 'Última Milla',
+        lastMileMax: 'Máx 45 min',
+        longTrip: 'Recorrido Largo',
+        longTripMax: 'Máx 75 min',
+        balance: 'Saldo:',
+        recharge: 'Recargar',
+        warning: 'La bicicleta se reservará por',
+        warningMinutes: '10 minutos',
+        reserveBike: 'Reservar Bicicleta',
+        selectionAlert: 'Por favor selecciona el tipo de bicicleta y el tipo de viaje.',
+        reserveError: 'Error al iniciar la reserva. Intenta nuevamente.',
+        mustLogin: 'Debes iniciar sesión para iniciar el viaje'
+    },
+    ultimaMilla: {
+        title: 'Viaje de Última Milla',
+        subtitle: 'Selecciona tu punto de partida (metro) y la estación de bicicletas destino',
+        longTripTitle: 'Recorrido Largo',
+        longTripSubtitle: 'Selecciona estación de origen y destino (bici a bici)',
+        originLabel: 'Punto de Partida (Metro)',
+        originLongTripLabel: 'Estación de Origen',
+        destinationLabel: 'Estación de Destino',
+        selectPoint: 'Seleccione un punto',
+        selectStation: 'Seleccione estación',
+        bikeTypeRequired: 'Debe seleccionar tipo de bicicleta'
+    },
+    confirmation: {
+        remainingTime: 'Tiempo restante de reserva',
+        tripDetails: 'Detalles del viaje',
+        bikeType: 'Tipo de bicicleta:',
+        tripType: 'Tipo de viaje:',
+        estimatedCost: 'Costo estimado:',
+        confirm: 'Confirmar Reserva',
+        enterBikeCode: 'Ingresa el código de la bicicleta',
+        unlock: 'Desbloquear',
+        bikeCodeInvalid: 'Por favor, digita el código de 6 dígitos de la bicicleta',
+        noReservationData: 'No hay datos de reserva disponibles',
+        unlockError: 'No se pudo verificar/desbloquear la bicicleta'
+    },
+    map: {
+        authRequired: 'Acceso restringido',
+        authMessage: 'Para acceder a nuestros servicios y ver el mapa, debes iniciar sesión primero.',
+        accept: 'Aceptar',
+        originStation: 'Estación Origen',
+        destinationStation: 'Estación Destino',
+        availableBikes: 'bicicletas',
+        availableSlots: 'puestos libres',
+        markerOrigin: 'Origen',
+        markerDestination: 'Destino',
+        markerCoords: 'Lat: {lat}, Lng: {lng}',
+        popup: {
+            availableTypes: 'Tipos disponibles',
+            mechanical: 'Mecánicas',
+            electric: 'Eléctricas',
+            available: 'Disponibles',
+            slots: 'Slots',
+            noSlots: 'Sin slots',
+            slotFree: 'Slot {num}: Libre',
+            slotOccupied: 'Slot {num}: Ocupado',
+            slotMaintenance: 'Slot {num}: Mantto.',
+            slotOutOfService: 'Slot {num}: Fuera',
+            slotUnknown: 'Desconocido'
+        },
+        bicycle: {
+            title: 'Bicicleta {id}',
+            battery: 'Batería',
+            location: 'Ubicación',
+            lastUpdate: 'Última actualización'
+        }
+    },
+    notifications: {
+        expiredTravel: 'Viaje Cancelado',
+        expiredTravelMsg: 'El tiempo de espera ha expirado y tu viaje ha sido cancelado automáticamente.',
+        startTravel: 'Viaje Iniciado',
+        startTravelMsg: '¡Tu reserva ha sido confirmada! El viaje ha iniciado exitosamente.',
+        endTravel: 'Viaje Finalizado',
+        endTravelMsg: 'Tu viaje ha finalizado. Los detalles y el monto total serán enviados a tu correo electrónico.',
+        defaultNotification: 'Notificación',
+        closeLabel: 'Cerrar notificación'
+    }
+};

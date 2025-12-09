@@ -7,14 +7,9 @@ import lombok.Data;
 @Data
 public class EndTravelDTO {
 
-  private String slotId;
-  private String idBicycle;
-
   private Double latitudeBicycle;
   private Double longitudeBicycle;
-
-  private Integer idStation;
-
+  private Double batteryBicycle;
   private Long endTravelTimestamp;
 
 }

@@ -5,7 +5,9 @@ export const messages = {
             minutes: 'minutos',
             accept: 'Aceptar',
             cancel: 'Cancelar',
-            loading: 'Cargando...'
+            loading: 'Cargando...',
+            menu: 'Abrir menú',
+            close: 'Cerrar'
         },
         nav: {
             home: 'Inicio',
@@ -103,17 +105,76 @@ export const messages = {
             }
         },
         profile: {
+            loading: 'Cargando...',
             header: {
                 welcome_user: 'Bienvenido de nuevo, {name}'
             },
+            tabs: {
+                overview: 'Resumen',
+                trips: 'Viajes',
+                fines: 'Multas',
+                complaints: 'Quejas / Mantenimiento',
+                reports: 'Reportes'
+            },
+            complaints: {
+                title: 'Quejas',
+                subtitle: 'Reporta incidencias para soporte.',
+                formTitle: 'Reportar queja',
+                formSubtitle: 'Ingresa una queja para soporte. El ID de viaje es opcional.',
+                descriptionLabel: 'Descripción',
+                descriptionPlaceholder: 'Describe el inconveniente',
+                typeLabel: 'Tipo',
+                typeOptions: {
+                    bicycle: 'Bicicleta',
+                    slot: 'Candado / Slot',
+                    station: 'Estación'
+                },
+                travelIdLabel: 'ID de viaje (opcional)',
+                travelIdPlaceholder: 'Ej: 102',
+                submit: 'Enviar queja',
+                submitting: 'Enviando...',
+                success: 'Queja registrada (#{id})',
+                errorRequired: 'La descripción es obligatoria',
+                errorNumeric: 'El ID de viaje debe ser numérico',
+                submitError: 'No se pudo enviar la queja'
+            },
+            reportsSection: {
+                title: 'Reportes',
+                subtitle: 'Descarga reportes operativos en PDF o Excel.',
+                cards: {
+                    bicycleUsage: 'Uso de bicicletas',
+                    stationDemand: 'Demanda de estaciones',
+                    bicycleDemand: 'Demanda de bicicletas',
+                    dailyTrips: 'Viajes diarios'
+                },
+                downloadExcel: 'Excel',
+                downloadPdf: 'PDF',
+                downloadError: 'No se pudo descargar el reporte. Verifica que reports-service (5004) esté arriba.'
+            },
             trips: {
                 title: 'Historial de Viajes',
+                startStation: 'Estación de Inicio',
+                endStation: 'Estación de Destino',
                 route: 'Ruta',
                 date: 'Fecha',
                 duration: 'Duración',
                 cost: 'Costo',
-                status: 'Est',
-                viewAll: 'Ver todos los viajes'
+                status: 'Estado',
+                viewAll: 'Ver todos los viajes',
+                noTrips: 'No hay viajes registrados'
+            },
+            fines: {
+                title: 'Mis Multas',
+                fineId: 'Multa ID',
+                reason: 'Razón',
+                amount: 'Monto',
+                date: 'Fecha',
+                description: 'Descripción',
+                status: 'Estado',
+                paid: 'Pagado',
+                pending: 'Pendiente',
+                payNow: 'Pagar Ahora',
+                noFines: 'No hay multas pendientes'
             },
             loyalty: {
                 title: 'Puntos de Fidelización',
@@ -131,14 +192,37 @@ export const messages = {
                 registeredCard: 'Tarjeta Registrada',
                 expires: 'Expira:',
                 managePayments: 'Gestionar métodos de pago',
-                addBalance: 'Añadir saldo'
+                addBalance: 'Añadir saldo',
+                buySubscription: 'Comprar Suscripción',
+                currency: 'Moneda'
+            },
+            subscription: {
+                purchase: {
+                    title: 'Comprar Suscripción',
+                    subtitle: 'Accede a viajes ilimitados y beneficios exclusivos',
+                    price: 'Precio del plan mensual',
+                    currentBalance: 'Tu Saldo Actual',
+                    eligible: '✓ Saldo suficiente para la compra',
+                    insufficientBalance: '⚠ Saldo insuficiente',
+                    minimumRequirement: 'Saldo mínimo requerido: $39.00 USD',
+                    button: 'Comprar Suscripción',
+                    processing: 'Procesando compra...',
+                    note: 'La suscripción se renovará automáticamente cada mes.',
+                    terms: 'Al comprar aceptas los términos y condiciones del servicio.',
+                    success: {
+                        title: '¡Suscripción Activada!',
+                        message: 'Tu suscripción mensual ha sido activada exitosamente. Redirigiendo...'
+                    }
+                }
             }
         },
         reservation: {
             form: {
                 stationDetails: 'Detalles de la Estación',
                 defaultStation: 'Selecciona una estación',
+                selectStation: 'Selecciona una estación',
                 bikesAvailable: 'Bicicletas Disponibles',
+                totalSlots: 'Total de puestos',
                 bikeType: 'Tipo de Bicicleta:',
                 mechanical: 'Mecánica',
                 electric: 'Eléctrica',
@@ -152,7 +236,19 @@ export const messages = {
                 warning: 'La bicicleta se reservará por',
                 warningMinutes: '10 minutos',
                 reserveBike: 'Reservar Bicicleta',
-                selectionAlert: 'Por favor selecciona el tipo de bicicleta y el tipo de viaje.'
+                selectionAlert: 'Por favor selecciona el tipo de bicicleta y el tipo de viaje.',
+                noBikesAvailable: 'No hay bicicletas disponibles'
+            },
+            ultimaMilla: {
+                title: 'Última Milla',
+                longTripTitle: 'Recorrido Largo',
+                subtitle: 'Elige un origen desde metro y un destino de bici',
+                longTripSubtitle: 'Selecciona origen y destino para tu recorrido largo',
+                originLabel: 'Estación origen (metro)',
+                originLongTripLabel: 'Estación origen',
+                destinationLabel: 'Estación destino',
+                selectPoint: 'Selecciona un punto',
+                selectStation: 'Selecciona una estación'
             },
             confirmation: {
                 remainingTime: 'Tiempo restante de reserva',
@@ -160,7 +256,50 @@ export const messages = {
                 bikeType: 'Tipo de bicicleta:',
                 tripType: 'Tipo de viaje:',
                 estimatedCost: 'Costo estimado:',
-                confirm: 'Confirmar Reserva'
+                confirm: 'Confirmar Reserva',
+                enterBikeCode: 'Ingresa el código de la bicicleta',
+                unlock: 'Desbloquear'
+            },
+            map: {
+                authRequired: 'Acceso restringido',
+                authMessage: 'Para acceder a nuestros servicios y ver el mapa, debes iniciar sesión primero.',
+                accept: 'Aceptar',
+                originStation: 'Estación Origen',
+                destinationStation: 'Estación Destino',
+                availableBikes: 'bicicletas',
+                availableSlots: 'puestos libres',
+                markerOrigin: 'Origen',
+                markerDestination: 'Destino',
+                markerCoords: 'Lat: {lat}, Lng: {lng}',
+                popup: {
+                    availableTypes: 'Tipos disponibles',
+                    mechanical: 'Mecánicas',
+                    electric: 'Eléctricas',
+                    available: 'Disponibles',
+                    slots: 'Slots',
+                    noSlots: 'Sin slots',
+                    slotFree: 'Slot {num}: Libre',
+                    slotOccupied: 'Slot {num}: Ocupado',
+                    slotMaintenance: 'Slot {num}: Mantto.',
+                    slotOutOfService: 'Slot {num}: Fuera',
+                    slotUnknown: 'Desconocido'
+                },
+                bicycle: {
+                    title: 'Bicicleta {id}',
+                    battery: 'Batería',
+                    location: 'Ubicación',
+                    lastUpdate: 'Última actualización'
+                }
+            },
+            notifications: {
+                expiredTravel: 'Viaje Cancelado',
+                expiredTravelMsg: 'El tiempo de espera ha expirado y tu viaje ha sido cancelado automáticamente.',
+                startTravel: 'Viaje Iniciado',
+                startTravelMsg: '¡Tu reserva ha sido confirmada! El viaje ha iniciado exitosamente.',
+                endTravel: 'Viaje Finalizado',
+                endTravelMsg: 'Tu viaje ha finalizado. Los detalles y el monto total serán enviados a tu correo electrónico.',
+                defaultNotification: 'Notificación',
+                closeLabel: 'Cerrar notificación'
             }
         },
         destination: {
@@ -199,7 +338,35 @@ export const messages = {
             confirmDelete: '¿Estás seguro de que quieres eliminar este método de pago?',
             visa: 'Visa',
             mastercard: 'Mastercard',
-            amex: 'American Express'
+            amex: 'American Express',
+            recharge: {
+                title: 'Recargar Saldo',
+                subtitle: 'Elige el monto que deseas recargar en tu cuenta',
+                selectAmount: 'Por favor selecciona un monto',
+                processing: 'Procesando...',
+                rechargeBtn: 'Recargar Saldo',
+                security: '🔒 Serás redirigido a Stripe para completar el pago de forma segura',
+                notAuthenticated: 'No se encontró usuario autenticado. Vuelve a iniciar sesión.',
+                priceNotFound: 'PriceId no configurado para el monto seleccionado',
+                error: 'Error al iniciar el pago',
+                tryAgain: 'Por favor intenta nuevamente.',
+                currency: 'Moneda',
+                estimatedNote: 'Nota: Los montos se muestran en {currency} para tu referencia. El pago se procesa en USD.'
+            },
+            success: {
+                title: 'Pago realizado ✅',
+                subtitle: '¡Gracias por tu compra! Tu saldo ha sido recargado exitosamente.',
+                sessionId: 'Session ID:',
+                user: 'Usuario:',
+                updatedBalance: 'Saldo actualizado:',
+                viewBalance: 'Ver mi saldo actualizado',
+                backHome: 'Volver al inicio'
+            },
+            cancel: {
+                title: 'Pago cancelado ❌',
+                subtitle: 'El pago fue cancelado o no se completó. Si fue un error intenta nuevamente.',
+                backHome: 'Volver al inicio'
+            }
         },
         report: {
             title: 'Reportar Problema',
@@ -250,7 +417,9 @@ export const messages = {
             minutes: 'minutes',
             accept: 'Accept',
             cancel: 'Cancel',
-            loading: 'Loading...'
+            loading: 'Loading',
+            menu: 'Open menu',
+            close: 'Close'
         },
         nav: {
             home: 'Home',
@@ -299,7 +468,7 @@ export const messages = {
                 noAccount: "Don't have an account?",
                 registerHere: 'Register here',
                 verifyRequired: 'Verification required. Redirecting...',
-                success: 'Login successful. Redirecting...',
+                success: 'Login successful. Redirecting',
                 error: 'Login error'
             },
             signup: {
@@ -322,8 +491,8 @@ export const messages = {
                 password: 'Password',
                 submit: 'Register',
                 google: 'Sign up with Google',
-                idRequired: 'Please enter your identification.',
-                success: 'Registration successful. We will send a verification code.',
+                idRequired: 'Please enter your identification',
+                success: 'Registration successful. We will send a verification code',
                 error: 'Registration error'
             },
             otp: {
@@ -334,29 +503,88 @@ export const messages = {
                 verify: 'Verify Email',
                 resend: 'Resend Email',
                 backToLogin: 'Back to Login',
-                noEmailFound: 'No email found to verify. Redirecting to login...',
+                noEmailFound: 'No email found to verify. Redirecting to login',
                 noEmail: 'No email available to verify',
                 invalidOtp: 'OTP must be a valid 6-digit number',
-                success: 'Verification successful! Redirecting...',
+                success: 'Verification successful! Redirecting',
                 verifyError: 'Email verification error',
                 noEmailResend: 'No email available to resend',
                 resendSuccess: 'Verification email resent',
                 resendError: 'Error resending email',
-                emailSent: 'We have sent a verification email to your address.',
-                checkInbox: 'Please check your inbox and click on the verification link.',
-                afterVerify: 'Once verified, click the button below to continue.'
+                emailSent: 'We have sent a verification email to your address',
+                checkInbox: 'Please check your inbox and click on the verification link',
+                afterVerify: 'Once verified, click the button below to continue'
             }
         },
         profile: {
+            loading: 'Loading...',
             header: { welcome_user: 'Welcome back, {name}' },
+            tabs: {
+                overview: 'Overview',
+                trips: 'Trips',
+                fines: 'Fines',
+                complaints: 'Complaints',
+                reports: 'Reports'
+            },
+            complaints: {
+                title: 'Complaints',
+                subtitle: 'Report incidents for support.',
+                formTitle: 'Submit complaint',
+                formSubtitle: 'Enter a complaint for support. Travel ID is optional.',
+                descriptionLabel: 'Description',
+                descriptionPlaceholder: 'Describe the issue',
+                typeLabel: 'Type',
+                typeOptions: {
+                    bicycle: 'Bicycle',
+                    slot: 'Lock / Slot',
+                    station: 'Station'
+                },
+                travelIdLabel: 'Travel ID (optional)',
+                travelIdPlaceholder: 'e.g. 102',
+                submit: 'Send complaint',
+                submitting: 'Sending...',
+                success: 'Complaint recorded (#{id})',
+                errorRequired: 'Description is required',
+                errorNumeric: 'Travel ID must be numeric',
+                submitError: 'Could not submit the complaint'
+            },
+            reportsSection: {
+                title: 'Reports',
+                subtitle: 'Download operational reports in PDF or Excel.',
+                cards: {
+                    bicycleUsage: 'Bicycle usage',
+                    stationDemand: 'Station demand',
+                    bicycleDemand: 'Bicycle demand',
+                    dailyTrips: 'Daily trips'
+                },
+                downloadExcel: 'Excel',
+                downloadPdf: 'PDF',
+                downloadError: 'Could not download the report. Check that reports-service (5004) is up.'
+            },
             trips: {
                 title: 'Trip History',
+                startStation: 'Start Station',
+                endStation: 'End Station',
                 route: 'Route',
                 date: 'Date',
                 duration: 'Duration',
                 cost: 'Cost',
-                status: 'St',
-                viewAll: 'View all trips'
+                status: 'Status',
+                viewAll: 'View all trips',
+                noTrips: 'No trips recorded'
+            },
+            fines: {
+                title: 'My Fines',
+                fineId: 'Fine ID',
+                reason: 'Reason',
+                amount: 'Amount',
+                date: 'Date',
+                description: 'Description',
+                status: 'Status',
+                paid: 'Paid',
+                pending: 'Pending',
+                payNow: 'Pay Now',
+                noFines: 'No pending fines'
             },
             loyalty: {
                 title: 'Loyalty Points',
@@ -374,14 +602,37 @@ export const messages = {
                 registeredCard: 'Registered Card',
                 expires: 'Expires:',
                 managePayments: 'Manage payment methods',
-                addBalance: 'Add balance'
+                addBalance: 'Add Balance',
+                buySubscription: 'Buy Subscription',
+                currency: 'Currency'
+            },
+            subscription: {
+                purchase: {
+                    title: 'Buy Subscription',
+                    subtitle: 'Get unlimited rides and exclusive benefits',
+                    price: 'Monthly plan price',
+                    currentBalance: 'Your Current Balance',
+                    eligible: '✓ Sufficient balance for purchase',
+                    insufficientBalance: '⚠ Insufficient balance',
+                    minimumRequirement: 'Minimum required balance: $39.00 USD',
+                    button: 'Buy Subscription',
+                    processing: 'Processing purchase...',
+                    note: 'Subscription will automatically renew every month.',
+                    terms: 'By purchasing you agree to the service terms and conditions.',
+                    success: {
+                        title: 'Subscription Activated!',
+                        message: 'Your monthly subscription has been successfully activated. Redirecting...'
+                    }
+                }
             }
         },
         reservation: {
             form: {
                 stationDetails: 'Station Details',
                 defaultStation: 'Select a station',
+                selectStation: 'Select a station',
                 bikesAvailable: 'Available Bikes',
+                totalSlots: 'Total slots',
                 bikeType: 'Bike Type:',
                 mechanical: 'Mechanical',
                 electric: 'Electric',
@@ -403,7 +654,50 @@ export const messages = {
                 bikeType: 'Bike type:',
                 tripType: 'Trip type:',
                 estimatedCost: 'Estimated cost:',
-                confirm: 'Confirm Reservation'
+                confirm: 'Confirm Reservation',
+                enterBikeCode: 'Enter the bike code',
+                unlock: 'Unlock'
+            },
+            map: {
+                authRequired: 'Restricted access',
+                authMessage: 'To access our services and view the map, you must login first',
+                accept: 'Accept',
+                originStation: 'Origin Station',
+                destinationStation: 'Destination Station',
+                availableBikes: 'bikes',
+                availableSlots: 'available slots',
+                markerOrigin: 'Origin',
+                markerDestination: 'Destination',
+                markerCoords: 'Lat: {lat}, Lng: {lng}',
+                popup: {
+                    availableTypes: 'Available types',
+                    mechanical: 'Mechanical',
+                    electric: 'Electric',
+                    available: 'Available',
+                    slots: 'Slots',
+                    noSlots: 'No slots',
+                    slotFree: 'Slot {num}: Free',
+                    slotOccupied: 'Slot {num}: Occupied',
+                    slotMaintenance: 'Slot {num}: Maint.',
+                    slotOutOfService: 'Slot {num}: Out',
+                    slotUnknown: 'Unknown'
+                },
+                bicycle: {
+                    title: 'Bicycle {id}',
+                    battery: 'Battery',
+                    location: 'Location',
+                    lastUpdate: 'Last update'
+                }
+            },
+            notifications: {
+                expiredTravel: 'Travel Cancelled',
+                expiredTravelMsg: 'The wait time has expired and your trip has been automatically cancelled',
+                startTravel: 'Travel Started',
+                startTravelMsg: 'Your reservation has been confirmed! The trip has started successfully',
+                endTravel: 'Travel Completed',
+                endTravelMsg: 'Your trip has ended. Details and total amount will be sent to your email',
+                defaultNotification: 'Notification',
+                closeLabel: 'Close notification'
             }
         },
         destination: {
@@ -437,12 +731,40 @@ export const messages = {
             expiry: 'Expiration date',
             cvv: 'CVV',
             setAsPrimary: 'Set as primary payment method',
-            adding: 'Adding...',
+            adding: 'Adding',
             addCard: 'Add Card',
             confirmDelete: 'Are you sure you want to delete this payment method?',
             visa: 'Visa',
             mastercard: 'Mastercard',
-            amex: 'American Express'
+            amex: 'American Express',
+            recharge: {
+                title: 'Reload Balance',
+                subtitle: 'Choose the amount you want to reload to your account',
+                selectAmount: 'Please select an amount',
+                processing: 'Processing',
+                rechargeBtn: 'Reload Balance',
+                security: '🔒 You will be redirected to Stripe to complete the payment securely',
+                notAuthenticated: 'No authenticated user found. Please login again',
+                priceNotFound: 'PriceId not configured for the selected amount',
+                error: 'Error starting payment',
+                tryAgain: 'Please try again',
+                currency: 'Currency',
+                estimatedNote: 'Note: Amounts are shown in {currency} for your reference. Payment is processed in USD'
+            },
+            success: {
+                title: 'Payment completed ✅',
+                subtitle: 'Thank you for your purchase! Your balance has been reloaded successfully',
+                sessionId: 'Session ID:',
+                user: 'User:',
+                updatedBalance: 'Updated balance:',
+                viewBalance: 'View my updated balance',
+                backHome: 'Back to home'
+            },
+            cancel: {
+                title: 'Payment cancelled ❌',
+                subtitle: 'The payment was cancelled or not completed. If it was a mistake, try again',
+                backHome: 'Back to home'
+            }
         },
         report: {
             title: 'Report Problem',
@@ -455,14 +777,14 @@ export const messages = {
             problemType: 'Problem type',
             severity: 'Problem severity',
             description: 'Detailed description',
-            descriptionPlaceholder: 'Describe the problem with as much detail as possible...',
+            descriptionPlaceholder: 'Describe the problem with as much detail as possible',
             allowsUse: 'Does it allow bike usage?',
             noUse: 'No, unsafe to use',
             yesUse: 'Yes, but with caution',
-            sending: 'Sending report...',
+            sending: 'Sending report',
             sendReport: 'Send Report',
             successTitle: 'Report Sent',
-            successMsg: 'We received your report and are reviewing it. We will contact you if more info is needed.',
+            successMsg: 'We received your report and are reviewing it. We will contact you if more info is needed',
             reportId: 'Report ID:',
             problems: {
                 mechanical: 'Mechanical Problem',
@@ -477,8 +799,8 @@ export const messages = {
                 medium: { name: 'Medium', desc: 'Affects use but manageable' },
                 high: { name: 'High', desc: 'Serious issue, do not use bike' }
             },
-            cancelConfirm: 'Are you sure you want to cancel? Form data will be lost.',
-            sendError: 'Error sending report. Please try again.'
+            cancelConfirm: 'Are you sure you want to cancel? Form data will be lost',
+            sendError: 'Error sending report. Please try again'
         },
         footer: {
             about: 'About',

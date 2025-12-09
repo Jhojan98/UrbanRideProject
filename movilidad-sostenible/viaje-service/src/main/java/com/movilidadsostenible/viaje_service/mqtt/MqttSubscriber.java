@@ -3,10 +3,7 @@ package com.movilidadsostenible.viaje_service.mqtt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.movilidadsostenible.viaje_service.clients.SlotsClient;
 import com.movilidadsostenible.viaje_service.clients.UserClientRest;
-import com.movilidadsostenible.viaje_service.models.dto.EndTravelDTO;
-import com.movilidadsostenible.viaje_service.models.dto.ReservationTempDTO;
-import com.movilidadsostenible.viaje_service.models.dto.TravelEndDTO;
-import com.movilidadsostenible.viaje_service.models.dto.TravelStartDTO;
+import com.movilidadsostenible.viaje_service.models.dto.*;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
 import com.movilidadsostenible.viaje_service.rabbit.publisher.TravelPublisher;
 import com.movilidadsostenible.viaje_service.services.ReservationTempService;
@@ -141,25 +138,19 @@ public class MqttSubscriber implements MqttCallbackExtended {
           String slotIdIdFromTopic = extractSlotId(topic);
           String bicyIdFromTopic = extractBikeId(topic);
           EndTravelDTO telemetry = objectMapper.readValue(payloadStr, EndTravelDTO.class);
-          if (telemetry.getSlotId() == null) {
-              telemetry.setSlotId(slotIdIdFromTopic);
-          }
-          if (telemetry.getIdBicycle() == null) {
-            telemetry.setIdBicycle(bicyIdFromTopic);
-          }
           if (telemetry.getEndTravelTimestamp() == null) {
               telemetry.setEndTravelTimestamp(System.currentTimeMillis());
           }
-          if (telemetry.getSlotId() == null) {
+          if (slotIdIdFromTopic == null) {
             log.warn("Mensaje MQTT sin id de slot. topic={}, payload={}", topic, payloadStr);
             return;
           }
-          if (telemetry.getIdBicycle() == null) {
+          if (bicyIdFromTopic == null) {
             log.warn("Mensaje MQTT sin id de bicicleta. topic={}, payload={}", topic, payloadStr);
             return;
           }
 
-          Optional<Travel> opt = repository.findFirstByIdBicycleAndStatus(telemetry.getIdBicycle(), "IN_PROGRESS");
+          Optional<Travel> opt = repository.findFirstByIdBicycleAndStatus(bicyIdFromTopic, "IN_PROGRESS");
           Travel travel = opt.get();
 
           travel.setStatus("COMPLETED");
@@ -176,10 +167,24 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
           if (dto.getSlotEndId().equals(slotIdIdFromTopic)) {
 
+            BicycleTelemetryEndTravelDTO dtoTelemetry = new BicycleTelemetryEndTravelDTO();
+            dtoTelemetry.setIdBicycle(bicyIdFromTopic);
+            dtoTelemetry.setLatitude(telemetry.getLatitudeBicycle());
+            dtoTelemetry.setLongitude(telemetry.getLongitudeBicycle());
+            dtoTelemetry.setBattery(telemetry.getBatteryBicycle());
+
+            try{
+              slotsClient.lockSlotWithBicycleTelemetry(slotIdIdFromTopic, dtoTelemetry);
+            }
+            catch(Exception e){
+              log.error("Error enviando telemetría de fin de viaje al slot {}: {}", slotIdIdFromTopic, e.getMessage());
+              return;
+            }
+
             reservationTempService.removeExpired(dto.getReservationId());
 
             if (opt.isEmpty()) {
-              log.warn("Bicicleta {} no existe en BD. Ignorando telemetría.", telemetry.getIdBicycle());
+              log.warn("Bicicleta {} no existe en BD. Ignorando telemetría.", bicyIdFromTopic);
               return;
             }
 
@@ -225,8 +230,6 @@ public class MqttSubscriber implements MqttCallbackExtended {
             }
 
             repository.save(travel);
-
-            slotsClient.lockSlotById(slotIdIdFromTopic, bicyIdFromTopic);
 
             TravelEndDTO travelEndDTO = new TravelEndDTO();
             travelEndDTO.setUserId(travel.getUid());

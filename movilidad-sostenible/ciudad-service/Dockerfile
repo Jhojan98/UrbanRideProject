@@ -26,3 +26,4 @@ ENV PORT=$PORT_APP
 EXPOSE $PORT
 ENTRYPOINT ["java", "-jar", "ciudad-service-0.0.1-SNAPSHOT.jar"]
 
+

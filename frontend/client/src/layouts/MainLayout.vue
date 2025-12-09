@@ -26,9 +26,25 @@ import FooterComponent from '@/components/FooterComponent.vue'
 
 .layout-content {
     flex: 1;
-    /* Dejar espacio superior equivalente al header fijo (header tiene padding y 40px de logo).
-       Evita que el contenido quede debajo del header cuando éste está position: fixed. */
+    /* Leave top space equivalent to fixed header (60px) */
     padding: 1rem;
-    padding-top: 80px; /* ajuste seguro; reduce si tu header es más pequeño */
+    padding-top: 60px;
+}
+
+/* Ajustes para mobile */
+@media (max-width: 768px) {
+    .layout-content {
+        padding-top: 60px;
+        padding: 0.75rem;
+        padding-top: 75px;
+    }
+}
+
+@media (max-width: 480px) {
+    .layout-content {
+        padding-top: 56px;
+        padding: 0.5rem;
+        padding-top: 65px;
+    }
 }
 </style>

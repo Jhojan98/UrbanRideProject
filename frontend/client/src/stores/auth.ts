@@ -7,20 +7,76 @@ import {
   sendEmailVerification,
   GoogleAuthProvider,
   signInWithPopup,
+  onAuthStateChanged,
 } from "firebase/auth";
 
 const userAuth = defineStore("auth", {
   state() {
     return {
       token: null as string | null,
-      baseURL: "http://localhost:8090",
+      uid: null as string | null,
+      baseURL: "/api",
       message: "",
       isVerified: false,
       pendingVerification: false,
       tempEmail: null as string | null,
+      authStateInitialized: false,
     };
   },
   actions: {
+    /**
+     * Initialize authentication state from Firebase
+     * Restores session if a previous one exists
+     */
+    async initializeAuthState() {
+      return new Promise<void>((resolve) => {
+        const auth = getAuth();
+
+        // Restore token and uid from localStorage if they exist
+        const savedToken = localStorage.getItem('authToken');
+        const savedUid = localStorage.getItem('authUid');
+        if (savedToken) {
+          this.token = savedToken;
+          console.log('Token restored from localStorage');
+        }
+        if (savedUid) {
+          this.uid = savedUid;
+          console.log('Uid restored from localStorage');
+        }
+
+        // Listen for authentication state changes in Firebase
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            // Authenticated user
+            try {
+              const token = await user.getIdToken();
+              this.token = token;
+              this.uid = user.uid;
+              this.isVerified = user.emailVerified;
+
+              // Save token and uid in localStorage
+              localStorage.setItem('authToken', token);
+              localStorage.setItem('authUid', user.uid);
+              console.log('Token and uid saved in localStorage');
+            } catch (error) {
+              console.error('Error getting token:', error);
+              this.token = null;
+              this.uid = null;
+            }
+          } else {
+            // User not authenticated
+            this.token = null;
+            this.uid = null;
+            this.isVerified = false;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('authUid');
+          }
+
+          this.authStateInitialized = true;
+          resolve();
+        });
+      });
+    },
     async register(username: string, email: string, password: string) {
       try {
         const auth = getAuth();
@@ -42,19 +98,19 @@ const userAuth = defineStore("auth", {
         this.pendingVerification = true;
         this.isVerified = false;
         this.message =
-          "Registro exitoso. Revisa tu correo para verificar tu cuenta.";
+          "Registration successful. Check your email to verify your account.";
 
-        // Obtener fecha de creación de Firebase
+        // Get creation date from Firebase
         const creationTime = userCredential.user.metadata.creationTime;
 
-        console.log("=== ENVIANDO DATOS AL BACKEND (REGISTER) ===");
+        console.log("=== SENDING DATA TO BACKEND (REGISTER) ===");
         console.log("uId:", userCredential.user.uid);
         console.log("username:", username);
         console.log("email:", email);
         console.log("creationTime:", creationTime);
         console.log("============================================");
 
-        // Gateway enruta /user/register → usuario-service /register
+        // Gateway routes /user/register → usuario-service /register
         const uri = `${this.baseURL}/user/register`;
         const rawResponse = await fetch(uri, {
           method: "POST",
@@ -65,6 +121,7 @@ const userAuth = defineStore("auth", {
           body: JSON.stringify({
             uidUser: userCredential.user.uid,
             userName: username,
+            userEmail: userCredential.user.email,
           }),
         });
 
@@ -85,13 +142,13 @@ const userAuth = defineStore("auth", {
 
         return true;
       } catch (error: unknown) {
-        console.error("Error en registro (detalle completo):", error);
+        console.error("Error in registration (full detail):", error);
 
         const firebaseError = error as { code?: string; message?: string };
 
-        // Log detallado para depuración
-        console.error("Código de error:", firebaseError.code);
-        console.error("Mensaje de error:", firebaseError.message);
+        // Detailed logging for debugging
+        console.error("Error code:", firebaseError.code);
+        console.error("Error message:", firebaseError.message);
 
         return false;
       }
@@ -108,35 +165,36 @@ const userAuth = defineStore("auth", {
       try {
         const auth = getAuth();
 
-        // Iniciar sesión con Firebase
+        // Sign in with Firebase
         const userCredential = await signInWithEmailAndPassword(
           auth,
           email,
           password
         );
 
-        // Verificar si el email está verificado
+        // Check if email is verified
         if (!userCredential.user.emailVerified) {
           this.tempEmail = email;
           this.pendingVerification = true;
           this.isVerified = false;
-          this.message = "Por favor verifica tu correo antes de iniciar sesión";
+          this.message = "Please verify your email before signing in";
 
-          // Ofrecer reenvío de verificación
+          // Offer email verification resend
           await sendEmailVerification(userCredential.user);
 
           return { needsVerification: true };
         }
 
-        // Obtener token de Firebase
+        // Get Firebase token
         const token = await userCredential.user.getIdToken();
 
-        console.log("=== ENVIANDO DATOS AL BACKEND (LOGIN) ===");
+        console.log("=== SENDING DATA TO BACKEND (LOGIN) ===");
         console.log("email:", email);
-        console.log("token:", token ? "Token obtenido" : "No token");
+        console.log("token:", token ? "Token obtained" : "No token");
+        console.log(token);
         console.log("=========================================");
 
-        // Enviar credenciales al backend
+        // Send credentials to backend
         const uri = `${this.baseURL}/user/login/${userCredential.user.uid}`;
         const rawResponse = await fetch(uri, {
           method: "GET",
@@ -148,21 +206,25 @@ const userAuth = defineStore("auth", {
 
         if (!rawResponse.ok) {
           console.error(
-            "Error HTTP del backend (login):",
+            "HTTP error from backend (login):",
             rawResponse.status,
             rawResponse.statusText
           );
-          this.message = `Error al validar con backend: ${rawResponse.statusText}`;
+          this.message = `Error validating with backend: ${rawResponse.statusText}`;
           return { success: false };
         }
 
         const response = await rawResponse.json();
-        console.log("Respuesta del backend (login):", response);
+        console.log("Response from backend (login):", response);
 
         this.token = token;
         this.isVerified = true;
         this.pendingVerification = false;
-        this.message = "Login exitoso";
+        this.message = "Login successful";
+
+        // Save token in localStorage for persistence
+        localStorage.setItem('authToken', token);
+        console.log('Token saved in localStorage after login');
 
         return { success: true, userData: response };
       } catch (error: unknown) {
@@ -185,20 +247,44 @@ const userAuth = defineStore("auth", {
         const auth = getAuth();
         const provider = new GoogleAuthProvider();
 
+        // Request explicit permissions for email and profile
+        provider.addScope("email");
+        provider.addScope("profile");
+
+        // Configure to always request account selection
+        provider.setCustomParameters({
+          prompt: "select_account",
+        });
+
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
-        // Obtener token Firebase (ID token)
+        // Ensure the email sent to backend is the same as registered in Firebase
+        const userEmail =
+          user.email ||
+          user.providerData.find((p) => p?.email)?.email ||
+          null;
+
+        if (!userEmail) {
+          this.message = "Could not obtain email from Google account";
+          console.error("Google login without available email", {
+            uid: user.uid,
+            providerData: user.providerData,
+          });
+          return { success: false, code: "missing-email" };
+        }
+
+        // Get Firebase token (ID token)
         const token = await user.getIdToken();
 
-        console.log("=== ENVIANDO DATOS AL BACKEND (GOOGLE LOGIN) ===");
+        console.log("=== SENDING DATA TO BACKEND (GOOGLE LOGIN) ===");
         console.log("uId:", user.uid);
-        console.log("email:", user.email);
+        console.log("email:", userEmail);
         console.log("displayName:", user.displayName);
         console.log("creationTime:", user.metadata.creationTime);
         console.log("================================================");
 
-        // Primero verificar si el usuario ya existe
+        // First check if user already exists
         const checkUri = `${this.baseURL}/user/login/${user.uid}`;
         const checkResponse = await fetch(checkUri, {
           method: "GET",
@@ -210,12 +296,12 @@ const userAuth = defineStore("auth", {
 
         let userData;
         if (checkResponse.ok) {
-          // Usuario existe, solo obtener datos
+          // User exists, just get data
           userData = await checkResponse.json();
-          console.log("Usuario existente encontrado:", userData);
+          console.log("Existing user found:", userData);
         } else if (checkResponse.status === 404) {
-          // Usuario no existe, registrar
-          console.log("Usuario no encontrado, registrando...");
+          // User does not exist, register
+          console.log("User not found, registering...");
           const registerUri = `${this.baseURL}/user/register`;
           const registerResponse = await fetch(registerUri, {
             method: "POST",
@@ -228,9 +314,8 @@ const userAuth = defineStore("auth", {
               uidUser: user.uid,
               userName:
                 user.displayName ||
-                (user.email
-                  ? user.email.split("@")[0]
-                  : `user_${user.uid.substring(0, 6)}`),
+                userEmail.split("@")[0] || `user_${user.uid.substring(0, 6)}`,
+              userEmail: userEmail,
             }),
           });
 
@@ -254,18 +339,23 @@ const userAuth = defineStore("auth", {
             checkResponse.status,
             checkResponse.statusText
           );
-          this.message = `Error al verificar usuario: ${checkResponse.statusText}`;
+          this.message = `Error verifying user: ${checkResponse.statusText}`;
           return { success: false };
         }
 
         this.token = token;
-        this.isVerified = true; // Con Google el correo ya está verificado
+        this.isVerified = true; // With Google the email is already verified
         this.pendingVerification = false;
-        this.tempEmail = user.email;
-        this.message = "Login con Google exitoso";
+        this.tempEmail = userEmail;
+        this.message = "Google login successful";
+
+        // Save token in localStorage for persistence
+        localStorage.setItem('authToken', token);
+        console.log('Token saved in localStorage after Google login');
+
         return { success: true, userData };
       } catch (error: unknown) {
-        console.error("Error en login Google:", error);
+        console.error("Error in Google login:", error);
         const firebaseError = error as { code?: string; message?: string };
 
         switch (firebaseError.code) {
@@ -311,17 +401,17 @@ const userAuth = defineStore("auth", {
         const user = auth.currentUser;
 
         if (user && user.email === email) {
-          // Reenviar email de verificación
+          // Resend verification email
           await sendEmailVerification(user);
-          this.message = "Email de verificación reenviado";
+          this.message = "Verification email resent";
           return true;
         } else {
-          this.message = "No se encontró usuario activo";
+          this.message = "No active user found";
           return false;
         }
       } catch (error: unknown) {
-        console.error("Error al reenviar verificación:", error);
-        this.message = "Error al reenviar email de verificación";
+        console.error("Error resending verification:", error);
+        this.message = "Error resending verification email";
         return false;
       }
     },
@@ -329,20 +419,25 @@ const userAuth = defineStore("auth", {
       try {
         const auth = getAuth();
 
-        // Recargar usuario actual para obtener el estado actualizado de emailVerified
+        // Reload current user to get updated emailVerified status
         await auth.currentUser?.reload();
 
         const user = auth.currentUser;
 
         if (user && user.emailVerified) {
-          // Obtener token de Firebase
+          // Get Firebase token
           const token = await user.getIdToken();
 
           this.token = token;
           this.isVerified = true;
           this.pendingVerification = false;
           this.tempEmail = null;
-          this.message = "Cuenta verificada";
+          this.message = "Account verified";
+
+          // Save token in localStorage for persistence
+          localStorage.setItem('authToken', token);
+          console.log('Token saved in localStorage after verification');
+
           return true;
         } else {
           this.message =
@@ -355,6 +450,28 @@ const userAuth = defineStore("auth", {
         return false;
       }
     },
+        async buySubscription() {
+          try {
+            const url = `${this.baseURL}/user/subscription/purchase/${this.uid}`;
+            const res = await fetch(url, {
+              method: "POST",
+              headers: {
+                Accept: "application/json",
+                Authorization: `Bearer ${this.token}`,
+              },
+            });
+            if (!res.ok) {
+              const txt = await res.text().catch(() => "");
+              throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
+            }
+            const data = await res.json();
+            console.log("Subscription purchase response:", data);
+            return data;
+          }
+          catch (error: unknown) {
+            console.error("Error al comprar suscripción:", error);
+          }
+    }
   },
 });
 

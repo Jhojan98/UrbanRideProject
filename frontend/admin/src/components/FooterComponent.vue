@@ -4,9 +4,9 @@
     <div class="footer-content">
       <!-- Enlaces del footer -->
       <div class="footer-links">
-        <a href="#" class="footer-link">Acerca de</a>
-        <a href="#" class="footer-link">Recursos</a>
-        <a href="#" class="footer-link">Legal</a>
+        <a href="#" class="footer-link">{{ $t('footer.links.about') }}</a>
+        <a href="#" class="footer-link">{{ $t('footer.links.resources') }}</a>
+        <a href="#" class="footer-link">{{ $t('footer.links.legal') }}</a>
       </div>
       <!-- Copyright -->
       <div class="copyright">
@@ -14,7 +14,7 @@
         <i class="fa-brands fa-instagram"></i> ecoride |
         <i class="fa-brands fa-tiktok"></i> ecoride |
 
-        © 2026 ECORIDE
+        {{ $t('footer.copyright', { year: 2026, brand: 'ECORIDE' }) }}
       </div>
     </div>
   </footer>

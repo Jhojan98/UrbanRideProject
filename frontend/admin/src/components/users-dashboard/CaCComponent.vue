@@ -1,109 +1,176 @@
 <template>
-  <div class="cac-container">
-    <div class="header">
-      <h1>Quejas y Comentarios</h1>
+  <div class="section">
+    <div class="section-header">
+      <h2>{{ t('management.complaints.title') }}</h2>
       <div class="filters">
         <select v-model="filterStatus" class="filter-select">
-          <option value="">Todos los estados</option>
-          <option value="PENDIENTE">Pendiente</option>
-          <option value="EN_PROCESO">En Proceso</option>
-          <option value="RESUELTO">Resuelto</option>
-          <option value="CERRADO">Cerrado</option>
+          <option value="all">{{ t('management.complaints.allStatus') }}</option>
+          <option value="OPEN">{{ t('management.complaints.status.open') }}</option>
+          <option value="IN_PROGRESS">{{ t('management.complaints.status.inProgress') }}</option>
+          <option value="RESOLVED">{{ t('management.complaints.status.resolved') }}</option>
+          <option value="CLOSED">{{ t('management.complaints.status.closed') }}</option>
         </select>
+        <button class="btn-primary btn-sm" @click="complaintsStore.fetchComplaints()">
+          <span class="material-symbols-outlined">refresh</span>
+          {{ t('common.refresh') }}
+        </button>
       </div>
     </div>
 
-    <div class="stats-grid">
-      <div class="stat-card">
+    <div class="stats-cards">
+      <div class="stat-card open">
+        <span class="material-symbols-outlined">report_problem</span>
         <div class="stat-info">
-          <p class="stat-label">Total</p>
-          <p class="stat-value">{{ userStore.cacs.length }}</p>
+          <span class="stat-value">{{ complaintsStore.openComplaints.length }}</span>
+          <span class="stat-label">{{ t('management.complaints.status.open') }}</span>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card in-progress">
+        <span class="material-symbols-outlined">pending</span>
         <div class="stat-info">
-          <p class="stat-label">Pendientes</p>
-          <p class="stat-value">{{ pendingCaCs }}</p>
+          <span class="stat-value">{{ complaintsStore.inProgressComplaints.length }}</span>
+          <span class="stat-label">{{ t('management.complaints.status.inProgress') }}</span>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card resolved">
+        <span class="material-symbols-outlined">check_circle</span>
         <div class="stat-info">
-          <p class="stat-label">En Proceso</p>
-          <p class="stat-value">{{ inProcessCaCs }}</p>
+          <span class="stat-value">{{ complaintsStore.resolvedComplaints.length }}</span>
+          <span class="stat-label">{{ t('management.complaints.status.resolved') }}</span>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card closed">
+        <span class="material-symbols-outlined">cancel</span>
         <div class="stat-info">
-          <p class="stat-label">Resueltos</p>
-          <p class="stat-value">{{ resolvedCaCs }}</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="cacs-grid">
-      <div
-        v-for="cac in filteredCaCs"
-        :key="cac.idCaC"
-        class="cac-card"
-        @click="selectCaC(cac)"
-      >
-        <div class="cac-header">
-          <span class="cac-id">Ticket #{{ cac.idCaC }}</span>
-          <span :class="['status-badge', `status-${cac.status.toLowerCase()}`]">
-            {{ cac.status }}
-          </span>
-        </div>
-
-        <div class="cac-body">
-          <p class="cac-description">{{ cac.description }}</p>
-        </div>
-
-        <div class="cac-footer">
-          <div class="cac-meta">
-            <span class="meta-item">
-              Viaje #{{ cac.idTravel }}
-            </span>
-            <span class="meta-item">
-              {{ formatDate(cac.date) }}
-            </span>
-          </div>
+          <span class="stat-value">{{ complaintsStore.closedComplaints.length }}</span>
+          <span class="stat-label">{{ t('management.complaints.status.closed') }}</span>
         </div>
       </div>
     </div>
 
-    <div v-if="filteredCaCs.length === 0" class="no-data">
-      <p>No se encontraron quejas o comentarios</p>
+    <!-- Loading indicator -->
+    <div v-if="complaintsStore.loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>{{ t('common.loading') }}</p>
     </div>
 
-    <!-- Modal de detalle -->
-    <div v-if="selectedCaC" class="modal-overlay" @click="closeModal">
-      <div class="modal-content" @click.stop>
+    <!-- Error state -->
+    <div v-else-if="complaintsStore.error" class="error-state">
+      <span class="material-symbols-outlined">error</span>
+      <p>{{ complaintsStore.error }}</p>
+      <button class="btn-primary btn-sm" @click="complaintsStore.fetchComplaints()">
+        {{ t('common.refresh') }}
+      </button>
+    </div>
+
+    <div v-else class="data-table">
+      <table v-if="filteredComplaints.length">
+        <thead>
+          <tr>
+            <th>{{ t('common.id') }}</th>
+            <th>{{ t('management.complaints.type') }}</th>
+            <th>{{ t('management.complaints.description') }}</th>
+            <th>{{ t('management.complaints.travelId') }}</th>
+            <th>{{ t('management.complaints.status.label') }}</th>
+            <th>{{ t('management.complaints.date') }}</th>
+            <th>{{ t('common.actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="complaint in filteredComplaints" :key="complaint.k_id_complaints_and_claims">
+            <td>{{ complaint.k_id_complaints_and_claims }}</td>
+            <td>
+              <span :class="['type-badge', getTypeClass(complaint.t_type)]">
+                {{ getTypeLabel(complaint.t_type) }}
+              </span>
+            </td>
+            <td class="description-cell">
+              <div class="description-text">{{ complaint.d_description }}</div>
+            </td>
+            <td>{{ complaint.k_id_travel }}</td>
+            <td>
+              <select
+                :value="complaint.t_status"
+                :class="['status-select', getStatusClass(complaint.t_status)]"
+                @change="handleStatusChange(complaint.k_id_complaints_and_claims, $event)"
+              >
+                <option value="OPEN">{{ t('management.complaints.status.open') }}</option>
+                <option value="IN_PROGRESS">{{ t('management.complaints.status.inProgress') }}</option>
+                <option value="RESOLVED">{{ t('management.complaints.status.resolved') }}</option>
+                <option value="CLOSED">{{ t('management.complaints.status.closed') }}</option>
+              </select>
+            </td>
+            <td>{{ formatDate(complaint.created_at) }}</td>
+            <td>
+              <div class="action-buttons">
+                <button
+                  class="btn-info btn-sm"
+                  :title="t('common.view')"
+                  @click="viewComplaint(complaint)"
+                >
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
+                <button
+                  class="btn-danger btn-sm"
+                  :title="t('common.delete')"
+                  @click="handleDelete(complaint.k_id_complaints_and_claims)"
+                >
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="empty-message">
+        {{ filterStatus === 'all'
+          ? t('management.complaints.empty')
+          : t('management.complaints.emptyFilter')
+        }}
+      </p>
+    </div>
+
+    <!-- Modal de detalles -->
+    <div v-if="selectedComplaint" class="modal-overlay" @click.self="selectedComplaint = null">
+      <div class="modal-content">
         <div class="modal-header">
-          <h2>Detalle del Ticket #{{ selectedCaC.idCaC }}</h2>
-          <button @click="closeModal" class="btn-close">✕</button>
+          <h3>{{ t('management.complaints.details') }}</h3>
+          <button class="btn-close" @click="selectedComplaint = null">
+            <span class="material-symbols-outlined">close</span>
+          </button>
         </div>
-
         <div class="modal-body">
-          <div class="detail-section">
-            <h3>Estado</h3>
-            <span :class="['status-badge-large', `status-${selectedCaC.status.toLowerCase()}`]">
-              {{ selectedCaC.status }}
+          <div class="detail-row">
+            <strong>{{ t('common.id') }}:</strong>
+            <span>{{ selectedComplaint.k_id_complaints_and_claims }}</span>
+          </div>
+          <div class="detail-row">
+            <strong>{{ t('management.complaints.type') }}:</strong>
+            <span :class="['type-badge', getTypeClass(selectedComplaint.t_type)]">
+              {{ getTypeLabel(selectedComplaint.t_type) }}
             </span>
           </div>
-
-          <div class="detail-section">
-            <h3>Descripción</h3>
-            <p class="description-text">{{ selectedCaC.description }}</p>
+          <div class="detail-row">
+            <strong>{{ t('management.complaints.status.label') }}:</strong>
+            <span :class="['status-badge', getStatusClass(selectedComplaint.t_status)]">
+              {{ getStatusLabel(selectedComplaint.t_status) }}
+            </span>
           </div>
-
-          <div class="detail-section">
-            <h3>Información del Viaje</h3>
-            <p><strong>ID del Viaje:</strong> {{ selectedCaC.idTravel }}</p>
+          <div class="detail-row">
+            <strong>{{ t('management.complaints.travelId') }}:</strong>
+            <span>{{ selectedComplaint.k_id_travel }}</span>
           </div>
-
-          <div class="detail-section">
-            <h3>Fecha</h3>
-            <p>{{ formatDateTime(selectedCaC.date) }}</p>
+          <div class="detail-row full-width">
+            <strong>{{ t('management.complaints.description') }}:</strong>
+            <p class="description-full">{{ selectedComplaint.d_description }}</p>
+          </div>
+          <div class="detail-row">
+            <strong>{{ t('management.complaints.createdAt') }}:</strong>
+            <span>{{ formatDate(selectedComplaint.created_at) }}</span>
+          </div>
+          <div v-if="selectedComplaint.updated_at" class="detail-row">
+            <strong>{{ t('management.complaints.updatedAt') }}:</strong>
+            <span>{{ formatDate(selectedComplaint.updated_at) }}</span>
           </div>
         </div>
       </div>
@@ -112,411 +179,594 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { Ref } from 'vue'
-import usersStore from '@/stores/usersStore'
-import type CaC from '@/models/CaC'
+import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useComplaintsStore } from '@/stores/complaintsStore';
+import type Complaint from '@/models/Complaint';
+import { ComplaintStatus, ComplaintType } from '@/models/Complaint';
 
-const userStore = usersStore()
-const filterStatus = ref('')
-const selectedCaC: Ref<CaC | null> = ref(null)
+const { t } = useI18n();
+const complaintsStore = useComplaintsStore();
 
-const filteredCaCs = computed(() => {
-  if (!filterStatus.value) {
-    return userStore.cacs
+const filterStatus = ref<string>('all');
+const selectedComplaint = ref<Complaint | null>(null);
+
+const filteredComplaints = computed(() => {
+  const complaints = Array.isArray(complaintsStore.complaints) ? complaintsStore.complaints : [];
+
+  if (filterStatus.value === 'all') {
+    return complaints;
   }
-  return userStore.cacs.filter(cac => cac.status === filterStatus.value)
-})
 
-const pendingCaCs = computed(() => {
-  return userStore.cacs.filter(cac => cac.status === 'PENDIENTE').length
-})
+  const filtered = complaints.filter(c => c.t_status === filterStatus.value);
+  return filtered;
+});
 
-const inProcessCaCs = computed(() => {
-  return userStore.cacs.filter(cac => cac.status === 'EN_PROCESO').length
-})
-
-const resolvedCaCs = computed(() => {
-  return userStore.cacs.filter(cac => cac.status === 'RESUELTO' || cac.status === 'CERRADO').length
-})
-
-const selectCaC = (cac: CaC) => {
-  selectedCaC.value = cac
+function getStatusClass(status: string): string {
+  const statusUpper = status.toUpperCase();
+  switch (statusUpper) {
+    case ComplaintStatus.OPEN:
+      return 'status-open';
+    case ComplaintStatus.IN_PROGRESS:
+      return 'status-in-progress';
+    case ComplaintStatus.RESOLVED:
+      return 'status-resolved';
+    case ComplaintStatus.CLOSED:
+      return 'status-closed';
+    default:
+      return '';
+  }
 }
 
-const closeModal = () => {
-  selectedCaC.value = null
+function getStatusLabel(status: string): string {
+  const statusUpper = status.toUpperCase();
+  switch (statusUpper) {
+    case ComplaintStatus.OPEN:
+      return t('management.complaints.status.open');
+    case ComplaintStatus.IN_PROGRESS:
+      return t('management.complaints.status.inProgress');
+    case ComplaintStatus.RESOLVED:
+      return t('management.complaints.status.resolved');
+    case ComplaintStatus.CLOSED:
+      return t('management.complaints.status.closed');
+    default:
+      return status;
+  }
 }
 
-const formatDate = (date: Date | string | number) => {
-  return new Date(date).toLocaleDateString('es-ES', {
+function getTypeClass(type: string): string {
+  const typeUpper = type.toUpperCase();
+  switch (typeUpper) {
+    case ComplaintType.COMPLAINT:
+      return 'type-complaint';
+    case ComplaintType.CLAIM:
+      return 'type-claim';
+    case ComplaintType.SUGGESTION:
+      return 'type-suggestion';
+    default:
+      return 'type-other';
+  }
+}
+
+function getTypeLabel(type: string): string {
+  const typeUpper = type.toUpperCase();
+  switch (typeUpper) {
+    case ComplaintType.COMPLAINT:
+      return t('management.complaints.types.complaint');
+    case ComplaintType.CLAIM:
+      return t('management.complaints.types.claim');
+    case ComplaintType.SUGGESTION:
+      return t('management.complaints.types.suggestion');
+    default:
+      return t('management.complaints.types.other');
+  }
+}
+
+function formatDate(date: Date | string | undefined): string {
+  if (!date) return 'N/A';
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('es-CO', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
-  })
-}
-
-const formatDateTime = (date: Date | string | number) => {
-  return new Date(date).toLocaleString('es-ES', {
-    year: 'numeric',
-    month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  })
+  });
 }
+
+async function handleStatusChange(id: number, event: Event) {
+  const target = event.target as HTMLSelectElement;
+  const newStatus = target.value;
+  const complaintIndex = complaintsStore.complaints.findIndex(c => c.k_id_complaints_and_claims === id);
+  const previousStatus = complaintIndex !== -1 ? complaintsStore.complaints[complaintIndex].t_status : null;
+
+  try {
+    // Actualización optimista: actualizar UI inmediatamente
+    if (complaintIndex !== -1) {
+      complaintsStore.complaints[complaintIndex].t_status = newStatus;
+    }
+
+    await complaintsStore.updateComplaintStatus(id, newStatus);
+  } catch (error) {
+    // Revertir el cambio en la UI si falla
+    if (complaintIndex !== -1 && previousStatus) {
+      complaintsStore.complaints[complaintIndex].t_status = previousStatus;
+    }
+    alert(t('management.complaints.updateError'));
+  }
+}
+
+async function handleDelete(id: number) {
+  if (!confirm(t('management.complaints.confirmDelete'))) {
+    return;
+  }
+
+  try {
+    await complaintsStore.deleteComplaint(id);
+    alert(t('management.complaints.deleteSuccess'));
+  } catch (error) {
+    alert(t('management.complaints.deleteError'));
+  }
+}
+
+function viewComplaint(complaint: Complaint) {
+  selectedComplaint.value = complaint;
+}
+
+onMounted(async () => {
+  try {
+    await complaintsStore.fetchComplaints();
+  } catch (error) {
+    console.error('[CaCComponent] Error al cargar quejas:', error);
+  }
+});
 </script>
 
-<style scoped>
-.cac-container {
-  max-width: 1400px;
-  margin: 0 auto;
+<style lang="scss" scoped>
+.section {
+  background: var(--color-surface);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.header {
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-}
+  flex-wrap: wrap;
+  gap: 1rem;
 
-.header h1 {
-  margin: 0;
-  color: var(--color-text-primary-light);
-  font-size: 2rem;
+  h2 {
+    margin: 0;
+    color: var(--color-text);
+  }
 }
 
 .filters {
   display: flex;
   gap: 1rem;
+  align-items: center;
 }
 
 .filter-select {
-  padding: 0.75rem 1rem;
-  border: 2px solid var(--color-border-light);
-  border-radius: var(--border-radius);
-  font-size: 1rem;
-  background: var(--color-background-light);
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: border-color 0.3s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
 }
 
-.filter-select:focus {
-  outline: none;
-  border-color: var(--color-green-main);
-  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
-}
-
-.stats-grid {
+.stats-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
 .stat-card {
-  background: var(--color-background-light);
-  border-radius: 12px;
-  padding: 1.5rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  border-left: 4px solid var(--color-gray-medium);
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-label {
-  margin: 0;
-  color: var(--color-gray-medium);
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat-value {
-  margin: 0.5rem 0 0 0;
-  color: var(--color-text-primary-light);
-  font-size: 1.75rem;
-  font-weight: 700;
-}
-
-.cacs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
-}
-
-.cac-card {
-  background: var(--color-background-light);
-  border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: var(--color-background);
+  border-left: 4px solid;
+
+  &.open {
+    border-color: #f44336;
+    .material-symbols-outlined {
+      color: #f44336;
+    }
+  }
+
+  &.in-progress {
+    border-color: #ff9800;
+    .material-symbols-outlined {
+      color: #ff9800;
+    }
+  }
+
+  &.resolved {
+    border-color: #4caf50;
+    .material-symbols-outlined {
+      color: #4caf50;
+    }
+  }
+
+  &.closed {
+    border-color: #757575;
+    .material-symbols-outlined {
+      color: #757575;
+    }
+  }
+
+  .material-symbols-outlined {
+    font-size: 2.5rem;
+  }
+
+  .stat-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--color-text);
+  }
+
+  .stat-label {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+  }
+}
+
+.data-table {
+  overflow-x: auto;
+  margin-top: 1rem;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    th {
+      background: var(--color-background);
+      color: var(--color-text-secondary);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      transition: background-color 0.2s;
+
+      &:hover {
+        background: var(--color-hover);
+      }
+    }
+  }
+}
+
+.description-cell {
+  max-width: 300px;
+}
+
+.description-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  &.type-complaint {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  &.type-claim {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  &.type-suggestion {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+
+  &.type-other {
+    background: #e5e7eb;
+    color: #374151;
+  }
+}
+
+.status-select {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border-left: 4px solid var(--color-gray-medium);
-}
+  font-weight: 500;
 
-.cac-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-}
+  &.status-open {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #f87171;
+  }
 
-.cac-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--color-border-light);
-}
+  &.status-in-progress {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fbbf24;
+  }
 
-.cac-id {
-  font-weight: 700;
-  color: var(--color-text-primary-light);
-  font-size: 1rem;
+  &.status-resolved {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #34d399;
+  }
+
+  &.status-closed {
+    background: #e5e7eb;
+    color: #374151;
+    border-color: #9ca3af;
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
 }
 
 .status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.status-badge-large {
-  padding: 0.5rem 1.5rem;
-  border-radius: 20px;
-  font-size: 1rem;
-  font-weight: 600;
-  text-transform: uppercase;
   display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  &.status-open {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+
+  &.status-in-progress {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  &.status-resolved {
+    background: #d1fae5;
+    color: #065f46;
+  }
+
+  &.status-closed {
+    background: #e5e7eb;
+    color: #374151;
+  }
 }
 
-.status-pendiente {
-  background-color: var(--color-battery-medium);
-  color: var(--color-white);
-}
-
-.status-en_proceso {
-  background-color: var(--color-iot-good);
-  color: var(--color-white);
-}
-
-.status-resuelto {
-  background-color: var(--color-battery-high);
-  color: var(--color-white);
-}
-
-.status-cerrado {
-  background-color: var(--color-iot-loss);
-  color: var(--color-white);
-}
-
-.cac-body {
-  margin-bottom: 1rem;
-}
-
-.cac-description {
-  color: var(--color-text-secondary-light);
-  line-height: 1.6;
-  margin: 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.cac-footer {
+.action-buttons {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 0.5rem;
 }
 
-.cac-meta {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: var(--color-gray-medium);
-  font-size: 0.875rem;
-}
-
-.no-data {
-  padding: 3rem;
+.empty-message {
   text-align: center;
-  color: var(--color-gray-medium);
-  font-size: 1.125rem;
-  background: var(--color-background-light);
-  border-radius: 12px;
+  padding: 3rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
 }
 
-/* Modal Styles */
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  padding: 1rem;
 }
 
 .modal-content {
-  background: var(--color-background-light);
-  border-radius: 16px;
-  width: 90%;
+  background: var(--color-surface);
+  border-radius: 12px;
   max-width: 600px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: slideUp 0.3s ease;
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid var(--color-border-light);
-  background: var(--color-primary-light);
-  color: var(--color-white);
-  border-radius: 16px 16px 0 0;
-}
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
 
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-}
+  h3 {
+    margin: 0;
+  }
 
-.btn-close {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
+  .btn-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background 0.2s;
 
-.btn-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: rotate(90deg);
+    &:hover {
+      background: var(--color-hover);
+    }
+
+    .material-symbols-outlined {
+      font-size: 1.5rem;
+      color: var(--color-text-secondary);
+    }
+  }
 }
 
 .modal-body {
-  padding: 2rem;
-  overflow-y: auto;
+  padding: 1.5rem;
 }
 
-.detail-section {
-  margin-bottom: 1.5rem;
+.detail-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: start;
+
+  &.full-width {
+    grid-template-columns: 1fr;
+  }
+
+  strong {
+    color: var(--color-text-secondary);
+  }
+
+  .description-full {
+    margin: 0.5rem 0 0;
+    line-height: 1.6;
+    color: var(--color-text);
+  }
 }
 
-.detail-section h3 {
-  margin: 0 0 0.75rem 0;
-  color: var(--color-text-primary-light);
-  font-size: 1.125rem;
-  font-weight: 600;
+/* Buttons */
+.btn-primary, .btn-secondary, .btn-danger, .btn-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  .material-symbols-outlined {
+    font-size: 1.2rem;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
 }
 
-.detail-section p {
-  margin: 0;
-  color: var(--color-text-secondary-light);
-  line-height: 1.6;
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
 }
 
-.description-text {
-  background: var(--color-gray-very-light);
-  padding: 1rem;
-  border-radius: var(--border-radius);
-  border-left: 4px solid var(--color-gray-medium);
+.btn-danger {
+  background: #f44336;
+  color: white;
+}
+
+.btn-info {
+  background: #2196f3;
+  color: white;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+
+  .material-symbols-outlined {
+    font-size: 1rem;
+  }
+}
+
+/* Loading and Error States */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  gap: 1rem;
+  color: var(--color-text-secondary);
+
+  .material-symbols-outlined {
+    font-size: 3rem;
+    color: #f44336;
+  }
+
+  p {
+    font-size: 1.1rem;
+    margin: 0;
+  }
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
-  .header {
+  .section-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
   }
 
-  .stats-grid {
+  .stats-cards {
     grid-template-columns: 1fr;
   }
 
-  .cacs-grid {
+  .data-table {
+    font-size: 0.85rem;
+
+    th, td {
+      padding: 0.75rem 0.5rem;
+    }
+  }
+
+  .detail-row {
     grid-template-columns: 1fr;
   }
-
-  .modal-content {
-    width: 95%;
-    max-height: 90vh;
-  }
-
-  .modal-header {
-    padding: 1rem;
-  }
-
-  .modal-body {
-    padding: 1rem;
-  }
-}
-
-html[data-theme="dark"] .stat-card,
-html[data-theme="dark"] .cac-card,
-html[data-theme="dark"] .no-data,
-html[data-theme="dark"] .modal-content {
-  background: var(--color-surface-dark);
-}
-
-html[data-theme="dark"] .cac-description,
-html[data-theme="dark"] .detail-section p {
-  color: var(--color-text-secondary-dark);
-}
-
-html[data-theme="dark"] .description-text {
-  background: var(--color-gray-light);
 }
 </style>

@@ -7,6 +7,8 @@ import "@/styles/global.scss";
 import { initializeApp } from 'firebase/app'
 import { createI18n } from 'vue-i18n';
 import { messages } from '@/lang/messages';
+import userAuth from '@/stores/auth';
+
 const savedLocale = localStorage.getItem('locale') || 'es';
 const i18n = createI18n({
   legacy: false,
@@ -35,4 +37,9 @@ const app = createApp(App)
 app.use(router)
 app.use(pinia)
 app.use(i18n)
-app.mount('#app')
+
+// Initialize authentication state before mounting the app
+const authStore = userAuth()
+authStore.initializeAuthState().then(() => {
+  app.mount('#app')
+})

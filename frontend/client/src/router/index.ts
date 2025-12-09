@@ -1,14 +1,18 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import userAuth from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '@/views/LoginView.vue'
 import SignupView from '@/views/SignupView.vue'
 import VerifyOtpView from '@/views/VerifyOtpView.vue'
 import ProfileView from '@/views/ProfileView.vue'
 import ReservationView from '@/views/ReservationView.vue'
-import BalanceComponent from '@/components/BalanceComponent.vue'
-import PaymentMethodsComponent from '@/components/PaymentMethodsComponent.vue'
+import PaymentMethodsComponent from '@/components/payments/PaymentMethodsComponent.vue'
 import DestinationMapComponent from '@/components/DestinationMapComponent.vue'
 import ReportProblemComponent from '@/components/ReportProblemComponent.vue'
+import PaymentSuccesComponent from '@/components/payments/PaymentSuccesComponent.vue'
+import PaymentCancelComponent from '@/components/payments/PaymentCancelComponent.vue'
+import PurchaseSubscriptionComponent from '@/components/subscription/PurchaseSubscriptionComponent.vue'
+
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -55,16 +59,10 @@ const routes: Array<RouteRecordRaw> = [
     meta:{ requireAuth: true, layout: 'main' }
   },
   {
-    path: '/balance',
-    name: 'balance',
-    component: BalanceComponent,
-    meta:{ requireAuth: true, layout: 'main' }
-  },
-  {
     path: '/plan-your-trip',
     name: 'plan-your-trip',
     component: ReservationView,
-    meta:{ requireAuth: true, layout: 'main' }
+    meta:{ requireAuth: false, layout: 'main' }
   },
 
   {
@@ -74,27 +72,61 @@ const routes: Array<RouteRecordRaw> = [
     meta: {requireAuth: false, layout: 'main'}
   },
   {
-    path: '/payment',
-    name: 'payment-methods',
-    component: PaymentMethodsComponent,
-    meta: {requireAuth: false, layout: 'main'}
-
-  },
-  {
     path: '/report-problem',
     name: 'report-problem',
     component: ReportProblemComponent,
-    meta: {requireAuth: false, layout: 'main'}
+    meta: {requireAuth: true, layout: 'main'}
 
+  },
+  {
+    path: '/pago/success',
+    name: 'payment-success',
+    component: PaymentSuccesComponent,
+    meta: { requireAuth: true, layout: 'main' }
+  },
+  {
+    path: '/pago/cancel',
+    name: 'payment-cancel',
+    component: PaymentCancelComponent,
+    meta: { requireAuth: true, layout: 'main' }
+  },
+  {
+    path: '/pago/methods',
+    name: 'payment-methods',
+    component: PaymentMethodsComponent,
+    meta: { requireAuth: true, layout: 'main' }
+  },
+  {
+    path: '/purchase-subscription',
+    name: 'purchase-subscription',
+    component: PurchaseSubscriptionComponent,
+    meta: { requireAuth: true, layout: 'main' }
   }
-  
-
-
 ]
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
+})
+
+// Global guard to protect authenticated routes
+router.beforeEach((to, from, next) => {
+  const authStore = userAuth()
+  const isAuthenticated = !!authStore.token
+
+  // If the route requires authentication and user is not authenticated
+  if (to.meta.requireAuth && !isAuthenticated) {
+    // Redirect to login
+    next({ name: 'login' })
+  }
+  // If user is authenticated and tries to access auth routes
+  else if (isAuthenticated && (to.name === 'login' || to.name === 'signup')) {
+    // Redirect to home
+    next({ name: 'home' })
+  }
+  else {
+    next()
+  }
 })
 
 export default router

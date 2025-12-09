@@ -176,7 +176,7 @@ public class UserController {
 
     @PostMapping("/subscription/purchase/{uid}")
     @Operation(summary = "Comprar suscripción mensual",
-            description = "Compra la suscripción MONTHLY: establece subscriptionType='MONTHLY', suma 150 a subscriptionTravels y descuenta 39 del balance.")
+            description = "Compra la suscripción MONTHLY: establece subscriptionType='MONTHLY', suma 50 a subscriptionTravels y descuenta 39 del balance.")
     public ResponseEntity<?> purchaseMonthlySubscription(
             @Parameter(description = "UID del usuario", required = true)
             @PathVariable("uid") String uidUser

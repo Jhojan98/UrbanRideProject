@@ -1,0 +1,282 @@
+package com.movilidadsostenible.bicis_service.controllers;
+
+import com.movilidadsostenible.bicis_service.clients.StationClientRest;
+import com.movilidadsostenible.bicis_service.model.dto.BicycleTelemetryEndTravelDTO;
+import com.movilidadsostenible.bicis_service.model.dto.StationDTO;
+import com.movilidadsostenible.bicis_service.model.entity.Bicycle;
+import com.movilidadsostenible.bicis_service.services.BicycleService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@RestController
+@Tag(name = "Bicicletas", description = "Operaciones CRUD para bicicletas")
+public class BicycleController {
+
+    @Autowired
+    private BicycleService service;
+
+    @Autowired
+    private StationClientRest stationClient;
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    @GetMapping(produces = "application/json")
+    @Operation(summary = "Listar bicicletas",
+            description = "Obtiene el listado completo de bicicletas registradas")
+    @ApiResponse(responseCode = "200", description = "Listado obtenido",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = Bicycle.class))))
+    public ResponseEntity<List<Bicycle>> listBicycles() {
+        List<Bicycle> bicicletas = service.listBicycle();
+        return ResponseEntity.ok(bicicletas);
+    }
+
+    @GetMapping(value = "/{id}", produces = "application/json")
+    @Operation(summary = "Obtener bicicleta por id",
+            description = "Retorna la bicicleta con el identificador proporcionado")
+    @ApiResponse(responseCode = "200", description = "Bicicleta encontrada",
+            content = @Content(schema = @Schema(implementation = Bicycle.class)))
+    @ApiResponse(responseCode = "404", description = "No encontrada")
+    public ResponseEntity<?> getBicycleByid(
+            @Parameter(description = "Identificador de la bicicleta", required = true, example = "B-001")
+            @PathVariable String id) {
+        Optional<Bicycle> o = service.byId(id);
+        if (o.isPresent()) {
+            return ResponseEntity.ok(o.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+
+    }
+
+    @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "Actualizar bicicleta",
+            description = "Actualiza campos de la bicicleta indicada por id")
+    @ApiResponse(responseCode = "201", description = "Actualizada",
+            content = @Content(schema = @Schema(implementation = Bicycle.class)))
+    @ApiResponse(responseCode = "404", description = "No encontrada")
+    public ResponseEntity<?> updateBicycle(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Cuerpo con los cambios a aplicar",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Bicycle.class)))
+            @Valid @RequestBody Bicycle bicycle,
+            BindingResult result,
+            @Parameter(description = "Identificador de la bicicleta a actualizar", example = "B-001")
+            @PathVariable String id) {
+        Optional<Bicycle> o = service.byId(id);
+        if (o.isPresent()) {
+            Bicycle bicicletaDb = o.get();
+            bicicletaDb.setSeries(bicycle.getSeries());
+            bicicletaDb.setModel(bicycle.getModel());
+            bicicletaDb.setPadlockStatus(bicycle.getPadlockStatus());
+            bicicletaDb.setLastUpdate(bicycle.getLastUpdate());
+            bicicletaDb.setLatitude(bicycle.getLatitude());
+            bicicletaDb.setLength(bicycle.getLength());
+            bicicletaDb.setBattery(bicycle.getBattery());
+            service.save(bicicletaDb);
+            return ResponseEntity.status(HttpStatus.CREATED).body(bicicletaDb);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping(value = "/{id}")
+    @Operation(summary = "Eliminar bicicleta",
+            description = "Elimina la bicicleta por identificador")
+    @ApiResponse(responseCode = "204", description = "Eliminada")
+    @ApiResponse(responseCode = "404", description = "No encontrada")
+    public ResponseEntity<?> deleteBicycle(
+            @Parameter(description = "Identificador de la bicicleta a eliminar", example = "B-001")
+            @PathVariable String id) {
+        Optional<Bicycle> o = service.byId(id);
+        if (o.isPresent()) {
+            service.delete(id);
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // Crear una bicicleta eléctrica (model = ELECTRIC, id = ELEC-######)
+    @PostMapping(value = "/electric", consumes = "application/json", produces = "application/json")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Crear bicicleta eléctrica",
+            description = "Crea una bicicleta con modelo ELECTRIC y un id autogenerado ELEC-######")
+    @ApiResponse(responseCode = "201", description = "Creada",
+            content = @Content(schema = @Schema(implementation = Bicycle.class)))
+    @ApiResponse(responseCode = "400", description = "Validación fallida")
+    public ResponseEntity<?> createElectric(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Datos base de la bicicleta eléctrica (sin id ni model)",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Bicycle.class),
+                            examples = @ExampleObject(value = "{\n  \"series\": 2026,\n  \"padlockStatus\": \"UNLOCKED\"}")))
+            @Valid @RequestBody Bicycle bicycle,
+            BindingResult result) {
+        if (result.hasErrors()) {
+            return validate(result);
+        }
+        bicycle.setIdBicycle(generateId("ELEC"));
+        bicycle.setModel("ELECTRIC");
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(bicycle));
+    }
+
+    // Crear una bicicleta mecánica (model = MECHANIC, id = MECH-######)
+    @PostMapping(value = "/mechanic", consumes = "application/json", produces = "application/json")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "Crear bicicleta mecánica",
+            description = "Crea una bicicleta con modelo MECHANIC y un id autogenerado MECH-######")
+    @ApiResponse(responseCode = "201", description = "Creada",
+            content = @Content(schema = @Schema(implementation = Bicycle.class)))
+    @ApiResponse(responseCode = "400", description = "Validación fallida")
+    public ResponseEntity<?> createMechanic(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Datos base de la bicicleta mecánica (sin id ni model)",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = Bicycle.class),
+                            examples = @ExampleObject(value = "{\n  \"series\": 2025,\n  \"padlockStatus\": \"UNLOCKED\"\n}")))
+            @Valid @RequestBody Bicycle bicycle,
+            BindingResult result) {
+        if (result.hasErrors()) {
+            return validate(result);
+        }
+        bicycle.setIdBicycle(generateId("MECH"));
+        bicycle.setModel("MECHANIC");
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(bicycle));
+    }
+
+    // Metodo para actualizar el padlockeStatus de una bicicleta
+    @PutMapping(value = "/{id}/padlock-status", produces = "application/json")
+    @Operation(summary = "Actualizar estado del candado de una bicicleta",
+            description = "Actualiza el campo padlockStatus de la bicicleta indicada por id. Valores típicos: LOCKED, UNLOCKED")
+    @ApiResponse(responseCode = "200", description = "Actualizada",
+            content = @Content(schema = @Schema(implementation = Bicycle.class)))
+    @ApiResponse(responseCode = "404", description = "No encontrada")
+    public ResponseEntity<?> updatePadlockStatus(
+            @Parameter(description = "Identificador de la bicicleta", required = true, example = "ELEC-123456")
+            @PathVariable String id,
+            @Parameter(description = "Nuevo estado del candado", required = true, example = "LOCKED")
+            @RequestParam("status") String status) {
+        Optional<Bicycle> o = service.byId(id);
+        if (o.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Bicycle bici = o.get();
+        bici.setPadlockStatus(status);
+        service.save(bici);
+        return ResponseEntity.ok(bici);
+    }
+
+    // Nuevo: cerrar candado si la bici está a <=30m de una estación (usando telemetría)
+    @PutMapping(value = "/padlock-close-if-near", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "Cerrar candado si está cerca de la estación (telemetría)",
+            description = "Recibe datos de telemetría de la bicicleta (idBicycle, latitude, longitude, stationId) y verifica que esté a 30m o menos de la estación; si cumple, padlockStatus=LOCKED.")
+    @ApiResponse(responseCode = "200", description = "Candado cerrado",
+            content = @Content(schema = @Schema(implementation = Bicycle.class)))
+    @ApiResponse(responseCode = "400", description = "Distancia mayor a 30m o datos faltantes")
+    @ApiResponse(responseCode = "404", description = "Bicicleta o estación no encontrada")
+    public ResponseEntity<?> closePadlockIfNearTelemetry(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Telemetría de fin de viaje",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BicycleTelemetryEndTravelDTO.class)))
+            @Valid @RequestBody BicycleTelemetryEndTravelDTO telemetry
+    ) {
+        // Validaciones básicas del cuerpo
+        if (telemetry.getIdBicycle() == null || telemetry.getIdBicycle().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "idBicycle es requerido"));
+        }
+        if (telemetry.getLatitude() == null || telemetry.getLongitude() == null) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "latitude y longitude son requeridos"));
+        }
+        if (telemetry.getStationId() == null) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "stationId es requerido"));
+        }
+
+        Optional<Bicycle> o = service.byId(telemetry.getIdBicycle());
+        if (o.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Bicicleta no encontrada"));
+        }
+        Bicycle bici = o.get();
+
+        if (stationClient == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("mensaje", "StationClient no configurado"));
+        }
+
+        ResponseEntity<StationDTO> stationResponse;
+        try {
+          stationResponse = stationClient.getById(telemetry.getStationId());
+        } catch (Exception e) {
+          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Estación no encontrada"));
+        }
+
+        StationDTO station = stationResponse.getBody();
+
+        if (station == null || station.getLatitude() == null || station.getLength() == null) {
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("mensaje", "La estación no tiene coordenadas válidas"));
+        }
+
+        double distanceMeters = haversineMeters(telemetry.getLatitude(), telemetry.getLongitude(), station.getLatitude(), station.getLength());
+        if (distanceMeters > 30.0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "mensaje", "La bicicleta no está en la estacion cerca de la estación",
+                    "distancia_metros", String.format("%.2f", distanceMeters)
+            ));
+        }
+
+        bici.setPadlockStatus("LOCKED");
+        bici.setLatitude(telemetry.getLatitude());
+        bici.setLength(telemetry.getLongitude());
+        bici.setBattery(telemetry.getBattery());
+
+        service.save(bici);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("mensaje", "Candado cerrado exitosamente", "bicicleta", bici));
+    }
+
+    private String generateId(String prefix) {
+        int number = RANDOM.nextInt(1_000_000); // 0..999999
+        return String.format("%s-%06d", prefix, number);
+    }
+
+    // Utilidad: distancia Haversine en metros
+    private double haversineMeters(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371000.0;
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    private ResponseEntity<Map<String, String>> validate(BindingResult result) {
+        Map<String,String> errors = new HashMap<>();
+        result.getFieldErrors().forEach(err -> {
+            errors.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage());
+        });
+        return ResponseEntity.badRequest().body(errors);
+    }
+}

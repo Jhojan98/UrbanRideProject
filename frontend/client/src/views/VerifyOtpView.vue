@@ -2,24 +2,24 @@
     <div class="form-container">
         <img src="@/assets/ECORIDE.webp" alt="Logo" class="form-logo" />
         <h2 class="form-title">{{ $t('auth.otp.title') }}</h2>
-        
+
         <!-- Mostramos el email que viene del store -->
         <div class="email-info">
             <p>{{ $t('auth.otp.codeSentTo') }} <strong>{{ email }}</strong></p>
         </div>
-        
+
         <div class="verification-info">
             <p>{{ $t('auth.otp.emailSent') }}</p>
             <p>{{ $t('auth.otp.checkInbox') }}</p>
             <p>{{ $t('auth.otp.afterVerify') }}</p>
         </div>
-        
+
         <button @click="checkVerification" class="form-submit">{{ $t('auth.otp.verify') }}</button>
-        
+
         <div class="otp-actions">
             <button @click="resendOtp" class="btn-resend">{{ $t('auth.otp.resend') }}</button>
         </div>
-        
+
         <br>
         <h4>
             <router-link class="link-inline" :to="{ name: 'login' }" @click="clearEmail">
@@ -61,8 +61,8 @@ const checkVerification = async () => {
         return;
     }
 
-    // Simplemente redirigir al login
-    // La verificación ya se hizo mediante el enlace en el email
+    // Simply redirect to login
+    // Verification was already done via the link in the email
     feedback.value = $t('auth.otp.redirectToLogin');
     setTimeout(() => {
         router.push({ name: 'login', query: { verified: 'true' } });
@@ -76,7 +76,7 @@ const resendOtp = async () => {
     }
 
     const res = await store.generateOtp(email.value);
-    
+
     if (res) {
         feedback.value = $t('auth.otp.resendSuccess');
     } else {

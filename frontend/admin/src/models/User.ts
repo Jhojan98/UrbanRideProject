@@ -1,8 +1,11 @@
-export default interface User{
-  idUser: number;
-  username: string;
-  subscription: string | 'NONE';
+export default interface User {
+  // IDs posibles según origen de datos
+
+  uidUser: string;
+  userName: string;
+  subscriptionType?: string;
   email: string;
   timestamp: Date;
+  balance: number;
 }
 

@@ -7,5 +7,25 @@ const envPath = path.resolve(__dirname, '../.env')
 dotenv.config({ path: envPath })
 
 module.exports = defineConfig({
-  transpileDependencies: true
+  transpileDependencies: true,
+  devServer: {
+    proxy: {
+      '^/api': {
+        target: process.env.VUE_APP_API_URL,
+        changeOrigin: true,
+        pathRewrite: {
+          '^/api': ''
+        },
+        onProxyRes(proxyRes) {
+          // Limpiar headers CORS conflictivos - solo dejar un valor
+          proxyRes.headers['access-control-allow-origin'] = '*'
+          // Asegurar que métodos y headers CORS incluyan PATCH
+          proxyRes.headers['access-control-allow-methods'] = 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS'
+          proxyRes.headers['access-control-allow-headers'] = 'Content-Type,Authorization'
+          // Permitir credenciales si es necesario
+          proxyRes.headers['access-control-allow-credentials'] = 'true'
+        }
+      }
+    }
+  }
 })

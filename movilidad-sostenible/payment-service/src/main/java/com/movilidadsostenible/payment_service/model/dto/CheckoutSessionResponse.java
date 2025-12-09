@@ -9,4 +9,3 @@ public class CheckoutSessionResponse {
     private String sessionId;
     private String url; // URL a la que redirigir al usuario (Checkout Hosted Page)
 }
-

@@ -2,6 +2,7 @@ export default interface CaC {
   idCaC: number;
   description: string;
   status: string;
-  idTravel: number;
-  date
+  idTravel?: number | null;
+  type?: string;
+  date?: Date | string | null;
 }

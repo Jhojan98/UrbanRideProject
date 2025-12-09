@@ -4,14 +4,14 @@
       <h1>{{ $t('report.title') }}</h1>
       <p>{{ $t('report.subtitle') }}</p>
     </div>
-    
+
     <form @submit.prevent="submitReport" class="report-form">
       <div class="form-section">
         <h3>{{ $t('report.bikeInfo') }}</h3>
-        
+
         <div class="form-group">
           <label class="label">{{ $t('report.bikeId') }}</label>
-          <input 
+          <input
             v-model="formData.bikeId"
             type="text"
             placeholder="Ej: BIC-1234"
@@ -19,36 +19,36 @@
             required
           >
         </div>
-        
+
         <div class="form-group">
           <label class="label">{{ $t('report.stationWhere') }}</label>
           <select v-model="formData.stationId" class="form-select" required>
             <option value="">{{ $t('report.selectStation') }}</option>
-            <option 
-              v-for="station in stations" 
-              :key="station.id"
-              :value="station.id"
+            <option
+              v-for="station in stations"
+              :key="station.idStation"
+              :value="station.idStation"
             >
-              {{ station.name }}
+              {{ station.nameStation }}
             </option>
           </select>
         </div>
       </div>
-      
+
       <div class="form-section">
         <h3>{{ $t('report.problemDetails') }}</h3>
-        
+
         <div class="form-group">
           <label class="label">{{ $t('report.problemType') }}</label>
           <div class="problem-types">
-            <label 
-              v-for="problem in problemTypes" 
+            <label
+              v-for="problem in problemTypes"
               :key="problem.id"
               class="problem-card"
               :class="{ 'selected': formData.problemType === problem.id }"
             >
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 v-model="formData.problemType"
                 :value="problem.id"
                 class="radio-input"
@@ -60,21 +60,21 @@
             </label>
           </div>
         </div>
-        
+
         <div class="form-group">
           <label class="label">{{ $t('report.severity') }}</label>
           <div class="severity-levels">
-            <label 
-              v-for="level in severityLevels" 
+            <label
+              v-for="level in severityLevels"
               :key="level.id"
               class="severity-card"
-              :class="{ 
+              :class="{
                 'selected': formData.severity === level.id,
                 [level.id]: true
               }"
             >
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 v-model="formData.severity"
                 :value="level.id"
                 class="radio-input"
@@ -86,10 +86,10 @@
             </label>
           </div>
         </div>
-        
+
         <div class="form-group">
           <label class="label">{{ $t('report.description') }}</label>
-          <textarea 
+          <textarea
             v-model="formData.description"
             :placeholder="$t('report.descriptionPlaceholder')"
             class="form-textarea"
@@ -97,13 +97,13 @@
             required
           ></textarea>
         </div>
-        
+
         <div class="form-group">
           <label class="label">{{ $t('report.allowsUse') }}</label>
           <div class="radio-group">
             <label class="radio-label">
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 v-model="formData.allowsUse"
                 :value="false"
                 class="radio-input"
@@ -111,8 +111,8 @@
               <span>{{ $t('report.noUse') }}</span>
             </label>
             <label class="radio-label">
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 v-model="formData.allowsUse"
                 :value="true"
                 class="radio-input"
@@ -122,17 +122,17 @@
           </div>
         </div>
       </div>
-      
+
       <div class="form-actions">
-        <button 
-          type="button" 
+        <button
+          type="button"
           class="btn-secondary"
           @click="resetForm"
         >
           {{ $t('common.cancel') }}
         </button>
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           class="butn-primary"
           :disabled="loading"
         >
@@ -140,8 +140,8 @@
         </button>
       </div>
     </form>
-    
-    <!--confirmación -->
+
+    <!-- Confirmation -->
     <div v-if="showSuccess" class="modal-overlay">
       <div class="modal">
         <div class="modal-content">
@@ -175,12 +175,12 @@ const loading = ref(false)
 const showSuccess = ref(false)
 const reportId = ref('')
 
-// Datos de ejemplo
+// Datos de ejemplo - usando modelo Station correcto
 const stations = ref([
-  { id: '1', name: 'Estación Centro' },
-  { id: '2', name: 'Parque Sikuani' },
-  { id: '3', name: 'Zona Universitaria' },
-  { id: '4', name: 'Estación Sur' }
+  { idStation: 1, nameStation: 'Estación Centro' },
+  { idStation: 2, nameStation: 'Parque Sikuani' },
+  { idStation: 3, nameStation: 'Zona Universitaria' },
+  { idStation: 4, nameStation: 'Estación Sur' }
 ])
 
 const problemTypes = ref([
@@ -210,20 +210,20 @@ const formData = reactive<ProblemForm>({
 const { t: $t } = useI18n();
 const submitReport = async () => {
   if (loading.value) return
-  
+
   loading.value = true
-  
+
   try {
     // Simular a API
     await new Promise(resolve => setTimeout(resolve, 1500))
-    
+
     // Generar ID de reporte
     reportId.value = 'RP-' + Date.now().toString().slice(-6)
     showSuccess.value = true
-    
-    // se enviaría a la API
+
+    // Would be sent to the API
     console.log('Reporte enviado:', formData)
-    
+
   } catch (error) {
     console.error('Error enviando reporte:', error)
     alert($t('report.sendError'))
@@ -258,12 +258,12 @@ const closeModal = () => {
 
 .header {
   margin-bottom: 30px;
-  
+
   h1 {
     margin: 0 0 8px 0;
     color: #333;
   }
-  
+
   p {
     margin: 0;
     color: #666;
@@ -279,7 +279,7 @@ const closeModal = () => {
 
 .form-section {
   margin-bottom: 30px;
-  
+
   h3 {
     margin: 0 0 20px 0;
     color: #333;
@@ -300,7 +300,7 @@ const closeModal = () => {
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 16px;
-  
+
   &:focus {
     outline: none;
     border-color: #007bff;
@@ -326,12 +326,12 @@ const closeModal = () => {
   padding: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
-  
+
   &.selected {
     border-color: #007bff;
     background: #f8fbff;
   }
-  
+
   &:hover {
     border-color: #007bff;
   }
@@ -342,12 +342,12 @@ const closeModal = () => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  
+
   .problem-icon {
     font-size: 24px;
     margin-bottom: 8px;
   }
-  
+
   .problem-name {
     font-weight: 500;
     color: #333;
@@ -360,7 +360,7 @@ const closeModal = () => {
     font-weight: 600;
     margin-bottom: 4px;
   }
-  
+
   .severity-desc {
     display: block;
     font-size: 12px;
@@ -397,7 +397,7 @@ const closeModal = () => {
   display: flex;
   align-items: center;
   cursor: pointer;
-  
+
   span {
     margin-left: 8px;
   }
@@ -411,7 +411,7 @@ const closeModal = () => {
   border-top: 1px solid #f0f0f0;
 }
 
-// Modal de éxito
+// Success modal
 .modal-overlay {
   position: fixed;
   top: 0;

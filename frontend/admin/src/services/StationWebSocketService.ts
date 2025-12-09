@@ -1,34 +1,39 @@
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { type Station, type StationDTO, toStation } from '@/models/Station';
+import { type Station } from '@/models/Station';
 import { StationFactory } from '@/patterns/StationFlyweight';
 
+export interface AdminStationUpdate {
+  stationId: number;
+  timestamp: string;
+  availableElectricBikes: number;
+  availableMechanicBikes: number;
+  cctvStatus: boolean;
+  panicButtonStatus: boolean;
+  lightingStatus: boolean;
+}
+
 /**
- * Servicio WebSocket para manejo de estaciones y sus slots.
+ * Servicio WebSocket para recibir actualizaciones administrativas de estaciones.
  * Flujo:
  * 1. connect() -> establece conexión STOMP sobre SockJS
- * 2. requestInitialLoad() -> envía mensaje a /app/stations.request para bulk inicial
- * 3. Suscripciones:
- *    - /topic/stations.bulk   (array completo de estaciones con slots)
- *    - /topic/station.update  (actualizaciones incrementales de una estación)
+ * 2. Suscripción única a /topic/station.update/admin
+ * 3. Actualiza cache local y notifica callback
  */
 export class StationWebSocketService {
   private client: Client | null = null;
   private factory: StationFactory;
   private isConnected = false;
-  private hasBulk = false;
   private stationsCache: Map<number, Station> = new Map();
 
-  private onInitialLoad?: (stations: Station[], factory: StationFactory) => void;
-  private onUpdate?: (station: Station, factory: StationFactory) => void;
+  private onAdminUpdate?: (stationId: number, adminData: AdminStationUpdate) => void;
 
   constructor(factory?: StationFactory){
     this.factory = factory || new StationFactory();
   }
 
-  connect(onInitialLoad?: (stations: Station[], factory: StationFactory)=>void, onUpdate?: (station: Station, factory: StationFactory)=>void){
-    this.onInitialLoad = onInitialLoad;
-    this.onUpdate = onUpdate;
+  connect(onAdminUpdate?: (stationId: number, adminData: AdminStationUpdate)=>void){
+    this.onAdminUpdate = onAdminUpdate;
 
     // Conexión directa al microservicio de estaciones (no vía gateway)
     const baseUrl = process.env.VUE_APP_WEBSOCKET_STATIONS_URL || 'http://localhost:8005';
@@ -45,8 +50,6 @@ export class StationWebSocketService {
         console.log('[Stations WS] Conectado');
         this.isConnected = true;
         this.subscribe();
-        // Solicitar carga inicial automática
-        this.requestInitialLoad();
       },
       onStompError: frame => {
         console.error('[Stations WS] STOMP error:', frame.headers['message']);
@@ -68,50 +71,95 @@ export class StationWebSocketService {
   private subscribe(){
     if(!this.client){ console.error('STOMP no inicializado'); return; }
 
-    // Bulk inicial
-    this.client.subscribe('/topic/stations.bulk', msg => this.handleBulk(msg));
-    // Actualizaciones individuales
-    this.client.subscribe('/topic/station.update', msg => this.handleUpdate(msg));
+    this.client.subscribe('/topic/station.update/admin', msg => this.handleAdminUpdate(msg));
 
-    console.log('[Stations WS] Suscripciones realizadas');
+    console.log('[Stations WS] Suscripción a /topic/station.update/admin realizada');
   }
 
-  private handleBulk(message: IMessage){
+  registerStation(station: Station){
+    this.stationsCache.set(station.idStation, station);
+  }
+
+  registerStations(stations: Station[]){
+    stations.forEach(st => this.stationsCache.set(st.idStation, st));
+  }
+
+  private handleAdminUpdate(message: IMessage){
     try {
-      const arr: StationDTO[] = JSON.parse(message.body);
-      const stations: Station[] = arr.map(toStation);
-      stations.forEach(st => {
-        this.stationsCache.set(st.idStation, st);
-        this.factory.getStationMarker(st); // actualiza/crea en pool
+      const raw = message.body;
+      const adminData = JSON.parse(raw) as Record<string, unknown>;
+
+      const pickNumber = (keys: string[]): number | null => {
+        for (const k of keys) {
+          const v = adminData[k];
+          if (typeof v === 'number') return v;
+          if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return Number(v);
+        }
+        return null;
+      };
+
+      const pickBoolean = (keys: string[], fallback: boolean): boolean => {
+        for (const k of keys) {
+          const v = adminData[k];
+          if (typeof v === 'boolean') return v;
+          if (typeof v === 'string') {
+            const val = v.toLowerCase();
+            if (val === 'true') return true;
+            if (val === 'false') return false;
+          }
+          if (typeof v === 'number') return v !== 0;
+        }
+        return fallback;
+      };
+
+      // Resolver id con múltiples posibles claves
+      const stationId = pickNumber(['stationId', 'idStation', 'station_id', 'id']);
+
+      console.log('[Stations WS] Mensaje admin recibido:', {
+        stationId,
+        adminData
       });
-      this.hasBulk = true;
-      if(this.onInitialLoad){ this.onInitialLoad(stations, this.factory); }
-      console.log(`[Stations WS] Bulk recibido (${stations.length} estaciones)`);
-    } catch(e){
-      console.error('[Stations WS] Error parse bulk:', e, 'payload:', message.body);
-    }
-  }
 
-  private handleUpdate(message: IMessage){
-    try {
-      const dto: StationDTO = JSON.parse(message.body);
-      const station = toStation(dto);
-      this.stationsCache.set(station.idStation, station);
-      this.factory.getStationMarker(station);
-      if(this.onUpdate){ this.onUpdate(station, this.factory); }
-      console.log(`[Stations WS] Update estación ${station.idStation}`);
-    } catch(e){
-      console.error('[Stations WS] Error parse update:', e, 'payload:', message.body);
-    }
-  }
+      if (!stationId) {
+        console.warn('[Stations WS] stationId no encontrado en payload, body:', raw);
+        return;
+      }
 
-  requestInitialLoad(){
-    if(!this.client || !this.isConnected){
-      console.warn('[Stations WS] No conectado, no se puede solicitar bulk');
-      return;
+      const station = this.stationsCache.get(Number(stationId));
+
+      const update: AdminStationUpdate = {
+        stationId: Number(stationId),
+        timestamp: typeof adminData.timestamp === 'string' ? adminData.timestamp : new Date().toISOString(),
+        availableElectricBikes: pickNumber(['availableElectricBikes', 'available_electric_bikes', 'available_electric'])
+          ?? station?.availableElectricBikes
+          ?? 0,
+        availableMechanicBikes: pickNumber(['availableMechanicBikes', 'available_mechanic_bikes', 'available_mechanic'])
+          ?? station?.availableMechanicBikes
+          ?? 0,
+        cctvStatus: pickBoolean(['cctvStatus', 'cctv_status'], station?.cctvStatus ?? false),
+        panicButtonStatus: pickBoolean(['panicButtonStatus', 'panic_button_status'], station?.panicButtonStatus ?? false),
+        lightingStatus: pickBoolean(['lightingStatus', 'lighting_status'], station?.lightingStatus ?? false)
+      };
+
+      if(station){
+        station.availableElectricBikes = update.availableElectricBikes;
+        station.availableMechanicBikes = update.availableMechanicBikes;
+        station.cctvStatus = update.cctvStatus;
+        station.panicButtonStatus = update.panicButtonStatus;
+        station.lightingStatus = update.lightingStatus;
+        this.factory.getStationMarker(station);
+      } else {
+        console.warn('[Stations WS] Estación no registrada en cache para id', stationId);
+      }
+
+      if(this.onAdminUpdate){
+        this.onAdminUpdate(Number(stationId), update);
+      }
+
+      console.log(`[Stations WS] Admin update estación ${stationId}`);
+    } catch(e){
+      console.error('[Stations WS] Error parse admin update:', e, 'payload:', message.body);
     }
-    this.client.publish({ destination: '/app/stations.request', body: JSON.stringify({ action: 'load_all' }) });
-    console.log('[Stations WS] Solicitud bulk enviada');
   }
 
   disconnect(){
@@ -124,7 +172,6 @@ export class StationWebSocketService {
 
   // Helpers de estado
   getIsConnected(){ return this.isConnected; }
-  getHasInitialBulk(){ return this.hasBulk; }
   getFactory(){ return this.factory; }
   getStationCount(){ return this.factory.size(); }
   getStations(): Station[] { return Array.from(this.stationsCache.values()); }

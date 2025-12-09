@@ -1,14 +1,14 @@
 /* Color Palette - Light Mode */
 :root {
   /* Light Mode Palette */
-  --color-primary-light: #2E7D32;   
-  --color-accent-light: #FBC02D;     
-  --color-background-light: #FFFFFF; 
-  --color-surface-light: #004e61;  
+  --color-primary-light: #2E7D32;
+  --color-accent-light: #FBC02D;
+  --color-background-light: #FFFFFF;
+  --color-surface-light: #004e61;
   --color-text-primary-light: #000000;
   --color-text-secondary-light: #4A4A4A;
-  --color-border-light: #E0E0E0;     
-  --color-button-text-light: #FFFFFF; 
+  --color-border-light: #E0E0E0;
+  --color-button-text-light: #FFFFFF;
 
   /* Base tokens */
   --font-family-base: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -46,11 +46,11 @@
 
 [data-theme="dark"] {
   /* Dark Mode Palette */
-  --color-primary-dark: #266629;     
-  --color-accent-dark: #F1C84B;    
-  --color-background-dark: #000000; 
-  --color-surface-dark: #1E2128;     
-  --color-text-primary-dark: #FFFFFF; 
+  --color-primary-dark: #266629;
+  --color-accent-dark: #F1C84B;
+  --color-background-dark: #000000;
+  --color-surface-dark: #1E2128;
+  --color-text-primary-dark: #FFFFFF;
   --color-text-secondary-dark: #B0B0B0;
   --color-border-dark: #333333;
   --color-button-text-dark: #000000;
@@ -86,6 +86,11 @@ body {
   background-color: var(--color-background-light);
   color: var(--color-text-primary-light);
   line-height: 1.5;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--color-background-dark);
+  color: var(--color-text-primary-dark);
 }
 
 /* Containers */
@@ -155,6 +160,14 @@ textarea {
   transition: border-color 0.3s ease;
 }
 
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: var(--color-surface-dark);
+  color: var(--color-text-primary-dark);
+  border-color: var(--color-border-dark);
+}
+
 .link-inline {
   color: var(--color-primary-light);
   font-weight: 600;
@@ -166,6 +179,27 @@ textarea {
 .link-inline:hover {
   color: var(--color-green-light);
   text-decoration: underline;
+}
+
+/* Material Symbols Icons */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+  /* Support for all font variations */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 input:focus,

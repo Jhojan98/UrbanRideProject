@@ -1,0 +1,91 @@
+export default {
+    form: {
+        stationDetails: 'Station Details',
+        defaultStation: 'Select a station',
+        selectStation: 'Select a station',
+        bikesAvailable: 'Available Bikes',
+        totalSlots: 'Total slots',
+        bikeType: 'Bike Type:',
+        mechanical: 'Mechanical',
+        electric: 'Electric',
+        rideType: 'Trip Type:',
+        lastMile: 'Last Mile',
+        lastMileMax: 'Max 45 min',
+        longTrip: 'Long Trip',
+        longTripMax: 'Max 75 min',
+        balance: 'Balance:',
+        recharge: 'Recharge',
+        warning: 'The bike will be reserved for',
+        warningMinutes: '10 minutes',
+        reserveBike: 'Reserve Bike',
+        selectionAlert: 'Please select bike type and trip type.',
+        reserveError: 'Error starting reservation. Try again.',
+        mustLogin: 'You must login to start a trip'
+    },
+    ultimaMilla: {
+        title: 'Last Mile Trip',
+        subtitle: 'Select your starting point (metro) and destination bike station',
+        longTripTitle: 'Long Trip',
+        longTripSubtitle: 'Select origin and destination station (bike to bike)',
+        originLabel: 'Starting Point (Metro)',
+        originLongTripLabel: 'Origin Station',
+        destinationLabel: 'Destination Station',
+        selectPoint: 'Select a point',
+        selectStation: 'Select station',
+        bikeTypeRequired: 'Must select bike type'
+    },
+    confirmation: {
+        remainingTime: 'Reservation remaining time',
+        tripDetails: 'Trip details',
+        bikeType: 'Bike type:',
+        tripType: 'Trip type:',
+        estimatedCost: 'Estimated cost:',
+        confirm: 'Confirm Reservation',
+        enterBikeCode: 'Enter the bike code',
+        unlock: 'Unlock',
+        bikeCodeInvalid: 'Please enter the 6-digit bike code',
+        noReservationData: 'No reservation data available',
+        unlockError: 'Could not verify/unlock bike'
+    },
+    map: {
+        authRequired: 'Restricted access',
+        authMessage: 'To access our services and view the map, you must login first',
+        accept: 'Accept',
+        originStation: 'Origin Station',
+        destinationStation: 'Destination Station',
+        availableBikes: 'bikes',
+        availableSlots: 'available slots',
+        markerOrigin: 'Origin',
+        markerDestination: 'Destination',
+        markerCoords: 'Lat: {lat}, Lng: {lng}',
+        popup: {
+            availableTypes: 'Available types',
+            mechanical: 'Mechanical',
+            electric: 'Electric',
+            available: 'Available',
+            slots: 'Slots',
+            noSlots: 'No slots',
+            slotFree: 'Slot {num}: Free',
+            slotOccupied: 'Slot {num}: Occupied',
+            slotMaintenance: 'Slot {num}: Maint.',
+            slotOutOfService: 'Slot {num}: Out',
+            slotUnknown: 'Unknown'
+        },
+        bicycle: {
+            title: 'Bicycle {id}',
+            battery: 'Battery',
+            location: 'Location',
+            lastUpdate: 'Last update'
+        }
+    },
+    notifications: {
+        expiredTravel: 'Travel Cancelled',
+        expiredTravelMsg: 'The wait time has expired and your trip has been automatically cancelled',
+        startTravel: 'Travel Started',
+        startTravelMsg: 'Your reservation has been confirmed! The trip has started successfully',
+        endTravel: 'Travel Completed',
+        endTravelMsg: 'Your trip has ended. Details and total amount will be sent to your email',
+        defaultNotification: 'Notification',
+        closeLabel: 'Close notification'
+    }
+};

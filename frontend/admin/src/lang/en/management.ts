@@ -1,0 +1,179 @@
+export default {
+  title: 'Management',
+  tabs: {
+    cities: 'Cities',
+    stations: 'Stations',
+    bicycles: 'Bicycles',
+    slots: 'Slots'
+  },
+  cities: {
+    title: 'City Management',
+    create: 'Create City',
+    newCity: 'New City',
+    idCity: 'City ID',
+    cityName: 'City Name',
+    empty: 'No cities registered',
+    createSuccess: 'City created successfully',
+    createError: 'Error creating city',
+    confirmDelete: 'Are you sure you want to delete this city?',
+    deleteSuccess: 'City deleted successfully',
+    deleteError: 'Error deleting city'
+  },
+  stations: {
+    title: 'Station Management',
+    create: 'Create Station',
+    newStation: 'New Station',
+    idStation: 'Station ID',
+    stationName: 'Station Name',
+    latitude: 'Latitude',
+    longitude: 'Longitude',
+    city: 'City',
+    selectCity: 'Select a city',
+    type: 'Type',
+    location: 'Location',
+    cctv: 'CCTV',
+    cctvStatus: 'CCTV Status',
+    filterByCity: 'Filter by City:',
+    allCities: 'All cities',
+    filtered: 'Showing {count} of {total} stations',
+    empty: 'No stations registered',
+    createSuccess: 'Station created successfully',
+    createError: 'Error creating station',
+    confirmDelete: 'Are you sure you want to delete this station?',
+    deleteSuccess: 'Station deleted successfully',
+    deleteError: 'Error deleting station',
+    unknownCity: 'Unknown city (ID: {id})',
+    unknownStation: 'Unknown station (ID: {id})',
+    types: {
+      metro: 'Metro',
+      plaza: 'Plaza',
+      parque: 'Park',
+      comercial: 'Commercial'
+    }
+  },
+  bicycles: {
+    title: 'Bicycle Management',
+    create: 'Create Bicycle',
+    newBicycle: 'New Bicycle',
+    type: 'Type',
+    electric: 'Electric',
+    mechanic: 'Mechanical',
+    series: 'Series',
+    model: 'Model',
+    padlockStatus: 'Lock Status',
+    battery: 'Battery (%)',
+    filterByType: 'Filter by Type:',
+    filterByLock: 'Filter by Lock:',
+    allTypes: 'All types',
+    allLocks: 'All locks',
+    filtered: 'Showing {count} of {total} bicycles',
+    empty: 'No bicycles registered',
+    createSuccess: 'Bicycle created successfully',
+    createError: 'Error creating bicycle',
+    confirmDelete: 'Are you sure you want to delete this bicycle?',
+    deleteSuccess: 'Bicycle deleted successfully',
+    deleteError: 'Error deleting bicycle',
+    na: 'N/A',
+    padlock: {
+      locked: 'Locked',
+      unlocked: 'Unlocked'
+    }
+  },
+  slots: {
+    title: 'Slot Management',
+    filterByStation: 'Filter by Station:',
+    allStations: 'All stations',
+    station: 'Station',
+    bicycle: 'Bicycle',
+    noBicycle: 'No bicycle',
+    assignBicycle: 'Assign Bicycle',
+    assignBicycleTitle: 'Assign Bicycle to Slot',
+    assigningToSlot: 'Assigning to slot',
+    selectBicycle: 'Select Bicycle',
+    chooseBicycle: 'Choose a bicycle',
+    empty: 'No slots available',
+    assignSuccess: 'Bicycle assigned successfully',
+    assignError: 'Error assigning bicycle',
+    status: {
+      locked: 'Locked',
+      unlocked: 'Unlocked',
+      reserved: 'Reserved'
+    }
+  },
+  complaints: {
+    title: 'Complaints Management',
+    allStatus: 'All statuses',
+    type: 'Type',
+    description: 'Description',
+    travelId: 'Travel ID',
+    date: 'Date',
+    details: 'Complaint Details',
+    createdAt: 'Creation Date',
+    updatedAt: 'Last Update',
+    empty: 'No complaints or claims registered',
+    emptyFilter: 'No complaints or claims with this status',
+    updateSuccess: 'Status updated successfully',
+    updateError: 'Error updating status',
+    confirmDelete: 'Are you sure you want to delete this complaint?',
+    deleteSuccess: 'Complaint deleted successfully',
+    deleteError: 'Error deleting complaint',
+    status: {
+      label: 'Status',
+      open: 'Open',
+      inProgress: 'In Progress',
+      resolved: 'Resolved',
+      closed: 'Closed'
+    },
+    types: {
+      complaint: 'Complaint',
+      claim: 'Claim',
+      suggestion: 'Suggestion',
+      other: 'Other'
+    }
+  },
+  maintenance: {
+    title: 'Maintenance Orders',
+    create: 'Create maintenance order',
+    edit: 'Edit maintenance order',
+    newOrder: 'Create new maintenance order',
+    entityType: 'Entity type',
+    maintenanceType: 'Maintenance type',
+    triggeredBy: 'Requested by',
+    description: 'Description',
+    status: 'Status',
+    date: 'Date',
+    cost: 'Cost',
+    orderId: 'Order ID',
+    bikeId: 'Bike ID',
+    stationId: 'Station ID',
+    lockId: 'Lock ID',
+    saveChanges: 'Save changes',
+    cancel: 'Cancel',
+    loading: 'Loading orders...',
+    empty: 'No maintenance orders',
+    editButton: 'Edit',
+    createSuccess: 'Order created successfully',
+    updateSuccess: 'Order updated successfully',
+    createError: 'Error creating order',
+    updateError: 'Error updating order',
+    entities: {
+      bicycle: 'Bicycle',
+      station: 'Station',
+      lock: 'Lock'
+    },
+    types: {
+      preventive: 'Preventive',
+      corrective: 'Corrective',
+      inspection: 'Inspection'
+    },
+    triggers: {
+      admin: 'Administrator',
+      iotAlert: 'IoT Alert'
+    },
+    statuses: {
+      pending: 'Pending',
+      solving: 'In Progress',
+      resolved: 'Resolved'
+    }
+  }
+}

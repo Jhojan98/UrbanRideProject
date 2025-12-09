@@ -20,7 +20,7 @@
   color: var(--color-primary-light);
 }
 
-/* Subtítulos de sección (Tipo de Bicicleta / Tipo de Viaje) */
+/* Section subtitles (Bike Type / Trip Type) */
 .section-title {
   font-weight: 700;
   color: var(--color-primary-light);
@@ -36,10 +36,10 @@
 
 .select-group label,
 .select-group.vertical label {
-  color: var(--color-text-primary-light); 
+  color: var(--color-text-primary-light);
   display: flex;
   align-items: center;
-  gap: 5px;             
+  gap: 5px;
   margin: 0;
   font-size: 14px;
   cursor: pointer;
@@ -54,7 +54,7 @@
   width: auto;
   height: auto;
   vertical-align: middle;
-  
+
 }
 
 /* Inputs y selects */
@@ -164,6 +164,244 @@ button.secondary:hover {
 }
 
 
+/* Responsive adjustments for tablets and mobiles */
+@media (max-width: 992px) {
+  .reservation-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .left-panel {
+    position: static;
+    top: auto;
+  }
+
+  .panel,
+  .form-container,
+  .reservation-panel {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .reservation-view {
+    min-height: calc(100vh - 140px);
+  }
+
+  .reservation-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 12px;
+  }
+
+  .panel,
+  .form-container,
+  .reservation-panel {
+    width: 100%;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .reservation-panel h1 {
+    font-size: 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  label,
+  .section-title {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+
+  .select-group {
+    margin-bottom: 8px;
+  }
+
+  .select-group label {
+    font-size: 13px;
+    gap: 4px;
+  }
+
+  .ride-card {
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+
+  .ride-card strong {
+    font-size: 14px;
+  }
+
+  .ride-card p,
+  .ride-card .price {
+    font-size: 12px;
+  }
+
+  .reserve-btn,
+  .form-submit,
+  .butn-primary {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .balance-container {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    padding: 12px 10px;
+  }
+
+  .balance-container .btn-secondary {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reservation-view {
+    min-height: calc(100vh - 120px);
+  }
+
+  .reservation-grid {
+    gap: 0.5rem;
+    padding: 8px;
+  }
+
+  .panel,
+  .form-container,
+  .reservation-panel {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  .reservation-panel h1 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  label {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  .section-title {
+    font-size: 0.9rem;
+    margin-bottom: 6px;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 8px 6px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+
+  .select-group {
+    margin-bottom: 6px;
+  }
+
+  .select-group label {
+    font-size: 12px;
+    gap: 3px;
+  }
+
+  .select-group input[type="radio"] {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ride-card {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    gap: 8px;
+    min-height: 50px;
+  }
+
+  .ride-card input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+  }
+
+  .ride-card > div {
+    gap: 2px;
+  }
+
+  .ride-card strong {
+    font-size: 13px;
+  }
+
+  .ride-card p {
+    font-size: 11px;
+  }
+
+  .ride-card .price {
+    font-size: 12px;
+  }
+
+  .reserve-btn,
+  .form-submit,
+  .butn-primary {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 12px;
+    white-space: normal;
+  }
+
+  .warning,
+  .feedback {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+
+  .balance-container {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 8px;
+    border-radius: 8px;
+  }
+
+  .balance-container strong {
+    font-size: 14px;
+  }
+
+  .balance-container .btn-secondary {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 992px) {
   .reservation-grid {
@@ -176,12 +414,12 @@ button.secondary:hover {
 }
 
 .status {
-  margin-bottom: 10px; 
+  margin-bottom: 10px;
 }
 
 .butn-primary {
-  background-color: var(--color-primary-light); 
-  color: var(--color-button-text-light); 
+  background-color: var(--color-primary-light);
+  color: var(--color-button-text-light);
   border: none;
   padding: 12px 24px;
   border-radius: 6px;
@@ -189,11 +427,11 @@ button.secondary:hover {
   cursor: pointer;
   transition: background-color 0.3s;
   font-size: 1rem;
-  
+
 }
 
 .butn-primary:hover {
-  background-color: var(--color-surface-light); 
+  background-color: var(--color-surface-light);
 }
 
 /* Estilos para botones secundarios */
@@ -210,8 +448,8 @@ button.secondary:hover {
 }
 
 html[data-theme="dark"] .butn-primary{
-  background-color: var(--color-primary-light); 
-  color: var(--color-button-text-light); 
+  background-color: var(--color-primary-light);
+  color: var(--color-button-text-light);
 }
 .btn-secondary:hover {
   background-color: #FFFFFF;
@@ -221,8 +459,8 @@ html[data-theme="dark"] .butn-primary{
 
 .ride-card {
   display: flex;
-  align-items: center;    
-  gap: 16px;              
+  align-items: center;
+  gap: 16px;
   padding: 12px 14px;
   background: var(--color-background-light);
   border: 1px solid var(--color-border-light);
@@ -237,18 +475,18 @@ html[data-theme="dark"] .butn-primary{
 .ride-card input[type="radio"] {
   -webkit-appearance: radio;
   appearance: radio;
-  flex: 0 0 auto;        
-  width: 18px;           
+  flex: 0 0 auto;
+  width: 18px;
   height: 18px;
-  margin: 0;             
-  margin-top: 3px;  
-  margin-left: 2px;   
+  margin: 0;
+  margin-top: 3px;
+  margin-left: 2px;
   align-self: center;
 }
 
 .ride-card > div {
-  flex: 1 1 auto;        
-  min-width: 0;          
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -294,23 +532,23 @@ html[data-theme="dark"] .butn-primary{
 
 .balance-container {
   display: flex;
-  justify-content: space-between; /* texto a la izquierda, botón a la derecha */
+  justify-content: space-between; /* text on left, button on right */
   align-items: center;
   width: 100%;
   padding: 10px 14px;
   border-radius: 8px;
-  background: rgba(255,255,255,0.2); /* si usas tema claro/oscuro, puede cambiarse */
+  background: rgba(255,255,255,0.2); /* if using light/dark theme, can be changed */
   backdrop-filter: blur(6px);
   font-size: 15px;
-  margin-bottom: 15px; /* espacio respecto a lo que sigue */
+  margin-bottom: 15px; /* space from what follows */
 }
 
 .balance-container strong {
   font-weight: 600;
-  color: var(--color-primary); /* usa tu color bonito */
+  color: var(--color-primary); /* use your nice color */
 }
 
-/* Si ya tienes .btn-secondary global, solo mejora tamaño */
+/* If you already have .btn-secondary global, just improve size */
 .balance-container .btn-secondary {
   padding: 6px 12px;
   font-size: 14px;
@@ -355,10 +593,10 @@ html[data-theme="dark"] .reservation-panel {
 /* Modo oscuro tarjeta */
 
 
-  
+
 
 html[data-theme="dark"] p {
-  
+
   color: var(--color-background-dark);
 }
 html[data-theme="dark"] .reservation-panel p {
@@ -372,7 +610,7 @@ html[data-theme="dark"] .select-group label{
   color: var(--color-text-primary-dark);
 }
 
-/* Saldo y botón */
+/* Balance and button */
 .balance-container {
   display: flex;
   justify-content: space-between;
@@ -382,7 +620,7 @@ html[data-theme="dark"] .select-group label{
   border-radius: 10px;
 }
 
-/* Modo oscuro saldo */
+/* Dark mode balance */
 html[data-theme="dark"] .balance-container {
   background: var(--color-surface-dark);
 }

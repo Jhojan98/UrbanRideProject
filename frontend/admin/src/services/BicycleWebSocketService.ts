@@ -1,141 +1,156 @@
-import { Client } from '@stomp/stompjs';
+import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { type BicycleDTO, toBicycle } from '@/models/Bicycle';
-import { type BicycleFactory } from '@/patterns/BicycleFlyweight';
 
 /**
- * BicycleWebSocketService - Servicio para gestionar la conexión WebSocket
- * y la suscripción al tópico de bicicletas
+ * Interfaz para las actualizaciones de ubicación y batería de bicicletas
+ * desde el backend
+ */
+export interface BicycleLocationUpdate {
+  latitude: number;
+  longitude: number;
+  battery: number;
+  timestamp: number;
+}
+
+/**
+ * Servicio WebSocket para recibir actualizaciones en tiempo real de bicicletas.
+ * Flujo:
+ * 1. connect() -> establece conexión STOMP sobre SockJS
+ * 2. Suscripción a /topic/bicycle.location
+ * 3. Recibe actualizaciones de latitud, longitud y batería
+ * 4. Notifica via callback para actualizar el patrón Flyweight
+ *
+ * Nota: La carga inicial de bicicletas es responsabilidad del bikeStore
  */
 export class BicycleWebSocketService {
-    private client: Client | null = null;
-    private bicycleFactory: BicycleFactory;
-    private onBicycleUpdate?: (factory: BicycleFactory) => void;
-    private isConnected = false;
+  private client: Client | null = null;
+  private isConnected = false;
 
-    constructor(bicycleFactory: BicycleFactory) {
-        this.bicycleFactory = bicycleFactory;
+  // Callback para notificar actualizaciones de ubicación
+  private onLocationUpdate?: (bikeId: string, update: BicycleLocationUpdate) => void;
+
+  /**
+   * Establece la conexión WebSocket
+   * @param onLocationUpdate Callback que se ejecuta cuando se recibe una actualización
+   */
+  connect(onLocationUpdate?: (bikeId: string, update: BicycleLocationUpdate) => void) {
+    this.onLocationUpdate = onLocationUpdate;
+
+    // Conexión al microservicio de bicicletas
+    const baseUrl = process.env.VUE_APP_WEBSOCKET_BICYCLES_URL || 'http://localhost:8003';
+    const wsUrl = `${baseUrl}/ws`;
+    console.log('[Bicycles WS] Conectando a', wsUrl);
+
+    this.client = new Client({
+      webSocketFactory: () => new SockJS(wsUrl) as WebSocket,
+      debug: str => console.log('[STOMP Bicycles]', str),
+      reconnectDelay: 5000,
+      heartbeatIncoming: 5000,
+      heartbeatOutgoing: 5000,
+      onConnect: () => {
+        console.log('[Bicycles WS] Conectado exitosamente');
+        this.isConnected = true;
+        this.subscribeToLocationUpdates();
+      },
+      onStompError: frame => {
+        console.error('[Bicycles WS] Error STOMP:', frame.headers['message']);
+        console.error('[Bicycles WS] Detalles:', frame.body);
+        this.isConnected = false;
+      },
+      onWebSocketError: error => {
+        console.error('[Bicycles WS] Error WebSocket:', error);
+        this.isConnected = false;
+      },
+      onDisconnect: () => {
+        console.log('[Bicycles WS] Desconectado');
+        this.isConnected = false;
+      }
+    });
+
+    this.client.activate();
+  }
+
+  /**
+   * Suscripción al topic de actualizaciones de ubicación
+   */
+  private subscribeToLocationUpdates() {
+    if (!this.client || !this.isConnected) {
+      console.warn('[Bicycles WS] No se puede suscribir: cliente no conectado');
+      return;
     }
 
-    /**
-     * Conecta al WebSocket y se suscribe al tópico de bicicletas
-     */
-    public connect(onUpdate?: (factory: BicycleFactory) => void): void {
-        this.onBicycleUpdate = onUpdate;
+    console.log('[Bicycles WS] Suscribiéndose a /topic/bicycle.location');
 
-        // Conexión directa al microservicio de bicis (no vía gateway)
-        // SockJS requiere http/https, NO ws/wss (maneja la actualización automáticamente)
-        const baseUrl = process.env.VUE_APP_WEBSOCKET_BICYCLES_URL || 'http://localhost:8002';
-        const wsUrl = `${baseUrl}/ws`;
-        
-        console.log('🔌 Conectando a WebSocket:', wsUrl);
+    this.client.subscribe('/topic/bicycle.location', (message: IMessage) => {
+      try {
+        const payload = JSON.parse(message.body);
+        console.log('[Bicycles WS] 📨 Actualización recibida:', payload);
 
-        this.client = new Client({
-            // Usar SockJS como transporte
-            webSocketFactory: () => new SockJS(wsUrl) as WebSocket,
-            
-            debug: (str) => {
-                console.log('STOMP Debug:', str);
-            },
+        // Extraer el bikeId con múltiples variantes posibles
+        const bikeId = message.headers['bikeId']
+          || payload.bikeId
+          || payload.id
+          || payload.idBicycle;
 
-            reconnectDelay: 5000, // Reconectar cada 5 segundos si se pierde la conexión
-            heartbeatIncoming: 4000,
-            heartbeatOutgoing: 4000,
-
-            onConnect: () => {
-                console.log('✅ WebSocket conectado exitosamente');
-                this.isConnected = true;
-                this.subscribeToTopic();
-            },
-
-            onStompError: (frame) => {
-                console.error('❌ Error STOMP:', frame.headers['message']);
-                console.error('Detalles:', frame.body);
-                this.isConnected = false;
-            },
-
-            onWebSocketClose: () => {
-                console.warn('⚠️ WebSocket cerrado');
-                this.isConnected = false;
-            },
-
-            onWebSocketError: (error) => {
-                console.error('❌ Error en WebSocket:', error);
-                this.isConnected = false;
-            }
-        });
-
-        // Activar la conexión
-        this.client.activate();
-    }
-
-    /**
-     * Se suscribe al tópico de ubicación de bicicletas
-     */
-    private subscribeToTopic(): void {
-        if (!this.client) {
-            console.error('Cliente STOMP no inicializado');
-            return;
+        if (!bikeId) {
+          console.warn('[Bicycles WS] ⚠️ Actualización sin bikeId:', payload);
+          return;
         }
 
-        const topic = '/topic/bicycle.location';
-        console.log('📡 Suscribiéndose al tópico:', topic);
+        const update: BicycleLocationUpdate = {
+          latitude: payload.latitude,
+          longitude: payload.longitude,
+          battery: payload.battery,
+          timestamp: payload.timestamp || Date.now()
+        };
 
-        this.client.subscribe(topic, (message) => {
-            try {
-                // Parsear el mensaje recibido
-                const bicycleDTO: BicycleDTO = JSON.parse(message.body);
-                
-                console.log('📦 Bicicleta recibida:', {
-                    id: bicycleDTO.idBicycle,
-                    lat: bicycleDTO.latitude,
-                    lon: bicycleDTO.longitude,
-                    battery: bicycleDTO.battery,
-                    timestamp: new Date(bicycleDTO.timestamp).toLocaleString('es-CO')
-                });
+        // Validar que los datos sean válidos
+        if (
+          typeof update.latitude !== 'number' ||
+          typeof update.longitude !== 'number' ||
+          typeof update.battery !== 'number'
+        ) {
+          console.error('[Bicycles WS] ❌ Datos inválidos:', update);
+          return;
+        }
 
-                // Convertir DTO a modelo Bicycle
-                const bicycle = toBicycle(bicycleDTO);
-
-                // Usar el Factory para obtener/actualizar el marcador
-                this.bicycleFactory.getBicycleMarker(bicycle);
-
-                // Notificar a los listeners que hay una actualización
-                if (this.onBicycleUpdate) {
-                    this.onBicycleUpdate(this.bicycleFactory);
-                }
-
-            } catch (error) {
-                console.error('Error al procesar mensaje del WebSocket:', error);
-                console.error('Mensaje recibido:', message.body);
-            }
+        console.log(`[Bicycles WS] 🚲 Actualizando bicicleta ${bikeId}:`, {
+          lat: update.latitude,
+          lon: update.longitude,
+          battery: update.battery
         });
 
-        console.log('✅ Suscripción al tópico exitosa');
-    }
-
-    /**
-     * Desconecta el WebSocket
-     */
-    public disconnect(): void {
-        if (this.client && this.isConnected) {
-            console.log('🔌 Desconectando WebSocket...');
-            this.client.deactivate();
-            this.isConnected = false;
+        // Notificar actualización
+        if (this.onLocationUpdate) {
+          this.onLocationUpdate(String(bikeId), update);
         }
-    }
+      } catch (error) {
+        console.error('[Bicycles WS] ❌ Error procesando mensaje:', error);
+      }
+    });
+  }
 
-    /**
-     * Verifica si está conectado
-     */
-    public getIsConnected(): boolean {
-        return this.isConnected;
+  /**
+   * Desconecta el cliente WebSocket
+   */
+  disconnect() {
+    if (this.client) {
+      console.log('[Bicycles WS] Desconectando...');
+      this.client.deactivate();
+      this.client = null;
+      this.isConnected = false;
     }
+  }
 
-    /**
-     * Obtiene la cantidad de bicicletas en el pool
-     */
-    public getBicycleCount(): number {
-        return this.bicycleFactory.size();
-    }
+  /**
+   * Verifica si el servicio está conectado
+   */
+  getIsConnected(): boolean {
+    return this.isConnected;
+  }
 }
+
+/**
+ * Instancia singleton del servicio
+ */
+export const bicycleWebSocketService = new BicycleWebSocketService();
