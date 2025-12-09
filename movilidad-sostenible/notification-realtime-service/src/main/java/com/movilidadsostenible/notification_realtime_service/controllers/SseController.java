@@ -1,5 +1,6 @@
 package com.movilidadsostenible.notification_realtime_service.controllers;
 
+import com.movilidadsostenible.notification_realtime_service.model.dto.TravelStartDTO;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -96,5 +97,7 @@ public class SseController {
       sendToUser(uid, java.util.Map.of("message", msg));
     }
   }
+
+
 
 }

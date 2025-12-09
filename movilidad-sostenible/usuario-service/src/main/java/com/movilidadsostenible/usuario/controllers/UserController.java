@@ -82,9 +82,9 @@ public class UserController {
         }
         // Si el modelo incluye subcripcionTravels y viene presente, actualizarlo
         try {
-            Integer travels = user.getSubcripcionTravels();
+            Integer travels = user.getSubscriptionTravels();
             if (travels != null) {
-                usuarioDB.setSubcripcionTravels(travels);
+                usuarioDB.setSubscriptionTravels(travels);
             }
         } catch (Exception ignored) {
             // Campo opcional, omitir si no existe
@@ -174,8 +174,22 @@ public class UserController {
         }
     }
 
-
-
+    @PostMapping("/subscription/purchase/{uid}")
+    @Operation(summary = "Comprar suscripción mensual",
+            description = "Compra la suscripción MONTHLY: establece subscriptionType='MONTHLY', suma 150 a subscriptionTravels y descuenta 39 del balance.")
+    public ResponseEntity<?> purchaseMonthlySubscription(
+            @Parameter(description = "UID del usuario", required = true)
+            @PathVariable("uid") String uidUser
+    ) {
+        try {
+            User updated = service.purchaseMonthlySubscription(uidUser);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", e.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("mensaje", "Error al procesar la compra: " + ex.getMessage()));
+        }
+    }
 
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {
         Map<String,String> errores = new HashMap<>();

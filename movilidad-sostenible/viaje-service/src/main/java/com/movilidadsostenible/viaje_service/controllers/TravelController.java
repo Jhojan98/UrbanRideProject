@@ -3,10 +3,11 @@ package com.movilidadsostenible.viaje_service.controllers;
 import com.movilidadsostenible.viaje_service.clients.StationClientRest;
 import com.movilidadsostenible.viaje_service.clients.UserClientRest;
 import com.movilidadsostenible.viaje_service.models.dto.StartTravelRequestDTO;
+import com.movilidadsostenible.viaje_service.models.dto.TravelReservationDTO;
 import com.movilidadsostenible.viaje_service.models.dto.TravelStartDTO;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
 import com.movilidadsostenible.viaje_service.models.dto.ReservationTempDTO;
-import com.movilidadsostenible.viaje_service.publisher.TravelPublisher;
+import com.movilidadsostenible.viaje_service.rabbit.publisher.TravelPublisher;
 import com.movilidadsostenible.viaje_service.services.TravelService;
 import com.movilidadsostenible.viaje_service.services.ReservationTempService;
 import com.movilidadsostenible.viaje_service.clients.SlotsClient;
@@ -143,6 +144,19 @@ public class TravelController {
         if (req == null || req.getUserUid() == null || req.getStationStartId() == null || req.getStationEndId() == null || req.getBikeType() == null) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("mensaje", "userUid, stationStartId, stationEndId y bikeType son requeridos"));
         }
+        try{
+          // Comprobar si el usuario ya tiene una reserva temporal activa
+          ReservationTempDTO existing = reservationTempService.getByUID(req.getUserUid());
+          if (existing != null) {
+            // Usuario ya tiene una reserva temporal; no crear nueva
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Collections.singletonMap("mensaje", "EL_USUARIO_YA_TIENE_RESERVA_PREVIA"));
+          }
+        }
+        catch (Exception e){
+          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                  .body(Collections.singletonMap("mensaje", "Error al verificar reservas previas: " + e.getMessage()));
+        }
 
         try {
           Map<String, Object> blockResp = userClientRest.isBlockedForTravel(req.getUserUid());
@@ -230,13 +244,15 @@ public class TravelController {
 
         reservationTempService.save(dto);
 
-        TravelStartDTO travelStartDTO = new TravelStartDTO();
+        TravelReservationDTO travelStartDTO = new TravelReservationDTO();
         travelStartDTO.setUserId(req.getUserUid());
         travelStartDTO.setReservationId(reservationId);
         travelStartDTO.setStationStartId(req.getStationStartId());
         travelStartDTO.setStationEndId(req.getStationEndId());
         travelStartDTO.setSlotStartId(slotId);
         travelStartDTO.setTravelType(travelType);
+
+        travelPublisher.sendJsonTravelReservationMessage(travelStartDTO);
 
         Map<String, String> resp = new HashMap<>();
         resp.put("reservationId", reservationId);
@@ -309,6 +325,18 @@ public class TravelController {
             travel.setTravelType(dto.getTravelType() != null ? dto.getTravelType() : "MECHANIC");
 
             Travel saved = service.save(travel);
+
+          reservationTempService.saveOnlyResources(dto);
+
+          TravelStartDTO travelStartDTO = new TravelStartDTO();
+          travelStartDTO.setUserId(dto.getUserId());
+          travelStartDTO.setTravelId(dto.getReservationId());
+          travelStartDTO.setStationStartId(dto.getStationStartId());
+          travelStartDTO.setStationEndId(dto.getStationEndId());
+          travelStartDTO.setSlotEndId(dto.getSlotEndId());
+          travelStartDTO.setTravelType(dto.getTravelType());
+
+          travelPublisher.sendJsonTravelStartMessage(travelStartDTO);
 
             return ResponseEntity.ok(Map.of(
                     "status", "OK",

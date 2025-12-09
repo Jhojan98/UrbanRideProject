@@ -34,5 +34,5 @@ public class User {
     private Double balance;
 
     @Column(name = "t_subcripcion_travels")
-    private Integer subcripcionTravels;
+    private Integer subscriptionTravels;
 }

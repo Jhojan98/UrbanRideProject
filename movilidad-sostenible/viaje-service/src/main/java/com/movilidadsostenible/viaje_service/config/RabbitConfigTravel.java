@@ -12,6 +12,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitConfigTravel {
 
+  @Value("${rabbitmq.queue.travel.reservation}")
+  private String jsonQueueNameTravelReservationConsumer;
+
   @Value("${rabbitmq.queue.travel.start}")
   private String jsonQueueNameTravelStartConsumer;
 
@@ -21,6 +24,9 @@ public class RabbitConfigTravel {
   @Value("${rabbitmq.exchange.name}")
   public String jsonExchangeName;
 
+  @Value("${rabbitmq.routing.travel.reservation.key}")
+  public String routingJsonKeyTravelReservationConsumer;
+
   @Value("${rabbitmq.routing.travel.start.key}")
   public String routingJsonKeyTravelStartConsumer;
 
@@ -28,6 +34,10 @@ public class RabbitConfigTravel {
   public String routingJsonKeyTravelEndConsumer;
 
   // Cola durable
+  @Bean
+  public Queue jsonQueueTravelReservationConsumer() {
+    return QueueBuilder.durable(jsonQueueNameTravelReservationConsumer).build();
+  }
   @Bean
   public Queue jsonQueueTravelStartConsumer() {
     return QueueBuilder.durable(jsonQueueNameTravelStartConsumer).build();
@@ -44,6 +54,13 @@ public class RabbitConfigTravel {
   }
 
   // Binding entre cola y exchange usando routing key
+  @Bean
+  public Binding jsonBindingTravelReservationConsumer() {
+    return BindingBuilder
+      .bind(jsonQueueTravelReservationConsumer())
+      .to(jsonExchange())
+      .with(routingJsonKeyTravelReservationConsumer);
+  }
   @Bean
   public Binding jsonBindingTravelStartConsumer() {
     return BindingBuilder

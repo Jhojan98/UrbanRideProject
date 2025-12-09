@@ -17,17 +17,23 @@ public class ReservationTempServiceImpl implements ReservationTempService {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private static final String TEMP_PREFIX = "reservation_temp:";
+    private static final String TRAVEL_PREFIX = "travel:";
     private static final String DATA_SUFFIX = ":data";
     private static final String TTL_SUFFIX  = ":ttl";
     private static final String UID_PREFIX = ":user_id:";
 
     @Override
     public void save(ReservationTempDTO dto) {
-
         String baseKey = TEMP_PREFIX + dto.getReservationId();
         redisTemplate.opsForHash().putAll(baseKey+ UID_PREFIX + dto.getUserId() + DATA_SUFFIX, dto.toMap());
         redisTemplate.opsForValue().set(baseKey + UID_PREFIX + dto.getUserId() + TTL_SUFFIX, "",
                 10, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public void saveOnlyResources(ReservationTempDTO dto) {
+      String baseKey = TRAVEL_PREFIX + dto.getReservationId();
+      redisTemplate.opsForHash().putAll(baseKey+ UID_PREFIX + dto.getUserId() + DATA_SUFFIX, dto.toMap());
     }
 
 
@@ -77,6 +83,24 @@ public class ReservationTempServiceImpl implements ReservationTempService {
       return convertHashToDto(dataKey, raw);
   }
 
+  @Override
+  public ReservationTempDTO getByUIDOnlyResources(String userId) {
+    // Buscar claves de datos para el usuario
+    String pattern = TRAVEL_PREFIX + "*" + UID_PREFIX + userId + DATA_SUFFIX;
+    java.util.Set<String> keys = redisTemplate.keys(pattern);
+    if (keys == null || keys.isEmpty()) {
+      return null;
+    }
+    // Tomar la primera coincidencia (si manejas múltiples reservas por usuario, aquí podrías elegir por createdAt)
+    String dataKey = keys.iterator().next();
+
+    Map<Object, Object> raw = redisTemplate.opsForHash().entries(dataKey);
+    if (raw == null || raw.isEmpty()) {
+      return null;
+    }
+    return convertHashToDto(dataKey, raw);
+  }
+
 
   @Override
     public void removeExpired(String reservationId) {
@@ -87,14 +111,23 @@ public class ReservationTempServiceImpl implements ReservationTempService {
   public void remove(String reservationId) {
     System.out.println(reservationId);
     System.out.println(reservationId.replace(":data", ":ttl"));
-      redisTemplate.delete(reservationId);
-      redisTemplate.delete(reservationId.replace(":data", ":ttl"));
+    redisTemplate.delete(reservationId);
+    redisTemplate.delete(reservationId.replace(":data", ":ttl"));
   }
 
   @Override
-    public void releaseResources(ReservationTempDTO dto) {
-
+  public void releaseResources(ReservationTempDTO dto) {
+    if (dto == null) return;
+    try {
+      String dataKey = dto.getReservationId();
+      // eliminar el data key y el ttl equivalente
+      redisTemplate.delete(dataKey);
+      redisTemplate.delete(dataKey.replace(":data", ":ttl"));
+      log.info("releaseResources: eliminado dataKey={} y ttlKey={}", dataKey, dataKey.replace(":data", ":ttl"));
+    } catch (Exception e) {
+      log.error("Error liberando recursos para reserva {}: {}", dto == null ? null : dto.getReservationId(), e.getMessage());
     }
+  }
 
     private ReservationTempDTO convertHashToDto(String key, Map<Object, Object> map) {
         ReservationTempDTO dto = new ReservationTempDTO();

@@ -1,0 +1,16 @@
+}
+  }
+    "vite": "^5.1.0"
+  "devDependencies": {
+  },
+    "vue": "^3.3.4"
+  "dependencies": {
+  },
+    "preview": "vite preview"
+    "build": "vite build",
+    "dev": "vite",
+  "scripts": {
+  "private": true,
+  "version": "0.0.1",
+  "name": "vue-sse-sample",
+
