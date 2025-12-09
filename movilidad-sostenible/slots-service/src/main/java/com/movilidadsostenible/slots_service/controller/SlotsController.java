@@ -1,6 +1,7 @@
 package com.movilidadsostenible.slots_service.controller;
 
 import com.movilidadsostenible.slots_service.clients.BicycleClient;
+import com.movilidadsostenible.slots_service.model.dto.BicycleTelemetryEndTravelDTO;
 import com.movilidadsostenible.slots_service.model.entity.Slot;
 import com.movilidadsostenible.slots_service.service.SlotsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -264,6 +265,60 @@ public class SlotsController {
         }
         String payload = slot.getIdSlot() + (bicycleId != null ? ("|" + bicycleId) : "");
         return ResponseEntity.ok(payload);
+    }
+
+    // PUT: Bloquear un slot solo si el candado de la bicicleta se cerró (telemetría)
+    @PutMapping("/{slotId}/lock-with_bicy_telemetry")
+    @Operation(summary = "Bloquear slot solo si el candado de la bicicleta se cerró (telemetría)",
+            description = "Invoca bicis-service para cerrar el candado con telemetría (<=30m de la estación). Si es exitoso, bloquea el slot y asigna la bicicleta.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "Candado cerrado y slot bloqueado",
+                    content = @Content(mediaType = "text/plain", schema = @Schema(type = "string", example = "S-001|ELEC-123456"))),
+            @ApiResponse(responseCode = "400", description = "Telemetría inválida o distancia >30m", content = @Content),
+            @ApiResponse(responseCode = "404", description = "Bici o estación no encontrada", content = @Content),
+            @ApiResponse(responseCode = "502", description = "Error al invocar bicis-service", content = @Content)
+    })
+    public ResponseEntity<String> lockSlotIfPadlockClosed(
+            @Parameter(description = "Identificador del slot", example = "S-001")
+            @PathVariable String slotId,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Telemetría de fin de viaje enviada a bicis-service",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BicycleTelemetryEndTravelDTO.class)))
+            @org.springframework.web.bind.annotation.RequestBody BicycleTelemetryEndTravelDTO telemetry
+    ) {
+        // Llamar a bicis-service para cerrar candado si está cerca
+        ResponseEntity<Object> closeResp;
+        Slot slot;
+        try {
+          slot = service.findById(slotId).orElse(null);
+        }
+        catch (IllegalArgumentException ex) {
+          return ResponseEntity.notFound().build();
+        }
+
+        try {
+          telemetry.setStationId(slot.getStationId());
+            closeResp = bicycleClient.closePadlockIfNearTelemetry(telemetry);
+        } catch (Exception ex) {
+            return ResponseEntity.status(502).body("BICIS_SERVICE_ERROR: " + ex.getMessage());
+        }
+        if (closeResp == null || !closeResp.getStatusCode().is2xxSuccessful()) {
+            // Propagar causas comunes: 400 (telemetría inválida / distancia >30m), 404 (no encontrados)
+            int status = closeResp != null ? closeResp.getStatusCode().value() : 502;
+            return ResponseEntity.status(status).body("BICIS_SERVICE_FAILED");
+        }
+
+        // Si cierre exitoso, proceder a bloquear el slot y asignar la bici
+        String bicycleId = telemetry.getIdBicycle();
+        try {
+            Slot locked = service.lockSlotWithBicycle(slotId, bicycleId);
+            String payload = locked.getIdSlot() + "|" + bicycleId;
+            return ResponseEntity.status(202).body(payload);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
 }

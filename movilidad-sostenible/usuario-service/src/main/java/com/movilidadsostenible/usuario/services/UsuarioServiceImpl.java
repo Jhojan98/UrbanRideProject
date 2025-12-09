@@ -218,9 +218,9 @@ public class UsuarioServiceImpl implements UserService {
         // Incrementar viajes de suscripción, inicializar a 150 si es null
         Integer subscriptionTravels = user.getSubscriptionTravels();
         if (subscriptionTravels == null) {
-            subscriptionTravels = 150;
+            subscriptionTravels = 50;
         } else {
-            subscriptionTravels += 150;
+            subscriptionTravels += 50;
         }
         user.setSubscriptionTravels(subscriptionTravels);
 

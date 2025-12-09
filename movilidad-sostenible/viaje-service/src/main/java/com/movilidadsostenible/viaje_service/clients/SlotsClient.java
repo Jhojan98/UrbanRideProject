@@ -1,11 +1,15 @@
 package com.movilidadsostenible.viaje_service.clients;
 
+import com.movilidadsostenible.viaje_service.models.dto.BicycleTelemetryEndTravelDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.Map;
 
 @FeignClient(name = "slots-service")
 public interface SlotsClient {
@@ -30,18 +34,21 @@ public interface SlotsClient {
     @PostMapping("/{slotId}/lock")
     ResponseEntity<String> lockSlotById(@PathVariable("slotId") String slotId, @RequestParam("bicycleId") String bicycleId);
 
-  // Consumir endpoint que bloquea un slot por ID (UNLOCKED) y asigna bicycleId
-  @PostMapping("/{slotId}/unlock")
-  ResponseEntity<String> unlockSlotById(@PathVariable("slotId") String slotId, @RequestParam("bicycleId") String bicycleId);
+    // Consumir endpoint que bloquea un slot por ID (UNLOCKED) y asigna bicycleId
+    @PostMapping("/{slotId}/unlock")
+    ResponseEntity<String> unlockSlotById(@PathVariable("slotId") String slotId, @RequestParam("bicycleId") String bicycleId);
 
-
-  // Consumir endpoint que actualiza el padlockStatus de un slot por ID
+    // Consumir endpoint que actualiza el padlockStatus de un slot por ID
     @PutMapping("/{id}/padlock-status")
     ResponseEntity<String> updatePadlockStatus(
             @PathVariable("id") String id,
             @RequestParam("padlockStatus") String padlockStatus
     );
 
-
-
+    // Consumir endpoint que bloquea un slot solo si bicis-service cerró el candado vía telemetría
+    @PutMapping("/{slotId}/lock-with_bicy_telemetry")
+    ResponseEntity<String> lockSlotWithBicycleTelemetry(
+            @PathVariable("slotId") String slotId,
+            @RequestBody BicycleTelemetryEndTravelDTO telemetry
+    );
 }
