@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  postgres17:
+    image: postgres:17-alpine
+    container_name: postgres17
+    environment:
+      POSTGRES_USER: ${POSTGRES_ROOT_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_ROOT_DB}
+    ports:
+      - "5532:5432"
+    volumes:
+      - data-postgres:/var/lib/postgresql/data
+      - ./docker/postgres/version8.1/initdb:/docker-entrypoint-initdb.d
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:4.1.5-management-alpine
+    container_name: rabbitmq-server
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      - "8100:8001"
+    volumes:
+      - redis_data:/data
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto:/mosquitto
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+volumes:
+  data-postgres:
+    name: data-postgres
+  redis_data:
+    name: redis_data
+
+networks:
+  movilidad-sostenible-network:
+    name: movilidad-sostenible-network
+    driver: bridge
