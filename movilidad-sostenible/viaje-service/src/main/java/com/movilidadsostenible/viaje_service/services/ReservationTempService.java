@@ -7,8 +7,9 @@ public interface ReservationTempService {
     void saveOnlyResources(ReservationTempDTO dto);
     ReservationTempDTO getExpired(String reservationId);
     ReservationTempDTO get(String reservationId);
-    ReservationTempDTO getByUID(String userId);
+  ReservationTempDTO getByUID(String userId);
+  ReservationTempDTO getByUIDOnlyResources(String userId);
     void removeExpired(String reservationId);
-    void remove(String reservationId);
-    void releaseResources(ReservationTempDTO dto);
+  void remove(String reservationId);
+  void releaseResources(ReservationTempDTO dto);
 }

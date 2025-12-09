@@ -326,6 +326,8 @@ public class TravelController {
 
             Travel saved = service.save(travel);
 
+          reservationTempService.saveOnlyResources(dto);
+
           TravelStartDTO travelStartDTO = new TravelStartDTO();
           travelStartDTO.setUserId(dto.getUserId());
           travelStartDTO.setTravelId(dto.getReservationId());

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.movilidadsostenible.viaje_service.clients.SlotsClient;
 import com.movilidadsostenible.viaje_service.clients.UserClientRest;
 import com.movilidadsostenible.viaje_service.models.dto.EndTravelDTO;
+import com.movilidadsostenible.viaje_service.models.dto.ReservationTempDTO;
 import com.movilidadsostenible.viaje_service.models.dto.TravelEndDTO;
 import com.movilidadsostenible.viaje_service.models.dto.TravelStartDTO;
 import com.movilidadsostenible.viaje_service.models.entity.Travel;
@@ -159,70 +160,87 @@ public class MqttSubscriber implements MqttCallbackExtended {
           }
 
           Optional<Travel> opt = repository.findFirstByIdBicycleAndStatus(telemetry.getIdBicycle(), "IN_PROGRESS");
-
-          if (opt.isEmpty()) {
-              log.warn("Bicicleta {} no existe en BD. Ignorando telemetría.", telemetry.getIdBicycle());
-              return;
-          }
-
           Travel travel = opt.get();
+
           travel.setStatus("COMPLETED");
 
-          // Establecer la fecha de finalización desde telemetría (UTC)
-          long endMillis = telemetry.getEndTravelTimestamp();
-          travel.setEndedAt(Instant.ofEpochMilli(endMillis).atZone(ZoneOffset.UTC).toLocalDateTime());
+          ReservationTempDTO dto;
 
-          // Convertir el LocalDateTime de inicio a epoch millis (UTC)
-          long startMillis = travel.getStartedAt().atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
-          long diffMillis = endMillis - startMillis;
-          long durationMinutes = diffMillis > 0 ? (diffMillis / 60000) : 0;
+          try {
+            dto = reservationTempService.getByUIDOnlyResources(travel.getUid());
+          }
+          catch (Exception e) {
+            log.error("Error obteniendo reserva temporal para el usuario {}: {}", opt.get().getUid(), e.getMessage());
+            return;
+          }
 
-          // Tasa de cambio dinámica desde API: 1 UDT = COP_PER_USD COP
-          final double COP_PER_UDT = exchangeRateService.getCopPerUsd();
+          if (dto.getSlotEndId().equals(slotIdIdFromTopic)) {
 
-          double costUdT = 0.0;
-          int extraMinutes = 0;
+            reservationTempService.removeExpired(dto.getReservationId());
 
-          if (("LAST MILE").equalsIgnoreCase(travel.getTravelType())) {
+            if (opt.isEmpty()) {
+              log.warn("Bicicleta {} no existe en BD. Ignorando telemetría.", telemetry.getIdBicycle());
+              return;
+            }
+
+
+            // Establecer la fecha de finalización desde telemetría (UTC)
+            long endMillis = telemetry.getEndTravelTimestamp();
+            travel.setEndedAt(Instant.ofEpochMilli(endMillis).atZone(ZoneOffset.UTC).toLocalDateTime());
+
+            // Convertir el LocalDateTime de inicio a epoch millis (UTC)
+            long startMillis = travel.getStartedAt().atZone(ZoneOffset.UTC).toInstant().toEpochMilli();
+            long diffMillis = endMillis - startMillis;
+            long durationMinutes = diffMillis > 0 ? (diffMillis / 60000) : 0;
+
+            // Tasa de cambio dinámica desde API: 1 UDT = COP_PER_USD COP
+            final double COP_PER_UDT = exchangeRateService.getCopPerUsd();
+
+            double costUdT = 0.0;
+            int extraMinutes = 0;
+
+            if (("LAST MILE").equalsIgnoreCase(travel.getTravelType())) {
               // Última milla: 45 min máximo a 17,500 COP; minuto adicional 250 COP
               int includedMinutes = 45;
               extraMinutes = (int) Math.max(0, durationMinutes - includedMinutes);
               double baseCop = 17500.0;
               double extraCop = extraMinutes * 250.0;
               costUdT = (baseCop + extraCop) / COP_PER_UDT;
-          } else if (("LONG TRAVEL").equalsIgnoreCase(travel.getTravelType())) {
+            } else if (("LONG TRAVEL").equalsIgnoreCase(travel.getTravelType())) {
               // Recorrido largo: 75 min máximo a 25,000 COP; minuto adicional 1,000 COP
               int includedMinutes = 75;
               extraMinutes = (int) Math.max(0, durationMinutes - includedMinutes);
               double baseCop = 25000.0;
               double extraCop = extraMinutes * 1000.0;
               costUdT = (baseCop + extraCop) / COP_PER_UDT;
+            }
+
+            // Usar el setter correcto del costo en la entidad Travel
+            travel.setTravelCost(costUdT);
+
+            try {
+              userClientRest.chargeTrip(travel.getUid(), costUdT, extraMinutes);
+            } catch (Exception e) {
+              log.error("Error cobrando viaje al usuario {}: {}", travel.getUid(), e.getMessage());
+            }
+
+            repository.save(travel);
+
+            slotsClient.lockSlotById(slotIdIdFromTopic, bicyIdFromTopic);
+
+            TravelEndDTO travelEndDTO = new TravelEndDTO();
+            travelEndDTO.setUserId(travel.getUid());
+            travelEndDTO.setTravelId(travel.getIdTravel());
+            travelEndDTO.setTravelType(travel.getTravelType());
+            travelEndDTO.setStationStartId(travel.getFromIdStation());
+            travelEndDTO.setStationEndId(travel.getToIdStation());
+
+            travelPublisher.sendJsonTravelEndMessage(travelEndDTO);
+
           }
-
-          // Usar el setter correcto del costo en la entidad Travel
-          travel.setTravelCost(costUdT);
-
-          try {
-            userClientRest.chargeTrip(travel.getUid(), costUdT, extraMinutes);
+          else {
+            log.warn("Slot de fin de viaje no coincide. Esperado={}, recibido={}", dto.getSlotEndId(), slotIdIdFromTopic);
           }
-          catch (Exception e) {
-            log.error("Error cobrando viaje al usuario {}: {}", travel.getUid(), e.getMessage());
-          }
-
-          repository.save(travel);
-
-          slotsClient.lockSlotById(slotIdIdFromTopic, bicyIdFromTopic);
-
-          TravelEndDTO travelEndDTO = new TravelEndDTO();
-          travelEndDTO.setUserId(travel.getUid());
-          travelEndDTO.setTravelId(travel.getIdTravel());
-          travelEndDTO.setTravelType(travel.getTravelType());
-          travelEndDTO.setStationStartId(travel.getFromIdStation());
-          travelEndDTO.setStationEndId(travel.getToIdStation());
-
-          travelPublisher.sendJsonTravelEndMessage(travelEndDTO);
-
-
         } catch (Exception e) {
             log.error("Error procesando mensaje MQTT", e);
         }
