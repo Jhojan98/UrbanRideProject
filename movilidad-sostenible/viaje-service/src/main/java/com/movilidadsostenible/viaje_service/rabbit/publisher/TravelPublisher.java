@@ -1,7 +1,8 @@
-package com.movilidadsostenible.viaje_service.publisher;
+package com.movilidadsostenible.viaje_service.rabbit.publisher;
 
 import com.movilidadsostenible.viaje_service.models.dto.TravelEndDTO;
 import com.movilidadsostenible.viaje_service.models.dto.TravelStartDTO;
+import com.movilidadsostenible.viaje_service.models.dto.TravelReservationDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -28,12 +29,16 @@ public class TravelPublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    public void sendJsonTravelStartMessage(TravelStartDTO travelStartDTO) {
-      LOGGER.info(String.format("JSON Message sent -> %s", travelStartDTO.toString()));
-      rabbitTemplate.convertAndSend(jsonExchange, jsonTravelStartRoutingKey, travelStartDTO);
-    }
-    public void sendJsonTravelEndMessage(TravelEndDTO travelEndDTO) {
-      LOGGER.info(String.format("JSON Message sent -> %s", travelEndDTO.toString()));
-      rabbitTemplate.convertAndSend(jsonExchange, jsonTravelEndRoutingKey, travelEndDTO);
-    }
+  public void sendJsonTravelReservationMessage(TravelReservationDTO travelStartDTO) {
+    LOGGER.info(String.format("JSON Message sent -> %s", travelStartDTO.toString()));
+    rabbitTemplate.convertAndSend(jsonExchange, jsonTravelStartRoutingKey, travelStartDTO);
+  }
+  public void sendJsonTravelStartMessage(TravelStartDTO travelStartDTO) {
+    LOGGER.info(String.format("JSON Message sent -> %s", travelStartDTO.toString()));
+    rabbitTemplate.convertAndSend(jsonExchange, jsonTravelStartRoutingKey, travelStartDTO);
+  }
+  public void sendJsonTravelEndMessage(TravelEndDTO travelEndDTO) {
+    LOGGER.info(String.format("JSON Message sent -> %s", travelEndDTO.toString()));
+    rabbitTemplate.convertAndSend(jsonExchange, jsonTravelEndRoutingKey, travelEndDTO);
+  }
 }

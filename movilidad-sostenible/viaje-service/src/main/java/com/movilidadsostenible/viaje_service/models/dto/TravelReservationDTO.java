@@ -3,11 +3,12 @@ package com.movilidadsostenible.viaje_service.models.dto;
 import lombok.Data;
 
 @Data
-public class TravelStartDTO {
+public class TravelReservationDTO {
   private String userId;
-  private String travelId;
+  private String reservationId;
   private String travelType;
   private Integer stationStartId;
   private Integer stationEndId;
-  private String SlotEndId;
+  private String SlotStartId;
+
 }

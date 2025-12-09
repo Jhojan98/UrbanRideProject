@@ -110,7 +110,7 @@ public class UsuarioServiceImpl implements UserService {
         // el usuario NO está bloqueado independientemente del balance.
         String subscriptionType = user.getSubscriptionType();
         if ("MONTLY".equalsIgnoreCase(subscriptionType)) {
-            Integer travelsAvailable = user.getSubcripcionTravels();
+            Integer travelsAvailable = user.getSubscriptionTravels();
             if (travelsAvailable != null && travelsAvailable >= 1) {
                 // Tiene por lo menos un viaje mensual disponible, está habilitado para viajar
                 // (ignorando balance). Aún así, si tiene multas impagas, se bloquea.
@@ -158,8 +158,8 @@ public class UsuarioServiceImpl implements UserService {
             UserDTO dto = new UserDTO();
             dto.setUserEmail(user.getUserEmail());
 
-            if ("MONTHLY".equalsIgnoreCase(subscriptionType) && user.getSubcripcionTravels() != null && user.getSubcripcionTravels() > 0) {
-                Integer travels = user.getSubcripcionTravels();
+            if ("MONTHLY".equalsIgnoreCase(subscriptionType) && user.getSubscriptionTravels() != null && user.getSubscriptionTravels() > 0) {
+                Integer travels = user.getSubscriptionTravels();
                 if (travels == null) travels = 0;
                 // Resta 1 por el viaje incluido
                 travels -= 1;
@@ -167,7 +167,7 @@ public class UsuarioServiceImpl implements UserService {
                 if (excessMinutes > 0) {
                     travels -= 1;
                 }
-                user.setSubcripcionTravels(travels);
+                user.setSubscriptionTravels(travels);
 
                 subject = "Cobro de viaje por suscripción MONTHLY";
                 message = String.format(
@@ -201,5 +201,37 @@ public class UsuarioServiceImpl implements UserService {
         }
 
         repository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public User purchaseMonthlySubscription(String uidUser) {
+        User user = byId(uidUser).orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado"));
+
+        // Cambiar tipo de suscripción a MONTHLY
+        user.setSubscriptionType("MONTHLY");
+
+        // Incrementar viajes de suscripción, inicializar a 150 si es null
+        Integer subscriptionTravels = user.getSubscriptionTravels();
+        if (subscriptionTravels == null) {
+            subscriptionTravels = 150;
+        } else {
+            subscriptionTravels += 150;
+        }
+        user.setSubscriptionTravels(subscriptionTravels);
+
+        // Restar 39 del balance, inicializar a 0 si es null
+        Double balance = user.getBalance() == null ? 0.0 : user.getBalance();
+
+        // Si no hay saldo suficiente, lanzar excepción
+        if (balance < 39.0) {
+            throw new IllegalArgumentException("Saldo insuficiente");
+        }
+
+        balance -= 39.0;
+        user.setBalance(balance);
+
+        // Guardar cambios
+        return repository.save(user);
     }
 }

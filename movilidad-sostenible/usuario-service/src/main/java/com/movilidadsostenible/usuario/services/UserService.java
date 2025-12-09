@@ -20,4 +20,7 @@ public interface UserService {
 
     // Cobra el viaje aplicando reglas de suscripción.
     void chargeTravel(Double totalTripValue, Integer excessMinutes, String uidUser);
+
+    // Compra la suscripción mensual
+    User purchaseMonthlySubscription(String uidUser);
 }
