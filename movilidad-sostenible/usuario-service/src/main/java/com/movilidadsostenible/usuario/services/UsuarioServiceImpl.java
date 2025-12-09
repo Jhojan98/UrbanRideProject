@@ -169,6 +169,10 @@ public class UsuarioServiceImpl implements UserService {
                 }
                 user.setSubscriptionTravels(travels);
 
+                if (travels <= 0){
+                  user.setSubscriptionType("NONE");
+                }
+
                 subject = "Cobro de viaje por suscripción MONTHLY";
                 message = String.format(
                         "Se cobró un viaje usando la suscripción mensual. Viajes restantes: %d. Minutos excedentes: %d. Valor base del viaje: %.2f.",

@@ -176,6 +176,14 @@ public class MqttSubscriber implements MqttCallbackExtended {
 
           if (dto.getSlotEndId().equals(slotIdIdFromTopic)) {
 
+            try{
+              slotsClient.lockSlotById(slotIdIdFromTopic,bicyIdFromTopic);
+            }
+            catch(Exception e){
+              log.error("Error bloqueando slot {}: {}", slotIdIdFromTopic, e.getMessage());
+              return;
+            }
+
             reservationTempService.removeExpired(dto.getReservationId());
 
             if (opt.isEmpty()) {

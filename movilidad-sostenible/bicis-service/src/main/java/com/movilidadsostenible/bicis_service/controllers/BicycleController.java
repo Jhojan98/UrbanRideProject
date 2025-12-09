@@ -1,5 +1,8 @@
 package com.movilidadsostenible.bicis_service.controllers;
 
+import com.movilidadsostenible.bicis_service.clients.StationClientRest;
+import com.movilidadsostenible.bicis_service.model.dto.BicycleTelemetryEndTravelDTO;
+import com.movilidadsostenible.bicis_service.model.dto.StationDTO;
 import com.movilidadsostenible.bicis_service.model.entity.Bicycle;
 import com.movilidadsostenible.bicis_service.services.BicycleService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,10 +28,13 @@ import java.util.Optional;
 
 @RestController
 @Tag(name = "Bicicletas", description = "Operaciones CRUD para bicicletas")
-public class BicicletaController {
+public class BicycleController {
 
     @Autowired
     private BicycleService service;
+
+    @Autowired
+    private StationClientRest stationClient;
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -182,9 +188,88 @@ public class BicicletaController {
         return ResponseEntity.ok(bici);
     }
 
+    // Nuevo: cerrar candado si la bici está a <=30m de una estación (usando telemetría)
+    @PutMapping(value = "/padlock-close-if-near", consumes = "application/json", produces = "application/json")
+    @Operation(summary = "Cerrar candado si está cerca de la estación (telemetría)",
+            description = "Recibe datos de telemetría de la bicicleta (idBicycle, latitude, longitude, stationId) y verifica que esté a 30m o menos de la estación; si cumple, padlockStatus=LOCKED.")
+    @ApiResponse(responseCode = "200", description = "Candado cerrado",
+            content = @Content(schema = @Schema(implementation = Bicycle.class)))
+    @ApiResponse(responseCode = "400", description = "Distancia mayor a 30m o datos faltantes")
+    @ApiResponse(responseCode = "404", description = "Bicicleta o estación no encontrada")
+    public ResponseEntity<?> closePadlockIfNearTelemetry(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    description = "Telemetría de fin de viaje",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = BicycleTelemetryEndTravelDTO.class)))
+            @Valid @RequestBody BicycleTelemetryEndTravelDTO telemetry
+    ) {
+        // Validaciones básicas del cuerpo
+        if (telemetry.getIdBicycle() == null || telemetry.getIdBicycle().isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "idBicycle es requerido"));
+        }
+        if (telemetry.getLatitude() == null || telemetry.getLongitude() == null) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "latitude y longitude son requeridos"));
+        }
+        if (telemetry.getStationId() == null) {
+            return ResponseEntity.badRequest().body(Map.of("mensaje", "stationId es requerido"));
+        }
+
+        Optional<Bicycle> o = service.byId(telemetry.getIdBicycle());
+        if (o.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Bicicleta no encontrada"));
+        }
+        Bicycle bici = o.get();
+
+        if (stationClient == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("mensaje", "StationClient no configurado"));
+        }
+
+        ResponseEntity<StationDTO> stationResponse;
+        try {
+          stationResponse = stationClient.getById(telemetry.getStationId());
+        } catch (Exception e) {
+          return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", "Estación no encontrada"));
+        }
+
+        StationDTO station = stationResponse.getBody();
+
+        if (station == null || station.getLatitude() == null || station.getLength() == null) {
+          return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("mensaje", "La estación no tiene coordenadas válidas"));
+        }
+
+        double distanceMeters = haversineMeters(telemetry.getLatitude(), telemetry.getLongitude(), station.getLatitude(), station.getLength());
+        if (distanceMeters > 30.0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "mensaje", "La bicicleta no está en la estacion cerca de la estación",
+                    "distancia_metros", String.format("%.2f", distanceMeters)
+            ));
+        }
+
+        bici.setPadlockStatus("LOCKED");
+        bici.setLatitude(telemetry.getLatitude());
+        bici.setLength(telemetry.getLongitude());
+        bici.setBattery(telemetry.getBattery());
+
+        service.save(bici);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("mensaje", "Candado cerrado exitosamente", "bicicleta", bici));
+    }
+
     private String generateId(String prefix) {
         int number = RANDOM.nextInt(1_000_000); // 0..999999
         return String.format("%s-%06d", prefix, number);
+    }
+
+    // Utilidad: distancia Haversine en metros
+    private double haversineMeters(double lat1, double lon1, double lat2, double lon2) {
+        final double R = 6371000.0; // radio de la Tierra en metros
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {

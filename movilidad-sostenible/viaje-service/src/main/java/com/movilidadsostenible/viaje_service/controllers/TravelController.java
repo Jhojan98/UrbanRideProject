@@ -95,32 +95,6 @@ public class TravelController {
         }
     }
 
-    @PostMapping
-    @Operation(summary = "Crear viaje",
-            responses = {
-                    @ApiResponse(responseCode = "201", description = "Creado",
-                            content = @Content(schema = @Schema(implementation = Travel.class))),
-                    @ApiResponse(responseCode = "400", description = "Validación fallida")
-            })
-    public ResponseEntity<?> createTravel(@Valid @RequestBody Travel travel,
-                                          BindingResult result) {
-
-        if (result.hasErrors()) {
-            return validate(result);
-        }
-        try{
-            Optional<Travel> viajeGuardado = Optional.ofNullable(service.save(travel));
-            if (viajeGuardado.isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(Collections.singletonMap("mensaje", "No se pudo crear el travel. Verifique que el usuario y la bicicleta existan."));
-            }
-            return ResponseEntity.status(HttpStatus.CREATED).body(viajeGuardado.get());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("mensaje", "Error al crear el travel: " + e.getMessage()));
-        }
-    }
-
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar viaje")
     public ResponseEntity<?> deleteTravel(@PathVariable Integer id) {
