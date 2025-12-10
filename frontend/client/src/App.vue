@@ -14,7 +14,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTripStore } from '@/services/travelNotifications'
-import userAuth from '@/stores/auth'
+import { useActivityTracker } from '@/composables/useActivityTracker'
 import MainLayout from '@/layouts/MainLayout.vue'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import NotificationPopup from '@/components/reservation/NotificationPopup.vue'
@@ -22,32 +22,9 @@ import NotificationPopup from '@/components/reservation/NotificationPopup.vue'
 const route = useRoute()
 const router = useRouter()
 const tripStore = useTripStore()
-const authStore = userAuth()
 
-// Idle logout (5 minutos)
-const idleTimer = ref<number | null>(null)
-const IDLE_LIMIT_MS = 5 * 60 * 1000
-const activityEvents = ['mousemove', 'keydown', 'click', 'touchstart']
-
-const clearIdleTimer = () => {
-  if (idleTimer.value) {
-    clearTimeout(idleTimer.value)
-    idleTimer.value = null
-  }
-}
-
-const handleIdle = () => {
-  if (authStore.token) {
-    console.warn('[Idle] Sesión expirada por inactividad (cliente)')
-    authStore.logout()
-    router.push({ name: 'login' })
-  }
-}
-
-const resetIdleTimer = () => {
-  clearIdleTimer()
-  idleTimer.value = window.setTimeout(handleIdle, IDLE_LIMIT_MS)
-}
+// Initialize activity tracker for session management
+useActivityTracker()
 
 const layoutComponent = computed(() => {
   const layout = route.meta.layout as string | undefined

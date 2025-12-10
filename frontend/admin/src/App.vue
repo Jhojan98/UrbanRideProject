@@ -1,5 +1,6 @@
 <template>
   <MainLayout>
+    <SessionWarning />
     <router-view />
   </MainLayout>
 </template>

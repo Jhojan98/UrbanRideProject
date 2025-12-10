@@ -15,9 +15,7 @@
                 </div>
                 <button type="submit" class="form-submit">{{ t('login.button') }}</button>
             </form>
-
-            <p v-if="feedback" class="feedback-message">{{ feedback }}</p>
-
+            <p v-if="feedback" class="error-message">{{ feedback }}</p>
             <br>
         </div>
     </div>
@@ -27,30 +25,31 @@
 import { ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-
+import useAuthStore from '@/stores/auth';
 const email: Ref<string> = ref('');
 const password: Ref<string> = ref('');
 const feedback: Ref<string> = ref('');
 
 const router = useRouter();
-const store = useAuthStore();
+const authStore = useAuthStore();
 
 // i18n composable
 const { t } = useI18n();
 
 const logUser = async () => {
-    feedback.value = '';
+    feedback.value = ''
 
-    const result = await store.login(email.value, password.value);
+    try {
+        const result = await authStore.login(email.value, password.value)
 
-    if (result && result.success) {
-        feedback.value = 'Login exitoso';
-        setTimeout(() => {
-            router.push({ name: 'stationsDashboard' });
-        }, 500);
-    } else {
-        feedback.value = store.message || 'Error al iniciar sesión. Verifica tus credenciales.';
+        if (result.success) {
+            router.push({ name: 'stationsDashboard' })
+        } else {
+            feedback.value = authStore.message || 'Error al iniciar sesión. Verifica tus credenciales.'
+        }
+    } catch (error) {
+        feedback.value = 'Error al iniciar sesión. Verifica tus credenciales.'
+        console.error('Login error:', error)
     }
 }
 </script>

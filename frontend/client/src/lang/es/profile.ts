@@ -6,7 +6,9 @@ export default {
     tabs: {
         overview: 'Saldo y Planes',
         trips: 'Viajes',
-        fines: 'Multas'
+        fines: 'Multas',
+        complaints: 'Quejas',
+        reports: 'Reportes'
     },
     trips: {
         title: 'Historial de Viajes',
@@ -57,6 +59,7 @@ export default {
         expires: 'Expira:',
         managePayments: 'Gestionar métodos de pago',
         addBalance: 'Añadir saldo',
+        buySubscription: 'Comprar Suscripción',
         currency: 'Moneda'
     }
 };

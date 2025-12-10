@@ -4,17 +4,20 @@
     <img
       v-if="isDark"
       src="@/assets/icons/dark.webp"
-      alt="Tema Claro"
+      :alt="$t('common.lightTheme')"
     />
     <img
       v-else
       src="@/assets/icons/light.webp"
-      alt="Tema Oscuro"
+      :alt="$t('common.darkTheme')"
     />
   </button>
 </template>
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 
 const THEME_KEY = 'app-theme'
 
