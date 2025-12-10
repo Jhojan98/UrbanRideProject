@@ -371,8 +371,11 @@ onMounted(() => {
 }
 .data-table th, .data-table td {
   padding: 1rem;
-  text-align: left;
+  text-align: center;
   border-bottom: 1px solid var(--color-border);
+}
+.data-table th:first-child, .data-table td:first-child {
+  text-align: left;
 }
 .data-table th {
   background: var(--color-background);

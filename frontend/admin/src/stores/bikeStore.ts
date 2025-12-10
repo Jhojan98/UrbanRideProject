@@ -161,12 +161,18 @@ export const useBikeStore = defineStore("bike", {
       this.loading = true;
       this.error = null;
       try {
+        const token = localStorage.getItem('authToken');
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${this.baseURL}/electric`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers,
           body: JSON.stringify(data),
         });
 
@@ -193,12 +199,18 @@ export const useBikeStore = defineStore("bike", {
       this.loading = true;
       this.error = null;
       try {
+        const token = localStorage.getItem('authToken');
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${this.baseURL}/mechanic`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers,
           body: JSON.stringify(data),
         });
 
@@ -225,13 +237,28 @@ export const useBikeStore = defineStore("bike", {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch(`${this.baseURL}/${id}`, {
+        const token = localStorage.getItem('authToken');
+        const headers: Record<string, string> = {
+          Accept: "application/json",
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        console.log(`Attempting to delete bicycle with ID: ${id}`);
+        console.log(`DELETE URL: ${this.baseURL}/delete/${id}`);
+
+        const response = await fetch(`${this.baseURL}/delete/${id}`, {
           method: "DELETE",
-          headers: { Accept: "application/json" },
+          headers,
         });
 
+        console.log(`Delete response status: ${response.status}`);
+
         if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`Delete failed: ${response.status} - ${errorText}`);
+          throw new Error(`HTTP error: ${response.status} - ${errorText || response.statusText}`);
         }
 
         // Eliminar por idBicycle o id

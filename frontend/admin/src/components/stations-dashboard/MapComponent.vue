@@ -41,13 +41,27 @@ function updateMarkers() {
 
     clearMarkers()
 
-    // Crear iconos personalizados para estaciones
-    const stationIcon = L.divIcon({
-        className: 'station-marker',
-        html: '<div style="background-color: #2563eb; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
-        iconSize: [30, 30],
-        iconAnchor: [15, 15]
-    })
+    // Función para crear iconos personalizados según el tipo de estación
+    const createStationIcon = (type?: string) => {
+        const normalizedType = type ? type.toLowerCase().replace(/\s+/g, '') : ''
+        const typeStyles: Record<string, { color: string; icon: string }> = {
+            metro: { color: '#1e88e5', icon: 'fa-subway' },
+            financialcenter: { color: '#f59e0b', icon: 'fa-briefcase' },
+            residential: { color: '#10b981', icon: 'fa-building' }
+        }
+
+        const style = typeStyles[normalizedType] || { color: '#2563eb', icon: 'fa-location-dot' }
+
+        const html = `<div style="width:36px;height:36px;background:${style.color};border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35);"><i class="fa ${style.icon}"></i></div>`
+        
+        return L.divIcon({ 
+            html, 
+            className: 'station-icon', 
+            iconSize: [36, 36], 
+            iconAnchor: [18, 36], 
+            popupAnchor: [0, -36] 
+        })
+    }
 
     try {
         // Agregar marcadores de estaciones
@@ -89,7 +103,7 @@ function updateMarkers() {
                 minWidth: 200
             }).setContent(popupContent)
 
-            const stationMarker = L.marker([lat, lon], { icon: stationIcon })
+            const stationMarker = L.marker([lat, lon], { icon: createStationIcon(station.type) })
                 .addTo(map.value)
                 .bindPopup(popup)
 

@@ -46,9 +46,8 @@ export default {
     unknownStation: 'Unknown station (ID: {id})',
     types: {
       metro: 'Metro',
-      plaza: 'Plaza',
-      parque: 'Park',
-      comercial: 'Commercial'
+      residential: 'Residential',
+      'financial center': 'Financial Center'
     }
   },
   bicycles: {

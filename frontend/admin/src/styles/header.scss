@@ -1,7 +1,7 @@
 .header {
   background-color: var(--color-primary-light);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 1rem 0;
+  padding: 0.75rem 0;
   position: fixed;
   top: 0;
   left: 0;
@@ -15,13 +15,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
+  gap: 1rem;
+  width: 100%;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  flex-shrink: 0;
+  padding-left: 1rem;
+  flex: 1;
+  justify-content: center;
 }
 
 .logo-img {
@@ -32,26 +38,98 @@
 }
 
 .logo-text {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: bold;
   color: #FFFFFF;
 }
 
 .nav {
   display: flex;
-  gap: 2rem;
+  gap: 1.2rem;
+  flex: 1;
+  justify-content: center;
+  flex-wrap: nowrap;
 }
 
 .nav-link {
   text-decoration: none;
   color: var(--color-background-light);
   font-weight: 500;
+  font-size: 0.9rem;
   transition: color 0.3s;
+  white-space: nowrap;
 }
 
 .nav-link:hover {
   color: var(--color-surface-light);
-  transform: translateY(-2px);
+}
+
+.nav-link.router-link-active {
+  color: var(--color-background-light);
+  font-weight: bold;
+}
+
+.hamburger-menu {
+  display: none;
+  flex-direction: column;
+  gap: 0.35rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  z-index: 1001;
+}
+
+.hamburger-menu span {
+  display: block;
+  width: 24px;
+  height: 2.5px;
+  background-color: var(--color-background-light);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.hamburger-menu.active span:nth-child(1) {
+  transform: rotate(45deg) translate(7px, 7px);
+}
+
+.hamburger-menu.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(8px, -7px);
+}
+
+.mobile-nav {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--color-primary-light);
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  z-index: 999;
+}
+
+.mobile-nav.active {
+  display: flex;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--color-background-light);
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.3s;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: var(--color-surface-light);
 }
 
 .nav-link.router-link-active {
@@ -61,10 +139,11 @@
 
 .auth-buttons {
   display: flex;
-  gap: 1rem;
+  gap: 0.7rem;
   align-items: center;
   justify-content: flex-end;
-  min-width: 230px;
+  flex-shrink: 0;
+  padding-right: 1rem;
 }
 
 .auth-link {
@@ -79,13 +158,49 @@
 }
 @media (max-width: 768px) {
   .header-content {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
+    padding: 0 0.75rem;
+    gap: 0.4rem;
+  }
+
+  .logo {
+    padding-left: 0;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .logo-img {
+    height: 32px;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
   }
   
   .nav {
-    gap: 1rem;
+    display: none;
+  }
+
+  .hamburger-menu {
+    display: flex;
+    order: -1;
+    margin-right: 0.5rem;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .auth-buttons {
+    padding-right: 0;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .lang-switch {
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
   }
 }
 .auth-buttons {
@@ -153,58 +268,59 @@ html[data-theme="dark"] .btn-primary.router-link-active {
 .lang-switch {
   padding: 0.5rem 1rem;
   background-color: transparent;
-  border: 2px solid var(--color-background-light);
-  border-radius: 6px;
+  border: 1.5px solid var(--color-background-light);
+  border-radius: 5px;
   color: var(--color-background-light);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 55px;
-  width: 55px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.lang-switch:hover {
-  background-color: var(--color-background-light);
-  color: var(--color-primary-light);
-  transform: scale(1.05);
-}
-
-.lang-switch:active {
-  transform: scale(0.95);
-}
-
-/* Botón de logout */
-.logout-btn {
-  padding: 0.5rem 1.2rem;
-  background-color: var(--color-background-light);
-  border: none;
-  border-radius: 6px;
-  color: var(--color-primary-light);
-  font-weight: 600;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  min-width: 130px;
-  width: 130px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   white-space: nowrap;
 }
 
-.logout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+.lang-switch:hover {
+  background-color: var(--color-background-light);
+  color: var(--color-primary-light);
 }
 
-.logout-btn:active {
+.lang-switch:active {
+  transform: scale(0.98);
+}
+
+/* Botón de logout */
+.logout-btn, .login-btn {
+  padding: 0.5rem 1.2rem;
+  background-color: var(--color-background-light);
+  border: none;
+  border-radius: 5px;
+  color: var(--color-primary-light);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-btn:hover, .login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.logout-btn:active, .login-btn:active {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.desktop-only {
+  display: inline-flex;
 }
 
 html[data-theme="dark"] .lang-switch {
@@ -217,7 +333,8 @@ html[data-theme="dark"] .lang-switch:hover {
   color: var(--color-background-dark);
 }
 
-html[data-theme="dark"] .logout-btn {
+html[data-theme="dark"] .logout-btn,
+html[data-theme="dark"] .login-btn {
   background-color: var(--color-surface-dark);
   color: var(--color-text-primary-dark);
 }
@@ -259,17 +376,36 @@ html[data-theme="dark"] .logout-btn {
 }
 
 @media (max-width: 480px) {
+  .header {
+    padding: 0.6rem 0;
+  }
+
+  .header-content {
+    padding: 0 0.5rem;
+  }
+
+  .logo-img {
+    height: 28px;
+  }
+
+  .logo-text {
+    font-size: 1rem;
+  }
+
+  .hamburger-menu {
+    margin-right: 0.3rem;
+  }
+
+  .auth-buttons {
+    gap: 0.25rem;
+  }
+
   .lang-switch {
-    min-width: 45px;
-    width: 45px;
-    padding: 0.4rem 0.7rem;
+    padding: 0.3rem 0.5rem;
     font-size: 0.7rem;
   }
-  
-  .logout-btn {
-    min-width: 100px;
-    width: 100px;
-    padding: 0.4rem 0.85rem;
-    font-size: 0.7rem;
+
+  .mobile-nav {
+    padding: 0.75rem 1rem;
   }
 }

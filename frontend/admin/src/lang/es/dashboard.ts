@@ -5,6 +5,7 @@ export default {
         locationC: 'Ubicación',
         CCTVC: 'Estado CCTV',
         iluminationC: 'Estado Iluminación',
+        slotsAvailableC: 'Detalles',
         parkingC: 'Parqueadero',
         panicC: 'Botón de pánico',
         loadingMap: 'Cargando mapa...',
@@ -54,7 +55,7 @@ export default {
         }
     },
     bikes: {
-        title: 'Bicicletas en: {stationName}',
+        title: 'Ubicación y Disponibilidad: {stationName}',
         idC: 'Id',
         conditionC: 'Condición',
         modelC: 'Modelo',
@@ -83,5 +84,6 @@ export default {
     },
     
     isEmpty: 'No hay bicicletas en esta estación',
+    login: 'Iniciar Sesión',
     logout: 'Cerrar sesión'
 }

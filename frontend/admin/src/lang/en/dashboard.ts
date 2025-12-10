@@ -5,6 +5,7 @@ export default {
         locationC: 'Location',
         CCTVC: 'CCTV Status',
         iluminationC: 'Lighting Status',
+        slotsAvailableC: 'Details',
         parkingC: 'Parking',
         panicC: 'Panic Button',
         loadingMap: 'Loading map...',
@@ -45,7 +46,7 @@ export default {
         }
     },
     bikes: {
-        title: 'Bikes at: {stationName}',
+        title: 'Location and Availability: {stationName}',
         idC: 'Id',
         conditionC: 'Condition',
         modelC: 'Model',
@@ -73,5 +74,6 @@ export default {
         }
     },
     isEmpty: 'No bikes at this station',
+    login: 'Log In',
     logout: 'Log out'
 }

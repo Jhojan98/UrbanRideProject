@@ -148,18 +148,66 @@ html[data-theme="dark"] {
 }
 
 @media (max-width: 768px) {
+  .station-filter {
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+  }
+
   .filter-container {
     flex-direction: column;
     align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .filter-label {
+    font-size: 0.9rem;
+
+    .material-symbols-outlined {
+      font-size: 1.1rem;
+    }
   }
 
   .filter-select {
     width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    min-width: unset;
   }
 
   .filter-info {
     margin-left: 0;
     text-align: center;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .station-filter {
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .filter-container {
+    gap: 0.6rem;
+  }
+
+  .filter-label {
+    font-size: 0.85rem;
+
+    .material-symbols-outlined {
+      font-size: 1rem;
+    }
+  }
+
+  .filter-select {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .filter-info {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
   }
 }
 </style>

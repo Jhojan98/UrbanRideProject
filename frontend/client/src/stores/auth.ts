@@ -151,6 +151,17 @@ const userAuth = defineStore("auth", {
         console.error("Error code:", firebaseError.code);
         console.error("Error message:", firebaseError.message);
 
+        // Map Firebase error codes to user-friendly messages
+        const errorMessages: { [key: string]: string } = {
+          'auth/email-already-in-use': 'Este email ya está registrado. Intenta con otro o inicia sesión.',
+          'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+          'auth/invalid-email': 'El email no es válido.',
+          'auth/operation-not-allowed': 'Operación no permitida. Contacta al administrador.',
+          'auth/too-many-requests': 'Demasiados intentos fallidos. Intenta más tarde.',
+        };
+
+        this.message = errorMessages[firebaseError.code || ''] || `Error al registrarse: ${firebaseError.message || 'Error desconocido'}`;
+
         return false;
       }
     },

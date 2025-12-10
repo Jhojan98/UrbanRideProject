@@ -6,7 +6,7 @@ import {
   signOut,
 } from "firebase/auth";
 
-const userAuthStore = defineStore("auth", {
+export const useAuthStore = defineStore("auth", {
   state() {
     return {
       token: null as string | null,
@@ -137,4 +137,3 @@ const userAuthStore = defineStore("auth", {
     },
   },
 });
-export default userAuthStore;

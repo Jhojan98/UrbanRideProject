@@ -161,7 +161,7 @@ onMounted(async () => {
 
 .tabs {
   display: flex;
-  gap: 0.75rem;
+  gap: 1.25rem;
   margin-bottom: 2rem;
   flex-wrap: wrap;
 }
@@ -170,7 +170,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.85rem 1.5rem;
   border-radius: 12px;
   border: 2px solid var(--color-border-light);
   background: var(--color-background-light);

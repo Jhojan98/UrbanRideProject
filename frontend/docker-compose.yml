@@ -3,7 +3,7 @@ services:
     build:
       context: ./admin
       dockerfile: Dockerfile
-    container_name: admin-frontend
+    container_name: ecoride-admin
     ports:
       - "8080:80"
     environment:
@@ -23,7 +23,7 @@ services:
         - VUE_APP_FIREBASE_APP_ID=${VUE_APP_FIREBASE_APP_ID}
         - VUE_APP_FIREBASE_MEASUREMENT_ID=${VUE_APP_FIREBASE_MEASUREMENT_ID}
         - VUE_APP_API_URL=${VUE_APP_API_URL}
-    container_name: client-frontend
+    container_name: ecoride-client
     ports:
       - "8081:80"
     environment:

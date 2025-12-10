@@ -61,9 +61,8 @@
             <label>{{ t('management.stations.type') }}</label>
             <select v-model="form.type" required>
               <option value="METRO">METRO</option>
-              <option value="PLAZA">PLAZA</option>
-              <option value="PARQUE">PARQUE</option>
-              <option value="COMERCIAL">COMERCIAL</option>
+              <option value="RESIDENTIAL">RESIDENTIAL</option>
+              <option value="FINANCIAL CENTER">FINANCIAL CENTER</option>
             </select>
           </div>
         </div>
@@ -103,9 +102,16 @@
             <td>{{ station.stationName }}</td>
             <td>{{ station.idCity ? getCityName(station.idCity) : '-' }}</td>
             <td>
-              <span class="type-badge">
-                {{ t('management.stations.types.' + ((station.type || 'METRO').toString().toLowerCase())) }}
-              </span>
+              <div style="display: flex; align-items: center; justify-content: center;">
+                <span :class="['station-type-icon', (station.type || 'METRO').toLowerCase()]">
+                  <i v-if="(station.type || 'METRO').toLowerCase() === 'metro'" class="fa fa-subway"></i>
+                  <i v-else-if="(station.type || 'METRO').toLowerCase() === 'residential'" class="fa fa-building"></i>
+                  <i v-else-if="(station.type || 'METRO').toLowerCase() === 'financial'" class="fa fa-briefcase"></i>
+                </span>
+                <span :class="['type-badge', (station.type || 'METRO').toLowerCase()]">
+                  {{ t('management.stations.types.' + ((station.type || 'METRO').toString().toLowerCase())) }}
+                </span>
+              </div>
             </td>
             <td>{{ station.latitude.toFixed(4) }}, {{ (station.length ?? station.longitude ?? 0).toFixed(4) }}</td>
             <td>
@@ -210,17 +216,68 @@ async function handleDelete(id: number) {
 <style lang="scss" scoped>
 @import '@/styles/management-shared-styles.scss';
 
+.data-table {
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    
+    thead {
+      background-color: #f5f5f5;
+    }
+    
+    th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 2px solid #ddd;
+    }
+    
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: left;
+    }
+    
+    tbody tr {
+      &:hover {
+        background-color: #f9f9f9;
+      }
+    }
+  }
+}
+
 .type-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 12px;
-  font-size: 0.85rem;
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  border-radius: 14px;
+  font-size: 0.8rem;
   font-weight: 600;
-  background: var(--color-primary);
+  text-transform: uppercase;
   color: white;
+  
+  &:has(+ *:contains('metro')) {
+    background-color: #1e88e5;
+  }
+  
+  background-color: #1e88e5;
+  
+  &.metro {
+    background-color: #1e88e5;
+  }
+  
+  &.financial {
+    background-color: #f59e0b;
+  }
+  
+  &.residential {
+    background-color: #10b981;
+  }
 }
 
 .status-indicator {
   font-size: 1.5rem;
+  display: inline-block;
 
   &.active {
     color: #10b981;
@@ -228,6 +285,88 @@ async function handleDelete(id: number) {
 
   &.inactive {
     color: #9ca3af;
+  }
+}
+
+.btn-sm {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+  margin: 0 0.2rem;
+  
+  span {
+    font-size: 1.1rem;
+  }
+}
+
+button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  
+  span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  
+  &:hover:not(:disabled) {
+    background-color: #0056b3;
+  }
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+  
+  &:hover:not(:disabled) {
+    background-color: #545b62;
+  }
+}
+
+.btn-info {
+  background-color: #17a2b8;
+  color: white;
+  padding: 0.4rem 0.6rem;
+  
+  &:hover:not(:disabled) {
+    background-color: #138496;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  
+  button {
+    flex: 0 1 auto;
+    min-width: 120px;
   }
 }
 </style>

@@ -98,7 +98,24 @@ const metros = computed<StationOption[]>(() => {
   }))
 })
 
-// Todas las estaciones normalizadas (para viaje largo y destinos)
+// Estaciones de bicicleta (no METRO) para recorrido largo
+const bikeStations = computed<StationOption[]>(() => {
+  return stationStore.allStations.filter(s =>
+    s.type?.toUpperCase() !== 'METRO'
+  ).map(s => ({
+    idStation: s.idStation,
+    nameStation: s.nameStation,
+    latitude: s.latitude,
+    longitude: s.longitude,
+    availableSlots: s.availableSlots,
+    totalSlots: s.totalSlots,
+    type: s.type?.toUpperCase() || 'BIKE',
+    mechanical: s.mechanical ?? 0,
+    electric: s.electric ?? 0
+  }))
+})
+
+// Todas las estaciones normalizadas
 const allStationsNormalized = computed<StationOption[]>(() => {
   return stationStore.allStations.map(s => ({
     idStation: s.idStation,
@@ -125,17 +142,23 @@ const rideType = computed(() => props.rideType ?? 'short_trip')
 // Origin options based on trip type
 const originOptions = computed(() => {
   if (rideType.value === 'short_trip') {
-    // Last mile: only METRO stations
+    // Última milla (first/last mile): METRO stations only
     return metros.value
   } else {
-    // Long trip: any type of station
-    return allStationsNormalized.value
+    // Recorrido largo (long trip): BIKE stations only (no METRO)
+    return bikeStations.value
   }
 })
 
-// Destination options: always any type of station
+// Destination options based on trip type
 const destinationOptions = computed(() => {
-  return allStationsNormalized.value
+  if (rideType.value === 'short_trip') {
+    // Última milla: destino debe ser estación de bici (no METRO)
+    return bikeStations.value
+  } else {
+    // Recorrido largo: destino debe ser estación de bici (no METRO)
+    return bikeStations.value
+  }
 })
 
 // Habilitar el botón solo si todo está completo (disponibilidad se valida al confirmar)

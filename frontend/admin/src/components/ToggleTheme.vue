@@ -57,6 +57,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
   /* sombra sutil para que no se pierda */
   box-shadow: 0 0 4px rgba(0,0,0,0.25);
@@ -67,6 +68,7 @@ onMounted(() => {
 .theme-toggle img {
   width: 24px;
   height: 24px;
+  display: block;
 }
 
 /* hover */
@@ -90,10 +92,25 @@ onMounted(() => {
   --text: #fff;
 }
 
-.theme-toggle img {
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  background: transparent;
+@media (max-width: 768px) {
+  .theme-toggle {
+    padding: 0.3rem;
+  }
+  
+  .theme-toggle img {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .theme-toggle {
+    padding: 0.25rem;
+  }
+  
+  .theme-toggle img {
+    width: 18px;
+    height: 18px;
+  }
 }
 </style>
