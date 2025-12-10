@@ -25,7 +25,7 @@
 import { ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import useAuthStore from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth';
 const email: Ref<string> = ref('');
 const password: Ref<string> = ref('');
 const feedback: Ref<string> = ref('');

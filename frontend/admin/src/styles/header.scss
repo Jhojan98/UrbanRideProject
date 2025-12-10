@@ -13,7 +13,7 @@
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   padding: 0 1.5rem;
   gap: 1rem;
@@ -26,8 +26,7 @@
   gap: 0.4rem;
   flex-shrink: 0;
   padding-left: 1rem;
-  flex: 1;
-  justify-content: center;
+  /* Logo siempre centrado, sin flex */
 }
 
 .logo-img {
@@ -49,6 +48,7 @@
   flex: 1;
   justify-content: center;
   flex-wrap: nowrap;
+  min-height: 0; /* Para que no ocupe espacio si está oculto */
 }
 
 .nav-link {
@@ -78,6 +78,8 @@
   border: none;
   padding: 0;
   z-index: 1001;
+  position: absolute;
+  left: 1.5rem;
 }
 
 .hamburger-menu span {
@@ -144,6 +146,10 @@
   justify-content: flex-end;
   flex-shrink: 0;
   padding-right: 1rem;
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .auth-link {

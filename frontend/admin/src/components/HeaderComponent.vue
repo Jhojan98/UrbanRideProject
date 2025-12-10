@@ -14,7 +14,7 @@
         <img src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
         <span class="logo-text">ECORIDE</span>
       </div>
-      <nav class="nav">
+      <nav v-if="authStore.token" class="nav">
         <router-link :to="{name: 'stationsDashboard'}" class="nav-link">
           Dashboard de Estaciones
         </router-link>
@@ -38,7 +38,7 @@
         <toggle-theme />
       </div>
     </div>
-    <nav v-show="menuOpen" class="mobile-nav active">
+    <nav v-if="authStore.token" v-show="menuOpen" class="mobile-nav active">
       <router-link 
         :to="{name: 'stationsDashboard'}" 
         class="nav-link"
@@ -71,7 +71,9 @@
         <span class="material-symbols-outlined">logout</span>
         {{ t('dashboard.logout') }}
       </button>
-      <router-link v-else :to="{name: 'login'}" class="logout-btn-mobile" @click="menuOpen = false">
+    </nav>
+    <nav v-else v-show="menuOpen" class="mobile-nav active">
+      <router-link :to="{name: 'login'}" class="logout-btn-mobile" @click="menuOpen = false">
         <span class="material-symbols-outlined">login</span>
         {{ t('dashboard.login') || 'Iniciar Sesión' }}
       </router-link>

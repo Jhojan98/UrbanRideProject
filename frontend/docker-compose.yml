@@ -1,15 +1,4 @@
 services:
-  admin-frontend:
-    build:
-      context: ./admin
-      dockerfile: Dockerfile
-    container_name: ecoride-admin
-    ports:
-      - "8080:80"
-    environment:
-      - NODE_ENV=production
-    restart: unless-stopped
-
   client-frontend:
     build:
       context: ./client
@@ -24,6 +13,17 @@ services:
         - VUE_APP_FIREBASE_MEASUREMENT_ID=${VUE_APP_FIREBASE_MEASUREMENT_ID}
         - VUE_APP_API_URL=${VUE_APP_API_URL}
     container_name: ecoride-client
+    ports:
+      - "8080:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+
+  admin-frontend:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: ecoride-admin
     ports:
       - "8081:80"
     environment:

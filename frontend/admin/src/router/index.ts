@@ -9,7 +9,7 @@ import RegisterView from "@/views/RegisterView.vue";
 import UserLayout from "@/layouts/UserLayout.vue";
 import AdminManagementView from "@/views/AdminManagementView.vue";
 import BicyclesView from "@/views/BicyclesView.vue";
-import useAuthStore from "@/stores/auth";
+import { useAuthStore } from "@/stores/auth";
 
 const routes: Array<RouteRecordRaw> = [
   {

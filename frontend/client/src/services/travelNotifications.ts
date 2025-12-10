@@ -153,15 +153,17 @@ export const useTripStore = defineStore('trip', {
 
             let notificationType: NotificationData['type'] | null = null;
 
-            if (messageStr.includes('EXPIRED_TRAVEL')) {
+            // Detectar tipo con precedencia: EXPIRED > END > START
+            // Usar match más estricto para evitar falsos positivos
+            if (messageStr.toUpperCase().includes('EXPIRED_TRAVEL')) {
               notificationType = 'EXPIRED_TRAVEL';
               console.log('[SSE] ✅ Notification type detected: EXPIRED_TRAVEL');
-            } else if (messageStr.includes('START_TRAVEL')) {
-              notificationType = 'START_TRAVEL';
-              console.log('[SSE] ✅ Notification type detected: START_TRAVEL');
-            } else if (messageStr.includes('END_TRAVEL')) {
+            } else if (messageStr.toUpperCase().includes('END_TRAVEL')) {
               notificationType = 'END_TRAVEL';
               console.log('[SSE] ✅ Notification type detected: END_TRAVEL');
+            } else if (messageStr.toUpperCase().includes('START_TRAVEL')) {
+              notificationType = 'START_TRAVEL';
+              console.log('[SSE] ✅ Notification type detected: START_TRAVEL');
             } else {
               console.log('[SSE] ⚠️ No notification type matched in message');
             }

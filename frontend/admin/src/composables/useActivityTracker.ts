@@ -1,6 +1,6 @@
 import { onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import useAuthStore from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth';
 
 export function useActivityTracker() {
   const authStore = useAuthStore();

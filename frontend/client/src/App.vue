@@ -38,19 +38,12 @@ onMounted(() => {
   // Attach lifecycle listeners to reconnect when needed
   tripStore.attachLifecycleListeners()
   console.log('[App] SSE connected globally')
-
-  // Idle timer listeners
-  activityEvents.forEach(event => window.addEventListener(event, resetIdleTimer))
-  resetIdleTimer()
 })
 
 onUnmounted(() => {
   // Disconnect SSE when app unmounts
   tripStore.disconnect()
   console.log('[App] SSE disconnected')
-
-  activityEvents.forEach(event => window.removeEventListener(event, resetIdleTimer))
-  clearIdleTimer()
 })
 </script>
 

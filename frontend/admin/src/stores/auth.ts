@@ -8,7 +8,7 @@ import {
 
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutos en milisegundos
 
-const userAuthStore = defineStore("auth", {
+export const useAuthStore = defineStore("auth", {
   state() {
     // Verificar si el token ha expirado por inactividad
     const lastActivity = localStorage.getItem('lastActivity');
