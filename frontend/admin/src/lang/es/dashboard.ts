@@ -81,6 +81,7 @@ export default {
             unknown: 'Desconocido'
         }
     },
+    
     isEmpty: 'No hay bicicletas en esta estación',
     logout: 'Cerrar sesión'
 }

@@ -4,6 +4,7 @@
  * y del frontend (id, lockStatus, lat, lon) sin necesidad de conversión
  */
 export default interface Bike {
+  
   // ID flexible: acepta idBicycle (backend) o id (frontend)
   idBicycle?: string;
   id?: string;
@@ -68,5 +69,7 @@ export const BikeHelpers = {
     }
     return undefined;
   }
+  
 };
+
 

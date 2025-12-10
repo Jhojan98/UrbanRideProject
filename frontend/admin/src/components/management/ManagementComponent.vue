@@ -25,6 +25,7 @@
         v-else-if="activeTab === 'slots'"
         :initial-station-id="selectedStationForSlots"
       />
+      <BikeRedistributionManagement v-else-if="activeTab === 'redistribution'" />
       <ComplaintsManagement v-else-if="activeTab === 'complaints'" />
     </div>
 
@@ -47,9 +48,11 @@ import CitiesManagement from './CitiesManagement.vue';
 import StationsManagement from './StationsManagement.vue';
 import BicyclesManagement from './BicyclesManagement.vue';
 import SlotsManagement from './SlotsManagement.vue';
+import BikeRedistributionManagement from './BikeRedistributionManagement.vue';
 import ComplaintsManagement from './ComplaintsManagement.vue';
 
 const { t } = useI18n();
+
 const cityStore = useCityStore();
 const stationStore = useStationStore();
 const bicycleStore = useBikeStore();
@@ -63,6 +66,7 @@ const tabs = [
   { id: 'stations', label: 'management.tabs.stations', icon: 'store' },
   { id: 'bicycles', label: 'management.tabs.bicycles', icon: 'pedal_bike' },
   { id: 'slots', label: 'management.tabs.slots', icon: 'grid_view' },
+  { id: 'redistribution', label: 'management.tabs.redistribution', icon: 'redo' },
   { id: 'complaints', label: 'management.tabs.complaints', icon: 'report_problem' },
 ];
 
@@ -104,6 +108,7 @@ onMounted(async () => {
   gap: 0.5rem;
   margin-bottom: 2rem;
   border-bottom: 2px solid var(--color-border);
+  overflow-x: auto;
 }
 
 .tab-button {
@@ -118,6 +123,7 @@ onMounted(async () => {
   font-size: 1rem;
   color: var(--color-text-secondary);
   transition: all 0.3s;
+  white-space: nowrap;
 
   &:hover {
     color: var(--color-primary);

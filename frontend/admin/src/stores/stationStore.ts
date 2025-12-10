@@ -96,6 +96,7 @@ export const useStationStore = defineStore("station", {
         this.loading = false;
       }
     },
+    
 
     async deleteStation(id: number) {
       this.loading = true;
@@ -178,6 +179,7 @@ export const useStationStore = defineStore("station", {
       }
     },
   },
+  
 });
 
 /*import { defineStore } from 'pinia';
