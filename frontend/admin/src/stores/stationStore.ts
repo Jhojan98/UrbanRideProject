@@ -54,18 +54,32 @@ export const useStationStore = defineStore("station", {
       this.loading = true;
       this.error = null;
       try {
+        const token = localStorage.getItem('authToken');
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         const response = await fetch(`${this.baseURL}/station/`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers,
           body: JSON.stringify(data),
         });
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.mensaje || `HTTP error: ${response.status}`);
+          let errorMessage = `HTTP error: ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.mensaje || errorData.message || errorData.error || errorMessage;
+            console.error("Backend error details:", errorData);
+          } catch (e) {
+            const text = await response.text();
+            console.error("Backend error (text):", text);
+          }
+          throw new Error(errorMessage);
         }
 
         const result = await response.json();
@@ -87,9 +101,15 @@ export const useStationStore = defineStore("station", {
       this.loading = true;
       this.error = null;
       try {
+        const token = localStorage.getItem('authToken');
+        const headers: Record<string, string> = { Accept: "application/json" };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         const response = await fetch(`${this.baseURL}/station/${id}`, {
           method: "DELETE",
-          headers: { Accept: "application/json" },
+          headers,
         });
 
         if (!response.ok) {

@@ -147,8 +147,13 @@ defineEmits<{
 const showForm = ref(false);
 const selectedCityFilter = ref<number | null>(null);
 
+const getNextId = () => {
+  const ids = stationStore.stations.map(s => s.idStation);
+  return ids.length > 0 ? Math.max(...ids) + 1 : 1;
+};
+
 const form = ref({
-  idStation: 0,
+  idStation: getNextId(),
   stationName: '',
   latitude: 0,
   length: 0,
@@ -174,7 +179,7 @@ async function handleCreate() {
     await stationStore.createStation(form.value);
     showForm.value = false;
     form.value = {
-      idStation: 0,
+      idStation: getNextId(),
       stationName: '',
       latitude: 0,
       length: 0,
@@ -184,7 +189,9 @@ async function handleCreate() {
     };
     alert(t('management.stations.createSuccess'));
   } catch (error) {
-    alert(t('management.stations.createError'));
+    const errorMsg = error instanceof Error ? error.message : t('management.stations.createError');
+    alert(`${t('management.stations.createError')}: ${errorMsg}`);
+    console.error('Create station error:', error);
   }
 }
 

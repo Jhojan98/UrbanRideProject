@@ -16,7 +16,7 @@ const userAuth = defineStore("auth", {
     return {
       token: null as string | null,
       uid: null as string | null,
-      baseURL: "/api",
+      baseURL: process.env.VUE_APP_API_URL || "/api",
       message: "",
       isVerified: false,
       pendingVerification: false,
