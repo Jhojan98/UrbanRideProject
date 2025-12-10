@@ -10,7 +10,8 @@ export const useAuthStore = defineStore("auth", {
   state() {
     return {
       token: null as string | null,
-      baseURL: '/api',
+      // Usa la URL del gateway definida en .env al construir la imagen Docker; fallback a proxy local
+      baseURL: process.env.VUE_APP_API_URL || '/api',
       message: "",
       isVerified: false,
       pendingVerification: false,
