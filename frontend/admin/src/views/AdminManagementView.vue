@@ -36,6 +36,13 @@
             Slots ({{ stationStore.slots.length }})
           </button>
           <button
+            :class="['tab', { active: activeTab === 'redistribution' }]"
+            @click="activeTab = 'redistribution'"
+          >
+            <span class="material-symbols-outlined">redo</span>
+            Redistribución
+          </button>
+          <button
             :class="['tab', { active: activeTab === 'maintenances' }]"
             @click="activeTab = 'maintenances'"
           >
@@ -66,6 +73,11 @@
           <SlotsManagement :initial-station-id="selectedStationForSlots" />
         </div>
 
+        <!-- Redistribución -->
+        <div v-if="activeTab === 'redistribution'">
+          <BikeRedistributionManagement />
+        </div>
+
         <!-- Mantenimientos -->
         <div v-if="activeTab === 'maintenances'">
           <MaintenancesManagement />
@@ -84,13 +96,14 @@ import CitiesManagement from '@/components/management/CitiesManagement.vue';
 import StationsManagement from '@/components/management/StationsManagement.vue';
 import BicyclesManagement from '@/components/management/BicyclesManagement.vue';
 import SlotsManagement from '@/components/management/SlotsManagement.vue';
+import BikeRedistributionManagement from '@/components/management/BikeRedistributionManagement.vue';
 import MaintenancesManagement from '@/components/management/MaintenancesManagement.vue';
 
 const cityStore = useCityStore();
 const stationStore = useStationStore();
 const bicycleStore = useBikeStore();
 
-const activeTab = ref<'cities' | 'stations' | 'bicycles' | 'slots' | 'maintenances'>('cities');
+const activeTab = ref<'cities' | 'stations' | 'bicycles' | 'slots' | 'redistribution' | 'maintenances'>('cities');
 const selectedStationForSlots = ref<number | null>(null);
 
 const loading = computed(() => {

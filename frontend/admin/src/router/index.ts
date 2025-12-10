@@ -5,6 +5,7 @@ import RegisterView from '@/views/RegisterView.vue'
 import UserLayout from '@/layouts/UserLayout.vue'
 import AdminManagementView from '@/views/AdminManagementView.vue'
 import BicyclesView from '@/views/BicyclesView.vue'
+import RedistributionComponent from '@/components/redistribution/RedistributionComponent.vue'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -41,6 +42,7 @@ const routes: Array<RouteRecordRaw> = [
     component: AdminManagementView,
     meta: { layout: 'main' }
   },
+  
   /*{
     path: '/admin-dashboard',
     name: 'adminDashboard',
