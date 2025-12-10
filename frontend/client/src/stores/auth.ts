@@ -11,8 +11,24 @@ import {
 } from "firebase/auth";
 import { useTripStore } from "../services/travelNotifications";
 
+// Inactivity timeout: 10 minutes in milliseconds
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000;
+
 const userAuth = defineStore("auth", {
   state() {
+    // Check if session expired due to inactivity
+    const lastActivity = localStorage.getItem('lastActivity');
+    if (lastActivity) {
+      const timeSinceLastActivity = Date.now() - parseInt(lastActivity, 10);
+      if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
+        // Session expired, clear storage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUid');
+        localStorage.removeItem('lastActivity');
+        console.log('Session expired due to inactivity');
+      }
+    }
+
     return {
       token: null as string | null,
       uid: null as string | null,
@@ -22,6 +38,7 @@ const userAuth = defineStore("auth", {
       pendingVerification: false,
       tempEmail: null as string | null,
       authStateInitialized: false,
+      lastActivity: lastActivity ? parseInt(lastActivity, 10) : null as number | null,
     };
   },
   actions: {
@@ -227,6 +244,11 @@ const userAuth = defineStore("auth", {
         localStorage.setItem('authToken', token);
         console.log('Token saved in localStorage after login');
 
+        // Initialize lastActivity timestamp
+        const now = Date.now().toString();
+        localStorage.setItem('lastActivity', now);
+        this.lastActivity = Date.now();
+
         return { success: true, userData: response };
       } catch (error: unknown) {
         console.error("Error en login:", error);
@@ -354,6 +376,11 @@ const userAuth = defineStore("auth", {
         localStorage.setItem('authToken', token);
         console.log('Token saved in localStorage after Google login');
 
+        // Initialize lastActivity timestamp
+        const now = Date.now().toString();
+        localStorage.setItem('lastActivity', now);
+        this.lastActivity = Date.now();
+
         return { success: true, userData };
       } catch (error: unknown) {
         console.error("Error in Google login:", error);
@@ -392,14 +419,16 @@ const userAuth = defineStore("auth", {
         this.uid = null;
         this.isVerified = false;
         this.message = "Sesión cerrada";
-        
+        this.lastActivity = null;
+
         // Disconnect SSE when logging out
         const tripStore = useTripStore();
         tripStore.disconnect();
-        
+
         // Clear all stored auth data
         localStorage.removeItem('authToken');
         localStorage.removeItem('authUid');
+        localStorage.removeItem('lastActivity');
       } catch (error: unknown) {
         console.error("Error en logout:", error);
         this.message = "Error al cerrar sesión";
@@ -448,6 +477,11 @@ const userAuth = defineStore("auth", {
           localStorage.setItem('authToken', token);
           console.log('Token saved in localStorage after verification');
 
+          // Initialize lastActivity timestamp
+          const now = Date.now().toString();
+          localStorage.setItem('lastActivity', now);
+          this.lastActivity = Date.now();
+
           return true;
         } else {
           this.message =
@@ -481,7 +515,35 @@ const userAuth = defineStore("auth", {
           catch (error: unknown) {
             console.error("Error al comprar suscripción:", error);
           }
-    }
+    },
+    /**
+     * Renew activity timestamp
+     * Called by activity tracker on user interaction
+     */
+    renewActivity() {
+      const now = Date.now().toString();
+      localStorage.setItem('lastActivity', now);
+      this.lastActivity = Date.now();
+    },
+    /**
+     * Check if session has expired due to inactivity
+     * If expired, logout the user
+     * @returns true if session expired and user was logged out
+     */
+    checkTokenExpiration(): boolean {
+      const lastActivity = localStorage.getItem('lastActivity');
+      if (!lastActivity) {
+        return false;
+      }
+
+      const timeSinceLastActivity = Date.now() - parseInt(lastActivity, 10);
+      if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
+        console.log('Session expired due to inactivity, logging out...');
+        this.logout();
+        return true;
+      }
+      return false;
+    },
   },
 });
 

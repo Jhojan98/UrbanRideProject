@@ -3,7 +3,10 @@ export default {
     minutes: 'minutes',
     accept: 'Accept',
     cancel: 'Cancel',
-    loading: 'Loading...',
+    loading: 'Loading',
     menu: 'Open menu',
-    close: 'Close'
+    close: 'Close',
+    refreshBalance: 'Refresh balance',
+    lightTheme: 'Light Theme',
+    darkTheme: 'Dark Theme'
 };

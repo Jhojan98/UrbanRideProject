@@ -5,5 +5,8 @@ export default {
     cancel: 'Cancelar',
     loading: 'Cargando...',
     menu: 'Abrir menú',
-    close: 'Cerrar'
+    close: 'Cerrar',
+    refreshBalance: 'Actualizar saldo',
+    lightTheme: 'Tema Claro',
+    darkTheme: 'Tema Oscuro'
 };

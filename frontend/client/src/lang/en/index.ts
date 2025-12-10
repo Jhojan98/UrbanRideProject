@@ -5,6 +5,7 @@ import auth from './auth';
 import profile from './profile';
 import reservation from './reservation';
 import payments from './payments';
+import subscription from './subscription';
 import other from './other';
 
 export default {
@@ -15,5 +16,6 @@ export default {
     profile,
     reservation,
     payments,
+    subscription,
     ...other
 };

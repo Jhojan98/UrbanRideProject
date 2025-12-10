@@ -9,8 +9,8 @@
       </button>
 
       <div class="logo-mobile">
-        <img src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
-        <span class="logo-text">ECORIDE</span>
+        <img src="@/assets/ecorideHeader.webp" :alt="$t('common.brand')" class="logo-img">
+        <span class="logo-text">{{ $t('common.brand') }}</span>
       </div>
 
       <!-- Mobile utilities (visible in header) -->
@@ -31,8 +31,8 @@
     <!-- Desktop Header Content -->
     <div v-if="!isMobile" class="header-content">
       <div class="logo">
-        <img src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
-        <span class="logo-text">ECORIDE</span>
+        <img src="@/assets/ecorideHeader.webp" :alt="$t('common.brand')" class="logo-img">
+        <span class="logo-text">{{ $t('common.brand') }}</span>
       </div>
 
       <!-- Desktop Navigation -->

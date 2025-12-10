@@ -9,6 +9,9 @@
         <router-link :to="{name: 'stationsDashboard'}" class="nav-link">
           Dashboard de Estaciones
         </router-link>
+        <router-link :to="{name: 'bicyclesDashboard'}" class="nav-link">
+          Dashboard de Bicicletas
+        </router-link>
         <router-link :to="{name: 'usersDashboard'}" class="nav-link">
           Dashboard de Usuarios
         </router-link>

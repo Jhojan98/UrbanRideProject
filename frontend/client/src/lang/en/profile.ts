@@ -4,7 +4,9 @@ export default {
     tabs: {
         overview: 'Balance and Plans',
         trips: 'Trips',
-        fines: 'Fines'
+        fines: 'Fines',
+        complaints: 'Complaints',
+        reports: 'Reports'
     },
     trips: {
         title: 'Trip History',
@@ -55,6 +57,7 @@ export default {
         expires: 'Expires:',
         managePayments: 'Manage payment methods',
         addBalance: 'Add balance',
+        buySubscription: 'Buy Subscription',
         currency: 'Currency'
     }
 };

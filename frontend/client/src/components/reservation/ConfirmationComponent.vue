@@ -5,31 +5,31 @@
       <div v-if="showProblemModal" class="problem-modal-overlay" @click.self="closeProblemModal">
         <div class="problem-modal">
           <button class="close-btn" @click="closeProblemModal">✕</button>
-          <h2>Reportar un problema</h2>
-          <p class="modal-subtitle">¿Qué inconvenientes tuviste durante el viaje?</p>
-          
+          <h2>{{ $t('reservation.confirmation.reportTitle') }}</h2>
+          <p class="modal-subtitle">{{ $t('reservation.confirmation.reportSubtitle') }}</p>
+
           <form @submit.prevent="submitProblemReport">
-            <label class="input-label">Tipo de problema</label>
+            <label class="input-label">{{ $t('reservation.confirmation.problemType') }}</label>
             <select v-model="problemForm.type" required>
-              <option value="">Selecciona un problema</option>
-              <option value="BICYCLE">Problema con la bicicleta</option>
-              <option value="LOCK">Problema con el candado</option>
-              <option value="STATION">Problema con la estación</option>
-              <option value="OTHER">Otro problema</option>
+              <option value="">{{ $t('reservation.confirmation.selectProblem') }}</option>
+              <option value="BICYCLE">{{ $t('reservation.confirmation.problemBicycle') }}</option>
+              <option value="LOCK">{{ $t('reservation.confirmation.problemLock') }}</option>
+              <option value="STATION">{{ $t('reservation.confirmation.problemStation') }}</option>
+              <option value="OTHER">{{ $t('reservation.confirmation.problemOther') }}</option>
             </select>
 
-            <label class="input-label">Descripción del problema</label>
+            <label class="input-label">{{ $t('reservation.confirmation.problemDescription') }}</label>
             <textarea
               v-model="problemForm.description"
-              placeholder="Describe qué sucedió..."
+              :placeholder="$t('reservation.confirmation.describeProblem')"
               rows="4"
               required
             ></textarea>
 
             <div class="modal-actions">
-              <button type="button" class="btn-secondary" @click="closeProblemModal">Cancelar</button>
+              <button type="button" class="btn-secondary" @click="closeProblemModal">{{ $t('common.cancel') }}</button>
               <button type="submit" class="btn-primary" :disabled="isSubmittingProblem">
-                {{ isSubmittingProblem ? 'Reportando...' : 'Enviar reporte' }}
+                {{ isSubmittingProblem ? $t('reservation.confirmation.reporting') : $t('reservation.confirmation.sendReport') }}
               </button>
             </div>
           </form>
@@ -42,18 +42,18 @@
       <div v-if="showSuccessModal" class="success-modal-overlay">
         <div class="success-modal">
           <div class="success-icon">✓</div>
-          <h2>¡Viaje Finalizado!</h2>
+          <h2>{{ $t('reservation.confirmation.tripFinished') }}</h2>
           <div class="success-message">
-            <p>Tu viaje ha sido registrado exitosamente.</p>
+            <p>{{ $t('reservation.confirmation.tripRegistered') }}</p>
             <p class="cost-info">
-              💳 <strong>Cobro: {{ tripDetails.estimatedCost }}</strong>
+              💳 <strong>{{ $t('reservation.confirmation.charge') }} {{ tripDetails.estimatedCost }}</strong>
             </p>
             <p class="email-info">
-              📧 Recibirás la factura por correo electrónico en los próximos minutos.
+              📧 {{ $t('reservation.confirmation.emailReceipt') }}
             </p>
           </div>
           <button class="butn-primary" @click="() => { clearReservation(); router.push('/'); }">
-            Volver al inicio
+            {{ $t('reservation.confirmation.backHome') }}
           </button>
         </div>
       </div>
@@ -82,14 +82,14 @@
 
       <div class="unlock-section">
         <p class="slot-hint" v-if="slotId">
-          Tu slot asignado es <strong>{{ slotId }}</strong>.
+          {{ $t('reservation.confirmation.slotHint') }} <strong>{{ slotId }}</strong>.
         </p>
         <div class="lock-status" v-if="isUnlocked">
           <i class="fa fa-lock-open" style="color:#2E7D32;margin-right:6px"></i>
-          <span>🔓 Bicicleta desbloqueada — viaje iniciado</span>
+          <span>🔓 {{ $t('reservation.confirmation.bikeUnlocked') }}</span>
         </div>
         <label class="detail-label" for="bicycle-code">
-          {{ $t('reservation.confirmation.enterBikeCode') || 'Digita el número de matrícula que se encuentra en la bicicleta' }}
+          {{ $t('reservation.confirmation.enterBikeCode') }}
         </label>
         <input
           id="bicycle-code"
@@ -97,23 +97,23 @@
           type="text"
           inputmode="numeric"
           maxlength="6"
-          placeholder="Código de 6 dígitos"
+          :placeholder="$t('reservation.confirmation.codePlaceholder')"
           class="input"
         />
         <button class="butn-primary" :disabled="isLoading || isUnlocked" @click="unlockBike">
           <i :class="isUnlocked ? 'fa fa-lock-open' : 'fa fa-lock'" style="margin-right:6px"></i>
-          {{ isLoading ? $t('common.loading') : (isUnlocked ? 'Desbloqueado' : ($t('reservation.confirmation.unlock') || 'Desbloquear')) }}
+          {{ isLoading ? $t('common.loading') : (isUnlocked ? $t('reservation.confirmation.unlocked') : $t('reservation.confirmation.unlock')) }}
         </button>
 
         <!-- Botón de reportar problema -->
-        <button 
+        <button
           v-if="isUnlocked"
           class="btn-report-problem"
           @click="showProblemModal = true"
-          title="Reportar cualquier inconveniente durante el viaje"
+          :title="$t('reservation.confirmation.reportProblem')"
         >
           <i class="fa fa-exclamation-circle"></i>
-          ¿Ha tenido inconvenientes?
+          {{ $t('reservation.confirmation.reportProblem') }}
         </button>
       </div>
     </div>
@@ -213,12 +213,12 @@ const submitProblemReport = async () => {
 
   try {
     isSubmittingProblem.value = true;
-    
+
     // Obtener el ID de viaje activo
     const firebaseAuth = getAuth();
     const currentUser = firebaseAuth.currentUser;
     const userUid = currentUser?.uid;
-    
+
     if (!userUid) {
       throw new Error('Usuario no autenticado');
     }
@@ -268,7 +268,7 @@ const unlockBike = async () => {
     // Mostrar modal de éxito
     isUnlocked.value = true;
     if (timerInterval) clearInterval(timerInterval);
-    
+
     // Mostrar el modal de éxito por 3 segundos
     showSuccessModal.value = true;
     setTimeout(() => {
@@ -357,7 +357,7 @@ onUnmounted(() => {
 
   .success-message {
     margin-bottom: 2rem;
-    
+
     p {
       margin: 0.75rem 0;
       color: #666;

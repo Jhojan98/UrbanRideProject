@@ -1,23 +1,29 @@
 export default {
-    subscription: {
-      purchase: {
-        title: 'Suscripción Mensual',
-        subtitle: 'Obtén 150 viajes mensuales por una tarifa plana',
-        price: 'Precio',
-        currentBalance: 'Tu saldo actual',
-        eligible: '¡Puedes suscribirte!',
-        insufficientBalance: 'Saldo insuficiente para suscribirte',
-        minimumRequirement: 'Requerimiento mínimo: $150,000 COP',
-        button: 'Comprar Suscripción Mensual',
-        processing: 'Procesando...',
-        notAuthenticated: 'Debes iniciar sesión para suscribirte',
-        error: 'Error al procesar la suscripción',
-        success: {
-          title: '¡Suscripción activada!',
-          message: 'Tu suscripción mensual ha sido activada exitosamente'
+    purchase: {
+        title: 'Comprar Suscripción',
+        subtitle: 'Accede a viajes ilimitados y beneficios exclusivos',
+        price: 'Precio del plan mensual',
+        currentBalance: 'Tu Saldo Actual',
+        eligible: '✓ Saldo suficiente para la compra',
+        insufficientBalance: '⚠ Saldo insuficiente',
+        minimumRequirement: 'Saldo mínimo requerido: $39.00 USD',
+        button: 'Comprar Suscripción',
+        processing: 'Procesando compra...',
+        note: 'La suscripción se renovará automáticamente cada mes.',
+        terms: 'Al comprar aceptas los términos y condiciones del servicio.',
+        planTitle: 'Plan Mensual',
+        planFeatures: {
+            trips: '50 viajes mensuales incluidos',
+            noCost: 'Sin costo por minuto excedente',
+            priority: 'Prioridad en reservas',
+            support: 'Soporte 24/7'
         },
-        note: 'El pago se deducirá de tu saldo actual',
-        terms: 'La suscripción se renueva automáticamente cada mes'
-      }
+        success: {
+            title: '¡Suscripción Activada!',
+            message: 'Tu suscripción mensual ha sido activada exitosamente.',
+            plan: 'Plan',
+            trips: 'Viajes incluidos',
+            balance: 'Nuevo saldo'
+        }
     }
-} 
+}

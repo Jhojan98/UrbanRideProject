@@ -14,12 +14,16 @@
 import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTripStore } from '@/services/travelNotifications'
+import { useActivityTracker } from '@/composables/useActivityTracker'
 import MainLayout from '@/layouts/MainLayout.vue'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import NotificationPopup from '@/components/reservation/NotificationPopup.vue'
 
 const route = useRoute()
 const tripStore = useTripStore()
+
+// Initialize activity tracker for session management
+useActivityTracker()
 
 const layoutComponent = computed(() => {
   const layout = route.meta.layout as string | undefined

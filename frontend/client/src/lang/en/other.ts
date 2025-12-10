@@ -22,6 +22,7 @@ export default {
         subtitle: 'Report any issue with your bike',
         bikeInfo: 'Bike information',
         bikeId: 'Bike ID',
+        bikeIdPlaceholder: 'Ex: BIC-1234',
         stationWhere: 'Station where it is located',
         selectStation: 'Select station',
         problemDetails: 'Problem details',

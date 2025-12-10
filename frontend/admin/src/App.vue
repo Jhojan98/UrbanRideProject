@@ -1,11 +1,17 @@
 <template>
   <MainLayout>
+    <SessionWarning />
     <router-view />
   </MainLayout>
 </template>
 
 <script setup  lang="ts">
 import MainLayout from '@/layouts/MainLayout.vue'
+import SessionWarning from '@/components/SessionWarning.vue'
+import { useActivityTracker } from '@/composables/useActivityTracker'
+
+// Activar el tracker de actividad globalmente
+useActivityTracker()
 </script>
 <style lang="scss">
 #app {

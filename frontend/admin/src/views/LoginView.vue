@@ -15,7 +15,7 @@
                 </div>
                 <button type="submit" class="form-submit">{{ t('login.button') }}</button>
             </form>
-
+            <p v-if="feedback" class="error-message">{{ feedback }}</p>
             <br>
         </div>
     </div>
@@ -25,12 +25,13 @@
 import { ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-
+import useAuthStore from '@/stores/auth';
 const email: Ref<string> = ref('');
 const password: Ref<string> = ref('');
 const feedback: Ref<string> = ref('');
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 // i18n composable
 const { t } = useI18n();
@@ -39,8 +40,13 @@ const logUser = async () => {
     feedback.value = ''
 
     try {
+        const result = await authStore.login(email.value, password.value)
 
-        router.push({ name: 'stationsDashboard' })
+        if (result.success) {
+            router.push({ name: 'stationsDashboard' })
+        } else {
+            feedback.value = authStore.message || 'Error al iniciar sesión. Verifica tus credenciales.'
+        }
     } catch (error) {
         feedback.value = 'Error al iniciar sesión. Verifica tus credenciales.'
         console.error('Login error:', error)
