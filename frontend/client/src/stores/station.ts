@@ -84,27 +84,50 @@ export const useStationStore = defineStore("station", {
         // Normalize station data to Station model structure
         this.stations = list.map((s) => {
           const raw = s as RawStation;
+          const nameStation = (raw as Record<string, unknown>).stationName as string ?? raw.nameStation;
+
+          const rawType = raw.type
+            ?? (raw as Record<string, unknown>).t_type as string | undefined
+            ?? (raw as Record<string, unknown>).stationType as string | undefined;
+
+          const type = (() => {
+            if (typeof rawType === 'string') {
+              const t = rawType.toLowerCase();
+              if (t.includes('metro')) return 'metro';
+              if (t.includes('financial')) return 'financial';
+              if (t.includes('residential')) return 'residential';
+              return t;
+            }
+            if (typeof nameStation === 'string') {
+              const n = nameStation.toLowerCase();
+              if (n.includes('estadio') || n.includes('central')) return 'metro';
+            }
+            return undefined;
+          })();
           const mechanical = raw.mechanical
             ?? raw.availableMechanicBikes
             ?? (raw as Record<string, unknown>).availableMechanic as number | undefined
             ?? (raw as Record<string, unknown>).bikesMechanical as number | undefined
             ?? raw.mechanic
-            ?? 0;
+            ?? 0
 
           const electric = raw.electric
             ?? raw.availableElectricBikes
             ?? (raw as Record<string, unknown>).availableElectric as number | undefined
             ?? (raw as Record<string, unknown>).bikesElectric as number | undefined
             ?? (raw as Record<string, unknown>).electricBikes as number | undefined
-            ?? 0;
+            ?? 0
+
+          const totalSlots = raw.totalSlots ?? 0
+          const availableSlots = raw.availableSlots ?? 0
 
           return {
             idStation: raw.idStation,
-            nameStation: (raw as Record<string, unknown>).stationName as string ?? raw.nameStation,
+            nameStation,
             latitude: raw.latitude as number,
             longitude: (raw as Record<string, unknown>).length as number ?? raw.longitude,
-            totalSlots: raw.totalSlots ?? 0,
-            availableSlots: raw.availableSlots ?? 0,
+            totalSlots,
+            availableSlots,
             timestamp: typeof raw.timestamp === 'number' || typeof raw.timestamp === 'string'
               ? new Date(raw.timestamp)
               : raw.timestamp instanceof Date
@@ -112,7 +135,7 @@ export const useStationStore = defineStore("station", {
                 : new Date(),
             slots: raw.slots as StationExtended['slots'],
             // Extended fields
-            type: raw.type,
+            type,
             cctvStatus: typeof raw.cctvStatus === 'boolean' ? raw.cctvStatus : raw.cctvStatus === 'true',
             mechanical,
             electric,

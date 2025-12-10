@@ -2,7 +2,7 @@ export default {
     loading: 'Loading...',
     header: { welcome_user: 'Welcome back, {name}' },
     tabs: {
-        overview: 'Overview',
+        overview: 'Balance and Plans',
         trips: 'Trips',
         fines: 'Fines'
     },

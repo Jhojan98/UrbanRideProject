@@ -3,51 +3,32 @@ import { type Station, SlotStatus } from '@/models/Station';
 
 // Shared icons (intrinsic state)
 class StationFlyweight {
-  private static readonly high: L.DivIcon = new L.DivIcon({
-    html: `<div style="width:36px;height:36px;background:#4caf50;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35)"><i class="fa fa-bicycle"></i></div>`,
-    className: 'station-high', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
-  });
-  private static readonly medium: L.DivIcon = new L.DivIcon({
-    html: `<div style="width:36px;height:36px;background:#ff9800;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35)"><i class="fa fa-bicycle"></i></div>`,
-    className: 'station-medium', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
-  });
-  private static readonly low: L.DivIcon = new L.DivIcon({
-    html: `<div style="width:36px;height:36px;background:#f44336;border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35);animation:pulse 1.8s infinite"><i class="fa fa-bicycle"></i></div><style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}</style>`,
-    className: 'station-low', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
-  });
-  private static readonly none: L.DivIcon = new L.DivIcon({
-    html: `<div style="width:36px;height:36px;background:#757575;border:3px solid #eee;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#e0e0e0;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.25)"><i class="fa fa-bicycle"></i></div>`,
-    className: 'station-none', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36]
-  });
+  private static createDivIcon(opts: { color: string; icon: string; pulse?: boolean }): L.DivIcon {
+    const pulseCss = opts.pulse ? 'animation:pulse 1.8s infinite' : '';
+    const html = `<div style="width:36px;height:36px;background:${opts.color};border:3px solid #fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;box-shadow:0 2px 6px rgba(0,0,0,.35);${pulseCss}"><i class="fa ${opts.icon}"></i></div>${opts.pulse ? '<style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}</style>' : ''}`;
+    return new L.DivIcon({ html, className: 'station-icon', iconSize: [36,36], iconAnchor: [18,36], popupAnchor: [0,-36] });
+  }
 
-  // Now accepts optional type ('metro'|'bike') to change the icon
   static icon(available: number, total: number, type?: string): L.DivIcon {
-    // Choose base set by percentage
-    let base: L.DivIcon
-    if (available === 0) base = this.none;
-    else {
-      const pct = (available/total)*100;
-      if (pct > 50) base = this.high;
-      else if (pct > 20) base = this.medium;
-      else base = this.low;
+    const typeStyles: Record<string, { color: string; icon: string }> = {
+      metro: { color: '#1e88e5', icon: 'fa-subway' },
+      financial: { color: '#f59e0b', icon: 'fa-briefcase' },
+      residential: { color: '#10b981', icon: 'fa-building' }
+    };
+
+    const style = type ? typeStyles[type] : undefined;
+
+    if (style) {
+      return this.createDivIcon({ color: style.color, icon: style.icon });
     }
-    // If it's a metro station, replace innerHTML with metro icon
-    if (type === 'metro') {
-      // Clone but with metro icon — only if html is string
-      if (typeof base.options.html === 'string') {
-        const replaced = base.options.html.replace('fa-bicycle', 'fa-subway')
-        return new L.DivIcon({
-          html: replaced,
-          className: base.options.className,
-          iconSize: base.options.iconSize,
-          iconAnchor: base.options.iconAnchor,
-          popupAnchor: base.options.popupAnchor
-        })
-      }
-      // If not string, return original base
-      return base
-    }
-    return base;
+
+    // Fallback to availability-based colors when type is unknown
+    const safeTotal = total > 0 ? total : 1;
+    if (available === 0) return this.createDivIcon({ color: '#757575', icon: 'fa-bicycle' });
+    const pct = (available / safeTotal) * 100;
+    if (pct > 50) return this.createDivIcon({ color: '#4caf50', icon: 'fa-bicycle' });
+    if (pct > 20) return this.createDivIcon({ color: '#ff9800', icon: 'fa-bicycle' });
+    return this.createDivIcon({ color: '#f44336', icon: 'fa-bicycle', pulse: true });
   }
 }
 
@@ -115,8 +96,10 @@ export class StationMarker {
 
   private popupHtml(): string {
     const s = this.station;
-    const pct = ((s.availableSlots/s.totalSlots)*100).toFixed(0);
-    const color = s.availableSlots===0? '#757575': parseInt(pct)>50? '#4caf50': parseInt(pct)>20? '#ff9800': '#f44336';
+    const total = s.totalSlots && s.totalSlots > 0 ? s.totalSlots : 1;
+    const pctNumber = (s.availableSlots/total)*100;
+    const pct = pctNumber.toFixed(0);
+    const color = s.availableSlots===0? '#757575': pctNumber>50? '#4caf50': pctNumber>20? '#ff9800': '#f44336';
 
     // Use i18n if available, otherwise fallback to hardcoded strings
     const t = this.t || ((key: string) => key);

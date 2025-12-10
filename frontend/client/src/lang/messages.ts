@@ -110,10 +110,10 @@ export const messages = {
                 welcome_user: 'Bienvenido de nuevo, {name}'
             },
             tabs: {
-                overview: 'Resumen',
+                overview: 'Saldo y Planes',
                 trips: 'Viajes',
                 fines: 'Multas',
-                complaints: 'Quejas / Mantenimiento',
+                complaints: 'Quejas',
                 reports: 'Reportes'
             },
             complaints: {
@@ -218,7 +218,7 @@ export const messages = {
         },
         reservation: {
             form: {
-                stationDetails: 'Detalles de la Estación',
+                stationDetails: 'Planea tu viaje',
                 defaultStation: 'Selecciona una estación',
                 selectStation: 'Selecciona una estación',
                 bikesAvailable: 'Bicicletas Disponibles',
@@ -231,7 +231,7 @@ export const messages = {
                 lastMileMax: 'Máx 45 min',
                 longTrip: 'Recorrido Largo',
                 longTripMax: 'Máx 75 min',
-                balance: 'Saldo:',
+                balance: 'Costo:',
                 recharge: 'Recargar',
                 warning: 'La bicicleta se reservará por',
                 warningMinutes: '10 minutos',
@@ -520,7 +520,7 @@ export const messages = {
             loading: 'Loading...',
             header: { welcome_user: 'Welcome back, {name}' },
             tabs: {
-                overview: 'Overview',
+                overview: 'Balance and Plans',
                 trips: 'Trips',
                 fines: 'Fines',
                 complaints: 'Complaints',
@@ -628,7 +628,7 @@ export const messages = {
         },
         reservation: {
             form: {
-                stationDetails: 'Station Details',
+                stationDetails: 'Plan Your Trip',
                 defaultStation: 'Select a station',
                 selectStation: 'Select a station',
                 bikesAvailable: 'Available Bikes',
@@ -641,12 +641,23 @@ export const messages = {
                 lastMileMax: 'Max 45 min',
                 longTrip: 'Long Trip',
                 longTripMax: 'Max 75 min',
-                balance: 'Balance:',
+                balance: 'Cost:',
                 recharge: 'Recharge',
                 warning: 'The bike will be reserved for',
                 warningMinutes: '10 minutes',
                 reserveBike: 'Reserve Bike',
                 selectionAlert: 'Please select bike type and trip type.'
+            },
+            ultimaMilla: {
+                title: 'Last Mile',
+                longTripTitle: 'Long Trip',
+                subtitle: 'Choose an origin from metro and a bike destination',
+                longTripSubtitle: 'Select origin and destination for your long trip',
+                originLabel: 'Origin Station (metro)',
+                originLongTripLabel: 'Origin Station',
+                destinationLabel: 'Destination Station',
+                selectPoint: 'Select a point',
+                selectStation: 'Select a station'
             },
             confirmation: {
                 remainingTime: 'Reservation remaining time',

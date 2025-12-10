@@ -9,6 +9,7 @@ import {
   signInWithPopup,
   onAuthStateChanged,
 } from "firebase/auth";
+import { useTripStore } from "../services/travelNotifications";
 
 const userAuth = defineStore("auth", {
   state() {
@@ -388,8 +389,17 @@ const userAuth = defineStore("auth", {
         const auth = getAuth();
         await signOut(auth);
         this.token = null;
+        this.uid = null;
         this.isVerified = false;
         this.message = "Sesión cerrada";
+        
+        // Disconnect SSE when logging out
+        const tripStore = useTripStore();
+        tripStore.disconnect();
+        
+        // Clear all stored auth data
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUid');
       } catch (error: unknown) {
         console.error("Error en logout:", error);
         this.message = "Error al cerrar sesión";
