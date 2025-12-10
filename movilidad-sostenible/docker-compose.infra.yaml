@@ -48,7 +48,10 @@ services:
     ports:
       - "1883:1883"
     volumes:
-      - ./mosquitto:/mosquitto
+      # Mount config explicitly so the broker always sees the file
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
     networks:
       - movilidad-sostenible-network
     restart: always
