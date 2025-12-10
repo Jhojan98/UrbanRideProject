@@ -143,6 +143,13 @@ html[data-theme="dark"] .section-title{
   transform: translateY(-5px); /* Lift effect on hover */
 }
 
+.benefit-icon {
+  font-size: 5rem;
+  color: var(--color-primary-light);
+  margin: 0 auto 1.5rem auto;
+  display: block;
+}
+
 .benefit-card h3 {
   color: #2E7D32;
   margin-bottom: 1rem;

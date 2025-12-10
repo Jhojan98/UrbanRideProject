@@ -4,7 +4,7 @@ export default {
         welcome_user: 'Bienvenido de nuevo, {name}'
     },
     tabs: {
-        overview: 'Resumen',
+        overview: 'Saldo y Planes',
         trips: 'Viajes',
         fines: 'Multas'
     },

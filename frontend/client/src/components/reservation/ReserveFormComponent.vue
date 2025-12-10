@@ -5,26 +5,7 @@
     <h3 v-if="props.station">{{ props.station.nameStation }}</h3>
     <h3 v-else>{{ $t('reservation.form.selectStation') || 'Selecciona una estación' }}</h3>
 
-    <div v-if="props.station" class="availability-section">
-      <p class="availability">
-        🚲 {{ $t('reservation.form.bikesAvailable') }}: <strong>{{ props.station.availableSlots }}</strong>
-      </p>
-
-      <div class="bike-type-availability">
-        <div class="bike-count">
-          <span class="icon">⚡</span>
-          <span>{{ $t('reservation.form.electric') }}: <strong>{{ props.station.electric || 0 }}</strong></span>
-        </div>
-        <div class="bike-count">
-          <span class="icon">🔧</span>
-          <span>{{ $t('reservation.form.mechanical') }}: <strong>{{ props.station.mechanical || 0 }}</strong></span>
-        </div>
-      </div>
-
-      <p v-if="props.station?.totalSlots" class="availability">
-        🅿️ {{ $t('reservation.form.totalSlots') }}: <strong>{{ props.station.totalSlots }}</strong>
-      </p>
-    </div>
+    <!-- Disponibilidad de la estación: oculto per request -->
 
     <label class="label">{{ $t('reservation.form.bikeType') }}</label>
     <div class="select-group">
@@ -69,18 +50,14 @@
     </div>
 
     <div class="balance-container">
-      <div class="balance-title-row">
-        <h3 class="balance-title">{{ $t('reservation.form.balance') }}</h3>
-      </div>
+      <h3 class="balance-title">{{ $t('reservation.form.balance') }}</h3>
       <div class="balance-content">
-        <div class="balance-amount">
-          <strong>{{ formattedBalance }}</strong>
-          <select v-model="selectedCurrency" class="currency-select">
-            <option value="USD">USD</option>
-            <option value="COP">COP</option>
-            <option value="EUR">EUR</option>
-          </select>
-        </div>
+        <strong class="balance-value">{{ formattedBalance }}</strong>
+        <select v-model="selectedCurrency" class="currency-select">
+          <option value="USD">USD</option>
+          <option value="COP">COP</option>
+          <option value="EUR">EUR</option>
+        </select>
         <button class="btn-secondary" @click="recharge">{{ $t('reservation.form.recharge') }}</button>
       </div>
     </div>
@@ -258,11 +235,6 @@ async function onConfirmRoute(payload: { origin: StationLike; destination: Stati
     return
   }
 
-  if (currentBalance <= 0) {
-    window.alert('No tienes saldo suficiente para reservar. Recarga tu cuenta en el perfil.')
-    return
-  }
-
   const stationStartId = Number(payload.origin?.idStation ?? 0)
   const stationEndId = Number(payload.destination?.idStation ?? 0)
 
@@ -323,92 +295,79 @@ async function onConfirmRoute(payload: { origin: StationLike; destination: Stati
 }
 
 .balance-container {
-  margin: 1rem 0;
+  margin: 1.5rem 0;
   padding: 1.25rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #dee2e6;
-}
-
-.balance-title-row {
-  width: 100%;
-  margin-bottom: 0.85rem;
+  background-color: var(--color-background-light);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--color-border-light);
 }
 
 .balance-title {
-  margin: 0 0 1rem 0;
-  font-size: 1.1rem;
+  margin: 0 0 2.5rem 0;
+  font-size: 1rem;
   font-weight: 600;
-  color: #495057;
+  color: var(--color-primary-light);
+  display: block;
+  width: 100%;
 }
 
 .balance-content {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 1rem;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
-.balance-amount {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-
-  strong {
-    font-size: 1.5rem;
-    color: #0074d4;
-    font-weight: 700;
-  }
+.balance-value {
+  font-size: 1.2rem;
+  color: var(--color-primary-light);
+  font-weight: 700;
+  margin: 0;
+  padding: 0;
 }
 
 .currency-select {
   padding: 0.5rem 0.75rem;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  background-color: #fff;
-  font-size: 0.95rem;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--border-radius);
+  background-color: var(--color-background-light);
+  color: var(--color-text-primary-light);
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  min-width: 80px;
+  min-width: 75px;
   text-align: center;
+  transition: border-color 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: #0074d4;
-    box-shadow: 0 0 0 0.2rem rgba(0, 116, 212, 0.25);
+    border-color: var(--color-primary-light);
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.2);
   }
 
-
-
   &:hover {
-    border-color: #0074d4;
+    border-color: var(--color-primary-light);
   }
 }
 
 [data-theme="dark"] .balance-container {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .balance-title-row {
-  width: 100%;
+  background-color: var(--color-background-dark);
+  border-color: var(--color-border-dark);
 }
 
 [data-theme="dark"] .balance-title {
-  color: var(--color-text);
+  color: var(--color-text-primary-dark);
 }
 
-[data-theme="dark"] .balance-amount strong {
+[data-theme="dark"] .balance-value {
   color: var(--color-primary-light);
 }
 
 [data-theme="dark"] .currency-select {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: var(--color-text);
-
-
+  background-color: var(--color-background-dark);
+  border-color: var(--color-border-dark);
+  color: var(--color-text-primary-dark);
 
   &:hover {
     border-color: var(--color-primary-light);

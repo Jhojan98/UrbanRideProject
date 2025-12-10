@@ -8,7 +8,7 @@ export interface NotificationData {
 
 export const useTripStore = defineStore('trip', {
   state: () => ({
-    baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8090',
+    baseURL: '/api', // Usar proxy de Vue CLI que redirige a gateway-service
     message: '',
     notification: null as NotificationData | null,
     isVisible: false,

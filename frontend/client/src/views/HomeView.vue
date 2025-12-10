@@ -29,27 +29,24 @@
       <div class="benefits-grid">
         <!-- Each benefit-card is a service benefit -->
         <div class="benefit-card">
+          <i class="fas fa-heart benefit-icon"></i>
           <h3>{{ $t('home.cards.health.title') }}</h3>
           <p>{{ $t('home.cards.health.text') }}</p>
         </div>
         <div class="benefit-card">
+          <i class="fas fa-leaf benefit-icon"></i>
           <h3>{{ $t('home.cards.environment.title') }}</h3>
           <p>{{ $t('home.cards.environment.text') }}</p>
         </div>
         <div class="benefit-card">
+          <i class="fas fa-bolt benefit-icon"></i>
           <h3>{{ $t('home.cards.efficiency.title') }}</h3>
           <p>{{ $t('home.cards.efficiency.text') }}</p>
         </div>
       </div>
     </section>
 
-    <!-- Stations Section -->
-    <section class="stations">
-      <div class="stations-header">
-        <h2 class="section-title">{{ $t('home.stations.title') }}</h2>
-        <button class="btn-outline">{{ $t('home.stations.button') }}</button>
-      </div>
-    </section>
+    
   </div>
 </template>
 

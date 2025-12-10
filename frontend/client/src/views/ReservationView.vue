@@ -4,7 +4,6 @@
       <div class="reservation-grid">
         <aside class="left-panel">
           <ReserveFormComponent
-            :station="origin"
             :balance="userBalance"
             :origin="origin"
             :destination="destination"
@@ -13,7 +12,7 @@
           />
         </aside>
         <section class="map-panel">
-          <MapComponent :origin="origin" :destination="destination" :use-sockets="false" />
+          <MapComponent :origin="originForMap" :destination="destinationForMap" :use-sockets="true" />
         </section>
       </div>
     </template>
@@ -36,8 +35,8 @@ const paymentStore = usePaymentStore();
 // Tipos para coordinar origen/destino entre el formulario y el mapa
 interface Endpoint {
   idStation?: number
-  latitude: number
-  longitude: number
+  latitude?: number
+  longitude?: number
   name?: string
   nameStation?: string
   free_spots?: number
@@ -54,6 +53,45 @@ const destination = ref<Endpoint | null>(null)
 const userBalance = ref<number>(0)
 const isLoadingBalance = ref<boolean>(false)
 
+// Computed properties para convertir a StationPoint con valores seguros
+const originForMap = computed(() => 
+  origin.value && origin.value.latitude !== undefined && origin.value.longitude !== undefined
+    ? {
+        idStation: origin.value.idStation ?? 0,
+        latitude: origin.value.latitude,
+        longitude: origin.value.longitude,
+        nameStation: origin.value.nameStation,
+        type: origin.value.type,
+        availableSlots: origin.value.availableSlots ?? 0,
+        totalSlots: origin.value.totalSlots ?? 0,
+        mechanical: origin.value.mechanical ?? 0,
+        electric: origin.value.electric ?? 0,
+        status: origin.value.status,
+        free_spots: origin.value.free_spots,
+        timestamp: new Date()
+      }
+    : null
+)
+
+const destinationForMap = computed(() =>
+  destination.value && destination.value.latitude !== undefined && destination.value.longitude !== undefined
+    ? {
+        idStation: destination.value.idStation ?? 0,
+        latitude: destination.value.latitude,
+        longitude: destination.value.longitude,
+        nameStation: destination.value.nameStation,
+        type: destination.value.type,
+        availableSlots: destination.value.availableSlots ?? 0,
+        totalSlots: destination.value.totalSlots ?? 0,
+        mechanical: destination.value.mechanical ?? 0,
+        electric: destination.value.electric ?? 0,
+        status: destination.value.status,
+        free_spots: destination.value.free_spots,
+        timestamp: new Date()
+      }
+    : null
+)
+
 // Cargar el balance real del usuario
 async function fetchUserBalance() {
   try {
@@ -65,6 +103,8 @@ async function fetchUserBalance() {
       const balance = await paymentStore.fetchBalance(currentUser.uid)
       userBalance.value = balance ?? 0
       console.log('[ReservationView] Balance cargado:', userBalance.value)
+    } else {
+      userBalance.value = 0
     }
   } catch (error) {
     console.error('[ReservationView] Error cargando balance:', error)
