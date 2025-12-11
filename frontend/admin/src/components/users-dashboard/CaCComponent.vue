@@ -65,63 +65,64 @@
 
     <div v-else class="data-table">
       <table v-if="filteredComplaints.length">
-        <thead>
-          <tr>
-            <th>{{ t('common.id') }}</th>
-            <th>{{ t('management.complaints.type') }}</th>
-            <th>{{ t('management.complaints.description') }}</th>
-            <th>{{ t('management.complaints.travelId') }}</th>
-            <th>{{ t('management.complaints.status.label') }}</th>
-            <th>{{ t('management.complaints.date') }}</th>
-            <th>{{ t('common.actions') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="complaint in filteredComplaints" :key="complaint.k_id_complaints_and_claims">
-            <td>{{ complaint.k_id_complaints_and_claims }}</td>
-            <td>
-              <span :class="['type-badge', getTypeClass(complaint.t_type)]">
-                {{ getTypeLabel(complaint.t_type) }}
-              </span>
-            </td>
-            <td class="description-cell">
-              <div class="description-text">{{ complaint.d_description }}</div>
-            </td>
-            <td>{{ complaint.k_id_travel }}</td>
-            <td>
-              <select
-                :value="complaint.t_status"
-                :class="['status-select', getStatusClass(complaint.t_status)]"
-                @change="handleStatusChange(complaint.k_id_complaints_and_claims, $event)"
-              >
-                <option value="OPEN">{{ t('management.complaints.status.open') }}</option>
-                <option value="IN_PROGRESS">{{ t('management.complaints.status.inProgress') }}</option>
-                <option value="RESOLVED">{{ t('management.complaints.status.resolved') }}</option>
-                <option value="CLOSED">{{ t('management.complaints.status.closed') }}</option>
-              </select>
-            </td>
-            <td>{{ formatDate(complaint.created_at) }}</td>
-            <td>
-              <div class="action-buttons">
-                <button
-                  class="btn-info btn-sm"
-                  :title="t('common.view')"
-                  @click="viewComplaint(complaint)"
-                >
-                  <span class="material-symbols-outlined">visibility</span>
-                </button>
-                <button
-                  class="btn-danger btn-sm"
-                  :title="t('common.delete')"
-                  @click="handleDelete(complaint.k_id_complaints_and_claims)"
-                >
-                  <span class="material-symbols-outlined">delete</span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <thead>
+    <tr>
+      <th>{{ t('common.id') }}</th>
+      <th>{{ t('management.complaints.description') }}</th>
+      <th>{{ t('management.complaints.travelId') }}</th>
+      <th>{{ t('management.complaints.status.label') }}</th>
+      <th>{{ t('common.actions') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr v-for="complaint in filteredComplaints" :key="complaint.k_id_complaints_and_claims">
+      <td>{{ complaint.k_id_complaints_and_claims }}</td>
+
+      <!-- description -->
+      <td class="description-cell">
+        <div class="description-text">{{ complaint.d_description }}</div>
+      </td>
+
+      <!-- travel id -->
+      <td>{{ complaint.k_id_travel }}</td>
+
+      <!-- status (select) -->
+      <td>
+        <select
+          :value="complaint.t_status"
+          :class="['status-select', getStatusClass(complaint.t_status)]"
+          @change="handleStatusChange(complaint.k_id_complaints_and_claims, $event)"
+        >
+          <option value="OPEN">{{ t('management.complaints.status.open') }}</option>
+          <option value="IN_PROGRESS">{{ t('management.complaints.status.inProgress') }}</option>
+          <option value="RESOLVED">{{ t('management.complaints.status.resolved') }}</option>
+          <option value="CLOSED">{{ t('management.complaints.status.closed') }}</option>
+        </select>
+      </td>
+
+      <!-- actions -->
+      <td>
+        <div class="action-buttons">
+          <button
+            class="btn-info btn-sm"
+            :title="t('common.view')"
+            @click="viewComplaint(complaint)"
+          >
+            <span class="material-symbols-outlined">visibility</span>
+          </button>
+          <button
+            class="btn-danger btn-sm"
+            :title="t('common.delete')"
+            @click="handleDelete(complaint.k_id_complaints_and_claims)"
+          >
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
       <p v-else class="empty-message">
         {{ filterStatus === 'all'
           ? t('management.complaints.empty')
