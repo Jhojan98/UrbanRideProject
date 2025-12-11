@@ -16,6 +16,11 @@ export const useTravelStore = defineStore("history", {
     async startTravel(userUid: string, stationStartId: number, stationEndId: number, bikeType: string) {
       const payload = { userUid, stationStartId, stationEndId, bikeType };
       const url = this.baseURL + "/start";
+
+      console.log("[TravelStore] startTravel - URL:", url);
+      console.log("[TravelStore] startTravel - baseURL:", this.baseURL);
+      console.log("[TravelStore] startTravel - Payload:", payload);
+
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -24,8 +29,12 @@ export const useTravelStore = defineStore("history", {
         },
         body: JSON.stringify(payload),
       });
+
+      console.log("[TravelStore] startTravel - Response status:", res.status);
+
       if (!res.ok) {
         const txt = await res.text().catch(() => "");
+        console.error("[TravelStore] startTravel - Error response:", txt);
         throw new Error(`HTTP ${res.status} ${res.statusText} ${txt}`);
       }
       return await res.json().catch(() => null);

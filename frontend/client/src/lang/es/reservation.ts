@@ -45,7 +45,29 @@ export default {
         unlock: 'Desbloquear',
         bikeCodeInvalid: 'Por favor, digita el código de 6 dígitos de la bicicleta',
         noReservationData: 'No hay datos de reserva disponibles',
-        unlockError: 'No se pudo verificar/desbloquear la bicicleta'
+        unlockError: 'No se pudo verificar/desbloquear la bicicleta',
+        slotHint: 'Tu slot asignado es',
+        bikeUnlocked: 'Bicicleta desbloqueada — viaje iniciado',
+        unlocked: 'Desbloqueado',
+        codePlaceholder: 'Código de 6 dígitos',
+        reportProblem: '¿Ha tenido inconvenientes?',
+        reportTitle: 'Reportar un problema',
+        reportSubtitle: '¿Qué inconvenientes tuviste durante el viaje?',
+        problemType: 'Tipo de problema',
+        problemDescription: 'Descripción del problema',
+        selectProblem: 'Selecciona un problema',
+        problemBicycle: 'Problema con la bicicleta',
+        problemLock: 'Problema con el candado',
+        problemStation: 'Problema con la estación',
+        problemOther: 'Otro problema',
+        describeProblem: 'Describe qué sucedió...',
+        reporting: 'Reportando...',
+        sendReport: 'Enviar reporte',
+        tripFinished: '¡Viaje Finalizado!',
+        tripRegistered: 'Tu viaje ha sido registrado exitosamente.',
+        charge: 'Cobro:',
+        emailReceipt: 'Recibirás la factura por correo electrónico en los próximos minutos.',
+        backHome: 'Volver al inicio'
     },
     map: {
         authRequired: 'Acceso restringido',
@@ -87,5 +109,14 @@ export default {
         endTravelMsg: 'Tu viaje ha finalizado. Los detalles y el monto total serán enviados a tu correo electrónico.',
         defaultNotification: 'Notificación',
         closeLabel: 'Cerrar notificación'
+    },
+    travel: {
+        inProgress: {
+            title: 'Viaje en Curso',
+            duration: 'Duración',
+            status: 'Estado',
+            active: 'Activo',
+            message: 'Tu viaje está en progreso. Disfruta el recorrido y devuelve la bicicleta en cualquier estación disponible.'
+        }
     }
 };

@@ -69,7 +69,7 @@
                 <span class="balance-label">{{ $t('profile.balance.currentBalance') }}</span>
                 <span class="balance-value">
                   {{ formattedBalance }}
-                  <button @click="refreshBalance" class="refresh-btn" title="Actualizar saldo">
+                  <button @click="refreshBalance" class="refresh-btn" :title="$t('common.refreshBalance')">
                     ⟳
                   </button>
                   <span v-if="isLoadingBalance" class="loading-spinner">↻</span>

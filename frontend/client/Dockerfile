@@ -1,34 +1,50 @@
-# Etapa 1: Build
-FROM node:18-alpine AS builder
+# Etapa 1: Construcción
+FROM node:16-alpine AS build
 
+# Variables de entorno para el build
+ARG VUE_APP_FIREBASE_API_KEY
+ARG VUE_APP_FIREBASE_AUTH_DOMAIN
+ARG VUE_APP_FIREBASE_PROJECT_ID
+ARG VUE_APP_FIREBASE_STORAGE_BUCKET
+ARG VUE_APP_FIREBASE_MESSAGING_SENDER_ID
+ARG VUE_APP_FIREBASE_APP_ID
+ARG VUE_APP_FIREBASE_MEASUREMENT_ID
+
+ENV VUE_APP_FIREBASE_API_KEY=$VUE_APP_FIREBASE_API_KEY
+ENV VUE_APP_FIREBASE_AUTH_DOMAIN=$VUE_APP_FIREBASE_AUTH_DOMAIN
+ENV VUE_APP_FIREBASE_PROJECT_ID=$VUE_APP_FIREBASE_PROJECT_ID
+ENV VUE_APP_FIREBASE_STORAGE_BUCKET=$VUE_APP_FIREBASE_STORAGE_BUCKET
+ENV VUE_APP_FIREBASE_MESSAGING_SENDER_ID=$VUE_APP_FIREBASE_MESSAGING_SENDER_ID
+ENV VUE_APP_FIREBASE_APP_ID=$VUE_APP_FIREBASE_APP_ID
+ENV VUE_APP_FIREBASE_MEASUREMENT_ID=$VUE_APP_FIREBASE_MEASUREMENT_ID
+
+# Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de dependencias
+# Copiar archivos de configuración
 COPY package*.json ./
-
-# Copiar archivo de variables de entorno
-COPY .env ./
 
 # Instalar dependencias
 RUN npm install
 
-# Copiar el código fuente
+# Copiar el resto del código fuente
 COPY . .
 
-# Compilar la aplicación
+# Construir la aplicación para producción
 RUN npm run build
 
-# Etapa 2: Producción
+# Etapa 2: Producción con Nginx
 FROM nginx:alpine
 
-# Copiar configuración nginx personalizada
+# Copiar los archivos construidos
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copiar la configuración de Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copiar archivos compilados desde la etapa de build
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Exponer puerto
+# Exponer el puerto 80
 EXPOSE 80
 
-# Comando de inicio
+# Iniciar Nginx
 CMD ["nginx", "-g", "daemon off;"]
+

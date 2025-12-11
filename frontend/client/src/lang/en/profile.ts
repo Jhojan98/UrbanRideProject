@@ -4,7 +4,9 @@ export default {
     tabs: {
         overview: 'Balance and Plans',
         trips: 'Trips',
-        fines: 'Fines'
+        fines: 'Fines',
+        complaints: 'Complaints',
+        reports: 'Reports'
     },
     trips: {
         title: 'Trip History',
@@ -55,6 +57,42 @@ export default {
         expires: 'Expires:',
         managePayments: 'Manage payment methods',
         addBalance: 'Add balance',
+        buySubscription: 'Buy Subscription',
         currency: 'Currency'
+    },
+    complaints: {
+        title: 'Report Problem',
+        subtitle: 'Tell us about any issues you encountered',
+        formTitle: 'Report a Problem',
+        formSubtitle: 'Complete the form to report an issue',
+        descriptionLabel: 'Problem description',
+        descriptionPlaceholder: 'Describe the problem with as much detail as possible...',
+        typeLabel: 'Problem type',
+        typeOptions: {
+            bicycle: 'Bicycle',
+            slot: 'Parking slot',
+            station: 'Station'
+        },
+        travelIdLabel: 'Trip ID (optional)',
+        travelIdPlaceholder: 'Ex: 123456',
+        submit: 'Send Report',
+        submitting: 'Sending...',
+        success: 'Report sent successfully. ID: {id}',
+        errorRequired: 'Description is required',
+        errorNumeric: 'Trip ID must be a valid number',
+        submitError: 'Error sending report. Please try again'
+    },
+    reportsSection: {
+        title: 'Reports',
+        subtitle: 'Download your reports in available formats',
+        downloadExcel: 'Download Excel',
+        downloadPdf: 'Download PDF',
+        downloadError: 'Error downloading report. Please try again',
+        cards: {
+            bicycleUsage: 'Bicycle Usage',
+            stationDemand: 'Station Demand',
+            bicycleDemand: 'Bicycle Demand',
+            dailyTrips: 'Daily Trips'
+        }
     }
 };

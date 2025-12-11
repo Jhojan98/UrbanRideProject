@@ -121,6 +121,11 @@ export default {
           if (this.selectedCurrency === 'COP') {
             await this.updateExchangeRate();
           }
+          
+          // Redirigir automáticamente a /my-profile después de 3 segundos
+          setTimeout(() => {
+            this.$router.push('/my-profile');
+          }, 3000);
         }
       } catch (error) {
         console.error("Error getting updated balance:", error);

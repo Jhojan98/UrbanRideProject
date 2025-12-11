@@ -4,8 +4,33 @@ export default {
     cities: 'Ciudades',
     stations: 'Estaciones',
     bicycles: 'Bicicletas',
+    redistribution: 'Redistribución',
     slots: 'Espacios',
     complaints: 'Quejas y Reclamos'
+  },
+  redistribution: {
+    title: 'Redistribuir Bicicletas',
+    selectItems: 'Selecciona bicicleta, estación y slot destino',
+    selectBike: 'Bicicleta',
+    chooseBike: '-- Selecciona una bicicleta --',
+    selectStation: 'Estación Destino',
+    chooseStation: '-- Selecciona una estación --',
+    selectSlot: 'Slot Destino',
+    chooseSlot: '-- Selecciona un slot --',
+    type: 'Tipo',
+    series: 'Serie',
+    battery: 'Batería',
+    bike: 'Bicicleta',
+    selectedBikeInfo: 'Información de la Bicicleta',
+    redistribute: 'Redistribuir Bicicleta',
+    noSlotsAvailable: 'No hay slots disponibles en esta estación',
+    loadError: 'Error cargando datos',
+    slotLoadError: 'Error cargando slots',
+    selectRequired: 'Debes seleccionar bicicleta y slot',
+    success: 'Bicicleta redistribuida exitosamente al slot {slotId}',
+    error: 'Error al redistribuir la bicicleta',
+    history: 'Historial de Redistribuciones',
+    noHistory: 'No hay redistribuciones registradas',
   },
   cities: {
     title: 'Gestión de Ciudades',
@@ -47,9 +72,8 @@ export default {
     unknownStation: 'Estación desconocida (ID: {id})',
     types: {
       metro: 'Metro',
-      plaza: 'Plaza',
-      parque: 'Parque',
-      comercial: 'Comercial'
+      residential: 'Residencial',
+      'financial center': 'Centro Financiero'
     }
   },
   bicycles: {

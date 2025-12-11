@@ -36,6 +36,13 @@
             Slots ({{ stationStore.slots.length }})
           </button>
           <button
+            :class="['tab', { active: activeTab === 'redistribution' }]"
+            @click="activeTab = 'redistribution'"
+          >
+            <span class="material-symbols-outlined">redo</span>
+            Redistribución
+          </button>
+          <button
             :class="['tab', { active: activeTab === 'maintenances' }]"
             @click="activeTab = 'maintenances'"
           >
@@ -66,6 +73,11 @@
           <SlotsManagement :initial-station-id="selectedStationForSlots" />
         </div>
 
+        <!-- Redistribución -->
+        <div v-if="activeTab === 'redistribution'">
+          <BikeRedistributionManagement />
+        </div>
+
         <!-- Mantenimientos -->
         <div v-if="activeTab === 'maintenances'">
           <MaintenancesManagement />
@@ -84,13 +96,14 @@ import CitiesManagement from '@/components/management/CitiesManagement.vue';
 import StationsManagement from '@/components/management/StationsManagement.vue';
 import BicyclesManagement from '@/components/management/BicyclesManagement.vue';
 import SlotsManagement from '@/components/management/SlotsManagement.vue';
+import BikeRedistributionManagement from '@/components/management/BikeRedistributionManagement.vue';
 import MaintenancesManagement from '@/components/management/MaintenancesManagement.vue';
 
 const cityStore = useCityStore();
 const stationStore = useStationStore();
 const bicycleStore = useBikeStore();
 
-const activeTab = ref<'cities' | 'stations' | 'bicycles' | 'slots' | 'maintenances'>('cities');
+const activeTab = ref<'cities' | 'stations' | 'bicycles' | 'slots' | 'redistribution' | 'maintenances'>('cities');
 const selectedStationForSlots = ref<number | null>(null);
 
 const loading = computed(() => {
@@ -148,7 +161,7 @@ onMounted(async () => {
 
 .tabs {
   display: flex;
-  gap: 0.75rem;
+  gap: 1.25rem;
   margin-bottom: 2rem;
   flex-wrap: wrap;
 }
@@ -157,7 +170,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  padding: 0.85rem 1.5rem;
   border-radius: 12px;
   border: 2px solid var(--color-border-light);
   background: var(--color-background-light);

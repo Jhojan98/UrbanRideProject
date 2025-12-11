@@ -9,12 +9,12 @@
     <!-- Información de suscripción -->
     <div class="subscription-info">
       <div class="info-card">
-        <h3>📋 Plan Mensual</h3>
+        <h3>📋 {{ $t('subscription.purchase.planTitle') }}</h3>
         <ul class="features">
-          <li> 50 viajes mensuales incluidos</li>
-          <li> Sin costo por minuto excedente</li>
-          <li> Prioridad en reservas</li>
-          <li> Soporte 24/7</li>
+          <li>{{ $t('subscription.purchase.planFeatures.trips') }}</li>
+          <li>{{ $t('subscription.purchase.planFeatures.noCost') }}</li>
+          <li>{{ $t('subscription.purchase.planFeatures.priority') }}</li>
+          <li>{{ $t('subscription.purchase.planFeatures.support') }}</li>
         </ul>
 
         <div class="price-section">
@@ -67,9 +67,14 @@
       <h3>🎉 {{ $t('subscription.purchase.success.title') }}</h3>
       <p>{{ $t('subscription.purchase.success.message') }}</p>
       <div class="success-details">
-        <p><strong>Plan:</strong> Mensual</p>
-        <p><strong>Viajes incluidos:</strong> 50</p>
-        <p><strong>Nuevo saldo:</strong> {{ formattedBalance }}</p>
+        <p><strong>{{ $t('subscription.purchase.success.plan') }}:</strong> {{ $t('subscription.purchase.planTitle') }}</p>
+        <p><strong>{{ $t('subscription.purchase.success.trips') }}:</strong> 50</p>
+        <p><strong>{{ $t('subscription.purchase.success.balance') }}:</strong> {{ formattedBalance }}</p>
+      </div>
+      <div class="success-actions">
+        <router-link :to="{ name: 'profile' }" class="btn-primary">
+          {{ $t('payments.success.viewBalance') }}
+        </router-link>
       </div>
     </div>
 
@@ -87,12 +92,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getAuth } from 'firebase/auth'
-import { useRouter } from 'vue-router'
 import useAuth from '@/stores/auth'
 import usePaymentStore from '@/stores/payment'
 
-const { t: $t } = useI18n()
-const router = useRouter()
+const { t: $t, locale } = useI18n()
 
 // Stores
 const authStore = useAuth()
@@ -119,6 +122,8 @@ const formattedBalance = computed(() => {
 
 // Inicializar al montar
 onMounted(async () => {
+  console.log(`[PurchaseSubscription] Current locale: ${locale.value}`)
+  console.log(`[PurchaseSubscription] Test message:`, $t('subscription.purchase.title'))
   await checkSubscriptionEligibility()
 })
 
@@ -172,10 +177,7 @@ const handlePurchase = async () => {
       // Actualizar balance después de la compra
       await checkSubscriptionEligibility()
 
-      // Redirigir al perfil después de 3 segundos
-      setTimeout(() => {
-        router.push({ name: 'profile' })
-      }, 3000)
+      // No redirigir automáticamente - dejar que el usuario haga click en el botón
     } else {
       error.value = 'Error al procesar la compra. Por favor intenta nuevamente.'
     }
@@ -455,6 +457,36 @@ const handlePurchase = async () => {
       font-size: 0.95rem;
     }
   }
+
+  .success-actions {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+
+    .btn-primary {
+      padding: 0.8rem 1.5rem;
+      background: var(--color-primary-light);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-block;
+
+      &:hover {
+        background: var(--color-green-light);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
 }
 
 [data-theme="dark"] .success-message {
@@ -465,6 +497,16 @@ const handlePurchase = async () => {
   .success-details {
     background: var(--color-surface-dark);
     border-color: var(--color-border-dark);
+  }
+
+  .success-actions .btn-primary {
+    background: var(--color-primary-dark);
+    color: white;
+
+    &:hover {
+      background: var(--color-green-light);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
   }
 }
 

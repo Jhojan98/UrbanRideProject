@@ -8,18 +8,27 @@
 
   <!-- Componente de notificaciones global -->
   <NotificationPopup />
+  
+  <!-- Componente de viaje en progreso -->
+  <TripInProgress />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useTripStore } from '@/services/travelNotifications'
+import { useActivityTracker } from '@/composables/useActivityTracker'
 import MainLayout from '@/layouts/MainLayout.vue'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import NotificationPopup from '@/components/reservation/NotificationPopup.vue'
+import TripInProgress from '@/components/travel/TripInProgress.vue'
 
 const route = useRoute()
+const router = useRouter()
 const tripStore = useTripStore()
+
+// Initialize activity tracker for session management
+useActivityTracker()
 
 const layoutComponent = computed(() => {
   const layout = route.meta.layout as string | undefined
