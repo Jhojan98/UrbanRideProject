@@ -8,7 +8,6 @@ dotenv.config({ path: envPath })
 
 console.log('=== VUE CONFIG DEBUG ===')
 console.log('ENV Path:', envPath)
-console.log('VUE_APP_API_URL:', process.env.VUE_APP_API_URL)
 console.log('=======================')
 
 module.exports = defineConfig({
@@ -16,7 +15,7 @@ module.exports = defineConfig({
   devServer: {
     proxy: {
       '^/api': {
-        target: process.env.VUE_APP_API_URL || 'http://34.9.26.232:8090/',
+        target: 'http://localhost:8090',
         changeOrigin: true,
         pathRewrite: {
           '^/api': ''

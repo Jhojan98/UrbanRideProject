@@ -32,7 +32,7 @@ const userAuth = defineStore("auth", {
     return {
       token: null as string | null,
       uid: null as string | null,
-      baseURL: process.env.VUE_APP_API_URL || "/api",
+      baseURL: "/api",
       message: "",
       isVerified: false,
       pendingVerification: false,
@@ -99,8 +99,10 @@ const userAuth = defineStore("auth", {
       try {
         const auth = getAuth();
 
+        // Use current origin for email verification redirect
+        const currentOrigin = window.location.origin;
         const actionCodeSettings = {
-          url: "http://localhost:8080/login",
+          url: `${currentOrigin}/login`,
           handleCodeInApp: true,
         };
 

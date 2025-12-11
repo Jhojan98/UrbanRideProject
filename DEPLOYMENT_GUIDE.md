@@ -133,7 +133,7 @@ mosquitto_pub -h 34.9.26.232 -p 1883 -t "test/ping" -m "hello"
 
 ### 1. Variables de entorno
 
-Ya configuraste:
+Ya configuraste:W
 - `/frontend/admin/.env` → Apunta a 34.9.26.232
 - `/frontend/client/.env` → Necesita actualizarse
 
@@ -141,7 +141,7 @@ Ya configuraste:
 
 ```bash
 cd /home/xmara83/Escritorio/UD/UrbanRideProject/frontend/client
-```
+```WWWW
 
 Crear/actualizar `.env`:
 ```env
