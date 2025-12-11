@@ -246,9 +246,9 @@ export const useBikeStore = defineStore("bike", {
         }
 
         console.log(`Attempting to delete bicycle with ID: ${id}`);
-        console.log(`DELETE URL: ${this.baseURL}/delete/${id}`);
+        console.log(`DELETE URL: ${this.baseURL}/${id}`);
 
-        const response = await fetch(`${this.baseURL}/delete/${id}`, {
+        const response = await fetch(`${this.baseURL}/${id}`, {
           method: "DELETE",
           headers,
         });
