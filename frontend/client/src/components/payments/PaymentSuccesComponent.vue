@@ -4,9 +4,8 @@
       <h1>{{ $t('payments.success.title') }}</h1>
       <p>{{ $t('payments.success.subtitle') }}</p>
 
-      <div class="details" v-if="sessionId || uid">
-        <p><strong>{{ $t('payments.success.sessionId') }}</strong> {{ sessionId }}</p>
-        <p v-if="uid"><strong>{{ $t('payments.success.user') }}</strong> {{ uid }}</p>
+      <div class="details" v-if="userDisplay">
+        <p><strong>{{ $t('payments.success.user') }}</strong> {{ userDisplay }}</p>
       </div>
 
       <div class="currency-selector" v-if="newBalance !== null">
@@ -54,12 +53,20 @@ export default {
     return {
       sessionId: null,
       uid: null,
+      userEmail: null,
+      userName: null,
       newBalance: null,
       paymentStore: usePaymentStore(),
       currencies: ['USD', 'COP'],
       selectedCurrency: 'COP',
       exchangeRate: 4000 // Valor por defecto
     };
+  },
+  computed: {
+    userDisplay() {
+      // Prefer displayName, fallback to email
+      return this.userName || this.userEmail || '';
+    }
   },
   watch: {
     selectedCurrency(newCurrency) {
@@ -72,21 +79,27 @@ export default {
     // Leer query params que Stripe agrega
     this.sessionId = this.$route.query.session_id || null;
 
-    // Get current user UID
+    // Get current user UID, email, and display name
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
       this.uid = user.uid;
+      this.userEmail = user.email;
+      this.userName = user.displayName;
     } else {
       // Try to get from localStorage as fallback
       this.uid = localStorage.getItem("uid");
+      this.userEmail = localStorage.getItem("userEmail");
+      this.userName = localStorage.getItem("userName");
     }
 
     // Mark payment as completed
     this.markPaymentComplete();
 
-    // Try to get new balance
-    this.fetchUpdatedBalance();
+    // Try to get new balance with small delay to ensure backend processed it
+    setTimeout(() => {
+      this.fetchUpdatedBalance();
+    }, 500);
   },
   methods: {
     markPaymentComplete() {
@@ -108,6 +121,11 @@ export default {
           if (this.selectedCurrency === 'COP') {
             await this.updateExchangeRate();
           }
+          
+          // Redirigir automáticamente a /my-profile después de 3 segundos
+          setTimeout(() => {
+            this.$router.push('/my-profile');
+          }, 3000);
         }
       } catch (error) {
         console.error("Error getting updated balance:", error);

@@ -1,23 +1,29 @@
 export default {
-    subscription: {
-      purchase: {
-        title: 'Monthly Subscription',
-        subtitle: 'Get 150 monthly rides for a flat fee',
-        price: 'Price',
-        currentBalance: 'Your current balance',
-        eligible: 'You can subscribe!',
-        insufficientBalance: 'Insufficient balance to subscribe',
-        minimumRequirement: 'Minimum requirement: $150,000 COP',
-        button: 'Purchase Monthly Subscription',
-        processing: 'Processing...',
-        notAuthenticated: 'You must log in to subscribe',
-        error: 'Error processing subscription',
-        success: {
-          title: 'Subscription Activated!',
-          message: 'Your monthly subscription has been activated successfully'
+    purchase: {
+        title: 'Buy Subscription',
+        subtitle: 'Get unlimited rides and exclusive benefits',
+        price: 'Monthly plan price',
+        currentBalance: 'Your Current Balance',
+        eligible: '✓ Sufficient balance for purchase',
+        insufficientBalance: '⚠ Insufficient balance',
+        minimumRequirement: 'Minimum required balance: $39.00 USD',
+        button: 'Buy Subscription',
+        processing: 'Processing purchase...',
+        note: 'Subscription will automatically renew every month.',
+        terms: 'By purchasing you agree to the service terms and conditions.',
+        planTitle: 'Monthly Plan',
+        planFeatures: {
+            trips: '50 monthly included trips',
+            noCost: 'No cost for extra minutes',
+            priority: 'Priority on reservations',
+            support: '24/7 Support'
         },
-        note: 'Payment will be deducted from your current balance',
-        terms: 'Subscription automatically renews every month'
-      }
+        success: {
+            title: 'Subscription Activated!',
+            message: 'Your monthly subscription has been successfully activated.',
+            plan: 'Plan',
+            trips: 'Included trips',
+            balance: 'New balance'
+        }
     }
 }

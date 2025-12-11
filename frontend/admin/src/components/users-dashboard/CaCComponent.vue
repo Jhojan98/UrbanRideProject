@@ -442,8 +442,12 @@ onMounted(async () => {
 
     th, td {
       padding: 1rem;
-      text-align: left;
+      text-align: center;
       border-bottom: 1px solid var(--color-border);
+
+      &:first-child {
+        text-align: left;
+      }
     }
 
     th {

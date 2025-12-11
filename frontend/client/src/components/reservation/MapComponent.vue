@@ -22,7 +22,6 @@
         <h4>📍 {{ $t('reservation.map.originStation') }}</h4>
         <div>
           <div class="row"><strong>{{ originPlain.nameStation ?? '—' }}</strong></div>
-          <div class="row">🚲 {{ originPlain.availableSlots ?? '—' }} {{ $t('reservation.map.availableBikes') }}</div>
         </div>
       </div>
 
@@ -30,7 +29,6 @@
         <h4>🅿️ {{ $t('reservation.map.destinationStation') }}</h4>
         <div>
           <div class="row"><strong>{{ destinationPlain.nameStation ?? '—' }}</strong></div>
-          <div class="row">📍 {{ destinationPlain.availableSlots ?? '—' }} {{ $t('reservation.map.availableSlots') }}</div>
         </div>
       </div>
     </div>
@@ -314,66 +312,67 @@ onMounted(() => {
     keepBuffer: 0,
   }).addTo(map.value as LeafletMap)
 
-  // Fetch and render stations from store
-  if (props.useSockets === false) {
-    // Fetch stations from backend via store
-    stationStore.fetchStations().then((stations) => {
-      if (stations && stations.length > 0) {
-        renderStationsFromStore()
-      } else {
-        console.warn('[Map] No stations loaded from store')
-        if (props.initialStations && props.initialStations.length) {
-          console.log('[Map] Using initialStations prop as fallback')
-          props.initialStations.forEach(st => {
-            const marker = stationFactory.getStationMarker(st)
-            marker.render(map.value as LeafletMap)
-          })
-          stationsRendered.value = true
-        }
-      }
-    }).catch((err) => {
-      console.error('[Map] Error fetching stations from store:', err)
+  // Siempre cargar estaciones iniciales por REST/HTTP primero
+  console.log('[Map] Cargando estaciones iniciales por REST...')
+  stationStore.fetchStations().then((stations) => {
+    if (stations && stations.length > 0) {
+      renderStationsFromStore()
+      console.log(`[Map] ${stations.length} estaciones renderizadas desde REST`)
+    } else {
+      console.warn('[Map] No stations loaded from store')
       if (props.initialStations && props.initialStations.length) {
-        console.log('[Map] Using initialStations prop as fallback after error')
+        console.log('[Map] Using initialStations prop as fallback')
         props.initialStations.forEach(st => {
           const marker = stationFactory.getStationMarker(st)
           marker.render(map.value as LeafletMap)
         })
         stationsRendered.value = true
       }
-    })
-  } else {
-    console.log('[Map] WebSocket mode enabled, waiting for WS data')
-    stationsRendered.value = false
-  }
+    }
+  }).catch((err) => {
+    console.error('[Map] Error fetching stations from store:', err)
+    if (props.initialStations && props.initialStations.length) {
+      console.log('[Map] Using initialStations prop as fallback after error')
+      props.initialStations.forEach(st => {
+        const marker = stationFactory.getStationMarker(st)
+        marker.render(map.value as LeafletMap)
+      })
+      stationsRendered.value = true
+    }
+  })
 
-  // Intentar conectar al WebSocket de estaciones para actualizaciones en tiempo real
-  try {
-    stationWsService.connect((station, factory) => {
-      // Update incremental: render/update single station
-      if (!map.value || !isMounted.value) return
-      try {
-        const stationExt = station as StationLikeExtended
-        const mk = factory.getStationMarker(stationExt)
-        mk.setTranslator($t)
-        mk.render(map.value as LeafletMap)
-        mk.onClick((st) => {
-          const stExt = st as StationLikeExtended
-          const payload = {
-            id: stExt.idStation ?? 0,
-            name: stExt.nameStation ?? '',
-            latitude: stExt.latitude,
-            longitude: stExt.longitude,
-            free_spots: stExt.availableSlots ?? 0,
-            type: stExt.type ?? 'bike'
-          }
-          if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
-          else clickedStation.value = payload
-        })
-        console.log(`[Map] Station updated via WS: ${stationExt.nameStation} (ID: ${stationExt.idStation})`)
-      } catch (e) { console.error('[Map] Error updating station', e) }
-    })
-  } catch (e) { console.warn('[Map] No se pudo conectar al Stations WS', e) }
+  // Si WebSocket está habilitado, conectar DESPUÉS para actualizaciones en tiempo real
+  if (props.useSockets !== false) {
+    console.log('[Map] WebSocket habilitado - conectando para actualizaciones en tiempo real...')
+    try {
+      stationWsService.connect((station, factory) => {
+        // Update incremental: render/update single station
+        if (!map.value || !isMounted.value) return
+        try {
+          const stationExt = station as StationLikeExtended
+          const mk = factory.getStationMarker(stationExt)
+          mk.setTranslator($t)
+          mk.render(map.value as LeafletMap)
+          mk.onClick((st) => {
+            const stExt = st as StationLikeExtended
+            const payload = {
+              id: stExt.idStation ?? 0,
+              name: stExt.nameStation ?? '',
+              latitude: stExt.latitude,
+              longitude: stExt.longitude,
+              free_spots: stExt.availableSlots ?? 0,
+              type: stExt.type ?? 'bike'
+            }
+            if (clickedStation.value && clickedStation.value.id === payload.id) clickedStation.value = null
+            else clickedStation.value = payload
+          })
+          console.log(`[Map] Station actualizada via WS: ${stationExt.nameStation} (ID: ${stationExt.idStation})`)
+        } catch (e) { console.error('[Map] Error updating station', e) }
+      })
+    } catch (e) { console.warn('[Map] No se pudo conectar al Stations WS', e) }
+  } else {
+    console.log('[Map] WebSocket deshabilitado - solo datos REST')
+  }
 
   // Debug temporal: comprobar estado del WS y cantidad de estaciones almacenadas
   setTimeout(() => {

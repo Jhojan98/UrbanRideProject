@@ -183,11 +183,69 @@ html[data-theme="dark"] {
 @media (max-width: 1100px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
     .grid-right {
         order: -1;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-title {
+        font-size: 1.5rem;
+        margin: 0 0 0.75rem;
+    }
+
+    .dashboard-grid {
+        gap: 1rem;
+    }
+
+    .grid-right {
+        margin-bottom: 1rem;
+    }
+
+    .bike-info-wrapper {
+        margin-top: 0.75rem;
+    }
+
+    .loading-map,
+    .empty-filter {
+        padding: 2rem 1rem;
+        min-height: 300px;
+
+        .material-symbols-outlined {
+            font-size: 3rem;
+        }
+
+        p {
+            font-size: 1rem;
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-title {
+        font-size: 1.25rem;
+    }
+
+    .dashboard-grid {
+        gap: 0.75rem;
+    }
+
+    .loading-map,
+    .empty-filter {
+        padding: 1.5rem 0.75rem;
+        min-height: 250px;
+
+        .material-symbols-outlined {
+            font-size: 2.5rem;
+        }
+
+        p {
+            font-size: 0.9rem;
+        }
     }
 }
 </style>

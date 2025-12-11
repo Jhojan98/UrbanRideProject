@@ -42,24 +42,25 @@ export const useCityStore = defineStore("city", {
       this.loading = true;
       this.error = null;
       try {
+        const token = localStorage.getItem('authToken');
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${this.baseURL}/city/`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers,
           body: JSON.stringify({
             idCity,
             cityName,
           }),
         });
         if (!response.ok) {
-          console.error(
-            "HTTP error creating city:",
-            response.status,
-            response.statusText
-          );
-          return;
+          throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
         }
         await this.fetchCities();
       } catch (error) {
@@ -75,24 +76,34 @@ export const useCityStore = defineStore("city", {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch(`${this.baseURL}/city/${idCity}`, {
+        const token = localStorage.getItem('authToken');
+        const headers: Record<string, string> = {
+          Accept: "application/json",
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        console.log(`Attempting to delete city with ID: ${idCity}`);
+        console.log(`DELETE URL: ${this.baseURL}/city/delete/${idCity}`);
+
+        const response = await fetch(`${this.baseURL}/city/delete/${idCity}`, {
           method: "DELETE",
-          headers: {
-            Accept: "application/json",
-          },
+          headers,
         });
+
+        console.log(`Delete response status: ${response.status}`);
+
         if (!response.ok) {
-          console.error(
-            "HTTP error deleting city:",
-            response.status,
-            response.statusText
-          );
-          return;
+          const errorText = await response.text();
+          console.error(`Delete failed: ${response.status} - ${errorText}`);
+          throw new Error(`HTTP error: ${response.status} - ${errorText || response.statusText}`);
         }
         await this.fetchCities();
       } catch (error) {
         console.error("Error deleting city:", error);
         this.error = error instanceof Error ? error.message : "Error desconocido";
+        throw error;
         throw error;
       } finally {
         this.loading = false;

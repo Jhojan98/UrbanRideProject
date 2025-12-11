@@ -69,7 +69,7 @@
                 <span class="balance-label">{{ $t('profile.balance.currentBalance') }}</span>
                 <span class="balance-value">
                   {{ formattedBalance }}
-                  <button @click="refreshBalance" class="refresh-btn" title="Actualizar saldo">
+                  <button @click="refreshBalance" class="refresh-btn" :title="$t('common.refreshBalance')">
                     ⟳
                   </button>
                   <span v-if="isLoadingBalance" class="loading-spinner">↻</span>
@@ -170,7 +170,7 @@
           <h1>{{ $t('profile.complaints.title') }}</h1>
           <p class="muted">{{ $t('profile.complaints.subtitle') }}</p>
         </div>
-        <div class="profile-content cards-grid">
+        <div class="profile-content cards-grid complaints-grid">
           <div class="action-card">
             <h3>{{ $t('profile.complaints.formTitle') }}</h3>
             <p>{{ $t('profile.complaints.formSubtitle') }}</p>
@@ -925,6 +925,25 @@ onMounted(() => {
   display: grid !important;
   grid-template-columns: repeat(2, 1fr) !important;
   gap: 1.25rem !important;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Quejas en una sola columna */
+.complaints-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.complaint-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .btn-primary {
+    margin-top: 1.5rem;
+    align-self: center;
+    padding: 0.75rem 2rem;
+  }
 }
 
 .action-card {

@@ -115,10 +115,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useBicycleStore } from '@/stores/bicycleStore';
+import { useBikeStore } from '@/stores/bikeStore';
 
 const { t } = useI18n();
-const bicycleStore = useBicycleStore();
+const bicycleStore = useBikeStore();
 
 const showForm = ref(false);
 const selectedTypeFilter = ref<string | null>(null);

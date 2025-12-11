@@ -238,11 +238,15 @@
 
       th {
         padding: 1rem;
-        text-align: left;
+        text-align: center;
         font-weight: 600;
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+
+        &:first-child {
+          text-align: left;
+        }
       }
     }
 
@@ -262,6 +266,11 @@
         td {
           padding: 1rem;
           color: var(--color-text-primary-light);
+          text-align: center;
+
+          &:first-child {
+            text-align: left;
+          }
 
           code {
             background: var(--color-background-light);
@@ -312,6 +321,52 @@
   color: var(--color-gray-medium);
   font-style: italic;
   font-size: 1.1rem;
+}
+
+// Station type icons and badges
+.station-type-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+  font-weight: 500;
+  flex-shrink: 0;
+
+  &.metro {
+    background-color: rgba(30, 136, 229, 0.15);
+    color: #1e88e5;
+  }
+
+  &.residential {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+  }
+
+  &.financial {
+    background-color: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+  }
+}
+
+html[data-theme="dark"] .station-type-icon {
+  &.metro {
+    background-color: rgba(30, 136, 229, 0.25);
+    color: #60a5fa;
+  }
+
+  &.residential {
+    background-color: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+  }
+
+  &.financial {
+    background-color: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+  }
 }
 
 .btn-primary, .btn-secondary, .btn-danger, .btn-info {

@@ -9,8 +9,8 @@
       </button>
 
       <div class="logo-mobile">
-        <img src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
-        <span class="logo-text">ECORIDE</span>
+        <img src="@/assets/ecorideHeader.webp" :alt="$t('common.brand')" class="logo-img">
+        <span class="logo-text">{{ $t('common.brand') }}</span>
       </div>
 
       <!-- Mobile utilities (visible in header) -->
@@ -31,8 +31,8 @@
     <!-- Desktop Header Content -->
     <div v-if="!isMobile" class="header-content">
       <div class="logo">
-        <img src="@/assets/ecorideHeader.webp" alt="ecoRideLogo" class="logo-img">
-        <span class="logo-text">ECORIDE</span>
+        <img src="@/assets/ecorideHeader.webp" :alt="$t('common.brand')" class="logo-img">
+        <span class="logo-text">{{ $t('common.brand') }}</span>
       </div>
 
       <!-- Desktop Navigation -->
@@ -48,7 +48,6 @@
       <div class="auth-buttons">
         <template v-if="showAuthButtons">
           <router-link :to="{ name: 'login' }" class="btn-primary">{{ $t('nav.login') }}</router-link>
-          <router-link :to="{ name: 'signup' }" class="btn-primary">{{ $t('nav.signup') }}</router-link>
         </template>
         <button v-if="showLogoutButton" @click="logout" class="btn-primary btn-logout">
           {{ $t('nav.logout') }}
@@ -88,9 +87,6 @@
         <template v-if="showAuthButtons">
           <router-link :to="{ name: 'login' }" class="btn-primary" @click="closeSidebarOnMobile">
             {{ $t('nav.login') }}
-          </router-link>
-          <router-link :to="{ name: 'signup' }" class="btn-primary" @click="closeSidebarOnMobile">
-            {{ $t('nav.signup') }}
           </router-link>
         </template>
 

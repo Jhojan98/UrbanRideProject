@@ -14,7 +14,7 @@
           <input
             v-model="formData.bikeId"
             type="text"
-            placeholder="Ej: BIC-1234"
+            :placeholder="$t('report.bikeIdPlaceholder')"
             class="form-input"
             required
           >

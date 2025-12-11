@@ -3,9 +3,9 @@
     <div v-if="tripStore.isVisible && tripStore.notification" class="notification-popup" :class="notificationClass">
       <div class="notification-content">
         <div class="notification-icon">
-          <span v-if="tripStore.notification.type === 'EXPIRED_TRAVEL'">⏰</span>
-          <span v-else-if="tripStore.notification.type === 'START_TRAVEL'">🚴</span>
-          <span v-else-if="tripStore.notification.type === 'END_TRAVEL'">✅</span>
+          <span v-if="tripStore.notification.type === 'TRAVEL_EXPIRED'">⏰</span>
+          <span v-else-if="tripStore.notification.type === 'TRAVEL_START'">🚴</span>
+          <span v-else-if="tripStore.notification.type === 'TRAVEL_END'">✅</span>
         </div>
         <div class="notification-body">
           <h3 class="notification-title">{{ notificationTitle }}</h3>
@@ -31,11 +31,11 @@ const notificationClass = computed(() => {
   if (!tripStore.notification) return '';
 
   switch (tripStore.notification.type) {
-    case 'EXPIRED_TRAVEL':
+    case 'TRAVEL_EXPIRED':
       return 'notification-error';
-    case 'START_TRAVEL':
+    case 'TRAVEL_START':
       return 'notification-success';
-    case 'END_TRAVEL':
+    case 'TRAVEL_END':
       return 'notification-info';
     default:
       return '';
@@ -46,11 +46,11 @@ const notificationTitle = computed(() => {
   if (!tripStore.notification) return '';
 
   switch (tripStore.notification.type) {
-    case 'EXPIRED_TRAVEL':
+    case 'TRAVEL_EXPIRED':
       return $t('reservation.notifications.expiredTravel');
-    case 'START_TRAVEL':
+    case 'TRAVEL_START':
       return $t('reservation.notifications.startTravel');
-    case 'END_TRAVEL':
+    case 'TRAVEL_END':
       return $t('reservation.notifications.endTravel');
     default:
       return $t('reservation.notifications.defaultNotification');
@@ -61,11 +61,11 @@ const notificationMessage = computed(() => {
   if (!tripStore.notification) return '';
 
   switch (tripStore.notification.type) {
-    case 'EXPIRED_TRAVEL':
+    case 'TRAVEL_EXPIRED':
       return $t('reservation.notifications.expiredTravelMsg');
-    case 'START_TRAVEL':
+    case 'TRAVEL_START':
       return $t('reservation.notifications.startTravelMsg');
-    case 'END_TRAVEL':
+    case 'TRAVEL_END':
       return $t('reservation.notifications.endTravelMsg');
     default:
       return tripStore.notification.message;

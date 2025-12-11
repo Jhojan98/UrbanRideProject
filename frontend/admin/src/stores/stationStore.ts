@@ -54,18 +54,40 @@ export const useStationStore = defineStore("station", {
       this.loading = true;
       this.error = null;
       try {
+        const token = localStorage.getItem('authToken');
+        console.log('[StationStore] Creating station with token:', token ? 'Token exists' : 'NO TOKEN');
+        
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        console.log('[StationStore] POST URL:', `${this.baseURL}/station/`);
+        console.log('[StationStore] Headers:', headers);
+        
         const response = await fetch(`${this.baseURL}/station/`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers,
           body: JSON.stringify(data),
         });
 
+        console.log('[StationStore] Response status:', response.status);
+
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.mensaje || `HTTP error: ${response.status}`);
+          let errorMessage = `HTTP error: ${response.status}`;
+          const errorText = await response.text();
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.mensaje || errorData.message || errorData.error || errorMessage;
+            console.error("Backend error details:", errorData);
+          } catch {
+            errorMessage = errorText || errorMessage;
+            console.error("Backend error (text):", errorText);
+          }
+          throw new Error(errorMessage);
         }
 
         const result = await response.json();
@@ -88,13 +110,26 @@ export const useStationStore = defineStore("station", {
       this.loading = true;
       this.error = null;
       try {
-        const response = await fetch(`${this.baseURL}/station/${id}`, {
+        const token = localStorage.getItem('authToken');
+        const headers: Record<string, string> = { Accept: "application/json" };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        console.log(`Attempting to delete station with ID: ${id}`);
+        console.log(`DELETE URL: ${this.baseURL}/station/delete/${id}`);
+        
+        const response = await fetch(`${this.baseURL}/station/delete/${id}`, {
           method: "DELETE",
-          headers: { Accept: "application/json" },
+          headers,
         });
 
+        console.log(`Delete response status: ${response.status}`);
+        
         if (!response.ok) {
-          throw new Error(`HTTP error: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`Delete failed: ${response.status} - ${errorText}`);
+          throw new Error(`HTTP error: ${response.status} - ${errorText || response.statusText}`);
         }
 
         this.stations = this.stations.filter(s => s.idStation !== id);

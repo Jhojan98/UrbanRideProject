@@ -2,7 +2,10 @@
     <div class="bike-info" v-if="station">
         <div class="bike-info-header">
             <h3>{{ t('dashboard.bikes.title', { stationName: station.nameStation }) }}</h3>
-            <p class="subtitle">{{ station.latitude }}, {{ station.longitude }}</p>
+        </div>
+        <div class="coordinates-display">
+            <span class="material-symbols-outlined">location_on</span>
+            <span class="coordinates-text">{{ station.latitude?.toFixed(5) || 'N/A' }}, {{ (station.longitude ?? station.length)?.toFixed(5) || 'N/A' }}</span>
         </div>
 
         <div class="summary-grid">
@@ -49,6 +52,38 @@ const station = computed(() => props.station)
 .bike-info-header { display: flex; align-items: baseline; gap: 1rem; }
 .bike-info-header h3 { margin: 0; }
 .subtitle { margin: 0; font-size: .85rem; color: var(--color-text-secondary-light); }
+
+.coordinates-display {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+    background: #f0f9ff;
+    border-left: 3px solid var(--color-primary-light);
+    border-radius: 4px;
+    font-size: 0.9rem;
+
+    .material-symbols-outlined {
+        font-size: 1.2rem;
+        color: var(--color-primary-light);
+    }
+
+    .coordinates-text {
+        font-weight: 600;
+        color: var(--color-text-primary-light);
+        font-family: monospace;
+    }
+}
+
+html[data-theme="dark"] .coordinates-display {
+    background: rgba(30, 136, 229, 0.1);
+
+    .coordinates-text {
+        color: var(--color-text-primary-dark);
+    }
+}
+
 
 .summary-grid {
     display: grid;
@@ -97,5 +132,82 @@ const station = computed(() => props.station)
 
 .bike-info.empty {
     margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+    .bike-info {
+        padding: 1rem;
+    }
+
+    .bike-info h3 {
+        font-size: 1.1rem;
+    }
+
+    .coordinates-display {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+
+        .material-symbols-outlined {
+            font-size: 1rem;
+        }
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .summary-card {
+        padding: 0.75rem;
+    }
+
+    .summary-card p {
+        font-size: 0.8rem;
+    }
+
+    .summary-card strong {
+        font-size: 1rem;
+    }
+
+    .status-pill {
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .bike-info {
+        padding: 0.75rem;
+    }
+
+    .bike-info h3 {
+        font-size: 1rem;
+    }
+
+    .coordinates-display {
+        padding: 0.5rem;
+        font-size: 0.75rem;
+
+        .material-symbols-outlined {
+            font-size: 0.9rem;
+        }
+    }
+
+    .summary-card {
+        padding: 0.6rem;
+    }
+
+    .summary-card p {
+        font-size: 0.75rem;
+    }
+
+    .summary-card strong {
+        font-size: 0.95rem;
+    }
+
+    .status-pill {
+        padding: 4px 7px;
+        font-size: 0.75rem;
+    }
 }
 </style>

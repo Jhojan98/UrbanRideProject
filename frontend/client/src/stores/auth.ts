@@ -9,9 +9,26 @@ import {
   signInWithPopup,
   onAuthStateChanged,
 } from "firebase/auth";
+import { useTripStore } from "../services/travelNotifications";
+
+// Inactivity timeout: 10 minutes in milliseconds
+const INACTIVITY_TIMEOUT = 10 * 60 * 1000;
 
 const userAuth = defineStore("auth", {
   state() {
+    // Check if session expired due to inactivity
+    const lastActivity = localStorage.getItem('lastActivity');
+    if (lastActivity) {
+      const timeSinceLastActivity = Date.now() - parseInt(lastActivity, 10);
+      if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
+        // Session expired, clear storage
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUid');
+        localStorage.removeItem('lastActivity');
+        console.log('Session expired due to inactivity');
+      }
+    }
+
     return {
       token: null as string | null,
       uid: null as string | null,
@@ -21,6 +38,7 @@ const userAuth = defineStore("auth", {
       pendingVerification: false,
       tempEmail: null as string | null,
       authStateInitialized: false,
+      lastActivity: lastActivity ? parseInt(lastActivity, 10) : null as number | null,
     };
   },
   actions: {
@@ -81,8 +99,10 @@ const userAuth = defineStore("auth", {
       try {
         const auth = getAuth();
 
+        // Use current origin for email verification redirect
+        const currentOrigin = window.location.origin;
         const actionCodeSettings = {
-          url: "http://localhost:8080/login",
+          url: `${currentOrigin}/login`,
           handleCodeInApp: true,
         };
 
@@ -149,6 +169,17 @@ const userAuth = defineStore("auth", {
         // Detailed logging for debugging
         console.error("Error code:", firebaseError.code);
         console.error("Error message:", firebaseError.message);
+
+        // Map Firebase error codes to user-friendly messages
+        const errorMessages: { [key: string]: string } = {
+          'auth/email-already-in-use': 'Este email ya está registrado. Intenta con otro o inicia sesión.',
+          'auth/weak-password': 'La contraseña debe tener al menos 6 caracteres.',
+          'auth/invalid-email': 'El email no es válido.',
+          'auth/operation-not-allowed': 'Operación no permitida. Contacta al administrador.',
+          'auth/too-many-requests': 'Demasiados intentos fallidos. Intenta más tarde.',
+        };
+
+        this.message = errorMessages[firebaseError.code || ''] || `Error al registrarse: ${firebaseError.message || 'Error desconocido'}`;
 
         return false;
       }
@@ -225,6 +256,11 @@ const userAuth = defineStore("auth", {
         // Save token in localStorage for persistence
         localStorage.setItem('authToken', token);
         console.log('Token saved in localStorage after login');
+
+        // Initialize lastActivity timestamp
+        const now = Date.now().toString();
+        localStorage.setItem('lastActivity', now);
+        this.lastActivity = Date.now();
 
         return { success: true, userData: response };
       } catch (error: unknown) {
@@ -353,6 +389,11 @@ const userAuth = defineStore("auth", {
         localStorage.setItem('authToken', token);
         console.log('Token saved in localStorage after Google login');
 
+        // Initialize lastActivity timestamp
+        const now = Date.now().toString();
+        localStorage.setItem('lastActivity', now);
+        this.lastActivity = Date.now();
+
         return { success: true, userData };
       } catch (error: unknown) {
         console.error("Error in Google login:", error);
@@ -388,8 +429,19 @@ const userAuth = defineStore("auth", {
         const auth = getAuth();
         await signOut(auth);
         this.token = null;
+        this.uid = null;
         this.isVerified = false;
         this.message = "Sesión cerrada";
+        this.lastActivity = null;
+
+        // Disconnect SSE when logging out
+        const tripStore = useTripStore();
+        tripStore.disconnect();
+
+        // Clear all stored auth data
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUid');
+        localStorage.removeItem('lastActivity');
       } catch (error: unknown) {
         console.error("Error en logout:", error);
         this.message = "Error al cerrar sesión";
@@ -438,6 +490,11 @@ const userAuth = defineStore("auth", {
           localStorage.setItem('authToken', token);
           console.log('Token saved in localStorage after verification');
 
+          // Initialize lastActivity timestamp
+          const now = Date.now().toString();
+          localStorage.setItem('lastActivity', now);
+          this.lastActivity = Date.now();
+
           return true;
         } else {
           this.message =
@@ -471,7 +528,35 @@ const userAuth = defineStore("auth", {
           catch (error: unknown) {
             console.error("Error al comprar suscripción:", error);
           }
-    }
+    },
+    /**
+     * Renew activity timestamp
+     * Called by activity tracker on user interaction
+     */
+    renewActivity() {
+      const now = Date.now().toString();
+      localStorage.setItem('lastActivity', now);
+      this.lastActivity = Date.now();
+    },
+    /**
+     * Check if session has expired due to inactivity
+     * If expired, logout the user
+     * @returns true if session expired and user was logged out
+     */
+    checkTokenExpiration(): boolean {
+      const lastActivity = localStorage.getItem('lastActivity');
+      if (!lastActivity) {
+        return false;
+      }
+
+      const timeSinceLastActivity = Date.now() - parseInt(lastActivity, 10);
+      if (timeSinceLastActivity > INACTIVITY_TIMEOUT) {
+        console.log('Session expired due to inactivity, logging out...');
+        this.logout();
+        return true;
+      }
+      return false;
+    },
   },
 });
 
