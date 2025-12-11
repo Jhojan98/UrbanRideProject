@@ -1,0 +1,6 @@
+export default {
+    title: 'Iniciar sesión',
+    email: 'Correo electrónico',
+    password: 'Contraseña',
+    button: 'Entrar'
+}

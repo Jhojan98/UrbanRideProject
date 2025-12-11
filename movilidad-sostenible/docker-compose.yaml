@@ -3,13 +3,14 @@ services:
     container_name: postgres17
     image: postgres:17-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: SASA
-      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${POSTGRES_ROOT_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_ROOT_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_ROOT_DB}
     ports:
       - "5532:5432"
     volumes:
       - data-postgres:/var/lib/postgresql/data
+      - ./docker/postgres/version8.1/initdb:/docker-entrypoint-initdb.d
     networks:
       - movilidad-sostenible-network
     restart: always
@@ -21,30 +22,64 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
     networks:
       - movilidad-sostenible-network
     restart: always
 
-#  database-migrator:
-#    container_name: database-migrator
-#    image: seanbolivar2002/database-migrator:latest
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
+    ports:
+      - "6379:6379"
+      - "8100:8001"
+    networks:
+      - movilidad-sostenible-network
+    volumes:
+      - redis_data:/data
+
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto:2
+    # ATENCIÓN: si ya tienes mosquitto en el host usando 1883, comenta la línea de puertos abajo para evitar conflicto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto:/mosquitto
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+#  keycloak:
+#    container_name: keycloak
+#    image: quay.io/keycloak/keycloak:26.4.5
+#    command:
+#     - start-dev
 #    environment:
-#      DB_HOST: postgres17:5432
-#      POSTGRES_DB: movilidad_sostenible
-#      POSTGRES_USER_FLYWAY: flyway
-#      POSTGRES_PASSWORD_FLYWAY: FLYWAY_PASS
-#      FLYWAY_BASELINE: "false"
-#    networks:
-#      - movilidad-sostenible-network
+#      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USER}
+#      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASSWORD}
+#
+#      # CONFIG BD
+#      KC_DB: postgres
+#      KC_DB_URL: jdbc:postgresql://postgres17:5432/keycloak
+#      KC_DB_USERNAME: ${KC_DB_USER}
+#      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+#    expose:
+#      - 8080
+#    ports:
+#      - "8080:8080"
 #    depends_on:
 #      - postgres17
-#    restart: "no"
+#    networks:
+#      - movilidad-sostenible-network
+#    restart: always
 
   eureka-server:
     container_name: eureka-server
-    image: seanbolivar2002/eureka-server:latest
+    build:
+      context: ./
+      dockerfile: ./eureka-server/Dockerfile
     ports:
       - "8761:8761"
     environment:
@@ -54,147 +89,487 @@ services:
     depends_on:
       - postgres17
     restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  gateway-server:
+    container_name: gateway-server
+    build:
+      context: ./
+      dockerfile: ./gateway-server/Dockerfile
+    expose:
+      - 8090
+    ports:
+      - "8090:8090"
+    environment:
+      SERVER_PORT: 8090
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      #      keycloak:
+      #        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
 
   usuario-service:
     container_name: usuario-service
-    image: seanbolivar2002/usuario-service:latest
+    build:
+      context: ./
+      dockerfile: ./usuario-service/Dockerfile
     ports:
-      - "8001:8001"
+      - "8001:8100"
     environment:
-      PORT: 8001
+      PORT: 8100
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: manager_users
-      POSTGRES_PASSWORD: g_user
+      POSTGRES_USER: ${USUARIO_DB_USER}
+      POSTGRES_PASSWORD: ${USUARIO_DB_PASSWORD}
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - eureka-server
-      - rabbitmq
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      notification-email-service:
+        condition: service_started
+      fine-service:
+        condition: service_started
     restart: always
 
-  email-service:
-    container_name: email-service
-    image: seanbolivar2002/email-service:latest
+  admin-service:
+    container_name: admin-service
+    build:
+      context: ./
+      dockerfile: ./admin-service/Dockerfile
     ports:
-      - "8004:8004"
+      - "8008:8008"
     environment:
-      PORT: 8004
+      PORT: 8008
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: SASA
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_RABBITMQ_PORT: 5672
-      SPRING_RABBITMQ_USERNAME: guest
-      SPRING_RABBITMQ_PASSWORD: guest
+      POSTGRES_USER: ${ADMIN_DB_USER}
+      POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD}
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - eureka-server
-      - rabbitmq
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
     restart: always
 
   bicis-service:
     container_name: bicis-service
-    image: seanbolivar2002/bicis-service:latest
+    build:
+      context: ./
+      dockerfile: ./bicis-service/Dockerfile
     ports:
       - "8002:8002"
     environment:
       PORT: 8002
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: manager_bicycle
-      POSTGRES_PASSWORD: g_bicy
+      POSTGRES_USER: ${BICIS_DB_USER}
+      POSTGRES_PASSWORD: ${BICIS_DB_PASSWORD}
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_QOS: 1
+      MQTT_CLIENT_ID: "bicis-service-${HOSTNAME:-local-dev}"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - eureka-server
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+      rabbitmq:
+        condition: service_started
     restart: always
 
   viaje-service:
     container_name: viaje-service
-    image: seanbolivar2002/viaje-service:latest
+    build:
+      context: ./
+      dockerfile: ./viaje-service/Dockerfile
     ports:
       - "8003:8003"
     environment:
       PORT: 8003
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: manager_travel
-      POSTGRES_PASSWORD: g_trav
+      POSTGRES_USER: ${VIAJE_DB_USER}
+      POSTGRES_PASSWORD: ${VIAJE_DB_PASSWORD}
+      USUARIO_URL: usuario-service:8100
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_REDIS_HOST: redis-stack
+      SPRING_REDIS_PORT: 6379
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_QOS: 1
+      MQTT_CLIENT_ID: "travel-service-${HOSTNAME:-local-dev}"
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - usuario-service
-      - bicis-service
-      - eureka-server
+      slots-service:
+        condition: service_started
+      usuario-service:
+        condition: service_started
+      notification-realtime-service:
+        condition: service_started
+      notification-email-service:
+        condition: service_started
+      postgres17:
+        condition: service_started
+      redis-stack:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
     restart: always
 
-  gateway-server:
-    container_name: gateway-server
-    image: seanbolivar2002/gateway-server:latest
+  slots-service:
+    container_name: slots-service
+    build:
+      context: ./
+      dockerfile: ./slots-service/Dockerfile
     ports:
-      - "8090:8090"
+      - "8004:8004"
     environment:
-      PORT: 8090
+      PORT: 8004
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${SLOTS_DB_USER}
+      POSTGRES_PASSWORD: ${SLOTS_DB_PASSWORD}
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
+      estaciones-service:
+        condition: service_started
+      bicis-service:
+        condition: service_started
+      ciudad-service:
+        condition: service_started
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
     restart: always
 
   estaciones-service:
     container_name: estaciones-service
-    image: seanbolivar2002/estaciones-service:latest
+    build:
+      context: ./
+      dockerfile: ./estaciones-service/Dockerfile
     ports:
       - "8005:8005"
     environment:
       PORT: 8005
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: manager_station
-      POSTGRES_PASSWORD: g_stat
+      POSTGRES_USER: ${ESTACIONES_DB_USER}
+      POSTGRES_PASSWORD: ${ESTACIONES_DB_PASSWORD}
       EUREKA_HOST: eureka-server
       EUREKA_PORT: 8761
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_QOS: 1
+      MQTT_CLIENT_ID: "station-service-${HOSTNAME:-local-dev}"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - eureka-server
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
     restart: always
 
   ciudad-service:
     container_name: ciudad-service
-    image: seanbolivar2002/ciudad-service:latest
+    build:
+      context: ./
+      dockerfile: ./ciudad-service/Dockerfile
     ports:
       - "8006:8006"
     environment:
       PORT: 8006
       DB_HOST: postgres17:5432
       POSTGRES_DB: movilidad_sostenible
-      POSTGRES_USER: manager_city
-      POSTGRES_PASSWORD: g_city
+      POSTGRES_USER: ${CIUDAD_DB_USER}
+      POSTGRES_PASSWORD: ${CIUDAD_DB_PASSWORD}
       EUREKA_HOST: eureka-server
       EUREKA_PORT: 8761
     networks:
       - movilidad-sostenible-network
     depends_on:
-      - postgres17
-      - eureka-server
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
     restart: always
+
+  payment-service:
+    container_name: payment-service
+    build:
+      context: ./
+      dockerfile: ./payment-service/Dockerfile
+    ports:
+      - "8007:8007"
+    environment:
+      PORT: 8007
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
+  fine-service:
+    container_name: fine-service
+    build:
+      context: ./fine-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5003"]
+    ports:
+      - "5003:5003"
+    environment:
+      SERVICE_PORT: 5003
+      SERVICE_HOST: fine-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: fine-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      USERS_SERVICE_URL: http://usuario-service:8100
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${FINES_DB_USER}
+      POSTGRES_PASSWORD: ${FINES_DB_PASSWORD}
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
+  reports-service:
+    container_name: reports-service
+    build:
+      context: ./reports-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5004"]
+    ports:
+      - "5004:5004"
+    environment:
+      SERVICE_PORT: 5004
+      SERVICE_HOST: reports-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: reports-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      USERS_SERVICE_URL: http://usuario-service:8100
+      BICYCLE_SERVICE_URL: http://bicis-service:8002
+      RESERVATIONS_SERVICE_URL: http://viaje-service:8003
+      FINES_SERVICE_URL: http://fine-service:5003
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      usuario-service:
+        condition: service_started
+      bicis-service:
+        condition: service_started
+      viaje-service:
+        condition: service_started
+      fine-service:
+        condition: service_started
+    restart: always
+
+  complaints-service:
+    container_name: complaints-service
+    build:
+      context: ./complaints-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5007"]
+    ports:
+      - "5007:5007"
+    environment:
+      SERVICE_PORT: 5007
+      SERVICE_HOST: complaints-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: complaints-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${COMPLAINTS_DB_USER}
+      POSTGRES_PASSWORD: ${COMPLAINTS_DB_PASSWORD}
+      TRAVEL_SERVICE_URL: http://viaje-service:8003
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+      viaje-service:
+        condition: service_started
+    restart: always
+
+  btnpanic-service:
+    container_name: btnpanic-service
+    build:
+      context: ./btnPanic-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5008"]
+    ports:
+      - "5008:5008"
+    environment:
+      SERVICE_PORT: 5008
+      SERVICE_HOST: btnpanic-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: btnpanic-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${BTN_PANIC_DB_USER}
+      POSTGRES_PASSWORD: ${BTN_PANIC_DB_PASSWORD}
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
+  maintenance-service:
+    container_name: maintenance-service
+    build:
+      context: ./maintenance-service
+      dockerfile: Dockerfile
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5006"]
+    ports:
+      - "5006:5006"
+    environment:
+      SERVICE_PORT: 5006
+      SERVICE_HOST: maintenance-service
+      EUREKA_HOST: eureka-server
+      LOCK_SERVICE_URL: http://slots-service:8004
+      STATION_SERVICE_URL: http://estaciones-service:8005
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: maintenance-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${MANTENIMIENTO_DB_USER}
+      POSTGRES_PASSWORD: ${MANTENIMIENTO_DB_PASSWORD}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/
+      RABBITMQ_QUEUE: maintenance_tasks
+      RABBITMQ_EXCHANGE: maintenance_exchange
+      RABBITMQ_ROUTING_KEY: maintenance.key
+      RABBITMQ_BINDING_PATTERN: maintenance.#
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      postgres17:
+        condition: service_started
+      eureka-server:
+        condition: service_healthy
+    restart: always
+
+  notification-email-service:
+    container_name: notification-email-service
+    build:
+      context: ./
+      dockerfile: ./notification-email-service/Dockerfile
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_QUEUE_USER_TO_EMAIL: emailQueue
+      RABBITMQ_EXCHANGE_NAME: emailUserExchange
+      RABBITMQ_ROUTING_USER_TO_EMAIL: emailRoutingKey
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+    networks:
+      - movilidad-sostenible-network
+    depends_on:
+      rabbitmq:
+        condition: service_started
+    restart: always
+
+  notification-realtime-service:
+    container_name: notification-realtime-service
+    build:
+      context: ./
+      dockerfile: ./notification-realtime-service/Dockerfile
+    ports:
+      - "8105:8105"
+    environment:
+      PORT: 8105
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_QUEUE_USER_TO_EMAIL: emailQueue
+      RABBITMQ_EXCHANGE_NAME: emailUserExchange
+      RABBITMQ_ROUTING_USER_TO_EMAIL: emailRoutingKey
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
 
 volumes:
   data-postgres:
     name: data-postgres
+
+  redis_data:
+    name: redis_data
 
 networks:
   movilidad-sostenible-network:

@@ -1,24 +1,24 @@
 /* Color Palette - Light Mode */
 :root {
   /* Light Mode Palette */
-  --color-primary-light: #2E7D32;   
-  --color-accent-light: #FBC02D;     
-  --color-background-light: #FFFFFF; 
-  --color-surface-light: #004e61;  
+  --color-primary-light: #2E7D32;
+  --color-accent-light: #FBC02D;
+  --color-background-light: #FFFFFF;
+  --color-surface-light: #004e61;
   --color-text-primary-light: #000000;
   --color-text-secondary-light: #4A4A4A;
-  --color-border-light: #E0E0E0;     
-  --color-button-text-light: #FFFFFF; 
+  --color-border-light: #E0E0E0;
+  --color-button-text-light: #FFFFFF;
 }
 
 
 [data-theme="dark"] {
   /* Dark Mode Palette */
-  --color-primary-dark: #266629;     
-  --color-accent-dark: #F1C84B;    
-  --color-background-dark: #000000; 
-  --color-surface-dark: #1E2128;     
-  --color-text-primary-dark: #FFFFFF; 
+  --color-primary-dark: #266629;
+  --color-accent-dark: #F1C84B;
+  --color-background-dark: #000000;
+  --color-surface-dark: #1E2128;
+  --color-text-primary-dark: #FFFFFF;
   --color-text-secondary-dark: #B0B0B0;
   --color-border-dark: #333333;
   --color-button-text-dark: #000000;
@@ -148,7 +148,7 @@ textarea:focus {
 h1, h2, h3, h4, h5, h6 {
   color: var(--color-gray-dark);
   margin: 0 0 12px 0;
-  
+
 }
 
 p {
@@ -275,7 +275,7 @@ body[data-theme="dark"] textarea {
   color: var(--color-primary-light);
 }
 
-/* contenido de la página debajo del header */
+/* Page content below header */
 .page-content {
   padding: 2rem;
 }
@@ -283,4 +283,123 @@ i {
   position: static !important;
   font-size: inherit !important;
   z-index: auto !important;
+}
+
+/* ===== Responsive Media Queries ===== */
+
+/* Tablet (max 768px) */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .page-content {
+    padding: 1rem;
+  }
+
+  .header {
+    padding: 0 1rem;
+  }
+
+  .header-menu {
+    gap: 1rem;
+    font-size: 0.95rem;
+  }
+
+  button {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  body {
+    font-size: 14px;
+  }
+}
+
+/* Mobile small (max 480px) */
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+  }
+
+  .page-content {
+    padding: 0.75rem;
+  }
+
+  .header {
+    padding: 0 0.75rem;
+  }
+
+  .header-menu {
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  body {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  /* Improve touch scroll on iOS */
+  body {
+    -webkit-user-select: text;
+    -webkit-touch-callout: inherit;
+  }
+
+  /* Prevent zoom on inputs on iOS */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Improve focus visibility on mobiles */
+  button:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: 2px solid var(--color-primary-light);
+    outline-offset: 2px;
+  }
+}
+
+/* Landscape mode adjustments */
+@media (max-height: 500px) {
+  .header {
+    min-height: auto;
+  }
+
+  .page-content {
+    padding: 0.5rem 1rem;
+  }
+
+  button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Very small screen (max 320px) */
+@media (max-width: 320px) {
+  .container {
+    padding: 0.5rem;
+  }
+
+  .page-content {
+    padding: 0.5rem;
+  }
+
+  button {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  body {
+    font-size: 11px;
+  }
 }

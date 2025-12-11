@@ -9,8 +9,12 @@
     </option>
     <option name="ignoredFiles">
       <set>
-        <option value="$PROJECT_DIR$/email-rabbit-service/pom.xml" />
-        <option value="$PROJECT_DIR$/gateway-service/pom.xml" />
+        <option value="$PROJECT_DIR$/auth-server/pom.xml" />
+        <option value="$PROJECT_DIR$/auth-service/pom.xml" />
+        <option value="$PROJECT_DIR$/database-migrator/pom.xml" />
+        <option value="$PROJECT_DIR$/email-notification-service/pom.xml" />
+        <option value="$PROJECT_DIR$/email-service/pom.xml" />
+        <option value="$PROJECT_DIR$/keycloackAdapter/pom.xml" />
       </set>
     </option>
   </component>

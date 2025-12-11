@@ -1,0 +1,208 @@
+server:
+  port: ${SERVER_PORT:8090}
+  http2:
+    enabled: false
+logging:
+  level:
+    org.springframework.security: trace
+
+spring:
+  application:
+    name: gateway-server
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+#          issuer-uri: http://keycloak:8080/realms/oauth2-movilidadsostenible
+#          jwk-set-uri: https://www.googleapis.com/service_accounts/v1/jwk/securetoken%40system.gserviceaccount.com
+          issuer-uri: https://securetoken.google.com/test-firebase-8217b
+  cloud:
+    gateway:
+      routes:
+
+        - id: usuario-service
+          uri: lb://usuario-service
+          predicates:
+            - Path=/user/**
+          filters:
+            - StripPrefix=1
+
+        - id: admin-service
+          uri: lb://admin-service
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=1
+
+        - id: bicis-service
+          uri: lb://bicis-service
+          predicates:
+            - Path=/bicy/**
+          filters:
+            - StripPrefix=1
+
+        - id: bicycle-fastapi
+          uri: lb://bicycle-service
+          predicates:
+            - Path=/bicycle-fastapi/**
+          filters:
+            - StripPrefix=1
+
+        - id: fine-service
+          uri: lb://fine-service
+          predicates:
+            - Path=/fine/**
+          filters:
+            - StripPrefix=1
+
+        - id: ciudad-service
+          uri: lb://ciudad-service
+          predicates:
+            - Path=/city/**
+          filters:
+            - StripPrefix=1
+
+        - id: email-service
+          uri: lb://email-service
+          predicates:
+            - Path=/email/**
+          filters:
+            - StripPrefix=1
+
+        - id: estaciones-service
+          uri: lb://estaciones-service
+          predicates:
+            - Path=/station/**
+          filters:
+            - StripPrefix=1
+
+        - id: viaje-service
+          uri: lb://viaje-service
+          predicates:
+            - Path=/travel/**
+          filters:
+            - StripPrefix=1
+
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/payment/**
+          filters:
+            - StripPrefix=1
+
+        - id: slots-service
+          uri: lb://slots-service
+          predicates:
+            - Path=/slot/**
+          filters:
+            - StripPrefix=1
+          
+        - id: maintenance-service
+          uri: lb://maintenance-service
+          predicates:
+            - Path=/maintenance/**
+          filters:
+            - StripPrefix=1
+        
+        - id: btnpanic-service
+          uri: lb://btnpanic-service
+          predicates:
+            - Path=/btnpanic/**
+          filters:
+            - StripPrefix=1
+
+        - id: maintenance-service
+          uri: lb://maintenance-service
+          predicates:
+            - Path=/maintenance/**
+          filters:
+            - StripPrefix=1
+
+        - id: btnpanic-service
+          uri: lb://btnpanic-service
+          predicates:
+            - Path=/btnpanic/**
+          filters:
+            - StripPrefix=1
+
+        - id: reports-service
+          uri: lb://reports-service
+          predicates:
+            - Path=/report/**
+          filters:
+            - StripPrefix=1
+
+        - id: complaints-service
+          uri: lb://complaints-service
+          predicates:
+            - Path=/complaints/**
+          filters:
+            - StripPrefix=1
+
+        - id:  notification-realtime-service
+          uri: lb://notification-realtime-service
+          predicates:
+            - Path=/notification/**
+          filters:
+            - StripPrefix=1
+            
+        - id: reports-service
+          uri: lb://reports-service
+          predicates:
+            - Path=/report/**
+          filters:
+            - StripPrefix=1
+
+        - id: complaints-service
+          uri: lb://complaints-service
+          predicates:
+            - Path=/complaints/**
+          filters:
+            - StripPrefix=1
+
+        - id:  notification-realtime-service
+          uri: lb://notification-realtime-service
+          predicates:
+            - Path=/notification/**
+          filters:
+            - StripPrefix=1
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - name: Usuario Service
+        url: /user/v3/api-docs
+      - name: Bicis Service
+        url: /bicy/v3/api-docs
+      - name: Viaje Service
+        url: /travel/v3/api-docs
+      - name: Estaciones Service
+        url: /station/v3/api-docs
+      - name: Ciudad Service
+        url: /city/v3/api-docs
+      - name: Admin Service
+        url: /admin/v3/api-docs
+      - name: Payment Service
+        url: /payment/v3/api-docs
+      - name: Slots Service
+        url: /slot/v3/api-docs
+      - name: Fine Service
+        url: /fine/openapi.json
+      - name: Reports Service
+        url: /report/openapi.json
+      - name: Complaints Service
+        url: /complaints/openapi.json
+    disable-swagger-default-url: true
+    operation-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:eureka-server}:${EUREKA_PORT:8761}/eureka/

@@ -1,0 +1,421 @@
+version: "3.9"
+
+services:
+  eureka-server:
+    image: ${DOCKERHUB_NAMESPACE}/eureka-server:${TAG:-latest}
+    container_name: eureka-server
+    environment:
+      PORT: 8761
+    ports:
+      - "8761:8761"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/eureka/apps"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  gateway-server:
+    image: ${DOCKERHUB_NAMESPACE}/gateway-server:${TAG:-latest}
+    container_name: gateway-server
+    environment:
+      SERVER_PORT: 8090
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    ports:
+      - "8090:8090"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  usuario-service:
+    image: ${DOCKERHUB_NAMESPACE}/usuario-service:${TAG:-latest}
+    container_name: usuario-service
+    environment:
+      PORT: 8100
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${USUARIO_DB_USER}
+      POSTGRES_PASSWORD: ${USUARIO_DB_PASSWORD}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "8001:8100"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  admin-service:
+    image: ${DOCKERHUB_NAMESPACE}/admin-service:${TAG:-latest}
+    container_name: admin-service
+    environment:
+      PORT: 8008
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${ADMIN_DB_USER}
+      POSTGRES_PASSWORD: ${ADMIN_DB_PASSWORD}
+    ports:
+      - "8008:8008"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  bicis-service:
+    image: ${DOCKERHUB_NAMESPACE}/bicis-service:${TAG:-latest}
+    container_name: bicis-service
+    environment:
+      PORT: 8002
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${BICIS_DB_USER}
+      POSTGRES_PASSWORD: ${BICIS_DB_PASSWORD}
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_QOS: 1
+      MQTT_CLIENT_ID: "bicis-service-${HOSTNAME:-local-dev}"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "8002:8002"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  viaje-service:
+    image: ${DOCKERHUB_NAMESPACE}/viaje-service:${TAG:-latest}
+    container_name: viaje-service
+    environment:
+      PORT: 8003
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${VIAJE_DB_USER}
+      POSTGRES_PASSWORD: ${VIAJE_DB_PASSWORD}
+      USUARIO_URL: usuario-service:8100
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_REDIS_HOST: redis-stack
+      SPRING_REDIS_PORT: 6379
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_QOS: 1
+      MQTT_CLIENT_ID: "travel-service-${HOSTNAME:-local-dev}"
+    ports:
+      - "8003:8003"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      usuario-service:
+        condition: service_started
+      notification-realtime-service:
+        condition: service_started
+      notification-email-service:
+        condition: service_started
+      slots-service:
+        condition: service_started
+
+  slots-service:
+    image: ${DOCKERHUB_NAMESPACE}/slots-service:${TAG:-latest}
+    container_name: slots-service
+    environment:
+      PORT: 8004
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${SLOTS_DB_USER}
+      POSTGRES_PASSWORD: ${SLOTS_DB_PASSWORD}
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    ports:
+      - "8004:8004"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      estaciones-service:
+        condition: service_started
+      bicis-service:
+        condition: service_started
+      ciudad-service:
+        condition: service_started
+
+  estaciones-service:
+    image: ${DOCKERHUB_NAMESPACE}/estaciones-service:${TAG:-latest}
+    container_name: estaciones-service
+    environment:
+      PORT: 8005
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${ESTACIONES_DB_USER}
+      POSTGRES_PASSWORD: ${ESTACIONES_DB_PASSWORD}
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      MQTT_BROKER_URL: tcp://mosquitto:1883
+      MQTT_QOS: 1
+      MQTT_CLIENT_ID: "station-service-${HOSTNAME:-local-dev}"
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - "8005:8005"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  ciudad-service:
+    image: ${DOCKERHUB_NAMESPACE}/ciudad-service:${TAG:-latest}
+    container_name: ciudad-service
+    environment:
+      PORT: 8006
+      DB_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${CIUDAD_DB_USER}
+      POSTGRES_PASSWORD: ${CIUDAD_DB_PASSWORD}
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    ports:
+      - "8006:8006"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  payment-service:
+    image: ${DOCKERHUB_NAMESPACE}/payment-service:${TAG:-latest}
+    container_name: payment-service
+    environment:
+      PORT: 8007
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    ports:
+      - "8007:8007"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  fine-service:
+    image: ${DOCKERHUB_NAMESPACE}/fine-service:${TAG:-latest}
+    container_name: fine-service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5003"]
+    environment:
+      SERVICE_PORT: 5003
+      SERVICE_HOST: fine-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: fine-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      USERS_SERVICE_URL: http://usuario-service:8100
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${FINES_DB_USER}
+      POSTGRES_PASSWORD: ${FINES_DB_PASSWORD}
+    ports:
+      - "5003:5003"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      usuario-service:
+        condition: service_started
+
+  reports-service:
+    image: ${DOCKERHUB_NAMESPACE}/reports-service:${TAG:-latest}
+    container_name: reports-service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5004"]
+    environment:
+      SERVICE_PORT: 5004
+      SERVICE_HOST: reports-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: reports-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      USERS_SERVICE_URL: http://usuario-service:8100
+      BICYCLE_SERVICE_URL: http://bicis-service:8002
+      RESERVATIONS_SERVICE_URL: http://viaje-service:8003
+      FINES_SERVICE_URL: http://fine-service:5003
+    ports:
+      - "5004:5004"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      usuario-service:
+        condition: service_started
+      bicis-service:
+        condition: service_started
+      viaje-service:
+        condition: service_started
+      fine-service:
+        condition: service_started
+
+  complaints-service:
+    image: ${DOCKERHUB_NAMESPACE}/complaints-service:${TAG:-latest}
+    container_name: complaints-service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5007"]
+    environment:
+      SERVICE_PORT: 5007
+      SERVICE_HOST: complaints-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: complaints-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${COMPLAINTS_DB_USER}
+      POSTGRES_PASSWORD: ${COMPLAINTS_DB_PASSWORD}
+      TRAVEL_SERVICE_URL: http://viaje-service:8003
+    ports:
+      - "5007:5007"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      viaje-service:
+        condition: service_started
+
+  btnpanic-service:
+    image: ${DOCKERHUB_NAMESPACE}/btnpanic-service:${TAG:-latest}
+    container_name: btnpanic-service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5008"]
+    environment:
+      SERVICE_PORT: 5008
+      SERVICE_HOST: btnpanic-service
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: btnpanic-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${BTN_PANIC_DB_USER}
+      POSTGRES_PASSWORD: ${BTN_PANIC_DB_PASSWORD}
+    ports:
+      - "5008:5008"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+  maintenance-service:
+    image: ${DOCKERHUB_NAMESPACE}/maintenance-service:${TAG:-latest}
+    container_name: maintenance-service
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "5006"]
+    environment:
+      SERVICE_PORT: 5006
+      SERVICE_HOST: maintenance-service
+      EUREKA_HOST: eureka-server
+      LOCK_SERVICE_URL: http://slots-service:8004
+      STATION_SERVICE_URL: http://estaciones-service:8005
+      EUREKA_PORT: 8761
+      EUREKA_APP_NAME: maintenance-service
+      EUREKA_HEARTBEAT_INTERVAL: 30
+      POSTGRES_HOST: postgres17:5432
+      POSTGRES_DB: movilidad_sostenible
+      POSTGRES_USER: ${MANTENIMIENTO_DB_USER}
+      POSTGRES_PASSWORD: ${MANTENIMIENTO_DB_PASSWORD}
+      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672/
+      RABBITMQ_QUEUE: maintenance_tasks
+      RABBITMQ_EXCHANGE: maintenance_exchange
+      RABBITMQ_ROUTING_KEY: maintenance.key
+      RABBITMQ_BINDING_PATTERN: maintenance.#
+    ports:
+      - "5006:5006"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      slots-service:
+        condition: service_started
+      estaciones-service:
+        condition: service_started
+
+  notification-email-service:
+    image: ${DOCKERHUB_NAMESPACE}/notification-email-service:${TAG:-latest}
+    container_name: notification-email-service
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_QUEUE_USER_TO_EMAIL: emailQueue
+      RABBITMQ_EXCHANGE_NAME: emailUserExchange
+      RABBITMQ_ROUTING_USER_TO_EMAIL: emailRoutingKey
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD}
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+
+  notification-realtime-service:
+    image: ${DOCKERHUB_NAMESPACE}/notification-realtime-service:${TAG:-latest}
+    container_name: notification-realtime-service
+    environment:
+      PORT: 8105
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_QUEUE_USER_TO_EMAIL: emailQueue
+      RABBITMQ_EXCHANGE_NAME: emailUserExchange
+      RABBITMQ_ROUTING_USER_TO_EMAIL: emailRoutingKey
+      EUREKA_HOST: eureka-server
+      EUREKA_PORT: 8761
+    ports:
+      - "8105:8105"
+    networks:
+      - movilidad-sostenible-network
+    restart: always
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+
+networks:
+  movilidad-sostenible-network:
+    external: true
+    name: movilidad-sostenible-network

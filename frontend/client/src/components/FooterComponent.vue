@@ -1,12 +1,12 @@
 <template>
-  <!-- Pie de página -->
+  <!-- Footer -->
   <footer class="footer">
     <div class="footer-content">
-      <!-- Enlaces del footer -->
+      <!-- Footer links -->
       <div class="footer-links">
-        <a href="#" class="footer-link">Acerca de</a>
-        <a href="#" class="footer-link">Recursos</a>
-        <a href="#" class="footer-link">Legal</a>
+        <a href="#" class="footer-link">{{ $t('footer.about') }}</a>
+        <a href="#" class="footer-link">{{ $t('footer.resources') }}</a>
+        <a href="#" class="footer-link">{{ $t('footer.legal') }}</a>
       </div>
       <!-- Copyright -->
       <div class="copyright">
@@ -14,14 +14,15 @@
         <i class="fa-brands fa-instagram"></i> ecoride |
         <i class="fa-brands fa-tiktok"></i> ecoride |
 
-        © 2026 ECORIDE
+        {{ $t('footer.copyright') }}
       </div>
     </div>
   </footer>
 </template>
 
 <script setup>
-
+import { useI18n } from 'vue-i18n';
+useI18n();
 </script>
 
 

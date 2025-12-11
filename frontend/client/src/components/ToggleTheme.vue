@@ -1,20 +1,23 @@
 
 <template>
   <button @click="toggleTheme" class="theme-toggle">
-    <img 
-      v-if="isDark" 
-      src="@/assets/icons/dark.webp" 
-      alt="Tema Claro" 
+    <img
+      v-if="isDark"
+      src="@/assets/icons/dark.webp"
+      :alt="$t('common.lightTheme')"
     />
-    <img 
-      v-else 
-      src="@/assets/icons/light.webp" 
-      alt="Tema Oscuro" 
+    <img
+      v-else
+      src="@/assets/icons/light.webp"
+      :alt="$t('common.darkTheme')"
     />
   </button>
 </template>
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t: $t } = useI18n()
 
 const THEME_KEY = 'app-theme'
 
@@ -63,7 +66,7 @@ onMounted(() => {
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-/* ícono */
+/* Icon */
 .theme-toggle img {
   width: 24px;
   height: 24px;

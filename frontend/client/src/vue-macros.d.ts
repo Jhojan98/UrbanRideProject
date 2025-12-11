@@ -5,8 +5,6 @@
  * automáticamente en <script setup> y no requieren importación.
  */
 
-import type { AllowedComponentProps, ComponentCustomProps, ComponentOptionsMixin, DefineComponent, ExtractPropTypes, VNodeProps } from 'vue'
-
 declare global {
   const defineProps: typeof import('vue')['defineProps']
   const defineEmits: typeof import('vue')['defineEmits']

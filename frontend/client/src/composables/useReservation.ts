@@ -1,13 +1,12 @@
 import { ref, computed } from 'vue'
+import type { Station } from '@/models/Station'
 
 interface ReservationData {
   bikeType: string
   rideType: string
-  station?: {
-    name: string
-    available: number
-    status: string
-  }
+  station?: Partial<Station> | null
+  destination?: Partial<Station> | null
+  startResponse?: unknown
 }
 
 const reservationData = ref<ReservationData | null>(null)
@@ -15,6 +14,9 @@ const isReservationActive = ref(false)
 
 export function useReservation() {
   const setReservation = (data: ReservationData) => {
+    console.log('[useReservation] Guardando reserva:', data);
+    console.log('[useReservation] Station guardada:', data.station);
+    console.log('[useReservation] Station idStation:', data.station?.idStation);
     reservationData.value = data
     isReservationActive.value = true
   }
@@ -28,8 +30,8 @@ export function useReservation() {
 
   const getTripType = computed(() => {
     if (!reservationData.value) return 'N/A'
-    return reservationData.value.rideType === 'short_trip' 
-      ? 'Última Milla' 
+    return reservationData.value.rideType === 'short_trip'
+      ? 'Última Milla'
       : 'Recorrido Largo'
   })
 

@@ -1,12 +1,15 @@
 package com.movilidadsostenible.viaje_service.models.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "travel")
+@Data
 public class Travel {
 
     @Id
@@ -15,59 +18,39 @@ public class Travel {
     private Integer idTravel;
 
     @NotNull
-    @Column(name = "f_request_date")
-    private LocalDateTime requestDate;
+    @Column (name = "f_required_at")
+    private LocalDateTime requiredAt;
 
     @NotNull
-    @Column(name = "k_user_cc")
-    private Integer userCc;
+    @Column(name = "f_started_at")
+    private LocalDateTime startedAt;
 
-    @NotNull
+    @Column(name = "f_ended_at")
+    private LocalDateTime endedAt;
+
+    @NotBlank
+    @Column(name = "t_status", length = 50)
+    private String status;
+
+    @NotBlank
+    @Column(name = "k_uid_user")
+    private String uid;
+
+    @NotBlank
     @Column(name = "k_id_bicycle")
-    private Integer idBicycle;
+    private String idBicycle;
 
     @NotNull
-    @Column(name = "k_series")
-    private Integer series;
+    @Column(name = "k_from_id_station")
+    private Integer fromIdStation;
 
-    // Getters and Setters
-    public Integer getIdTravel() {
-        return idTravel;
-    }
+    @Column(name = "k_to_id_station")
+    private Integer toIdStation;
 
-    public void setIdTravel(Integer idTravel) {
-        this.idTravel = idTravel;
-    }
+    @Column(name = "t_travel_type")
+    @NotBlank
+    private String travelType;
 
-    public LocalDateTime getRequestDate() {
-        return requestDate;
-    }
-
-    public void setRequestDate(LocalDateTime requestDate) {
-        this.requestDate = requestDate;
-    }
-
-    public Integer getUserCc() {
-        return userCc;
-    }
-
-    public void setUserCc(Integer userCc) {
-        this.userCc = userCc;
-    }
-
-    public Integer getIdBicycle() {
-        return idBicycle;
-    }
-
-    public void setIdBicycle(Integer idBicycle) {
-        this.idBicycle = idBicycle;
-    }
-
-    public Integer getSeries() {
-        return series;
-    }
-
-    public void setSeries(Integer series) {
-        this.series = series;
-    }
+    @Column(name = "v_travel_cost")
+    private Double travelCost;
 }

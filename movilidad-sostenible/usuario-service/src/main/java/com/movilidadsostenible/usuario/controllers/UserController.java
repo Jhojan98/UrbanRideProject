@@ -1,8 +1,6 @@
 package com.movilidadsostenible.usuario.controllers;
 
-import com.movilidadsostenible.usuario.models.dto.UserDTO;
 import com.movilidadsostenible.usuario.models.entity.User;
-import com.movilidadsostenible.usuario.publisher.UserPublisher;
 import com.movilidadsostenible.usuario.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.*;
 
 @RestController
@@ -27,20 +24,14 @@ public class UserController {
     @Autowired
     private UserService service;
 
-    private final UserPublisher publisher;
-
-    public UserController(UserPublisher publisher) {
-        this.publisher = publisher;
-    }
-
     @GetMapping
     @Operation(summary = "Listar usuarios")
     public List<User> listUsers() {
         return service.listUsers();
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Obtener usuario por id",
+    @GetMapping("/login/{uid}")
+    @Operation(summary = "Obtener usuario por UID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Encontrado",
                             content = @Content(schema = @Schema(implementation = User.class))),
@@ -48,14 +39,10 @@ public class UserController {
             })
     public ResponseEntity<?> getUserById(
             @Parameter(description = "Identificador del usuario", required = true)
-            @PathVariable Integer id) {
-        Optional<User> usuarioOptional = service.byId(id);
-
-        if(usuarioOptional.isPresent()) {
-            return ResponseEntity.ok(usuarioOptional.get());
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+            @PathVariable String uid) {
+        Optional<User> usuarioOptional = service.byId(uid);
+        return usuarioOptional.<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping("/register")
@@ -67,114 +54,146 @@ public class UserController {
             })
     public ResponseEntity<?> createUser(@Valid @RequestBody User user,
                                         BindingResult result) {
-        if (!user.getUserEmail().isEmpty() &&
-                service.byUserEmail(user.getUserEmail()).isPresent()){
-            return ResponseEntity.badRequest()
-                    .body(Collections.singletonMap("mensaje", "Ya!!! existe un user con ese correo electrónico"));
-        }
-
         if (result.hasErrors()) {
             return validate(result);
         }
-
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUserCc(user.getUserCc());
-        userDTO.setUserEmail(user.getUserEmail());
-        userDTO.setVerified(user.getIsVerified());
-        publisher.sendJsonMessage(userDTO);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(service.save(user));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{uid}")
     @Operation(summary = "Actualizar usuario")
     public ResponseEntity<?> updateUser(@Valid @RequestBody User user,
                                         BindingResult result,
-                                        @PathVariable Integer id) {
-
-
+                                        @PathVariable("uid") String uid) {
         if (result.hasErrors()) {
             return validate(result);
         }
-        
-        Optional<User> usuarioOptional = service.byId(id);
-        if(usuarioOptional.isPresent()) {
-            User usuarioDB = usuarioOptional.get();
-
-            if (!user.getUserEmail().isEmpty() &&
-                    !user.getUserEmail().equalsIgnoreCase(usuarioDB.getUserEmail()) &&
-                    service.byUserEmail(user.getUserEmail()).isPresent()){
-                return ResponseEntity.badRequest()
-                        .body(Collections.singletonMap("mensaje", "Ya existe un usuario con ese correo electrónico cambielo"));
-            }
-
-            usuarioDB.setFirstName(user.getFirstName());
-            usuarioDB.setSecondName(user.getSecondName());
-            usuarioDB.setFirstLastname(user.getFirstLastname());
-            usuarioDB.setSecondLastname(user.getSecondLastname());
-            usuarioDB.setUserBirthday(user.getUserBirthday());
-            usuarioDB.setUserEmail(user.getUserEmail());
-            usuarioDB.setSubscriptionType(user.getSubscriptionType());
-            usuarioDB.setUserRegistrationDate(user.getUserRegistrationDate());
-            usuarioDB.setIsVerified(user.getIsVerified());
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(service.save(usuarioDB));
-        } else {
+        Optional<User> usuarioOptional = service.byId(uid);
+        if (usuarioOptional.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
+        User usuarioDB = usuarioOptional.get();
+        // Actualización parcial segura
+        if (user.getUserName() != null) {
+            usuarioDB.setUserName(user.getUserName());
+        }
+        if (user.getSubscriptionType() != null) {
+            usuarioDB.setSubscriptionType(user.getSubscriptionType());
+        }
+        // Si el modelo incluye subcripcionTravels y viene presente, actualizarlo
+        try {
+            Integer travels = user.getSubscriptionTravels();
+            if (travels != null) {
+                usuarioDB.setSubscriptionTravels(travels);
+            }
+        } catch (Exception ignored) {
+            // Campo opcional, omitir si no existe
+        }
+        User saved = service.save(usuarioDB);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar usuario")
-    public ResponseEntity<?> deleteUser(@PathVariable Integer id) {
-        Optional<User> usuarioOptional = service.byId(id);
+    public ResponseEntity<?> deleteUser(@PathVariable String uid) {
+        Optional<User> usuarioOptional = service.byId(uid);
         if (usuarioOptional.isPresent()) {
-            service.delete(id);
+            service.delete(uid);
             return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/{userCc}/verification/resend")
-    @Operation(summary = "Reenviar código de verificación", description = "Genera y envía nuevamente el código de verificación al correo del usuario.",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "OTP reenviado", content = @Content(schema = @Schema(implementation = Map.class))),
-                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
-                    @ApiResponse(responseCode = "409", description = "Usuario ya verificado")
-            })
-    public ResponseEntity<?> resendVerification(
-            @Parameter(description = "Documento del usuario", required = true)
-            @PathVariable Integer userCc) {
-        Optional<User> usuarioOptional = service.byId(userCc);
-        if (usuarioOptional.isEmpty()) {
+    // --- Endpoints de balance ---
+    @GetMapping("/balance/{uid}")
+    @Operation(summary = "Obtener balance de usuario")
+    public ResponseEntity<?> getBalance(@PathVariable("uid") String uidUser) {
+        Double balance = service.getBalance(uidUser);
+        if (balance == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("resent", false, "message", "Usuario no encontrado"));
+                    .body(Map.of("message", "Usuario no encontrado"));
         }
-        User usuario = usuarioOptional.get();
-        if (Boolean.TRUE.equals(usuario.getIsVerified())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(Map.of("resent", false, "message", "El usuario ya está verificado"));
-        }
-        // Publicar nuevamente el mensaje al email-service para regenerar OTP
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUserCc(usuario.getUserCc());
-        userDTO.setUserEmail(usuario.getUserEmail());
-        userDTO.setVerified(false); // sigue sin verificar
-        publisher.sendJsonMessage(userDTO);
-        return ResponseEntity.ok(Map.of(
-                "resent", true,
-                "message", "Se solicitó el reenvío del código de verificación",
-                "userCc", usuario.getUserCc()
-        ));
+        return ResponseEntity.ok(Map.of("uid", uidUser, "balance", balance));
     }
 
+    @PostMapping("/balance/{uid}/add")
+    @Operation(summary = "Agregar saldo al usuario")
+    public ResponseEntity<?> addBalance(@PathVariable("uid") String uidUser,
+                                        @RequestParam("amount") Double amount) {
+        try {
+            Double newBalance = service.addBalance(uidUser, amount);
+            return ResponseEntity.ok(Map.of("uid", uidUser, "balance", newBalance));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/balance/{uid}/subtract")
+    @Operation(summary = "Quitar saldo al usuario")
+    public ResponseEntity<?> subtractBalance(@PathVariable("uid") String uidUser,
+                                             @RequestParam("amount") Double amount) {
+        try {
+            Double newBalance = service.subtractBalance(uidUser, amount);
+            return ResponseEntity.ok(Map.of("uid", uidUser, "balance", newBalance));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/travel/blocked/{uid}")
+    @Operation(summary = "Consultar si el usuario está bloqueado para viajar",
+            description = "Devuelve true si el usuario NO puede viajar (saldo negativo/nulo o multas impagas), false si SÍ puede viajar")
+    public ResponseEntity<?> isBlockedForTravel(
+            @Parameter(description = "UID del usuario", required = true)
+            @PathVariable("uid") String uidUser
+    ) {
+        boolean blocked = service.isUserBlockedForTravel(uidUser);
+        return ResponseEntity.ok(Map.of("uid", uidUser, "blocked", blocked));
+    }
+
+    // --- Cobro de viaje ---
+    @PostMapping("/travel/charge/{uid}")
+    @Operation(summary = "Cobrar viaje al usuario",
+            description = "Cobra el viaje aplicando reglas de suscripción: si es MONTLY descuenta viajes, si es NONE descuenta balance y puede quedar negativo")
+    public ResponseEntity<?> chargeTravel(
+            @Parameter(description = "UID del usuario", required = true)
+            @PathVariable("uid") String uidUser,
+            @Parameter(description = "Valor total del viaje", required = true)
+            @RequestParam("total") Double totalTripValue,
+            @Parameter(description = "Minutos excedentes", required = true)
+            @RequestParam("excessMinutes") Integer excessMinutes
+    ) {
+        try {
+            service.chargeTravel(totalTripValue, excessMinutes, uidUser);
+            return ResponseEntity.ok(Map.of(
+                    "uid", uidUser,
+                    "charged", true
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/subscription/purchase/{uid}")
+    @Operation(summary = "Comprar suscripción mensual",
+            description = "Compra la suscripción MONTHLY: establece subscriptionType='MONTHLY', suma 50 a subscriptionTravels y descuenta 39 del balance.")
+    public ResponseEntity<?> purchaseMonthlySubscription(
+            @Parameter(description = "UID del usuario", required = true)
+            @PathVariable("uid") String uidUser
+    ) {
+        try {
+            User updated = service.purchaseMonthlySubscription(uidUser);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("mensaje", e.getMessage()));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("mensaje", "Error al procesar la compra: " + ex.getMessage()));
+        }
+    }
 
     private ResponseEntity<Map<String, String>> validate(BindingResult result) {
         Map<String,String> errores = new HashMap<>();
-        result.getFieldErrors().forEach(err -> {
-            errores.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage());
-        });
+        result.getFieldErrors().forEach(err -> errores.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errores);
     }
 }

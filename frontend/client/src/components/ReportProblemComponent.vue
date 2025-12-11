@@ -1,156 +1,156 @@
 <template>
   <div class="report-problem">
     <div class="header">
-      <h1>Reportar Problema</h1>
-      <p>Informa sobre cualquier inconveniente con tu bicicleta</p>
+      <h1>{{ $t('report.title') }}</h1>
+      <p>{{ $t('report.subtitle') }}</p>
     </div>
-    
+
     <form @submit.prevent="submitReport" class="report-form">
       <div class="form-section">
-        <h3>Información de la bicicleta</h3>
-        
+        <h3>{{ $t('report.bikeInfo') }}</h3>
+
         <div class="form-group">
-          <label class="label">ID de la bicicleta</label>
-          <input 
+          <label class="label">{{ $t('report.bikeId') }}</label>
+          <input
             v-model="formData.bikeId"
             type="text"
-            placeholder="Ej: BIC-1234"
+            :placeholder="$t('report.bikeIdPlaceholder')"
             class="form-input"
             required
           >
         </div>
-        
+
         <div class="form-group">
-          <label class="label">Estación donde se encuentra</label>
+          <label class="label">{{ $t('report.stationWhere') }}</label>
           <select v-model="formData.stationId" class="form-select" required>
-            <option value="">Seleccionar estación</option>
-            <option 
-              v-for="station in stations" 
-              :key="station.id"
-              :value="station.id"
+            <option value="">{{ $t('report.selectStation') }}</option>
+            <option
+              v-for="station in stations"
+              :key="station.idStation"
+              :value="station.idStation"
             >
-              {{ station.name }}
+              {{ station.nameStation }}
             </option>
           </select>
         </div>
       </div>
-      
+
       <div class="form-section">
-        <h3>Detalles del problema</h3>
-        
+        <h3>{{ $t('report.problemDetails') }}</h3>
+
         <div class="form-group">
-          <label class="label">Tipo de problema</label>
+          <label class="label">{{ $t('report.problemType') }}</label>
           <div class="problem-types">
-            <label 
-              v-for="problem in problemTypes" 
+            <label
+              v-for="problem in problemTypes"
               :key="problem.id"
               class="problem-card"
               :class="{ 'selected': formData.problemType === problem.id }"
             >
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 v-model="formData.problemType"
                 :value="problem.id"
                 class="radio-input"
               >
               <div class="problem-content">
                 <span class="problem-icon">{{ problem.icon }}</span>
-                <span class="problem-name">{{ problem.name }}</span>
+                <span class="problem-name">{{ $t('report.problems.' + problem.id) }}</span>
               </div>
             </label>
           </div>
         </div>
-        
+
         <div class="form-group">
-          <label class="label">Gravedad del problema</label>
+          <label class="label">{{ $t('report.severity') }}</label>
           <div class="severity-levels">
-            <label 
-              v-for="level in severityLevels" 
+            <label
+              v-for="level in severityLevels"
               :key="level.id"
               class="severity-card"
-              :class="{ 
+              :class="{
                 'selected': formData.severity === level.id,
                 [level.id]: true
               }"
             >
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 v-model="formData.severity"
                 :value="level.id"
                 class="radio-input"
               >
               <div class="severity-content">
-                <span class="severity-name">{{ level.name }}</span>
-                <span class="severity-desc">{{ level.description }}</span>
+                <span class="severity-name">{{ $t('report.severityLevels.' + level.id + '.name') }}</span>
+                <span class="severity-desc">{{ $t('report.severityLevels.' + level.id + '.desc') }}</span>
               </div>
             </label>
           </div>
         </div>
-        
+
         <div class="form-group">
-          <label class="label">Descripción detallada</label>
-          <textarea 
+          <label class="label">{{ $t('report.description') }}</label>
+          <textarea
             v-model="formData.description"
-            placeholder="Describe el problema con tanto detalle como sea posible..."
+            :placeholder="$t('report.descriptionPlaceholder')"
             class="form-textarea"
             rows="4"
             required
           ></textarea>
         </div>
-        
+
         <div class="form-group">
-          <label class="label">¿Permite el uso de la bicicleta?</label>
+          <label class="label">{{ $t('report.allowsUse') }}</label>
           <div class="radio-group">
             <label class="radio-label">
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 v-model="formData.allowsUse"
                 :value="false"
                 class="radio-input"
               >
-              <span>No, es peligroso usarla</span>
+              <span>{{ $t('report.noUse') }}</span>
             </label>
             <label class="radio-label">
-              <input 
-                type="radio" 
+              <input
+                type="radio"
                 v-model="formData.allowsUse"
                 :value="true"
                 class="radio-input"
               >
-              <span>Sí, pero con precaución</span>
+              <span>{{ $t('report.yesUse') }}</span>
             </label>
           </div>
         </div>
       </div>
-      
+
       <div class="form-actions">
-        <button 
-          type="button" 
+        <button
+          type="button"
           class="btn-secondary"
           @click="resetForm"
         >
-          Cancelar
+          {{ $t('common.cancel') }}
         </button>
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           class="butn-primary"
           :disabled="loading"
         >
-          {{ loading ? 'Enviando reporte...' : 'Enviar Reporte' }}
+          {{ loading ? $t('report.sending') : $t('report.sendReport') }}
         </button>
       </div>
     </form>
-    
-    <!--confirmación -->
+
+    <!-- Confirmation -->
     <div v-if="showSuccess" class="modal-overlay">
       <div class="modal">
         <div class="modal-content">
           <div class="success-icon">✅</div>
-          <h3>Reporte Enviado</h3>
-          <p>Hemos recibido tu reporte y lo estamos revisando. Te contactaremos si necesitamos más información.</p>
-          <p class="report-id">ID del reporte: <strong>{{ reportId }}</strong></p>
+          <h3>{{ $t('report.successTitle') }}</h3>
+          <p>{{ $t('report.successMsg') }}</p>
+          <p class="report-id">{{ $t('report.reportId') }} <strong>{{ reportId }}</strong></p>
           <button class="butn-primary" @click="closeModal">
-            Aceptar
+            {{ $t('common.accept') }}
           </button>
         </div>
       </div>
@@ -160,6 +160,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { useI18n } from 'vue-i18n';
 
 interface ProblemForm {
   bikeId: string
@@ -174,39 +175,27 @@ const loading = ref(false)
 const showSuccess = ref(false)
 const reportId = ref('')
 
-// Datos de ejemplo
+// Datos de ejemplo - usando modelo Station correcto
 const stations = ref([
-  { id: '1', name: 'Estación Centro' },
-  { id: '2', name: 'Parque Sikuani' },
-  { id: '3', name: 'Zona Universitaria' },
-  { id: '4', name: 'Estación Sur' }
+  { idStation: 1, nameStation: 'Estación Centro' },
+  { idStation: 2, nameStation: 'Parque Sikuani' },
+  { idStation: 3, nameStation: 'Zona Universitaria' },
+  { idStation: 4, nameStation: 'Estación Sur' }
 ])
 
 const problemTypes = ref([
-  { id: 'mechanical', name: 'Problema Mecánico', icon: '🔧' },
-  { id: 'electrical', name: 'Problema Eléctrico', icon: '🔌' },
-  { id: 'brakes', name: 'Frenos', icon: '🛑' },
-  { id: 'tire', name: 'Llantas', icon: '🚲' },
-  { id: 'chain', name: 'Cadena', icon: '⛓️' },
-  { id: 'other', name: 'Otro', icon: '❓' }
+  { id: 'mechanical', icon: '🔧' },
+  { id: 'electrical', icon: '🔌' },
+  { id: 'brakes', icon: '🛑' },
+  { id: 'tire', icon: '🚲' },
+  { id: 'chain', icon: '⛓️' },
+  { id: 'other', icon: '❓' }
 ])
 
 const severityLevels = ref([
-  { 
-    id: 'low', 
-    name: 'Baja', 
-    description: 'Problema menor, no afecta uso' 
-  },
-  { 
-    id: 'medium', 
-    name: 'Media', 
-    description: 'Afecta uso pero es manejable' 
-  },
-  { 
-    id: 'high', 
-    name: 'Alta', 
-    description: 'Problema grave, no usar la bicicleta' 
-  }
+  { id: 'low' },
+  { id: 'medium' },
+  { id: 'high' }
 ])
 
 const formData = reactive<ProblemForm>({
@@ -218,32 +207,33 @@ const formData = reactive<ProblemForm>({
   allowsUse: null
 })
 
+const { t: $t } = useI18n();
 const submitReport = async () => {
   if (loading.value) return
-  
+
   loading.value = true
-  
+
   try {
     // Simular a API
     await new Promise(resolve => setTimeout(resolve, 1500))
-    
+
     // Generar ID de reporte
     reportId.value = 'RP-' + Date.now().toString().slice(-6)
     showSuccess.value = true
-    
-    // se enviaría a la API
+
+    // Would be sent to the API
     console.log('Reporte enviado:', formData)
-    
+
   } catch (error) {
     console.error('Error enviando reporte:', error)
-    alert('Error al enviar el reporte. Intenta nuevamente.')
+    alert($t('report.sendError'))
   } finally {
     loading.value = false
   }
 }
 
 const resetForm = () => {
-  if (confirm('¿Estás seguro de que quieres cancelar? Se perderán los datos del formulario.')) {
+  if (confirm($t('report.cancelConfirm') as string)) {
     formData.bikeId = ''
     formData.stationId = ''
     formData.problemType = ''
@@ -268,12 +258,12 @@ const closeModal = () => {
 
 .header {
   margin-bottom: 30px;
-  
+
   h1 {
     margin: 0 0 8px 0;
     color: #333;
   }
-  
+
   p {
     margin: 0;
     color: #666;
@@ -289,7 +279,7 @@ const closeModal = () => {
 
 .form-section {
   margin-bottom: 30px;
-  
+
   h3 {
     margin: 0 0 20px 0;
     color: #333;
@@ -310,7 +300,7 @@ const closeModal = () => {
   border: 1px solid #ddd;
   border-radius: 8px;
   font-size: 16px;
-  
+
   &:focus {
     outline: none;
     border-color: #007bff;
@@ -336,12 +326,12 @@ const closeModal = () => {
   padding: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
-  
+
   &.selected {
     border-color: #007bff;
     background: #f8fbff;
   }
-  
+
   &:hover {
     border-color: #007bff;
   }
@@ -352,12 +342,12 @@ const closeModal = () => {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  
+
   .problem-icon {
     font-size: 24px;
     margin-bottom: 8px;
   }
-  
+
   .problem-name {
     font-weight: 500;
     color: #333;
@@ -370,7 +360,7 @@ const closeModal = () => {
     font-weight: 600;
     margin-bottom: 4px;
   }
-  
+
   .severity-desc {
     display: block;
     font-size: 12px;
@@ -407,7 +397,7 @@ const closeModal = () => {
   display: flex;
   align-items: center;
   cursor: pointer;
-  
+
   span {
     margin-left: 8px;
   }
@@ -421,7 +411,7 @@ const closeModal = () => {
   border-top: 1px solid #f0f0f0;
 }
 
-// Modal de éxito
+// Success modal
 .modal-overlay {
   position: fixed;
   top: 0;

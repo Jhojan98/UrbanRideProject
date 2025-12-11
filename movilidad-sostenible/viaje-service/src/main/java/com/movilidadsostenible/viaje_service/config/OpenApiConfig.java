@@ -18,7 +18,7 @@ import org.springframework.context.annotation.Configuration;
         ),
         servers = {
                 @Server(url = "http://localhost:8003", description = "Local"),
-                @Server(url = "http://gateway-server:8090", description = "Gateway interno")
+                @Server(url = "http://localhost:8090/travel", description = "Gateway")
         }
 )
 public class OpenApiConfig {

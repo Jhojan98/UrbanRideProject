@@ -7,11 +7,20 @@ import java.util.Optional;
 
 public interface UserService {
     List<User> listUsers();
-    Optional<User> byId(Integer id);
     User save(User user);
-    void delete(Integer id);
+    void delete(String uid);
+    Optional<User> byId(String uidUser);
 
-    Optional<User> byUserEmail(String userEmail);
-    void updateVerificationStatus(Integer userCc, boolean verified);
+    Double getBalance(String uidUser);
+    Double addBalance(String uidUser, Double amount);
+    Double subtractBalance(String uidUser, Double amount);
 
+    // Devuelve true si el usuario NO puede viajar (bloqueado), false si SÍ puede
+    boolean isUserBlockedForTravel(String uidUser);
+
+    // Cobra el viaje aplicando reglas de suscripción.
+    void chargeTravel(Double totalTripValue, Integer excessMinutes, String uidUser);
+
+    // Compra la suscripción mensual
+    User purchaseMonthlySubscription(String uidUser);
 }

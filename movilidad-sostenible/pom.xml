@@ -17,14 +17,17 @@
 
     <modules>
         <module>usuario-service</module>
+        <module>admin-service</module>
         <module>bicis-service</module>
         <module>viaje-service</module>
         <module>eureka-server</module>
         <module>gateway-server</module>
-        <module>email-service</module>
         <module>estaciones-service</module>
         <module>ciudad-service</module>
-        <module>database-migrator</module>
+        <module>payment-service</module>
+        <module>slots-service</module>
+      <module>notification-email-service</module>
+      <module>notification-realtime-service</module>
     </modules>
 
     <properties>
