@@ -99,7 +99,7 @@ onUnmounted(() => {
 Agregar en `frontend/.env`:
 
 ```env
-VUE_APP_WEBSOCKET_URL=wss://localhost:8090/ws/bicis/ws/
+VUE_APP_WEBSOCKET_URL=wss://34.9.26.232:8090/ws/bicis/ws/
 ```
 
 ### Dependencias

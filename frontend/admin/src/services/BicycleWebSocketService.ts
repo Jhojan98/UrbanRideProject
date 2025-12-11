@@ -37,7 +37,7 @@ export class BicycleWebSocketService {
     this.onLocationUpdate = onLocationUpdate;
 
     // Conexión al microservicio de bicicletas
-    const baseUrl = process.env.VUE_APP_WEBSOCKET_BICYCLES_URL || 'http://localhost:8003';
+    const baseUrl = process.env.VUE_APP_WEBSOCKET_BICYCLES_URL || 'http://34.9.26.232:8003';
     const wsUrl = `${baseUrl}/ws`;
     console.log('[Bicycles WS] Conectando a', wsUrl);
 
