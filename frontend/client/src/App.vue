@@ -8,6 +8,9 @@
 
   <!-- Componente de notificaciones global -->
   <NotificationPopup />
+  
+  <!-- Componente de viaje en progreso -->
+  <TripInProgress />
 </template>
 
 <script setup lang="ts">
@@ -18,6 +21,7 @@ import { useActivityTracker } from '@/composables/useActivityTracker'
 import MainLayout from '@/layouts/MainLayout.vue'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import NotificationPopup from '@/components/reservation/NotificationPopup.vue'
+import TripInProgress from '@/components/travel/TripInProgress.vue'
 
 const route = useRoute()
 const router = useRouter()

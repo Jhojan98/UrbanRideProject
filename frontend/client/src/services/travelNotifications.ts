@@ -1,9 +1,19 @@
 import { defineStore } from 'pinia';
 
 export interface NotificationData {
-  type: 'EXPIRED_TRAVEL' | 'START_TRAVEL' | 'END_TRAVEL';
+  type: 'TRAVEL_EXPIRED' | 'TRAVEL_START' | 'TRAVEL_END';
   message: string;
   timestamp: number;
+}
+
+export interface SSEMessage {
+  message: 'TRAVEL_START' | 'TRAVEL_END' | 'TRAVEL_EXPIRED';
+  userId: string;
+  travelId?: string;
+  travelType?: string;
+  stationStartId?: number;
+  stationEndId?: number;
+  slotEndId?: number;
 }
 
 export const useTripStore = defineStore('trip', {
@@ -22,7 +32,32 @@ export const useTripStore = defineStore('trip', {
     heartbeatTimeoutMs: 60000, // si no hay mensajes en 60s, forzar reconnect
     lifecycleListenersAttached: false,
     userUid: null as string | null,
+    // Estado del viaje activo
+    activeTripStartTime: null as number | null,
+    isTripActive: false,
   }),
+
+  getters: {
+    // Duración del viaje en milisegundos
+    tripDuration: (state) => {
+      if (!state.isTripActive || !state.activeTripStartTime) return 0;
+      return Date.now() - state.activeTripStartTime;
+    },
+    
+    // Duración formateada como "HH:MM:SS"
+    formattedTripDuration: (state) => {
+      const startTime = state.activeTripStartTime || parseInt(localStorage.getItem('activeTripStartTime') || '0');
+      if (!startTime) return '00:00:00';
+      
+      const duration = Date.now() - startTime;
+      const seconds = Math.floor(duration / 1000);
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    },
+  },
 
   actions: {
     attachLifecycleListeners() {
@@ -95,6 +130,14 @@ export const useTripStore = defineStore('trip', {
         console.warn('[SSE] No user uid available, cannot connect to SSE');
         return;
       }
+      
+      // Restaurar estado de viaje activo desde localStorage
+      const savedStartTime = localStorage.getItem('activeTripStartTime');
+      if (savedStartTime) {
+        this.activeTripStartTime = parseInt(savedStartTime);
+        this.isTripActive = true;
+        console.log('[SSE] 🔄 Viaje activo restaurado desde localStorage:', savedStartTime);
+      }
 
       try {
         const sseUrl = `${this.baseURL}/notification/sse/connect?uid=${encodeURIComponent(this.userUid)}`;
@@ -145,25 +188,25 @@ export const useTripStore = defineStore('trip', {
             console.log('[SSE] ✅ Heartbeat reset');
 
             // Parsear el mensaje para determinar el tipo
-            const messageStr = data.message || '';
+            const messageStr = (data.message || '').toUpperCase();
             console.log('[SSE] Message string for parsing:', messageStr);
-            console.log('[SSE] Message includes EXPIRED_TRAVEL:', messageStr.includes('EXPIRED_TRAVEL'));
-            console.log('[SSE] Message includes START_TRAVEL:', messageStr.includes('START_TRAVEL'));
-            console.log('[SSE] Message includes END_TRAVEL:', messageStr.includes('END_TRAVEL'));
+            console.log('[SSE] Message includes TRAVEL_EXPIRED:', messageStr.includes('TRAVEL_EXPIRED'));
+            console.log('[SSE] Message includes TRAVEL_END:', messageStr.includes('TRAVEL_END'));
+            console.log('[SSE] Message includes TRAVEL_START:', messageStr.includes('TRAVEL_START'));
 
             let notificationType: NotificationData['type'] | null = null;
 
             // Detectar tipo con precedencia: EXPIRED > END > START
-            // Usar match más estricto para evitar falsos positivos
-            if (messageStr.toUpperCase().includes('EXPIRED_TRAVEL')) {
-              notificationType = 'EXPIRED_TRAVEL';
-              console.log('[SSE] ✅ Notification type detected: EXPIRED_TRAVEL');
-            } else if (messageStr.toUpperCase().includes('END_TRAVEL')) {
-              notificationType = 'END_TRAVEL';
-              console.log('[SSE] ✅ Notification type detected: END_TRAVEL');
-            } else if (messageStr.toUpperCase().includes('START_TRAVEL')) {
-              notificationType = 'START_TRAVEL';
-              console.log('[SSE] ✅ Notification type detected: START_TRAVEL');
+            // Coincidir exactamente con los valores que envía el backend
+            if (messageStr === 'TRAVEL_EXPIRED') {
+              notificationType = 'TRAVEL_EXPIRED';
+              console.log('[SSE] ✅ Notification type detected: TRAVEL_EXPIRED');
+            } else if (messageStr === 'TRAVEL_END') {
+              notificationType = 'TRAVEL_END';
+              console.log('[SSE] ✅ Notification type detected: TRAVEL_END');
+            } else if (messageStr === 'TRAVEL_START') {
+              notificationType = 'TRAVEL_START';
+              console.log('[SSE] ✅ Notification type detected: TRAVEL_START');
             } else {
               console.log('[SSE] ⚠️ No notification type matched in message');
             }
@@ -195,11 +238,11 @@ export const useTripStore = defineStore('trip', {
             const data = JSON.parse(event.data);
             this.resetHeartbeat();
             // Procesar igual que 'mensaje'
-            const messageStr = data.message || '';
+            const messageStr = (data.message || '').toUpperCase();
             let notificationType: NotificationData['type'] | null = null;
-            if (messageStr.includes('EXPIRED_TRAVEL')) notificationType = 'EXPIRED_TRAVEL';
-            else if (messageStr.includes('START_TRAVEL')) notificationType = 'START_TRAVEL';
-            else if (messageStr.includes('END_TRAVEL')) notificationType = 'END_TRAVEL';
+            if (messageStr === 'TRAVEL_EXPIRED') notificationType = 'TRAVEL_EXPIRED';
+            else if (messageStr === 'TRAVEL_START') notificationType = 'TRAVEL_START';
+            else if (messageStr === 'TRAVEL_END') notificationType = 'TRAVEL_END';
 
             if (notificationType) {
               this.showNotification(notificationType, messageStr);
@@ -275,6 +318,20 @@ export const useTripStore = defineStore('trip', {
 
     showNotification(type: NotificationData['type'], message: string) {
       console.log('[SSE] Creating notification object:', { type, message, timestamp: Date.now() });
+      
+      // Manejar estado del viaje según el tipo
+      if (type === 'TRAVEL_START') {
+        this.isTripActive = true;
+        this.activeTripStartTime = Date.now();
+        localStorage.setItem('activeTripStartTime', this.activeTripStartTime.toString());
+        console.log('[SSE] ✅ Viaje INICIADO. Estado: activo');
+      } else if (type === 'TRAVEL_END') {
+        this.isTripActive = false;
+        this.activeTripStartTime = null;
+        localStorage.removeItem('activeTripStartTime');
+        console.log('[SSE] ✅ Viaje TERMINADO. Estado: inactivo');
+      }
+      
       this.notification = {
         type,
         message,
@@ -283,6 +340,7 @@ export const useTripStore = defineStore('trip', {
       this.isVisible = true;
       console.log('[SSE] Notification visibility set to true');
       console.log('[SSE] Current notification state:', this.notification);
+      console.log('[SSE] Trip active:', this.isTripActive);
     },
 
     closeNotification() {

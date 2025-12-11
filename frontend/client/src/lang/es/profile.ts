@@ -61,5 +61,40 @@ export default {
         addBalance: 'Añadir saldo',
         buySubscription: 'Comprar Suscripción',
         currency: 'Moneda'
+    },
+    complaints: {
+        title: 'Reportar Problema',
+        subtitle: 'Cuéntanos sobre cualquier inconveniente que hayas tenido',
+        formTitle: 'Reportar un Problema',
+        formSubtitle: 'Completa el formulario para reportar un inconveniente',
+        descriptionLabel: 'Descripción del problema',
+        descriptionPlaceholder: 'Describe el problema con tanto detalle como sea posible...',
+        typeLabel: 'Tipo de problema',
+        typeOptions: {
+            bicycle: 'Bicicleta',
+            slot: 'Puesto de estacionamiento',
+            station: 'Estación'
+        },
+        travelIdLabel: 'ID del viaje (opcional)',
+        travelIdPlaceholder: 'Ej: 123456',
+        submit: 'Enviar Reporte',
+        submitting: 'Enviando...',
+        success: 'Reporte enviado exitosamente. ID: {id}',
+        errorRequired: 'La descripción es requerida',
+        errorNumeric: 'El ID del viaje debe ser un número válido',
+        submitError: 'Error al enviar el reporte. Intenta nuevamente'
+    },
+    reportsSection: {
+        title: 'Reportes',
+        subtitle: 'Descarga tus reportes en los formatos disponibles',
+        downloadExcel: 'Descargar Excel',
+        downloadPdf: 'Descargar PDF',
+        downloadError: 'Error al descargar el reporte. Intenta nuevamente',
+        cards: {
+            bicycleUsage: 'Uso de Bicicletas',
+            stationDemand: 'Demanda de Estaciones',
+            bicycleDemand: 'Demanda de Bicicletas',
+            dailyTrips: 'Viajes Diarios'
+        }
     }
 };

@@ -109,5 +109,14 @@ export default {
         endTravelMsg: 'Your trip has ended. Details and total amount will be sent to your email',
         defaultNotification: 'Notification',
         closeLabel: 'Close notification'
+    },
+    travel: {
+        inProgress: {
+            title: 'Trip in Progress',
+            duration: 'Duration',
+            status: 'Status',
+            active: 'Active',
+            message: 'Your trip is in progress. Enjoy the ride and return the bike at any available station.'
+        }
     }
 };
