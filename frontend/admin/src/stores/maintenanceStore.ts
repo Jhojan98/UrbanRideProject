@@ -18,7 +18,7 @@ type MaintenancePayload = {
 
 export const useMaintenanceStore = defineStore('maintenance', {
   state: () => ({
-    baseURL:   'api/maintenance',
+    baseURL: '/api/maintenance',
     maintList: [] as Maintenance[],
     loading: false as boolean,
   }),

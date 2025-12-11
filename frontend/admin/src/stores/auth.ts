@@ -30,7 +30,7 @@ export const useAuthStore = defineStore("auth", {
 
     return {
       token,
-      baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8080',
+      baseURL: "/api",
       message: "",
       isVerified,
       pendingVerification: false,
