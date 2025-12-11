@@ -7,7 +7,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Copiar archivo de variables de entorno
+# Copiar archivo de variables de entorno
 COPY .env ./
+
+# Configuración de variables de entorno para build
+ARG VUE_APP_WEBSOCKET_STATIONS_URL
+ENV VUE_APP_WEBSOCKET_STATIONS_URL=$VUE_APP_WEBSOCKET_STATIONS_URL
 
 # Instalar dependencias
 RUN npm install

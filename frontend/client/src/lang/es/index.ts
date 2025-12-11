@@ -8,6 +8,8 @@ import payments from './payments'
 import subscription from './subscription'
 import other from './other'
 
+import travel from './travel'
+
 export default {
     common,
     nav,
@@ -17,5 +19,6 @@ export default {
     reservation,
     payments,
     subscription,
+    travel,
     ...other
 }

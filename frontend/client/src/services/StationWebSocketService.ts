@@ -1,6 +1,6 @@
 import { Client, type IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
-import { type Station } from '@/models/Station';
+import { type Station, type StationTelemetry } from '@/models/Station';
 import { StationFactory } from '@/patterns/StationFlyweight';
 import { useStationStore } from '@/stores/station';
 
@@ -24,11 +24,11 @@ export class StationWebSocketService {
 
   private onUpdate?: (station: Station, factory: StationFactory) => void;
 
-  constructor(factory?: StationFactory){
+  constructor(factory?: StationFactory) {
     this.factory = factory || new StationFactory();
   }
 
-  connect(onUpdate?: (station: Station, factory: StationFactory)=>void){
+  connect(onUpdate?: (station: Station, factory: StationFactory) => void) {
     this.onUpdate = onUpdate;
 
     // Direct connection to stations service (not via gateway)
@@ -66,8 +66,8 @@ export class StationWebSocketService {
     this.client.activate();
   }
 
-  private subscribe(){
-    if(!this.client){ console.error('STOMP not initialized'); return; }
+  private subscribe() {
+    if (!this.client) { console.error('STOMP not initialized'); return; }
 
     // Real-time telemetry: updates bike availability
     this.client.subscribe('/topic/station.update/user', msg => this.handleTelemetry(msg));
@@ -75,15 +75,10 @@ export class StationWebSocketService {
     console.log('[Stations WS] Subscriptions made');
   }
 
-  private handleTelemetry(message: IMessage){
+  private handleTelemetry(message: IMessage) {
     try {
       // Parse telemetry data from /topic/station.update/user
-      const telemetry = JSON.parse(message.body) as {
-        idStation?: number;
-        timestamp?: number;
-        availableElectricBikes?: number;
-        availableMechanicBikes?: number;
-      };
+      const telemetry = JSON.parse(message.body) as StationTelemetry;
 
       const idStation = telemetry.idStation;
       if (!idStation) {
@@ -137,15 +132,15 @@ export class StationWebSocketService {
       }
 
       // Notify listeners
-      if(this.onUpdate){ this.onUpdate(station, this.factory); }
+      if (this.onUpdate) { this.onUpdate(station, this.factory); }
       console.log(`[Stations WS] Telemetry station ${idStation}: ⚡ ${station.electric}, ⚙️ ${station.mechanical}`);
-    } catch(e){
+    } catch (e) {
       console.error('[Stations WS] Error parsing telemetry:', e, 'payload:', message.body);
     }
   }
 
-  disconnect(){
-    if(this.client && this.isConnected){
+  disconnect() {
+    if (this.client && this.isConnected) {
       console.log('[Stations WS] Disconnecting...');
       this.client.deactivate();
     }
@@ -153,9 +148,9 @@ export class StationWebSocketService {
   }
 
   // State helpers
-  getIsConnected(){ return this.isConnected; }
-  getFactory(){ return this.factory; }
-  getStationCount(){ return this.factory.size(); }
+  getIsConnected() { return this.isConnected; }
+  getFactory() { return this.factory; }
+  getStationCount() { return this.factory.size(); }
   getStations(): Station[] { return Array.from(this.stationsCache.values()); }
   getStation(id: number): Station | undefined { return this.stationsCache.get(id); }
 }

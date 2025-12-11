@@ -1,15 +1,20 @@
 <template>
   <Transition name="slide-up">
-    <div v-if="tripStore.isTripActive" class="trip-in-progress">
+    <div v-if="tripStore.isTripActive" class="trip-in-progress" :class="{ 'minimized': isMinimized }">
       <div class="trip-container">
         <div class="trip-header">
           <div class="trip-icon">
             <span class="bike-icon">🚴</span>
           </div>
-          <h2 class="trip-title">{{ $t('travel.inProgress.title') }}</h2>
+          <h2 class="trip-title" v-if="!isMinimized">{{ $t('travel.inProgress.title') }}</h2>
+          <div class="header-controls">
+            <button class="icon-btn minimize-btn" @click="toggleMinimize" :title="isMinimized ? 'Expandir' : 'Minimizar'">
+              {{ isMinimized ? '▲' : '▼' }}
+            </button>
+          </div>
         </div>
 
-        <div class="trip-content">
+        <div class="trip-content" v-show="!isMinimized">
           <div class="trip-info">
             <div class="info-item">
               <span class="info-label">{{ $t('travel.inProgress.duration') }}</span>
@@ -28,6 +33,11 @@
           <div class="trip-message">
             <p>{{ $t('travel.inProgress.message') }}</p>
           </div>
+
+          <!-- Botón provisional para cerrar -->
+          <button class="debug-btn" @click="forceStop">
+           Force Stop (Debug)
+          </button>
         </div>
       </div>
     </div>
@@ -46,8 +56,20 @@ const tripStore = useTripStore();
 const formattedDuration = ref('00:00:00');
 let updateInterval: number | null = null;
 
+// Estado local para minimizar
+const isMinimized = ref(false);
+
 const updateDuration = () => {
   formattedDuration.value = tripStore.formattedTripDuration;
+};
+
+const forceStop = () => {
+  // Use the new forceResetState action which actually clears variables
+  tripStore.forceResetState();
+};
+
+const toggleMinimize = () => {
+  isMinimized.value = !isMinimized.value;
 };
 
 onMounted(() => {
@@ -72,15 +94,22 @@ onUnmounted(() => {
   z-index: 1000;
   max-width: 500px;
   width: 90%;
-  animation: pulse-border 2s infinite;
 }
 
 .trip-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: white; /* Fallback */
+  background: var(--color-background-light, #ffffff);
+  border: 1px solid var(--color-border-light, #e0e0e0);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
-  color: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  color: var(--color-text-primary-light, #333);
+}
+
+[data-theme="dark"] .trip-container {
+  background: var(--color-surface-dark, #1E2128);
+  border-color: var(--color-border-dark, #333);
+  color: var(--color-text-primary-dark, #fff);
 }
 
 .trip-header {
@@ -93,11 +122,12 @@ onUnmounted(() => {
 .trip-icon {
   width: 48px;
   height: 48px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-primary-light, #2E7D32);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: white;
 }
 
 .bike-icon {
@@ -116,9 +146,9 @@ onUnmounted(() => {
 
 .trip-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
-  color: white;
+  color: inherit;
 }
 
 .trip-content {
@@ -134,32 +164,41 @@ onUnmounted(() => {
 }
 
 .info-item {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--color-background-light, #f5f5f5);
   padding: 16px;
   border-radius: 12px;
-  backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
   gap: 8px;
+  border: 1px solid transparent;
+}
+
+[data-theme="dark"] .info-item {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .info-label {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  opacity: 0.9;
+  opacity: 0.7;
   font-weight: 600;
 }
 
 .info-value {
   font-size: 20px;
   font-weight: 700;
+  color: var(--color-primary-light, #2E7D32);
+}
+
+[data-theme="dark"] .info-value {
+  color: var(--color-green-light, #66BB6A);
 }
 
 .time-display {
-  font-family: 'Courier New', monospace;
+  font-family: 'Roboto Mono', monospace; /* More modern than Courier New */
   font-size: 24px;
-  letter-spacing: 2px;
+  letter-spacing: 1px;
 }
 
 .status-active {
@@ -189,27 +228,103 @@ onUnmounted(() => {
 }
 
 .trip-message {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 16px;
-  border-radius: 12px;
+  background: rgba(46, 125, 50, 0.1); /* Light green tint */
+  padding: 12px;
+  border-radius: 8px;
   text-align: center;
-  backdrop-filter: blur(10px);
+  border: 1px dashed var(--color-primary-light, #2E7D32);
+}
+
+[data-theme="dark"] .trip-message {
+  background: rgba(102, 187, 106, 0.1);
+  border-color: var(--color-green-light, #66BB6A);
 }
 
 .trip-message p {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  opacity: 0.95;
+  color: inherit;
 }
 
-@keyframes pulse-border {
-  0%, 100% {
-    filter: drop-shadow(0 0 0 transparent);
-  }
-  50% {
-    filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.6));
-  }
+.debug-btn {
+  background: #f44336; /* Red for debug/stop */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  align-self: center;
+  margin-top: 10px;
+  opacity: 0.8;
+  transition: opacity 0.3s;
+}
+
+.debug-btn:hover {
+  opacity: 1;
+}
+
+.header-controls {
+  margin-left: auto;
+}
+
+.icon-btn {
+  background: transparent;
+  border: 1px solid var(--color-border-light, #e0e0e0);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-primary-light, #333);
+  transition: all 0.2s;
+}
+
+[data-theme="dark"] .icon-btn {
+  border-color: var(--color-border-dark, #333);
+  color: var(--color-text-primary-dark, #fff);
+}
+
+.icon-btn:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] .icon-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.trip-in-progress.minimized {
+  width: auto;
+  left: auto;
+  right: 20px;
+  transform: none;
+}
+
+.minimized .trip-container {
+  padding: 12px;
+  border-radius: 50px;
+}
+
+.minimized .trip-header {
+  margin-bottom: 0;
+  gap: 10px;
+}
+
+.minimized .trip-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.minimized .bike-icon {
+  font-size: 18px;
+}
+
+.minimized .trip-title, 
+.minimized .trip-content {
+  display: none;
 }
 
 /* Transición de entrada/salida */
@@ -240,15 +355,7 @@ onUnmounted(() => {
   }
 
   .trip-title {
-    font-size: 20px;
-  }
-
-  .trip-info {
-    grid-template-columns: 1fr;
-  }
-
-  .info-item {
-    padding: 12px;
+    font-size: 18px;
   }
 
   .time-display {

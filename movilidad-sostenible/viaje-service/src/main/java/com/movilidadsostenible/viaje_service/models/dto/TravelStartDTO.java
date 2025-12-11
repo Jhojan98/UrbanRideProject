@@ -10,4 +10,5 @@ public class TravelStartDTO {
   private Integer stationStartId;
   private Integer stationEndId;
   private String SlotEndId;
+  private String message;
 }

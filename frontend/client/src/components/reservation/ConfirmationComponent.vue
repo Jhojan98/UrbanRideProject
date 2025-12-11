@@ -41,19 +41,13 @@
     <Transition name="fade">
       <div v-if="showSuccessModal" class="success-modal-overlay">
         <div class="success-modal">
-          <div class="success-icon">✓</div>
-          <h2>{{ $t('reservation.confirmation.tripFinished') }}</h2>
+          <div class="success-icon">🚲</div>
+          <h2>{{ $t('reservation.confirmation.tripStarted') || '¡Viaje Iniciado!' }}</h2>
           <div class="success-message">
-            <p>{{ $t('reservation.confirmation.tripRegistered') }}</p>
-            <p class="cost-info">
-              💳 <strong>{{ $t('reservation.confirmation.charge') }} {{ tripDetails.estimatedCost }}</strong>
-            </p>
-            <p class="email-info">
-              📧 {{ $t('reservation.confirmation.emailReceipt') }}
-            </p>
+            <p>{{ $t('reservation.confirmation.enjoyRide') || 'Disfruta tu viaje. Tu tiempo ha comenzado.' }}</p>
           </div>
           <button class="butn-primary" @click="() => { clearReservation(); router.push('/'); }">
-            {{ $t('reservation.confirmation.backHome') }}
+            {{ $t('common.continue') || 'Continuar' }}
           </button>
         </div>
       </div>
@@ -142,7 +136,7 @@ interface ProblemForm {
 
 const router = useRouter();
 const { t: $t } = useI18n();
-const { hasActiveReservation, getTripType, getEstimatedCost, getBikeType, clearReservation, reservationData } = useReservation();
+const { hasActiveReservation, getTripType, getEstimatedCost, getBikeType, clearReservation, reservationData, getReservationStartTime } = useReservation();
 const travelStore = useTravelStore();
 const supportStore = useSupportStore();
 
@@ -178,26 +172,25 @@ const formatTime = (seconds: number): string => {
 };
 
 const startTimer = () => {
-  if (timerInterval) {
-    clearInterval(timerInterval);
-  }
+  if (timerInterval) clearInterval(timerInterval);
 
-  currentTime.value = startTime;
-  timeLeft.value = formatTime(startTime);
+  const updateTime = () => {
+    const startedAt = getReservationStartTime.value ?? Date.now();
+    const elapsed = Math.floor((Date.now() - startedAt) / 1000);
+    const remaining = Math.max(0, startTime - elapsed);
 
-  timerInterval = setInterval(() => {
-    if (currentTime.value > 0) {
-      currentTime.value--;
-      timeLeft.value = formatTime(currentTime.value);
-    } else {
-      if (timerInterval) {
-        clearInterval(timerInterval);
-      }
+    currentTime.value = remaining;
+    timeLeft.value = formatTime(remaining);
+
+    if (remaining <= 0) {
+      if (timerInterval) clearInterval(timerInterval);
       clearReservation();
-      // Redirigir cuando se acabe el tiempo
       router.push('/');
     }
-  }, 1000);
+  };
+
+  updateTime(); // Initial update
+  timerInterval = window.setInterval(updateTime, 1000);
 };
 
 const closeProblemModal = () => {

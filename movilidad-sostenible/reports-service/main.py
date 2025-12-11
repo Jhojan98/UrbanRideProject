@@ -129,7 +129,7 @@ async def health_check():
 
 
 
-@app.get("/api/admin/overview.xlsx", tags=["Reports", "Admin"])
+@app.get("/admin/overview.xlsx", tags=["Reports", "Admin"])
 async def admin_overview_excel(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -150,7 +150,7 @@ async def admin_overview_excel(lang: str = "es"):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/api/admin/overview.pdf", tags=["Reports", "Admin"])
+@app.get("/admin/overview.pdf", tags=["Reports", "Admin"])
 async def admin_overview_pdf(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -175,7 +175,7 @@ async def admin_overview_pdf(lang: str = "es"):
 
 
 
-@app.get("/api/users/{user_id}/dashboard.xlsx", tags=["Reports", "Users"])
+@app.get("/users/{user_id}/dashboard.xlsx", tags=["Reports", "Users"])
 async def user_dashboard_excel(user_id: str, lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -198,7 +198,7 @@ async def user_dashboard_excel(user_id: str, lang: str = "es"):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/api/users/{user_id}/dashboard.pdf", tags=["Reports", "Users"])
+@app.get("/users/{user_id}/dashboard.pdf", tags=["Reports", "Users"])
 async def user_dashboard_pdf(user_id: str, lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -223,7 +223,7 @@ async def user_dashboard_pdf(user_id: str, lang: str = "es"):
 
 
 
-@app.get("/api/reports/bicycle-usage.xlsx", tags=["Reports"])
+@app.get("/bicycle-usage.xlsx", tags=["Reports"])
 async def report_bicycle_usage_excel(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -240,7 +240,7 @@ async def report_bicycle_usage_excel(lang: str = "es"):
         logging.error("Error generating bicycle usage excel: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/api/reports/bicycle-usage.pdf", tags=["Reports"])
+@app.get("/bicycle-usage.pdf", tags=["Reports"])
 async def report_bicycle_usage_pdf(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -260,7 +260,7 @@ async def report_bicycle_usage_pdf(lang: str = "es"):
 
 
 
-@app.get("/api/reports/station-demand.xlsx", tags=["Reports"])
+@app.get("/station-demand.xlsx", tags=["Reports"])
 async def report_station_demand_excel(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -277,7 +277,7 @@ async def report_station_demand_excel(lang: str = "es"):
         logging.error("Error generating station demand excel: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/api/reports/station-demand.pdf", tags=["Reports"])
+@app.get("/station-demand.pdf", tags=["Reports"])
 async def report_station_demand_pdf(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -297,7 +297,7 @@ async def report_station_demand_pdf(lang: str = "es"):
 
 
 
-@app.get("/api/reports/service-demand.xlsx", tags=["Reports"])
+@app.get("/service-demand.xlsx", tags=["Reports"])
 async def report_service_demand_excel(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -314,7 +314,7 @@ async def report_service_demand_excel(lang: str = "es"):
         logging.error("Error generating service demand excel: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/api/reports/service-demand.pdf", tags=["Reports"])
+@app.get("/service-demand.pdf", tags=["Reports"])
 async def report_service_demand_pdf(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -334,7 +334,7 @@ async def report_service_demand_pdf(lang: str = "es"):
 
 
 
-@app.get("/api/reports/bicycle-demand.xlsx", tags=["Reports"])
+@app.get("/bicycle-demand.xlsx", tags=["Reports"])
 async def report_bicycle_demand_excel(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -351,7 +351,7 @@ async def report_bicycle_demand_excel(lang: str = "es"):
         logging.error("Error generating bicycle demand excel: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/api/reports/bicycle-demand.pdf", tags=["Reports"])
+@app.get("/bicycle-demand.pdf", tags=["Reports"])
 async def report_bicycle_demand_pdf(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -371,7 +371,7 @@ async def report_bicycle_demand_pdf(lang: str = "es"):
 
 
 
-@app.get("/api/reports/daily-trips.xlsx", tags=["Reports"])
+@app.get("/daily-trips.xlsx", tags=["Reports"])
 async def report_daily_trips_excel(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -388,7 +388,7 @@ async def report_daily_trips_excel(lang: str = "es"):
         logging.error("Error generating daily trips excel: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/api/reports/daily-trips.pdf", tags=["Reports"])
+@app.get("/daily-trips.pdf", tags=["Reports"])
 async def report_daily_trips_pdf(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -408,7 +408,7 @@ async def report_daily_trips_pdf(lang: str = "es"):
 
 
 
-@app.get("/api/reports/maintenances.xlsx", tags=["Reports"])
+@app.get("/maintenances.xlsx", tags=["Reports"])
 async def report_maintenances_excel(lang: str = "es"):
     aggregator = ReportAggregator()
     try:
@@ -426,7 +426,7 @@ async def report_maintenances_excel(lang: str = "es"):
         logging.error("Error generating maintenances excel: %s", e)
         raise HTTPException(status_code=500, detail="Internal server error")
 
-@app.get("/api/reports/maintenances.pdf", tags=["Reports"])
+@app.get("/maintenances.pdf", tags=["Reports"])
 async def report_maintenances_pdf(lang: str = "es"):
     aggregator = ReportAggregator()
     try:

@@ -10,6 +10,7 @@ interface ReservationData {
 }
 
 const reservationData = ref<ReservationData | null>(null)
+const reservationStartTime = ref<number | null>(null)
 const isReservationActive = ref(false)
 
 export function useReservation() {
@@ -18,11 +19,13 @@ export function useReservation() {
     console.log('[useReservation] Station guardada:', data.station);
     console.log('[useReservation] Station idStation:', data.station?.idStation);
     reservationData.value = data
+    reservationStartTime.value = Date.now()
     isReservationActive.value = true
   }
 
   const clearReservation = () => {
     reservationData.value = null
+    reservationStartTime.value = null
     isReservationActive.value = false
   }
 
@@ -57,6 +60,7 @@ export function useReservation() {
     clearReservation,
     getTripType,
     getEstimatedCost,
-    getBikeType
+    getBikeType,
+    getReservationStartTime: computed(() => reservationStartTime.value)
   }
 }

@@ -104,3 +104,13 @@ export function toStation(dto: StationDTO): Station {
     slots: dto.slots?.map(toSlot)
   };
 }
+
+/**
+ * Telemetry data received via WebSocket
+ */
+export interface StationTelemetry {
+  idStation?: number;
+  timestamp?: number;
+  availableElectricBikes?: number;
+  availableMechanicBikes?: number;
+}

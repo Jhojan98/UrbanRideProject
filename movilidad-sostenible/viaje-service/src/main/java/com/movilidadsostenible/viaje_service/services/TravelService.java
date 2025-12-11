@@ -14,4 +14,6 @@ public interface TravelService {
 
     // Metodo para obtener un viaje a partir del bicycleId y que el t_status esté en "IN_PROGRESS"
     Optional<Travel> findFirstByIdBicycleAndStatus(String idBicycle, String status);
+
+    Optional<Travel> findActiveTravelByUid(String uid);
 }

@@ -43,18 +43,18 @@ export const useTripStore = defineStore('trip', {
       if (!state.isTripActive || !state.activeTripStartTime) return 0;
       return Date.now() - state.activeTripStartTime;
     },
-    
+
     // Duración formateada como "HH:MM:SS"
     formattedTripDuration: (state) => {
       const startTime = state.activeTripStartTime || parseInt(localStorage.getItem('activeTripStartTime') || '0');
       if (!startTime) return '00:00:00';
-      
+
       const duration = Date.now() - startTime;
       const seconds = Math.floor(duration / 1000);
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
       const secs = seconds % 60;
-      
+
       return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     },
   },
@@ -130,7 +130,7 @@ export const useTripStore = defineStore('trip', {
         console.warn('[SSE] No user uid available, cannot connect to SSE');
         return;
       }
-      
+
       // Restaurar estado de viaje activo desde localStorage
       const savedStartTime = localStorage.getItem('activeTripStartTime');
       if (savedStartTime) {
@@ -318,7 +318,7 @@ export const useTripStore = defineStore('trip', {
 
     showNotification(type: NotificationData['type'], message: string) {
       console.log('[SSE] Creating notification object:', { type, message, timestamp: Date.now() });
-      
+
       // Manejar estado del viaje según el tipo
       if (type === 'TRAVEL_START') {
         this.isTripActive = true;
@@ -331,7 +331,7 @@ export const useTripStore = defineStore('trip', {
         localStorage.removeItem('activeTripStartTime');
         console.log('[SSE] ✅ Viaje TERMINADO. Estado: inactivo');
       }
-      
+
       this.notification = {
         type,
         message,
@@ -369,6 +369,37 @@ export const useTripStore = defineStore('trip', {
       }
       console.log('[SSE] ✅ Disconnected successfully');
       console.log('═══════════════════════════════════════════');
+    },
+
+    async forceResetState() {
+      console.log('[SSE] ⚠️ FORCE RESETTING TRIP STATE');
+
+      // Try to notify backend to close trip
+      if (this.userUid) {
+        try {
+          // Assuming via-service is reachable at /api/travel (gateway routed)
+          // Adjust base URL if needed. Default baseURL in state is '/api' or '/api/travel' ?
+          // state.baseURL is '/api'. So travel endpoint is '/api/travel'
+          const response = await fetch('/api/travel/force-finish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: this.userUid })
+          });
+          console.log('[SSE] Backend force finish response:', response.status);
+        } catch (e) {
+          console.error('[SSE] Failed to call backend force finish:', e);
+        }
+      }
+
+      this.disconnect();
+      this.isTripActive = false;
+      this.activeTripStartTime = null;
+      this.message = '';
+      this.notification = null;
+      this.isVisible = false;
+      localStorage.removeItem('activeTripStartTime');
+      // Force reload to clear any other lingering state if needed, or just let the user continue
+      // window.location.reload(); 
     },
 
     getConnectionStatus() {

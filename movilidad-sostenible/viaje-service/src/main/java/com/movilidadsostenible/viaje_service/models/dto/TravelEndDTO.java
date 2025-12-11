@@ -9,5 +9,6 @@ public class TravelEndDTO {
   private String travelType;
   private Integer stationStartId;
   private Integer stationEndId;
+  private String message;
 
 }

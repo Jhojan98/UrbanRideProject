@@ -59,4 +59,10 @@ public class TravelServiceImpl implements TravelService {
         return repository.findFirstByIdBicycleAndStatus(idBicycle, status);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Travel> findActiveTravelByUid(String uid) {
+        return repository.findFirstByUidAndStatus(uid, "IN_PROGRESS");
+    }
+
 }

@@ -225,6 +225,7 @@ public class TravelController {
         travelStartDTO.setStationEndId(req.getStationEndId());
         travelStartDTO.setSlotStartId(slotId);
         travelStartDTO.setTravelType(travelType);
+        travelStartDTO.setMessage("TRAVEL_RESERVATION");
 
         travelPublisher.sendJsonTravelReservationMessage(travelStartDTO);
 
@@ -309,6 +310,7 @@ public class TravelController {
           travelStartDTO.setStationEndId(dto.getStationEndId());
           travelStartDTO.setSlotEndId(dto.getSlotEndId());
           travelStartDTO.setTravelType(dto.getTravelType());
+          travelStartDTO.setMessage("TRAVEL_START");
 
           travelPublisher.sendJsonTravelStartMessage(travelStartDTO);
 
@@ -349,5 +351,25 @@ public class TravelController {
             errors.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage());
         });
         return ResponseEntity.badRequest().body(errors);
+    }
+
+    @PostMapping("/force-finish")
+    @Operation(summary = "Forzar finalización de viaje", description = "Finaliza el viaje en curso de un usuario. Útil para debug o problemas de sincronización.")
+    public ResponseEntity<?> forceFinishTravel(@RequestBody Map<String, String> body) {
+        String uid = body.get("uid");
+        if (uid == null || uid.isEmpty()) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("mensaje", "Uid es requerido"));
+        }
+
+        Optional<Travel> travelOpt = service.findActiveTravelByUid(uid);
+        if (travelOpt.isPresent()) {
+            Travel travel = travelOpt.get();
+            travel.setEndedAt(LocalDateTime.now());
+            travel.setStatus("FINISHED");
+            service.save(travel);
+            return ResponseEntity.ok(Collections.singletonMap("mensaje", "Viaje finalizado forzosamente"));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap("mensaje", "No se encontró viaje activo para el usuario"));
+        }
     }
 }

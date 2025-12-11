@@ -237,6 +237,7 @@ public class MqttSubscriber implements MqttCallbackExtended {
             travelEndDTO.setTravelType(travel.getTravelType());
             travelEndDTO.setStationStartId(travel.getFromIdStation());
             travelEndDTO.setStationEndId(travel.getToIdStation());
+            travelEndDTO.setMessage("TRAVEL_END");
 
             travelPublisher.sendJsonTravelEndMessage(travelEndDTO);
 

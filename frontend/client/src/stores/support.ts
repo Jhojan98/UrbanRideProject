@@ -4,7 +4,7 @@ import type { ComplaintPayload, ComplaintResponse } from "@/models/Complaint";
 export const useSupportStore = defineStore("support", {
   state: () => ({
     complaintsBaseURL: '/api/complaints',
-    reportsBaseURL: '/api/reports',
+    reportsBaseURL: '/api/report/api/reports',
     loading: false,
     error: null as string | null,
     lastComplaint: null as ComplaintResponse | null,

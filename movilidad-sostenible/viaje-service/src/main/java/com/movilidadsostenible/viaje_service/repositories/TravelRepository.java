@@ -12,4 +12,7 @@ public interface TravelRepository extends CrudRepository<Travel, Integer> {
 
     // Metodo para obtener un viaje a partir del bicleID y que el t_satatus este en "IN_PROGRESS"
     Optional<Travel> findFirstByIdBicycleAndStatus(String idBicycle, String tStatus);
+
+    // Get active trip by user UID
+    Optional<Travel> findFirstByUidAndStatus(String uid, String status);
 }

@@ -272,6 +272,11 @@ function renderStationsFromStore() {
     return false
   }
 
+  if (!map.value || !isMounted.value) {
+    console.warn('[Map] Map not initialized or component unmounted, skipping render')
+    return false
+  }
+
   console.log('[Map] Renderizando estaciones del store (StationFactory):', stations.length)
 
   stations.forEach(s => {
