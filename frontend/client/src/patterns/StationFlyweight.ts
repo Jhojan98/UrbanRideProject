@@ -96,10 +96,12 @@ export class StationMarker {
 
   private popupHtml(): string {
     const s = this.station;
-    const total = s.totalSlots && s.totalSlots > 0 ? s.totalSlots : 1;
-    const pctNumber = (s.availableSlots/total)*100;
+    // Asegurar que totalSlots es siempre 15 (número de slots por estación)
+    const total = s.totalSlots && s.totalSlots > 0 ? s.totalSlots : 15;
+    const available = s.availableSlots ?? 0;
+    const pctNumber = (available / total) * 100;
     const pct = pctNumber.toFixed(0);
-    const color = s.availableSlots===0? '#757575': pctNumber>50? '#4caf50': pctNumber>20? '#ff9800': '#f44336';
+    const color = available === 0 ? '#757575' : pctNumber > 50 ? '#4caf50' : pctNumber > 20 ? '#ff9800' : '#f44336';
 
     // Use i18n if available, otherwise fallback to hardcoded strings
     const t = this.t || ((key: string) => key);
@@ -120,7 +122,7 @@ export class StationMarker {
     return `<div style='font-family:Arial;min-width:200px;max-width:280px'>
       <h4 style='margin:0 0 4px 0;color:#2c3e50;border-bottom:2px solid ${color};padding-bottom:3px;font-size:13px'>${(s as any).type === 'metro' ? '🚇' : '🅿️'} ${s.nameStation}</h4>
       <div style='font-size:11px;color:#444;margin-bottom:5px'>
-        <strong>${t('reservation.map.popup.available')}:</strong> <span style='color:${color};font-weight:bold'>${s.availableSlots}</span>/<span>${s.totalSlots}</span>
+        <strong>${t('reservation.map.popup.available')}:</strong> <span style='color:${color};font-weight:bold'>${available}</span>/<span>${total}</span>
         <span style='background:${color};color:#fff;padding:1px 4px;border-radius:3px;font-size:10px;margin-left:4px'>${pct}%</span>
         <div style='margin-top:2px;font-size:9px;color:#666'>Lat: ${s.latitude.toFixed(5)} | Lon: ${s.longitude.toFixed(5)}</div>
       </div>

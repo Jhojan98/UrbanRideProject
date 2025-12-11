@@ -48,6 +48,7 @@
       <div class="auth-buttons">
         <template v-if="showAuthButtons">
           <router-link :to="{ name: 'login' }" class="btn-primary">{{ $t('nav.login') }}</router-link>
+          <router-link :to="{ name: 'signup' }" class="btn-primary">{{ $t('nav.signup') }}</router-link>
         </template>
         <button v-if="showLogoutButton" @click="logout" class="btn-primary btn-logout">
           {{ $t('nav.logout') }}

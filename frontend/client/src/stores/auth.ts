@@ -50,44 +50,52 @@ const userAuth = defineStore("auth", {
       return new Promise<void>((resolve) => {
         const auth = getAuth();
 
-        // Restore token and uid from localStorage if they exist
+        // Restaurar token y uid desde localStorage si existen
+        // Esto se usa solo para persistencia entre recargas, NO guarda nuevos tokens
         const savedToken = localStorage.getItem('authToken');
         const savedUid = localStorage.getItem('authUid');
-        if (savedToken) {
+        if (savedToken && savedUid) {
           this.token = savedToken;
-          console.log('Token restored from localStorage');
-        }
-        if (savedUid) {
           this.uid = savedUid;
-          console.log('Uid restored from localStorage');
+          console.log('[Auth] Token and uid restored from localStorage');
         }
 
-        // Listen for authentication state changes in Firebase
+        // Escuchar cambios en el estado de autenticación de Firebase
+        // Este listener verifica si la sesión de Firebase sigue siendo válida
         onAuthStateChanged(auth, async (user) => {
           if (user) {
-            // Authenticated user
+            // Usuario autenticado en Firebase
             try {
               const token = await user.getIdToken();
               this.token = token;
               this.uid = user.uid;
               this.isVerified = user.emailVerified;
 
-              // Save token and uid in localStorage
-              localStorage.setItem('authToken', token);
-              localStorage.setItem('authUid', user.uid);
-              console.log('Token and uid saved in localStorage');
+              // SOLO guardar en localStorage si no hay un token guardado previamente
+              // o si el token ha cambiado (lo que indica un nuevo login)
+              const existingToken = localStorage.getItem('authToken');
+              if (!existingToken || existingToken !== token) {
+                localStorage.setItem('authToken', token);
+                localStorage.setItem('authUid', user.uid);
+                console.log('[Auth] Token and uid saved in localStorage (new or refreshed)');
+              } else {
+                console.log('[Auth] Token already in localStorage, skipping save');
+              }
             } catch (error) {
-              console.error('Error getting token:', error);
+              console.error('[Auth] Error getting token:', error);
               this.token = null;
               this.uid = null;
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('authUid');
             }
           } else {
-            // User not authenticated
+            // Usuario NO autenticado
             this.token = null;
             this.uid = null;
             this.isVerified = false;
             localStorage.removeItem('authToken');
             localStorage.removeItem('authUid');
+            console.log('[Auth] User logged out, localStorage cleared');
           }
 
           this.authStateInitialized = true;
@@ -219,13 +227,12 @@ const userAuth = defineStore("auth", {
         // Get Firebase token
         const token = await userCredential.user.getIdToken();
 
-        console.log("=== SENDING DATA TO BACKEND (LOGIN) ===");
-        console.log("email:", email);
-        console.log("token:", token ? "Token obtained" : "No token");
-        console.log(token);
-        console.log("=========================================");
+        console.log("[Auth] === LOGIN ATTEMPT ===");
+        console.log("[Auth] email:", email);
+        console.log("[Auth] uid:", userCredential.user.uid);
+        console.log("[Auth] token obtained:", !!token);
 
-        // Send credentials to backend
+        // Send credentials to backend for validation
         const uri = `${this.baseURL}/user/login/${userCredential.user.uid}`;
         const rawResponse = await fetch(uri, {
           method: "GET",
@@ -237,40 +244,56 @@ const userAuth = defineStore("auth", {
 
         if (!rawResponse.ok) {
           console.error(
-            "HTTP error from backend (login):",
+            "[Auth] Backend validation failed:",
             rawResponse.status,
             rawResponse.statusText
           );
           this.message = `Error validating with backend: ${rawResponse.statusText}`;
+
+          // Login failed: clear any stored tokens
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('authUid');
+          this.token = null;
+          this.uid = null;
+
           return { success: false };
         }
 
         const response = await rawResponse.json();
-        console.log("Response from backend (login):", response);
+        console.log("[Auth] Backend validation successful");
 
+        // LOGIN SUCCESSFUL - Update state
         this.token = token;
+        this.uid = userCredential.user.uid;
         this.isVerified = true;
         this.pendingVerification = false;
         this.message = "Login successful";
 
-        // Save token in localStorage for persistence
+        // ONLY save token in localStorage after successful login
         localStorage.setItem('authToken', token);
-        console.log('Token saved in localStorage after login');
+        localStorage.setItem('authUid', userCredential.user.uid);
+        console.log('[Auth] Token and uid SAVED in localStorage after successful login');
 
         // Initialize lastActivity timestamp
         const now = Date.now().toString();
         localStorage.setItem('lastActivity', now);
         this.lastActivity = Date.now();
 
+        console.log("[Auth] === LOGIN SUCCESSFUL ===");
         return { success: true, userData: response };
       } catch (error: unknown) {
-        console.error("Error en login:", error);
+        console.error("[Auth] Login error:", error);
 
         const firebaseError = error as { code?: string };
+        console.error("[Auth] Error code:", firebaseError.code);
 
-        console.error("Código de error:", firebaseError.code);
-
+        // Clear any partial state on error
         this.token = null;
+        this.uid = null;
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUid');
+
+        console.log("[Auth] === LOGIN FAILED ===");
         return { success: false };
       }
     },

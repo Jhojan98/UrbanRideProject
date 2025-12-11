@@ -1,8 +1,8 @@
 <template>
   <header class="header">
     <div class="header-content">
-      <button 
-        :class="['hamburger-menu', { active: menuOpen }]" 
+      <button
+        :class="['hamburger-menu', { active: menuOpen }]"
         @click="menuOpen = !menuOpen"
         aria-label="Toggle menu"
       >
@@ -39,29 +39,29 @@
       </div>
     </div>
     <nav v-if="authStore.token" v-show="menuOpen" class="mobile-nav active">
-      <router-link 
-        :to="{name: 'stationsDashboard'}" 
+      <router-link
+        :to="{name: 'stationsDashboard'}"
         class="nav-link"
         @click="menuOpen = false"
       >
         Dashboard de Estaciones
       </router-link>
-      <router-link 
-        :to="{name: 'usersDashboard'}" 
+      <router-link
+        :to="{name: 'usersDashboard'}"
         class="nav-link"
         @click="menuOpen = false"
       >
         Dashboard de Usuarios
       </router-link>
-      <router-link 
-        :to="{name: 'adminManagement'}" 
+      <router-link
+        :to="{name: 'adminManagement'}"
         class="nav-link"
         @click="menuOpen = false"
       >
         Gestión de Admin
       </router-link>
-      <router-link 
-        :to="{name: 'register'}" 
+      <router-link
+        :to="{name: 'register'}"
         class="nav-link"
         @click="menuOpen = false"
       >
@@ -103,8 +103,9 @@ const toggleLocale = () => {
 const currentLocaleLabel = computed(() => (locale.value === 'es' ? 'ES' : 'EN'))
 
 // Manejar el cierre de sesión
-const logout = () => {
-  authStore.logout()
+const logout = async () => {
+  await authStore.logout()
+  menuOpen.value = false
   router.push({ name: 'login' })
 }
 </script>

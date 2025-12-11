@@ -31,12 +31,15 @@ export class StationWebSocketService {
   connect(onUpdate?: (station: Station, factory: StationFactory) => void) {
     this.onUpdate = onUpdate;
 
-    // Direct connection to stations service (not via gateway)
-    // By default point to `estaciones-service` on port 8005 (docker-compose exposes it this way)
-    const baseUrl = process.env.VUE_APP_WEBSOCKET_STATIONS_URL || 'http://localhost:8005';
-    // Direct connection to stations microservice: SockJS endpoint `/ws`
+    // Obtener URL del WebSocket desde variable de entorno o fallback
+    // En desarrollo: http://localhost:8005
+    // En producción: se debe establecer VUE_APP_WEBSOCKET_STATIONS_URL en el .env
+    const baseUrl = this.getWebSocketBaseUrl();
     const wsUrl = `${baseUrl}/ws`;
-    console.log('[Stations WS] Connecting to', wsUrl);
+
+    console.log('[Stations WS] Environment VUE_APP_WEBSOCKET_STATIONS_URL:', process.env.VUE_APP_WEBSOCKET_STATIONS_URL);
+    console.log('[Stations WS] Resolved base URL:', baseUrl);
+    console.log('[Stations WS] Connecting to:', wsUrl);
 
     this.client = new Client({
       webSocketFactory: () => new SockJS(wsUrl) as WebSocket,
@@ -64,6 +67,53 @@ export class StationWebSocketService {
       }
     });
     this.client.activate();
+  }
+
+  /**
+   * Obtener la URL base del WebSocket desde variable de entorno o fallback
+   * En producción, VUE_APP_WEBSOCKET_STATIONS_URL DEBE estar definido en .env
+   * NUNCA usar localhost en producción
+   */
+  private getWebSocketBaseUrl(): string {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isProduction = !isDevelopment;
+
+    // Primera opción: variable de entorno explícita
+    // Esta debe estar siempre en .env en PRODUCCIÓN
+    if (process.env.VUE_APP_WEBSOCKET_STATIONS_URL) {
+      const url = process.env.VUE_APP_WEBSOCKET_STATIONS_URL;
+      console.log('[Stations WS] Using VUE_APP_WEBSOCKET_STATIONS_URL:', url);
+      return url;
+    }
+
+    // Si estamos en producción y no hay variable de entorno, lo es un error crítico
+    if (isProduction) {
+      console.error(
+        '[Stations WS] CRITICAL: VUE_APP_WEBSOCKET_STATIONS_URL not set in production!',
+        'The WebSocket will not connect. Please ensure .env is properly configured.'
+      );
+      // Usar URL del API gateway como fallback de emergencia en producción
+      if (process.env.VUE_APP_API_URL) {
+        const apiUrl = new URL(process.env.VUE_APP_API_URL);
+        const emergencyUrl = `${apiUrl.protocol}//${apiUrl.hostname}:8005`;
+        console.warn('[Stations WS] Using emergency fallback URL:', emergencyUrl);
+        return emergencyUrl;
+      }
+      // En producción, si no hay nada, lanzar error
+      throw new Error(
+        'WebSocket URL not configured for production. ' +
+        'VUE_APP_WEBSOCKET_STATIONS_URL must be set in environment variables.'
+      );
+    }
+
+    // En desarrollo, usar localhost como fallback
+    if (isDevelopment) {
+      console.warn('[Stations WS] Development mode: using localhost:8005');
+      return 'http://localhost:8005';
+    }
+
+    // Fallback seguro (nunca debería llegar aquí)
+    return 'http://localhost:8005';
   }
 
   private subscribe() {

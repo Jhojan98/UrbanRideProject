@@ -36,6 +36,24 @@
       </select>
     </div>
 
+    <!-- Información de disponibilidad del destino -->
+    <div v-if="selectedDest" class="availability-container">
+      <div class="availability-item mechanical">
+        <div class="bike-icon">🚲</div>
+        <div class="availability-info">
+          <span class="availability-label">{{ $t('reservation.form.mechanical') }}</span>
+          <span class="availability-count">{{ selectedDest.mechanical ?? selectedDest.availableMechanicBikes ?? 0 }}</span>
+        </div>
+      </div>
+      <div class="availability-item electric">
+        <div class="bike-icon">⚡</div>
+        <div class="availability-info">
+          <span class="availability-label">{{ $t('reservation.form.electric') }}</span>
+          <span class="availability-count">{{ selectedDest.electric ?? selectedDest.availableElectricBikes ?? 0 }}</span>
+        </div>
+      </div>
+    </div>
+
     <!-- Mensajes de validación -->
     <div v-if="validationMessage" class="validation-message" :class="{ error: hasError }">
       {{ validationMessage }}
@@ -81,42 +99,66 @@ const { t: $t } = useI18n()
 
 const stationStore = useStationStore()
 
+// Mantener los IDs de las estaciones seleccionadas para evitar perder la selección en actualizaciones del WS
+const selectedOriginId = ref<number | null>(null)
+const selectedDestinationId = ref<number | null>(null)
+
+// Crear un mapa para búsqueda rápida de estaciones por ID
+const stationMapByType = computed(() => {
+  const map = {
+    metros: new Map<number, StationOption>(),
+    bikeStations: new Map<number, StationOption>()
+  }
+
+  // Metros
+  stationStore.allStations.forEach(s => {
+    if (s.type?.toUpperCase() === 'METRO') {
+      map.metros.set(s.idStation, {
+        idStation: s.idStation,
+        nameStation: s.nameStation,
+        latitude: s.latitude,
+        longitude: s.longitude,
+        availableSlots: s.availableSlots,
+        totalSlots: s.totalSlots,
+        type: s.type,
+        mechanical: s.mechanical ?? 0,
+        electric: s.electric ?? 0
+      })
+    }
+  })
+
+  // Bike stations
+  stationStore.allStations.forEach(s => {
+    if (s.type?.toUpperCase() !== 'METRO') {
+      map.bikeStations.set(s.idStation, {
+        idStation: s.idStation,
+        nameStation: s.nameStation,
+        latitude: s.latitude,
+        longitude: s.longitude,
+        availableSlots: s.availableSlots,
+        totalSlots: s.totalSlots,
+        type: s.type?.toUpperCase() || 'BIKE',
+        mechanical: s.mechanical ?? 0,
+        electric: s.electric ?? 0
+      })
+    }
+  })
+
+  return map
+})
+
 // Obtener estaciones desde el store, filtradas por tipo
 const metros = computed<StationOption[]>(() => {
-  return stationStore.allStations.filter(s =>
-    s.type?.toUpperCase() === 'METRO'
-  ).map(s => ({
-    idStation: s.idStation,
-    nameStation: s.nameStation,
-    latitude: s.latitude,
-    longitude: s.longitude,
-    availableSlots: s.availableSlots,
-    totalSlots: s.totalSlots,
-    type: s.type,
-    mechanical: s.mechanical ?? 0,
-    electric: s.electric ?? 0
-  }))
+  return Array.from(stationMapByType.value.metros.values())
 })
 
 // Estaciones de bicicleta (no METRO) para recorrido largo
 const bikeStations = computed<StationOption[]>(() => {
-  return stationStore.allStations.filter(s =>
-    s.type?.toUpperCase() !== 'METRO'
-  ).map(s => ({
-    idStation: s.idStation,
-    nameStation: s.nameStation,
-    latitude: s.latitude,
-    longitude: s.longitude,
-    availableSlots: s.availableSlots,
-    totalSlots: s.totalSlots,
-    type: s.type?.toUpperCase() || 'BIKE',
-    mechanical: s.mechanical ?? 0,
-    electric: s.electric ?? 0
-  }))
+  return Array.from(stationMapByType.value.bikeStations.values())
 })
 
-// Todas las estaciones normalizadas
-const allStationsNormalized = computed<StationOption[]>(() => {
+// Todas las estaciones normalizadas (no se usa actualmente, disponible para futuros usos)
+const _allStationsNormalized = computed<StationOption[]>(() => {
   return stationStore.allStations.map(s => ({
     idStation: s.idStation,
     nameStation: s.nameStation,
@@ -129,8 +171,27 @@ const allStationsNormalized = computed<StationOption[]>(() => {
     electric: s.electric ?? 0
   }))
 })
-const selectedOrigin = ref<StationOption | null>(null)
-const selectedDest = ref<StationOption | null>(null)
+
+// Computed que mantiene la selección cuando se actualiza el store
+const selectedOrigin = computed({
+  get: () => {
+    if (!selectedOriginId.value) return null
+    return stationMapByType.value.metros.get(selectedOriginId.value) || null
+  },
+  set: (value) => {
+    selectedOriginId.value = value?.idStation ?? null
+  }
+})
+
+const selectedDest = computed({
+  get: () => {
+    if (!selectedDestinationId.value) return null
+    return stationMapByType.value.bikeStations.get(selectedDestinationId.value) || null
+  },
+  set: (value) => {
+    selectedDestinationId.value = value?.idStation ?? null
+  }
+})
 
 const validationMessage = ref<string>('')
 const hasError = ref<boolean>(false)
@@ -235,7 +296,7 @@ function isDestinationDisabled(station: StationOption) {
   return disabled
 }
 
-// Emit transformed objects when user selects from dropdown (no bidirectional sync to avoid loops)
+// Emit transformed objects cuando cambia selectedOrigin (mantiene la selección incluso con WS updates)
 watch(selectedOrigin, (o) => {
   if (o) {
     const origin = {
@@ -253,7 +314,7 @@ watch(selectedOrigin, (o) => {
   } else {
     emit("update:origin", null)
   }
-})
+}, { deep: false })
 
 watch(selectedDest, (d) => {
   if (d) {
@@ -272,12 +333,12 @@ watch(selectedDest, (d) => {
   } else {
     emit("update:destination", null)
   }
-})
+}, { deep: false })
 
-// Reset selections when bike type or ride type changes
+// Reset selections cuando cambia el tipo de bicicleta o tipo de viaje
 watch(() => [props.bikeType, props.rideType], () => {
-  selectedOrigin.value = null
-  selectedDest.value = null
+  selectedOriginId.value = null
+  selectedDestinationId.value = null
 })
 
 function confirm() {
@@ -331,4 +392,74 @@ select { padding: .5rem; border-radius: 6px; border: 1px solid #ccc; }
 .status.active { color: green; font-weight: bold; }
 .status.full { color: red; font-weight: bold; }
 .btn-confirm { margin-top: 1rem; width: 100%; padding: .7rem; background: #2E7D32; color: white; border-radius: 8px; border: none; cursor: pointer; }
+
+/* Estilos para disponibilidad de bicicletas */
+.availability-container {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.availability-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  background: white;
+  flex: 1;
+}
+
+.availability-item.mechanical {
+  border-left: 4px solid #2563eb;
+}
+
+.availability-item.electric {
+  border-left: 4px solid #16a34a;
+}
+
+.bike-icon {
+  font-size: 1.5rem;
+}
+
+.availability-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.availability-label {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.availability-count {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.validation-message {
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  border-radius: 6px;
+  background: #e3f2fd;
+  color: #1565c0;
+  font-size: 0.875rem;
+}
+
+.validation-message.error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.sub {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
 </style>

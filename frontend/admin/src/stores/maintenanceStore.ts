@@ -18,7 +18,7 @@ type MaintenancePayload = {
 
 export const useMaintenanceStore = defineStore('maintenance', {
   state: () => ({
-    baseURL: '/api/maintenance',
+    maintURL: '/api/maintenance',
     maintList: [] as Maintenance[],
     loading: false as boolean,
   }),
@@ -27,17 +27,34 @@ export const useMaintenanceStore = defineStore('maintenance', {
       this.loading = true;
       try {
         const auth = getAuth();
-        const token = await auth.currentUser?.getIdToken();
-        const response = await fetch(`${this.baseURL}/maintenance/`, {
+        let token = await auth.currentUser?.getIdToken();
+        console.log('[Maintenance Store] Token length:', token?.length);
+
+        let response = await fetch(`${this.maintURL}/maintenance/`, {
           method: 'GET',
           headers: {
             Accept: 'application/json',
             ...(token && { Authorization: `Bearer ${token}` })
           },
         });
+
+        if (response.status === 403) {
+          console.log('[Maintenance Store] Token expired (403), refreshing...');
+          token = await auth.currentUser?.getIdToken(true);
+          console.log('[Maintenance Store] New token length:', token?.length);
+
+          response = await fetch(`${this.maintURL}/maintenance/`, {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` })
+            },
+          });
+        }
+
         if (!response.ok) {
           console.error(
-            'HTTP error fetching maintenances:',
+            '[Maintenance Store] HTTP error fetching maintenances:',
             response.status,
             response.statusText
           );
@@ -57,8 +74,10 @@ export const useMaintenanceStore = defineStore('maintenance', {
       this.loading = true;
       try {
         const auth = getAuth();
-        const token = await auth.currentUser?.getIdToken();
-        const response = await fetch(`${this.baseURL}/maintenance`, {
+        let token = await auth.currentUser?.getIdToken();
+        console.log('[Maintenance Store] Token length:', token?.length);
+
+        let response = await fetch(`${this.maintURL}/maintenance`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -74,9 +93,31 @@ export const useMaintenanceStore = defineStore('maintenance', {
           }),
         });
 
+        if (response.status === 403) {
+          console.log('[Maintenance Store] Token expired (403), refreshing...');
+          token = await auth.currentUser?.getIdToken(true);
+          console.log('[Maintenance Store] New token length:', token?.length);
+
+          response = await fetch(`${this.maintURL}/maintenance`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` })
+            },
+            body: JSON.stringify({
+              ...payload,
+              date: payload.date ? new Date(payload.date) : undefined,
+              bikeId: payload.bikeId ?? null,
+              stationId: payload.stationId ?? null,
+              lockId: payload.lockId ?? null,
+            }),
+          });
+        }
+
         if (!response.ok) {
           console.error(
-            'HTTP error creating maintenance:',
+            '[Maintenance Store] HTTP error creating maintenance:',
             response.status,
             response.statusText
           );
@@ -97,9 +138,11 @@ export const useMaintenanceStore = defineStore('maintenance', {
       this.loading = true;
       try {
         const auth = getAuth();
-        const token = await auth.currentUser?.getIdToken();
-        const response = await fetch(`${this.baseURL}/maintenance/${id}`, {
-          method: 'PATCH',
+        let token = await auth.currentUser?.getIdToken();
+        console.log('[Maintenance Store] Token length:', token?.length);
+
+        let response = await fetch(`${this.maintURL}/maintenance/${id}`, {
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
@@ -114,9 +157,49 @@ export const useMaintenanceStore = defineStore('maintenance', {
           }),
         });
 
+        if (response.status === 403) {
+          console.log('[Maintenance Store] Token expired (403), refreshing...');
+          token = await auth.currentUser?.getIdToken(true);
+          console.log('[Maintenance Store] New token length:', token?.length);
+
+          // Decodificar JWT para debugging
+          if (token) {
+            try {
+              const parts = token.split('.');
+              if (parts.length === 3) {
+                const tokenPayload = JSON.parse(atob(parts[1]));
+                console.log('[Maintenance Store] Token info:', {
+                  iss: tokenPayload.iss,
+                  aud: tokenPayload.aud,
+                  exp: new Date(tokenPayload.exp * 1000).toISOString(),
+                  isExpired: tokenPayload.exp * 1000 < Date.now()
+                });
+              }
+            } catch (e) {
+              console.error('[Maintenance Store] Error decoding token:', e);
+            }
+          }
+
+          response = await fetch(`${this.maintURL}/maintenance/${id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` })
+            },
+            body: JSON.stringify({
+              ...payload,
+              date: payload.date ? new Date(payload.date) : undefined,
+              bikeId: payload.bikeId ?? null,
+              stationId: payload.stationId ?? null,
+              lockId: payload.lockId ?? null,
+            }),
+          });
+        }
+
         if (!response.ok) {
           console.error(
-            'HTTP error updating maintenance:',
+            '[Maintenance Store] HTTP error updating maintenance:',
             response.status,
             response.statusText
           );

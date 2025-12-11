@@ -118,7 +118,7 @@ export const useStationStore = defineStore("station", {
             ?? (raw as Record<string, unknown>).electricBikes as number | undefined
             ?? 0
 
-          const totalSlots = raw.totalSlots ?? 0
+          const totalSlots = raw.totalSlots ?? 15;
           const availableSlots = raw.availableSlots ?? 0
 
           return {
@@ -179,7 +179,7 @@ export const useStationStore = defineStore("station", {
           nameStation: data.stationName ?? data.nameStation,
           latitude: data.latitude,
           longitude: data.length ?? data.longitude,
-          totalSlots: data.totalSlots ?? 0,
+          totalSlots: data.totalSlots ?? 15,
           availableSlots: data.availableSlots ?? 0,
           timestamp: data.timestamp ? new Date(data.timestamp) : new Date(),
           slots: data.slots,

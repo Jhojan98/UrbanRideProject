@@ -5,23 +5,7 @@
     <h3 v-if="props.station">{{ props.station.nameStation }}</h3>
     <h3 v-else>{{ $t('reservation.form.selectStation') || 'Selecciona una estación' }}</h3>
 
-    <!-- Disponibilidad de bicicletas -->
-    <div v-if="props.station" class="availability-container">
-      <div class="availability-item mechanical">
-        <div class="bike-icon">🚲</div>
-        <div class="availability-info">
-          <span class="availability-label">{{ $t('reservation.form.mechanical') }}</span>
-          <span class="availability-count">{{ props.station.mechanical || props.station.availableMechanicBikes || 0 }}</span>
-        </div>
-      </div>
-      <div class="availability-item electric">
-        <div class="bike-icon">⚡</div>
-        <div class="availability-info">
-          <span class="availability-label">{{ $t('reservation.form.electric') }}</span>
-          <span class="availability-count">{{ props.station.electric || props.station.availableElectricBikes || 0 }}</span>
-        </div>
-      </div>
-    </div>
+
 
     <label class="label">{{ $t('reservation.form.bikeType') }}</label>
     <div class="select-group">
@@ -404,28 +388,28 @@ async function onConfirmRoute(payload: { origin: StationLike; destination: Stati
   padding: 0.5rem 0.6rem;
   border-radius: 5px;
   transition: all 0.2s ease;
-  
+
   &.mechanical {
     background: rgba(25, 118, 210, 0.08);
     border: 1px solid rgba(25, 118, 210, 0.2);
-    
+
     .bike-icon {
       background: linear-gradient(135deg, #1976D2, #1565C0);
     }
-    
+
     &:hover {
       background: rgba(25, 118, 210, 0.12);
     }
   }
-  
+
   &.electric {
     background: rgba(255, 160, 0, 0.08);
     border: 1px solid rgba(255, 160, 0, 0.2);
-    
+
     .bike-icon {
       background: linear-gradient(135deg, #FFA000, #F57C00);
     }
-    
+
     &:hover {
       background: rgba(255, 160, 0, 0.12);
     }
@@ -475,16 +459,16 @@ async function onConfirmRoute(payload: { origin: StationLike; destination: Stati
   &.mechanical {
     background: rgba(25, 118, 210, 0.15);
     border-color: rgba(25, 118, 210, 0.3);
-    
+
     &:hover {
       background: rgba(25, 118, 210, 0.2);
     }
   }
-  
+
   &.electric {
     background: rgba(255, 160, 0, 0.15);
     border-color: rgba(255, 160, 0, 0.3);
-    
+
     &:hover {
       background: rgba(255, 160, 0, 0.2);
     }
@@ -505,21 +489,21 @@ async function onConfirmRoute(payload: { origin: StationLike; destination: Stati
     gap: 0.5rem;
     padding: 0.5rem;
   }
-  
+
   .availability-item {
     padding: 0.5rem;
   }
-  
+
   .bike-icon {
     font-size: 1.1rem;
     width: 1.8rem;
     height: 1.8rem;
   }
-  
+
   .availability-count {
     font-size: 1rem;
   }
-  
+
   .availability-label {
     font-size: 0.65rem;
   }
